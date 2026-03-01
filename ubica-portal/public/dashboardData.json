@@ -1,0 +1,141 @@
+{
+  "overview": {
+    "total_users": 247,
+    "total_properties": 45,
+    "total_investments": 15,
+    "total_transactions": 68,
+    "total_property_value": 15750000,
+    "users_by_role": {
+      "admin": 2,
+      "realtor": 12,
+      "investor": 23,
+      "user": 210
+    },
+    "properties_by_status": {
+      "available": 28,
+      "sold": 12,
+      "rented": 5
+    },
+    "totalProperties": 45,
+    "totalSales": 18,
+    "totalRentals": 12,
+    "activeInvestments": 15,
+    "monthlyRevenue": 145000,
+    "averageROI": 8.2,
+    "occupancyRate": 87.5
+  },
+  "revenue": {
+    "total_transaction_value": 8450000,
+    "total_commissions": 253500,
+    "platform_revenue": 87500,
+    "transaction_count": 68
+  },
+  "user_growth": [
+    { "month": "Ene", "new_users": 23 },
+    { "month": "Feb", "new_users": 31 },
+    { "month": "Mar", "new_users": 28 },
+    { "month": "Abr", "new_users": 35 },
+    { "month": "May", "new_users": 42 },
+    { "month": "Jun", "new_users": 38 }
+  ],
+  "top_properties": [
+    { "id": 1, "title": "Villa Moderna Cartagena", "views": 234, "price": 485000, "city": "Cartagena" },
+    { "id": 4, "title": "Chalet en Águilas", "views": 198, "price": 650000, "city": "Águilas" },
+    { "id": 6, "title": "Villa Torre Pacheco", "views": 187, "price": 395000, "city": "Torre Pacheco" }
+  ],
+  "top_realtors": [
+    { "id": 2, "name": "Costa Cálida Properties", "company": "Costa Cálida Properties SL", "properties": 15 },
+    { "id": 5, "name": "Murcia Real Estate", "company": "Murcia Real Estate SA", "properties": 12 },
+    { "id": 8, "name": "Mediterráneo Propiedades", "company": "Mediterráneo Propiedades SL", "properties": 8 }
+  ],
+  "salesData": {
+    "monthlyData": [
+      { "month": "Ene", "sales": 3, "revenue": 850000 },
+      { "month": "Feb", "sales": 2, "revenue": 430000 },
+      { "month": "Mar", "sales": 4, "revenue": 1200000 },
+      { "month": "Apr", "sales": 1, "revenue": 195000 },
+      { "month": "May", "sales": 3, "revenue": 975000 },
+      { "month": "Jun", "sales": 5, "revenue": 1650000 }
+    ],
+    "topProperties": [
+      { "id": 4, "title": "Chalet en Águilas", "price": 650000, "commission": 19500 },
+      { "id": 1, "title": "Villa Moderna Cartagena", "price": 485000, "commission": 14550 },
+      { "id": 6, "title": "Villa Torre Pacheco", "price": 395000, "commission": 11850 }
+    ],
+    "totalCommissions": 87500
+  },
+  "rentalData": {
+    "monthlyIncome": [
+      { "month": "Ene", "income": 12500, "properties": 8 },
+      { "month": "Feb", "income": 13200, "properties": 9 },
+      { "month": "Mar", "income": 15800, "properties": 10 },
+      { "month": "Apr", "income": 16500, "properties": 11 },
+      { "month": "May", "income": 17200, "properties": 11 },
+      { "month": "Jun", "income": 18500, "properties": 12 }
+    ],
+    "topRentals": [
+      { "id": 2, "title": "Apartamento Mar Menor", "monthlyRent": 1250, "occupancy": 95 },
+      { "id": 5, "title": "Piso Céntrico Murcia", "monthlyRent": 850, "occupancy": 100 },
+      { "id": 7, "title": "Ático Molina Segura", "monthlyRent": 1100, "occupancy": 90 }
+    ],
+    "averageOccupancy": 87.5
+  },
+  "investmentAnalysis": {
+    "roiData": [
+      { "propertyType": "Villa", "averageROI": 8.8, "count": 5 },
+      { "propertyType": "Apartamento", "averageROI": 8.5, "count": 15 },
+      { "propertyType": "Casa", "averageROI": 7.8, "count": 12 },
+      { "propertyType": "Ático", "averageROI": 8.1, "count": 8 },
+      { "propertyType": "Estudio", "averageROI": 9.2, "count": 5 }
+    ],
+    "marketTrends": [
+      { "quarter": "Q1 2024", "averagePrice": 285000, "growth": 2.3 },
+      { "quarter": "Q2 2024", "averagePrice": 292000, "growth": 2.5 },
+      { "quarter": "Q3 2024", "averagePrice": 299000, "growth": 2.4 },
+      { "quarter": "Q4 2024", "averagePrice": 306000, "growth": 2.3 }
+    ],
+    "timeOnMarket": {
+      "average": 2.1,
+      "byType": {
+        "Villa": 1.8,
+        "Apartamento": 2.3,
+        "Casa": 2.5,
+        "Ático": 1.9,
+        "Estudio": 1.2
+      }
+    }
+  },
+  "properties": [
+    {
+      "id": 1,
+      "title": "Villa Moderna Cartagena",
+      "status": "vendida",
+      "price": 485000,
+      "type": "villa",
+      "location": "Cartagena",
+      "dateListed": "2024-04-15",
+      "dateSold": "2024-06-02",
+      "commission": 14550
+    },
+    {
+      "id": 2,
+      "title": "Apartamento Mar Menor",
+      "status": "alquilada",
+      "price": 195000,
+      "monthlyRent": 1250,
+      "type": "apartment",
+      "location": "San Pedro del Pinatar",
+      "dateListed": "2024-01-10",
+      "dateRented": "2024-02-15"
+    },
+    {
+      "id": 3,
+      "title": "Casa Rural Lorca",
+      "status": "disponible",
+      "price": 320000,
+      "type": "house",
+      "location": "Lorca",
+      "dateListed": "2024-05-20"
+    }
+  ]
+}

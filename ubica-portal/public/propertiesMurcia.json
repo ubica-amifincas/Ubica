@@ -1,0 +1,282 @@
+[
+  {
+    "id": 1,
+    "title": "Villa Moderna en Cartagena",
+    "price": 485000,
+    "type": "villa",
+    "status": "for-sale",
+    "bedrooms": 4,
+    "bathrooms": 3,
+    "area": 250,
+    "location": "Cartagena",
+    "address": "Avenida de América, Cartagena",
+    "coordinates": {
+      "lat": 37.6063,
+      "lng": -0.9868
+    },
+    "images": ["/images/casa-moderna.jpg", "/images/villa-lujo.jpg"],
+    "features": ["Piscina privada", "Jardín", "Garaje", "Aire acondicionado", "Terraza"],
+    "description": "Espectacular villa moderna ubicada en una de las mejores zonas de Cartagena. Con amplios espacios, acabados de primera calidad y vistas al mar Mediterráneo.",
+    "yearBuilt": 2020,
+    "orientation": "Sur",
+    "energyRating": "A",
+    "investmentData": {
+      "roi": 8.5,
+      "rentalYield": 6.2,
+      "monthsOnMarket": 2,
+      "priceHistory": [480000, 485000]
+    }
+  },
+  {
+    "id": 2,
+    "title": "Apartamento Costa Mar Menor",
+    "price": 195000,
+    "type": "apartment",
+    "status": "for-sale",
+    "bedrooms": 2,
+    "bathrooms": 2,
+    "area": 85,
+    "location": "San Pedro del Pinatar",
+    "address": "Paseo Marítimo, San Pedro del Pinatar",
+    "coordinates": {
+      "lat": 37.8366,
+      "lng": -0.7897
+    },
+    "images": ["/images/apartamento-costa.jpg", "/images/villa-san-pedro.jpg"],
+    "features": ["Primera línea de playa", "Piscina comunitaria", "Terraza", "Aire acondicionado"],
+    "description": "Magnífico apartamento en primera línea del Mar Menor. Ideal para disfrutar de las vacaciones o como inversión turística.",
+    "yearBuilt": 2018,
+    "orientation": "Este",
+    "energyRating": "B",
+    "investmentData": {
+      "roi": 9.2,
+      "rentalYield": 7.8,
+      "monthsOnMarket": 1,
+      "priceHistory": [185000, 190000, 195000]
+    }
+  },
+  {
+    "id": 3,
+    "title": "Casa Rural en Lorca",
+    "price": 320000,
+    "type": "house",
+    "status": "for-sale",
+    "bedrooms": 5,
+    "bathrooms": 3,
+    "area": 180,
+    "location": "Lorca",
+    "address": "Camino de los Álamos, Lorca",
+    "coordinates": {
+      "lat": 37.6742,
+      "lng": -1.7018
+    },
+    "images": ["/images/casa-rural.jpg", "/images/villa-lorca.jpg"],
+    "features": ["Parcela 2000m²", "Huerto", "Barbacoa", "Chimenea", "Tranquilidad"],
+    "description": "Encantadora casa rural en Lorca, perfecta para quienes buscan tranquilidad y contacto con la naturaleza. Amplia parcela con árboles frutales.",
+    "yearBuilt": 2015,
+    "orientation": "Sur",
+    "energyRating": "C",
+    "investmentData": {
+      "roi": 7.8,
+      "rentalYield": 5.5,
+      "monthsOnMarket": 3,
+      "priceHistory": [315000, 320000]
+    }
+  },
+  {
+    "id": 4,
+    "title": "Chalet en Águilas Frente al Mar",
+    "price": 650000,
+    "type": "villa",
+    "status": "for-sale",
+    "bedrooms": 4,
+    "bathrooms": 4,
+    "area": 300,
+    "location": "Águilas",
+    "address": "Calle del Mar, Águilas",
+    "coordinates": {
+      "lat": 37.4090,
+      "lng": -1.5833
+    },
+    "images": ["/images/chalet-aguilas.jpg", "/images/casa-playa.jpg"],
+    "features": ["Acceso directo playa", "Piscina infinity", "Garaje doble", "Solarium", "Vistas panorámicas"],
+    "description": "Exclusivo chalet frente al mar en Águilas. Diseño contemporáneo con los mejores materiales y acceso directo a la playa.",
+    "yearBuilt": 2021,
+    "orientation": "Sur-Este",
+    "energyRating": "A+",
+    "investmentData": {
+      "roi": 10.2,
+      "rentalYield": 8.5,
+      "monthsOnMarket": 1,
+      "priceHistory": [630000, 650000]
+    }
+  },
+  {
+    "id": 5,
+    "title": "Piso Céntrico Murcia Capital",
+    "price": 145000,
+    "type": "apartment",
+    "status": "for-sale",
+    "bedrooms": 3,
+    "bathrooms": 2,
+    "area": 95,
+    "location": "Murcia",
+    "address": "Gran Vía Alfonso X El Sabio, Murcia",
+    "coordinates": {
+      "lat": 37.9922,
+      "lng": -1.1307
+    },
+    "images": ["/images/piso-ciudad.jpg", "/images/piso-murcia-centro.jpg"],
+    "features": ["Centro histórico", "Ascensor", "Balcón", "Calefacción", "Cerca de universidades"],
+    "description": "Magnífico piso en el corazón de Murcia capital. Perfecto para estudiantes, profesionales o como inversión de alquiler.",
+    "yearBuilt": 2010,
+    "orientation": "Norte-Sur",
+    "energyRating": "D",
+    "investmentData": {
+      "roi": 8.8,
+      "rentalYield": 6.8,
+      "monthsOnMarket": 2,
+      "priceHistory": [140000, 145000]
+    }
+  },
+  {
+    "id": 6,
+    "title": "Villa en Torre Pacheco",
+    "price": 395000,
+    "type": "villa",
+    "status": "for-sale",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "area": 200,
+    "location": "Torre Pacheco",
+    "address": "Urbanización Las Terrazas, Torre Pacheco",
+    "coordinates": {
+      "lat": 37.7444,
+      "lng": -0.9529
+    },
+    "images": ["/images/apartamento-torre-pacheco.jpg", "/images/villa-lujo.jpg"],
+    "features": ["Campo de golf", "Piscina privada", "Jardín paisajístico", "Garaje", "Seguridad 24h"],
+    "description": "Elegante villa en exclusiva urbanización de Torre Pacheco. Diseñada para el confort y la tranquilidad, con acceso a campo de golf.",
+    "yearBuilt": 2019,
+    "orientation": "Sur",
+    "energyRating": "A",
+    "investmentData": {
+      "roi": 7.5,
+      "rentalYield": 5.8,
+      "monthsOnMarket": 2,
+      "priceHistory": [385000, 395000]
+    }
+  },
+  {
+    "id": 7,
+    "title": "Ático en Molina de Segura",
+    "price": 225000,
+    "type": "penthouse",
+    "status": "for-sale",
+    "bedrooms": 3,
+    "bathrooms": 2,
+    "area": 120,
+    "location": "Molina de Segura",
+    "address": "Avenida de Madrid, Molina de Segura",
+    "coordinates": {
+      "lat": 38.0508,
+      "lng": -1.2138
+    },
+    "images": ["/images/atico.jpg", "/images/atico-molina-segura.jpg"],
+    "features": ["Terraza 50m²", "Vistas panorámicas", "Ascensor", "Trastero", "Plaza de garaje"],
+    "description": "Impresionante ático con gran terraza en Molina de Segura. Vistas espectaculares y espacios amplios para disfrutar al máximo.",
+    "yearBuilt": 2017,
+    "orientation": "Sur-Oeste",
+    "energyRating": "B",
+    "investmentData": {
+      "roi": 8.1,
+      "rentalYield": 6.5,
+      "monthsOnMarket": 1,
+      "priceHistory": [220000, 225000]
+    }
+  },
+  {
+    "id": 8,
+    "title": "Casa Adosada en Totana",
+    "price": 165000,
+    "type": "townhouse",
+    "status": "for-sale",
+    "bedrooms": 4,
+    "bathrooms": 2,
+    "area": 140,
+    "location": "Totana",
+    "address": "Calle San Roque, Totana",
+    "coordinates": {
+      "lat": 37.7692,
+      "lng": -1.5018
+    },
+    "images": ["/images/casa-adosada.jpg", "/images/casa-totana.jpg"],
+    "features": ["Patio interior", "Garaje", "Trastero", "Cerca colegios", "Zona tranquila"],
+    "description": "Acogedora casa adosada en Totana, ideal para familias. Espacios bien distribuidos y excelente ubicación cerca de servicios.",
+    "yearBuilt": 2012,
+    "orientation": "Este",
+    "energyRating": "C",
+    "investmentData": {
+      "roi": 7.2,
+      "rentalYield": 5.2,
+      "monthsOnMarket": 3,
+      "priceHistory": [160000, 165000]
+    }
+  },
+  {
+    "id": 9,
+    "title": "Estudio Moderno Murcia Centro",
+    "price": 89000,
+    "type": "studio",
+    "status": "for-sale",
+    "bedrooms": 1,
+    "bathrooms": 1,
+    "area": 45,
+    "location": "Murcia",
+    "address": "Calle Trapería, Murcia",
+    "coordinates": {
+      "lat": 37.9838,
+      "lng": -1.1280
+    },
+    "images": ["/images/estudio.jpg", "/images/piso-ciudad.jpg"],
+    "features": ["Completamente reformado", "Aire acondicionado", "Internet fibra", "Centro ciudad"],
+    "description": "Moderno estudio en pleno centro de Murcia. Perfecto para estudiantes o profesionales jóvenes. Totalmente equipado.",
+    "yearBuilt": 2022,
+    "orientation": "Norte",
+    "energyRating": "A",
+    "investmentData": {
+      "roi": 9.5,
+      "rentalYield": 7.2,
+      "monthsOnMarket": 1,
+      "priceHistory": [85000, 89000]
+    }
+  },
+  {
+    "id": 10,
+    "title": "Dúplex Familiar Alcantarilla",
+    "price": 210000,
+    "type": "duplex",
+    "status": "for-sale",
+    "bedrooms": 4,
+    "bathrooms": 3,
+    "area": 160,
+    "location": "Alcantarilla",
+    "address": "Avenida Príncipe de Asturias, Alcantarilla",
+    "coordinates": {
+      "lat": 37.9692,
+      "lng": -1.2143
+    },
+    "images": ["/images/duplex.jpg", "/images/casa-moderna.jpg"],
+    "features": ["Dos plantas", "Terraza privada", "Parking", "Zona infantil", "Transporte público"],
+    "description": "Espacioso dúplex en Alcantarilla, perfecto para familias numerosas. Excelente comunicación con Murcia capital.",
+    "yearBuilt": 2016,
+    "orientation": "Sur",
+    "energyRating": "B",
+    "investmentData": {
+      "roi": 8.0,
+      "rentalYield": 6.0,
+      "monthsOnMarket": 2,
+      "priceHistory": [205000, 210000]
+    }
+  }
+]

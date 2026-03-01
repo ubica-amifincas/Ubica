@@ -1,0 +1,258 @@
+D:\Proyects\Ubica_proyect\ubica_v2\ubica-backend\main.py:30: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+D:\Proyects\Ubica_proyect\ubica_v2\ubica-backend\main.py:229: PydanticDeprecatedSince20: The `dict` method is deprecated; use `model_dump` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+  json.dump([u.dict() for u in users_db], f, default=str, indent=2)
+D:\Proyects\Ubica_proyect\ubica_v2\ubica-backend\main.py:231: PydanticDeprecatedSince20: The `dict` method is deprecated; use `model_dump` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+  json.dump([p.dict() for p in properties_db], f, default=str, indent=2)
+D:\Proyects\Ubica_proyect\ubica_v2\ubica-backend\main.py:233: PydanticDeprecatedSince20: The `dict` method is deprecated; use `model_dump` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+  json.dump([p.dict() for p in favorites_db], f, default=str, indent=2)
+D:\Proyects\Ubica_proyect\ubica_v2\ubica-backend\main.py:235: PydanticDeprecatedSince20: The `dict` method is deprecated; use `model_dump` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+  json.dump([p.dict() for p in messages_db], f, default=str, indent=2)
+INFO:     Will watch for changes in these directories: ['D:\\Proyects\\Ubica_proyect\\ubica_v2\\ubica-backend']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [9976] using WatchFiles
+D:\Proyects\Ubica_proyect\ubica_v2\ubica-backend\main.py:30: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+5 changes detected
+INFO:     Started server process [20764]
+INFO:     Waiting for application startup.
+INFO:     ASGI 'lifespan' protocol appears unsupported.
+INFO:     Application startup complete.
+5 changes detected
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "C:\Users\Pencho\AppData\Roaming\Python\Python313\site-packages\uvicorn\protocols\http\httptools_impl.py", line 416, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.scope, self.receive, self.send
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+Google Gemini AI configured successfully!
+Google Gemini AI configured successfully!
+INFO:     127.0.0.1:61408 - "POST /api/ai/chat HTTP/1.1" 500 Internal Server Error
+    ^
+  File "C:\Users\Pencho\AppData\Roaming\Python\Python313\site-packages\uvicorn\middleware\proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Pencho\AppData\Roaming\Python\Python313\site-packages\fastapi\applications.py", line 1106, in __call__
+    await super().__call__(scope, receive, send)
+  File "C:\Users\Pencho\AppData\Roaming\Python\Python313\site-packages\starlette\applications.py", line 106, in __call__
+    self.middleware_stack = self.build_middleware_stack()
+                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Pencho\AppData\Roaming\Python\Python313\site-packages\fastapi\applications.py", line 1014, in build_middleware_stack
+    for cls, options in reversed(middleware):
+        ^^^^^^^^^^^^
+ValueError: too many values to unpack (expected 2)
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+5 changes detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+1 change detected
+2 changes detected
+WARNING:  WatchFiles detected changes in 'test_ai.py'. Reloading...
+Google Gemini AI configured successfully!
+Iniciando Ubica Enterprise Backend...
+Usuarios de prueba disponibles:
+   Admin: admin@amifincas.es / admin123
+   Realtor: inmobiliaria1@amifincas.es / realtor123
+   Investor: inversor1@amifincas.es / investor123
+API Documentation: http://localhost:8000/docs
+Health Check: http://localhost:8000/health

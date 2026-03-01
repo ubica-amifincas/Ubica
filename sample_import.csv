@@ -1,0 +1,5 @@
+titulo,precio,tipo,habitaciones,baños,area,ubicacion,direccion,descripcion,imagenes,estado
+"Villa Moderna con Vistas al Mar", 450000, villa, 4, 3, 220, "Cartagena", "Calle Pinaralto 12", "Fantástica villa en la costa con piscina privada y amplias terrazas.", "https://dummyimage.com/600x400/000/fff.jpg,https://dummyimage.com/600x400/eee/333.jpg", available
+"Apartamento Céntrico", 125000, apartamento, 2, 1, 85, "Murcia", "Gran Vía Escultor Salzillo 45", "Estupendo apartamento reformado en pleno centro comercial.", "https://dummyimage.com/600x400/111/fff.jpg", available
+"Adosado Familiar", 210000, casa, 3, 2, 140, "Molina de Segura", "Avenida de la Industria 80", "Casa adosada con zona comunitaria y garaje incluido.", "", sold
+"Ático de Lujo", 620000, atico, 3, 3, 180, "San Pedro del Pinatar", "Paseo Marítimo 1", "Impresionante ático en primera línea de playa con solárium privado.", "https://dummyimage.com/600x400/222/fff.jpg", available

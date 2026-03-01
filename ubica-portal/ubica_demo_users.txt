@@ -1,0 +1,3 @@
+Admin user: admin@amifincas.es / pass: admin123
+Inmobiliaria user: inmobiliaria1@amifincas.es / pass: realtor123
+Inversor user: inversor1@amifincas.es / pass: investor123
