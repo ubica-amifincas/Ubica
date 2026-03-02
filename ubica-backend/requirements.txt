@@ -4,3 +4,9 @@ pydantic[email]
 pyjwt
 python-multipart
 fastapi-mail
+sqlmodel
+psycopg2-binary
+sqlalchemy
+python-dotenv
+pandas
+aiohttp
