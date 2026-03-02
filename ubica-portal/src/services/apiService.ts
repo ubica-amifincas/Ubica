@@ -5,8 +5,8 @@
  */
 
 // Simulamos el backend con datos locales para el demo
-const DEMO_MODE = true;
-const API_BASE_URL = 'http://localhost:8000/api';
+const DEMO_MODE = false; // Desactivamos el modo demo para usar el backend real
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 export interface LoginRequest {
   email: string;
@@ -369,7 +369,8 @@ class ApiService {
 
   // Health check
   async healthCheck(): Promise<any> {
-    const response = await fetch('http://localhost:8000/health');
+    const baseUrl = API_BASE_URL.replace('/api', '');
+    const response = await fetch(`${baseUrl}/health`);
     return this.handleResponse<any>(response);
   }
 
