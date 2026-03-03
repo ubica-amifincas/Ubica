@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './hooks/useTheme';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
@@ -66,14 +66,15 @@ import useDocumentTitle from './hooks/useDocumentTitle';
 function AppRoutes() {
   useDocumentTitle();
   const { showBanner, acceptAll, rejectAll, updatePreferences } = useCookieConsent();
+  const location = useLocation();
   const isAmiFincasDomain = window.location.hostname === 'amifincas.es' || window.location.hostname === 'www.amifincas.es';
 
   // Redirigir todo excepto /ami-fincas a ubica.amifincas.es
   useEffect(() => {
-    if (isAmiFincasDomain && !window.location.pathname.startsWith('/ami-fincas')) {
-      window.location.replace(`https://ubica.amifincas.es${window.location.pathname}${window.location.search}`);
+    if (isAmiFincasDomain && !location.pathname.startsWith('/ami-fincas')) {
+      window.location.replace(`https://ubica.amifincas.es${location.pathname}${window.location.search}`);
     }
-  }, [isAmiFincasDomain]);
+  }, [isAmiFincasDomain, location.pathname]);
 
   return (
     <>
