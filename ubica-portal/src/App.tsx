@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './hooks/useTheme';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
@@ -74,7 +74,7 @@ function AppRoutes() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<MainLayout />}>
-            <Route index element={isAmiFincasDomain ? <AmiFincas /> : <Home />} />
+            <Route index element={isAmiFincasDomain ? <Navigate to="/ami-fincas" replace /> : <Home />} />
             <Route path="ami-fincas" element={<AmiFincas />} />
             <Route path="property/:id" element={<PropertyDetail />} />
             <Route path="about" element={<About />} />
