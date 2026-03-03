@@ -96,7 +96,7 @@ export default function Home() {
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [viewLayout, setViewLayout] = useState<'grid' | 'list'>('grid');
-  const [toolbarScale, setToolbarScale] = useState(0.7);
+  const [toolbarScale, setToolbarScale] = useState(() => window.innerWidth >= 768 ? 1.0 : 0.7);
   const [searchTerm, setSearchTerm] = useState('');
   const [mapZoom, setMapZoom] = useState(9);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -531,21 +531,21 @@ export default function Home() {
 
       {/* Map Controls Bar */}
       <div id="map-controls-bar" className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm sticky top-20 z-10">
-        <div className="container mx-auto px-4 py-3 relative">
+        <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-3 relative">
 
 
 
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex flex-row justify-between items-center gap-2 sm:gap-4">
             {/* Left Controls */}
-            <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center md:justify-start w-full md:w-auto">
+            <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink min-w-0">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2 bg-white dark:bg-gray-700 px-4 py-2 rounded-lg shadow border border-gray-200 dark:border-gray-600 hover:shadow-md transition-all"
+                className="flex items-center gap-1.5 sm:gap-2 bg-white dark:bg-gray-700 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow border border-gray-200 dark:border-gray-600 hover:shadow-md transition-all"
               >
-                <AdjustmentsHorizontalIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                <span className="text-gray-700 dark:text-gray-300 font-medium">{t('common.filters')}</span>
+                <AdjustmentsHorizontalIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 dark:text-gray-400" />
+                <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300 font-medium">{t('common.filters')}</span>
               </motion.button>
 
               {/* Drawing Tools - Only show in map mode */}
@@ -555,12 +555,12 @@ export default function Home() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={toggleDrawingMode}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg shadow border transition-all ${isDrawingEnabled
+                    className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow border transition-all ${isDrawingEnabled
                       ? 'bg-emerald-500 text-white border-emerald-600'
                       : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:shadow-md'
                       }`}
                   >
-                    <PencilIcon className="h-5 w-5" />
+                    <PencilIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                     <span className="hidden sm:inline">{t('map.drawArea')}</span>
                   </motion.button>
 
@@ -571,7 +571,7 @@ export default function Home() {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={clearDrawnArea}
-                      className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg shadow border border-red-600 hover:bg-red-600 transition-all"
+                      className="flex items-center gap-1.5 sm:gap-2 bg-red-500 text-white px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow border border-red-600 hover:bg-red-600 transition-all"
                     >
                       <TrashIcon className="h-4 w-4" />
                       <span className="hidden sm:inline">{t('map.clearArea')}</span>
@@ -580,7 +580,7 @@ export default function Home() {
                 </>
               )}
 
-              <div className="text-sm text-gray-600 dark:text-gray-400">
+              <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
                 {hasDrawnArea
                   ? t('view.propertiesInArea', { count: filteredProperties.length })
                   : t('view.properties', { count: filteredProperties.length })}
@@ -588,45 +588,45 @@ export default function Home() {
             </div>
 
             {/* Right Controls - View Toggle */}
-            <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-1 w-full sm:w-auto justify-center">
+            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5 sm:p-1 flex-shrink-0">
               {/* Grid Toggle */}
               <button
                 onClick={() => { setViewMode('grid'); setViewLayout('grid'); }}
-                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-md transition-all ${viewMode === 'grid' && viewLayout === 'grid'
+                className={`flex items-center justify-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md transition-all ${viewMode === 'grid' && viewLayout === 'grid'
                   ? 'bg-white dark:bg-gray-600 text-emerald-600 dark:text-emerald-400 shadow'
                   : 'text-gray-500 dark:text-gray-400 hover:bg-white/50'
                   }`}
                 title="Vista Cuadrícula"
               >
                 <ViewColumnsIcon className="h-4 w-4" />
-                <span className="text-xs font-semibold sm:hidden">{t('view.grid', 'Grid')}</span>
+                <span className="text-xs font-semibold hidden">{t('view.grid', 'Grid')}</span>
               </button>
 
               {/* List Toggle */}
               <button
                 onClick={() => { setViewMode('grid'); setViewLayout('list'); }}
-                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-md transition-all ${viewMode === 'grid' && viewLayout === 'list'
+                className={`flex items-center justify-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md transition-all ${viewMode === 'grid' && viewLayout === 'list'
                   ? 'bg-white dark:bg-gray-600 text-emerald-600 dark:text-emerald-400 shadow'
                   : 'text-gray-500 dark:text-gray-400 hover:bg-white/50'
                   }`}
                 title="Vista Lista"
               >
                 <Bars3Icon className="h-4 w-4" />
-                <span className="text-xs font-semibold sm:hidden">{t('view.list')}</span>
+                <span className="text-xs font-semibold hidden">{t('view.list')}</span>
               </button>
 
-              <div className="w-px h-4 bg-gray-300 dark:bg-gray-600 mx-1"></div>
+              <div className="w-px h-4 bg-gray-300 dark:bg-gray-600"></div>
 
               {/* Map Toggle */}
               <button
                 onClick={() => setViewMode('map')}
-                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-3 py-1.5 rounded-md transition-all ${viewMode === 'map'
+                className={`flex items-center justify-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md transition-all ${viewMode === 'map'
                   ? 'bg-emerald-500 text-white shadow'
                   : 'text-gray-600 dark:text-gray-400 hover:bg-white/50'
                   }`}
               >
                 <MapIcon className="h-4 w-4" />
-                <span className="text-sm font-semibold">{t('view.map')}</span>
+                <span className="text-xs sm:text-sm font-semibold">{t('view.map')}</span>
               </button>
             </div>
           </div>
@@ -900,7 +900,7 @@ export default function Home() {
                   {isDrawingEnabled && (
                     <div className="absolute bottom-6 left-0 right-0 z-[2000] flex justify-center pointer-events-none">
                       <motion.div
-                        className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl px-2 py-2 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/20 dark:border-gray-700 flex items-center gap-1 sm:gap-2 transition-all pointer-events-auto cursor-default origin-bottom"
+                        className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl px-2 py-2 md:px-4 md:py-3 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/20 dark:border-gray-700 flex items-center gap-1 sm:gap-2 md:gap-3 transition-all pointer-events-auto cursor-default origin-bottom"
                         initial={{ opacity: 0, y: 50, scale: 0.9 }}
                         animate={{ opacity: 1, y: 0, scale: toolbarScale }}
                         exit={{ opacity: 0, y: 50, scale: 0.9 }}
@@ -910,8 +910,8 @@ export default function Home() {
                         style={{ x: 0, y: 0 }}
                       >
                         {/* Drag Handle */}
-                        <div className="flex flex-col items-center justify-center px-1 sm:px-2 cursor-grab active:cursor-grabbing text-gray-400 hover:text-emerald-500 transition-colors">
-                          <HandRaisedIcon className="h-5 w-5" />
+                        <div className="flex flex-col items-center justify-center px-1 sm:px-2 md:px-3 cursor-grab active:cursor-grabbing text-gray-400 hover:text-emerald-500 transition-colors">
+                          <HandRaisedIcon className="h-5 w-5 md:h-6 md:w-6" />
                           <div className="w-1.5 h-1.5 rounded-full bg-current mt-1"></div>
                         </div>
 
@@ -927,7 +927,7 @@ export default function Home() {
                             <PlusIcon className="h-4 w-4" />
                           </button>
                           <button
-                            onClick={() => setToolbarScale(prev => Math.max(prev - 0.1, 0.6))}
+                            onClick={() => setToolbarScale(prev => Math.max(prev - 0.1, 0.4))}
                             className="p-1 rounded-md hover:bg-rose-50 dark:hover:bg-rose-900/30 text-rose-600 transition-colors"
                             title="Reducir tamaño barra"
                           >
@@ -937,14 +937,14 @@ export default function Home() {
 
                         <div className="w-px h-8 bg-gray-200 dark:bg-gray-700 mx-1"></div>
 
-                        <button onClick={handleFinishDrawing} className="flex flex-col items-center gap-0.5 min-w-[50px] sm:min-w-[60px] p-1.5 rounded-xl text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors group">
-                          <div className="bg-emerald-100 dark:bg-emerald-900/50 p-1.5 rounded-lg group-hover:scale-110 transition-transform"><CheckIcon className="h-5 w-5" /></div>
-                          <span className="text-[10px] sm:text-[11px] font-bold">Hecho</span>
+                        <button onClick={handleFinishDrawing} className="flex flex-col items-center gap-0.5 md:gap-1 min-w-[50px] sm:min-w-[60px] md:min-w-[72px] p-1.5 md:p-2.5 rounded-xl text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors group">
+                          <div className="bg-emerald-100 dark:bg-emerald-900/50 p-1.5 md:p-2 rounded-lg group-hover:scale-110 transition-transform"><CheckIcon className="h-5 w-5 md:h-6 md:w-6" /></div>
+                          <span className="text-[10px] sm:text-[11px] md:text-xs font-bold">Hecho</span>
                         </button>
 
-                        <button onClick={handleRestartDrawing} className="flex flex-col items-center gap-0.5 min-w-[50px] sm:min-w-[60px] p-1.5 rounded-xl text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-colors group">
-                          <div className="bg-amber-100 dark:bg-amber-900/50 p-1.5 rounded-lg group-hover:scale-110 transition-transform"><ArrowPathIcon className="h-5 w-5" /></div>
-                          <span className="text-[10px] sm:text-[11px] font-bold">Reiniciar</span>
+                        <button onClick={handleRestartDrawing} className="flex flex-col items-center gap-0.5 md:gap-1 min-w-[50px] sm:min-w-[60px] md:min-w-[72px] p-1.5 md:p-2.5 rounded-xl text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-colors group">
+                          <div className="bg-amber-100 dark:bg-amber-900/50 p-1.5 md:p-2 rounded-lg group-hover:scale-110 transition-transform"><ArrowPathIcon className="h-5 w-5 md:h-6 md:w-6" /></div>
+                          <span className="text-[10px] sm:text-[11px] md:text-xs font-bold">Reiniciar</span>
                         </button>
 
                         <button
@@ -954,41 +954,41 @@ export default function Home() {
                             setIsDrawingEnabled(false);
                             setTimeout(() => setIsDrawingEnabled(true), 10);
                           }}
-                          className="flex flex-col items-center gap-0.5 min-w-[50px] sm:min-w-[60px] p-1.5 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors group"
+                          className="flex flex-col items-center gap-0.5 md:gap-1 min-w-[50px] sm:min-w-[60px] md:min-w-[72px] p-1.5 md:p-2.5 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors group"
                         >
-                          <div className="bg-rose-100 dark:bg-rose-900/50 p-1.5 rounded-lg group-hover:scale-110 transition-transform"><TrashIcon className="h-5 w-5" /></div>
-                          <span className="text-[10px] sm:text-[11px] font-bold">Borrar</span>
+                          <div className="bg-rose-100 dark:bg-rose-900/50 p-1.5 md:p-2 rounded-lg group-hover:scale-110 transition-transform"><TrashIcon className="h-5 w-5 md:h-6 md:w-6" /></div>
+                          <span className="text-[10px] sm:text-[11px] md:text-xs font-bold">Borrar</span>
                         </button>
 
                         <div className="w-px h-10 bg-gray-200 dark:bg-gray-700 mx-1"></div>
 
-                        <button onClick={handleZoomIn} className="flex flex-col items-center gap-0.5 min-w-[44px] p-1.5 rounded-xl text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors group">
-                          <div className="bg-blue-100 dark:bg-blue-900/50 p-1.5 rounded-lg group-hover:scale-110 transition-transform"><MagnifyingGlassPlusIcon className="h-5 w-5" /></div>
-                          <span className="text-[10px] font-bold">Zoom+</span>
+                        <button onClick={handleZoomIn} className="flex flex-col items-center gap-0.5 md:gap-1 min-w-[44px] md:min-w-[56px] p-1.5 md:p-2.5 rounded-xl text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors group">
+                          <div className="bg-blue-100 dark:bg-blue-900/50 p-1.5 md:p-2 rounded-lg group-hover:scale-110 transition-transform"><MagnifyingGlassPlusIcon className="h-5 w-5 md:h-6 md:w-6" /></div>
+                          <span className="text-[10px] md:text-xs font-bold">Zoom+</span>
                         </button>
 
-                        <button onClick={handleZoomOut} className="flex flex-col items-center gap-0.5 min-w-[44px] p-1.5 rounded-xl text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors group">
-                          <div className="bg-blue-100 dark:bg-blue-900/50 p-1.5 rounded-lg group-hover:scale-110 transition-transform"><MagnifyingGlassMinusIcon className="h-5 w-5" /></div>
-                          <span className="text-[10px] font-bold">Zoom-</span>
+                        <button onClick={handleZoomOut} className="flex flex-col items-center gap-0.5 md:gap-1 min-w-[44px] md:min-w-[56px] p-1.5 md:p-2.5 rounded-xl text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors group">
+                          <div className="bg-blue-100 dark:bg-blue-900/50 p-1.5 md:p-2 rounded-lg group-hover:scale-110 transition-transform"><MagnifyingGlassMinusIcon className="h-5 w-5 md:h-6 md:w-6" /></div>
+                          <span className="text-[10px] md:text-xs font-bold">Zoom-</span>
                         </button>
 
-                        <button onClick={toggleFullscreen} className="flex flex-col items-center gap-0.5 min-w-[50px] sm:min-w-[60px] p-1.5 rounded-xl text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors group">
-                          <div className="bg-indigo-100 dark:bg-indigo-900/50 p-1.5 rounded-lg group-hover:scale-110 transition-transform">
-                            {isFullscreen ? <ArrowsPointingInIcon className="h-5 w-5" /> : <ArrowsPointingOutIcon className="h-5 w-5" />}
+                        <button onClick={toggleFullscreen} className="flex flex-col items-center gap-0.5 md:gap-1 min-w-[50px] sm:min-w-[60px] md:min-w-[72px] p-1.5 md:p-2.5 rounded-xl text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors group">
+                          <div className="bg-indigo-100 dark:bg-indigo-900/50 p-1.5 md:p-2 rounded-lg group-hover:scale-110 transition-transform">
+                            {isFullscreen ? <ArrowsPointingInIcon className="h-5 w-5 md:h-6 md:w-6" /> : <ArrowsPointingOutIcon className="h-5 w-5 md:h-6 md:w-6" />}
                           </div>
-                          <span className="text-[10px] sm:text-[11px] font-bold">Pantalla</span>
+                          <span className="text-[10px] sm:text-[11px] md:text-xs font-bold">Pantalla</span>
                         </button>
 
-                        <button onClick={() => setShowFilters(true)} className="flex flex-col items-center gap-0.5 min-w-[50px] sm:min-w-[60px] p-1.5 rounded-xl text-fuchsia-500 hover:bg-fuchsia-50 dark:hover:bg-fuchsia-900/30 transition-colors group">
-                          <div className="bg-fuchsia-100 dark:bg-fuchsia-900/50 p-1.5 rounded-lg group-hover:scale-110 transition-transform"><AdjustmentsHorizontalIcon className="h-5 w-5" /></div>
-                          <span className="text-[10px] sm:text-[11px] font-bold">Filtros</span>
+                        <button onClick={() => setShowFilters(true)} className="flex flex-col items-center gap-0.5 md:gap-1 min-w-[50px] sm:min-w-[60px] md:min-w-[72px] p-1.5 md:p-2.5 rounded-xl text-fuchsia-500 hover:bg-fuchsia-50 dark:hover:bg-fuchsia-900/30 transition-colors group">
+                          <div className="bg-fuchsia-100 dark:bg-fuchsia-900/50 p-1.5 md:p-2 rounded-lg group-hover:scale-110 transition-transform"><AdjustmentsHorizontalIcon className="h-5 w-5 md:h-6 md:w-6" /></div>
+                          <span className="text-[10px] sm:text-[11px] md:text-xs font-bold">Filtros</span>
                         </button>
 
                         <div className="w-px h-10 bg-gray-200 dark:bg-gray-700 mx-1"></div>
 
-                        <button onClick={handleCancelDrawing} className="flex flex-col items-center gap-0.5 min-w-[44px] p-1.5 rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group">
-                          <div className="bg-gray-100 dark:bg-gray-800 p-1.5 rounded-lg group-hover:scale-110 transition-transform border border-gray-200 dark:border-gray-600"><XMarkIcon className="h-5 w-5" /></div>
-                          <span className="text-[10px] font-bold">Salir</span>
+                        <button onClick={handleCancelDrawing} className="flex flex-col items-center gap-0.5 md:gap-1 min-w-[44px] md:min-w-[56px] p-1.5 md:p-2.5 rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group">
+                          <div className="bg-gray-100 dark:bg-gray-800 p-1.5 md:p-2 rounded-lg group-hover:scale-110 transition-transform border border-gray-200 dark:border-gray-600"><XMarkIcon className="h-5 w-5 md:h-6 md:w-6" /></div>
+                          <span className="text-[10px] md:text-xs font-bold">Salir</span>
                         </button>
                       </motion.div>
                     </div>

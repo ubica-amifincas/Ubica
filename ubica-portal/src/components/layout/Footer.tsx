@@ -40,12 +40,12 @@ export default function Footer() {
 
   return (
     <footer className="bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:py-12 sm:px-6 lg:px-8">
         {/* Main Footer Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-12">
           {/* Column 1: Ubica Brand */}
-          <div className="space-y-4">
-            <h3 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 bg-clip-text text-transparent">
+          <div className="col-span-2 lg:col-span-1 space-y-3 sm:space-y-4">
+            <h3 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 bg-clip-text text-transparent">
               Ubica
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -65,7 +65,7 @@ export default function Footer() {
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
               {t('footer.company')}
             </h3>
-            <ul className="space-y-3">
+            <ul className="space-y-2 sm:space-y-3">
               {footerLinks.company.map((item) => (
                 <li key={item.name}>
                   {item.external ? (
@@ -95,7 +95,7 @@ export default function Footer() {
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
               {t('footer.services')}
             </h3>
-            <ul className="space-y-3">
+            <ul className="space-y-2 sm:space-y-3">
               {footerLinks.services.map((item) => (
                 <li key={item.name}>
                   {(item as any).external ? (
@@ -125,7 +125,7 @@ export default function Footer() {
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
               {t('footer.support')}
             </h3>
-            <ul className="space-y-3">
+            <ul className="space-y-2 sm:space-y-3">
               {footerLinks.support.map((item) => (
                 <li key={item.name}>
                   {(item as any).external ? (
@@ -152,11 +152,11 @@ export default function Footer() {
         </div>
 
         {/* Contact Section */}
-        <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-6">
+        <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-200 dark:border-gray-700">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 sm:mb-6">
             {t('footer.contact_title')}
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
             {/* Murcia Office */}
             <div className="space-y-3">
               <h4 className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">{t('footer.murcia_office')}</h4>
@@ -196,7 +196,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom Section */}
-        <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
+        <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-gray-200 dark:border-gray-700">
           <div className="flex flex-col sm:flex-row items-center justify-between">
             <p className="text-sm text-gray-500 dark:text-gray-400">
               {t('footer.rights')}

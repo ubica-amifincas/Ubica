@@ -103,7 +103,7 @@ export function PropertyCard({
       transition={{ duration: 0.3 }}
     >
       {/* Image */}
-      <div className={`relative ${variant === 'list' ? 'aspect-video sm:aspect-square sm:w-48 lg:w-64' : 'aspect-video w-full'} overflow-hidden flex-shrink-0`}>
+      <div className={`relative ${variant === 'list' ? 'aspect-video sm:aspect-square sm:w-48 lg:w-64' : 'aspect-[4/3] sm:aspect-video w-full'} overflow-hidden flex-shrink-0`}>
         {imageLoading && (
           <div className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-700" />
         )}
@@ -183,26 +183,26 @@ export function PropertyCard({
       </div>
 
       {/* Content */}
-      <div className={`p-4 flex flex-col flex-1 min-w-0 ${variant === 'list' ? 'justify-between' : ''}`}>
+      <div className={`p-3 md:p-4 flex flex-col flex-1 min-w-0 ${variant === 'list' ? 'justify-between' : ''}`}>
         <div>
           {/* Title and Location */}
-          <div className="mb-2">
+          <div className="mb-1.5 md:mb-2">
             <div className="flex items-start justify-between gap-2">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white line-clamp-1">
+              <h3 className="text-sm md:text-lg font-bold text-gray-900 dark:text-white line-clamp-1">
                 {property.title}
               </h3>
             </div>
-            <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex items-center text-xs md:text-sm text-gray-500 dark:text-gray-400">
               <MapPinIcon className="mr-1 h-3.5 w-3.5 flex-shrink-0" />
               <span className="line-clamp-1">{property.location}</span>
             </div>
           </div>
 
           {/* Property Type and Details */}
-          <div className="mb-3 text-[10px] font-bold uppercase tracking-[0.1em] text-[#4a9d78] dark:text-[#45b894]">
+          <div className="mb-2 md:mb-3 text-[9px] md:text-[10px] font-bold uppercase tracking-[0.1em] text-[#4a9d78] dark:text-[#45b894]">
             {t(`property.${property.type.toLowerCase()}`, property.type)}
           </div>
-          <div className="mb-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-600 dark:text-gray-300">
+          <div className="mb-2 md:mb-4 flex flex-wrap gap-x-3 md:gap-x-4 gap-y-1 md:gap-y-2 text-xs md:text-sm text-gray-600 dark:text-gray-300">
             <div className="flex items-center">
               <span className="font-bold">{property.bedrooms}</span>
               <span className="ml-1 text-xs">{t('details.bedrooms')}</span>
@@ -235,17 +235,17 @@ export function PropertyCard({
         </div>
 
         {/* Price and Action */}
-        <div className={`mt-auto flex items-center justify-between border-t border-gray-100 pt-3 dark:border-gray-700 ${variant === 'list' ? 'sm:border-t-0 sm:pt-0' : ''}`}>
+        <div className={`mt-auto flex items-center justify-between border-t border-gray-100 pt-2 md:pt-3 dark:border-gray-700 ${variant === 'list' ? 'sm:border-t-0 sm:pt-0' : ''}`}>
           <div className="flex items-center">
-            <BanknotesIcon className="mr-1 h-5 w-5 text-[#4a9d78]" />
-            <span className="text-xl font-bold text-gray-900 dark:text-white">
+            <BanknotesIcon className="mr-1 h-4 w-4 md:h-5 md:w-5 text-[#4a9d78]" />
+            <span className="text-base md:text-xl font-bold text-gray-900 dark:text-white">
               {formatPrice(property.price)}
             </span>
           </div>
 
           <motion.button
             onClick={() => onViewDetails(property.id)}
-            className="flex items-center space-x-1 rounded-lg bg-[#4a9d78] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#3a8d68] focus:outline-none shadow-sm hover:shadow-md"
+            className="flex items-center space-x-1 rounded-lg bg-[#4a9d78] px-2.5 py-1.5 md:px-3 md:py-2 text-[10px] md:text-xs font-semibold text-white transition-colors hover:bg-[#3a8d68] focus:outline-none shadow-sm hover:shadow-md"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
