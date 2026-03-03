@@ -31,12 +31,13 @@ export default function Navbar() {
   const { user, isAuthenticated, hasRole, logoutWithNotification } = useAuthNotifications();
 
   const isAmiFincasDomain = window.location.hostname === 'amifincas.es' || window.location.hostname === 'www.amifincas.es';
+  const isUbicaDomain = window.location.hostname === 'ubica.amifincas.es';
 
   // Navegación basada en autenticación y rol
   const getNavigation = () => {
     const publicNav = [
       { name: t('nav.home'), href: isAmiFincasDomain ? 'https://ubica.amifincas.es' : '/', icon: HomeIcon, external: isAmiFincasDomain },
-      { name: 'AMI Fincas', href: '/ami-fincas', icon: BuildingOfficeIcon, external: false },
+      { name: 'AMI Fincas', href: isUbicaDomain ? 'https://amifincas.es/ami-fincas' : '/ami-fincas', icon: BuildingOfficeIcon, external: isUbicaDomain },
     ];
 
     if (!isAuthenticated) {
