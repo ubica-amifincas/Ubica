@@ -89,6 +89,10 @@ const resources = {
       "stats.occupancy": "Ocupación",
       "stats.timeOnMarket": "Tiempo en Mercado",
       "stats.marketTrends": "Tendencias del Mercado",
+      "stats.title": "Nuestras Cifras",
+      "stats.propertiesListed": "Propiedades Listadas",
+      "stats.yearsExperience": "Años de Experiencia",
+      "stats.satisfiedClients": "Clientes Satisfechos",
 
       // Actions
       "actions.edit": "Editar",
@@ -725,6 +729,10 @@ const resources = {
       "stats.occupancy": "Occupancy",
       "stats.timeOnMarket": "Time on Market",
       "stats.marketTrends": "Market Trends",
+      "stats.title": "Our Numbers",
+      "stats.propertiesListed": "Properties Listed",
+      "stats.yearsExperience": "Years of Experience",
+      "stats.satisfiedClients": "Satisfied Clients",
 
       // Actions
       "actions.edit": "Edit",

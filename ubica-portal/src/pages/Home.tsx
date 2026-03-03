@@ -10,10 +10,12 @@ import {
   AdjustmentsHorizontalIcon,
   MapIcon,
   ViewColumnsIcon,
+  Bars3Icon,
   PlusIcon,
   MinusIcon,
   PencilIcon,
   TrashIcon,
+  HandRaisedIcon,
   ArrowsPointingOutIcon,
   ArrowsPointingInIcon,
   BanknotesIcon,
@@ -93,6 +95,8 @@ export default function Home() {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
+  const [viewLayout, setViewLayout] = useState<'grid' | 'list'>('grid');
+  const [toolbarScale, setToolbarScale] = useState(0.7);
   const [searchTerm, setSearchTerm] = useState('');
   const [mapZoom, setMapZoom] = useState(9);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -137,6 +141,9 @@ export default function Home() {
     status: '',
     searchTerm: ''
   });
+
+  const isSearchActive = !!searchTerm ||
+    Object.values(filters).some(f => f !== '' && f !== 0 && f !== 1000000);
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -351,12 +358,31 @@ export default function Home() {
   const toggleDrawingMode = () => {
     setIsDrawingEnabled(!isDrawingEnabled);
     if (!isDrawingEnabled && mapContainerRef.current) {
-      // Centrar el mapa en la pantalla en lugar de pantalla completa
-      mapContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
       setShowMapToast(true);
       setTimeout(() => setShowMapToast(false), 3000);
     }
   };
+
+  // Efecto para asegurar que el mapa se centra y gana visibilidad al empezar a dibujar
+  useEffect(() => {
+    if (isDrawingEnabled && mapContainerRef.current) {
+      // Pequeño retardo para asegurar que la UI se ha actualizado (especialmente en móvil)
+      const timer = setTimeout(() => {
+        const controlsBar = document.getElementById('map-controls-bar');
+        if (controlsBar) {
+          const rect = controlsBar.getBoundingClientRect();
+          // The navbar is top-0 and height is approx 80px (sticky top-20 for controls bar).
+          // We scroll the window so controlsBar is exactly at 80px from top viewport.
+          const targetY = window.pageYOffset + rect.top - 80;
+          window.scrollTo({
+            top: targetY,
+            behavior: 'smooth'
+          });
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [isDrawingEnabled]);
 
   const clearDrawnArea = () => {
     setHasDrawnArea(false);
@@ -408,99 +434,103 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Hero Section - Modern Search Box with Adaptive Background */}
-      <div className="bg-white dark:bg-gray-900 py-8 md:py-12">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          {/* Gradient Box Container */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="w-full bg-gradient-to-br from-emerald-600 via-teal-500 to-cyan-500 rounded-3xl p-6 md:p-8 shadow-xl"
-          >
-            {/* Eslogan Section - Dark Semi-transparent Box */}
+      {/* Hero Search Section - Ocultar si hay búsqueda activa o si se está dibujando */}
+      {!isSearchActive && !isDrawingEnabled && (
+        <div className="bg-white dark:bg-gray-900 py-8 md:py-12">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            {/* Gradient Box Container */}
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="bg-black/40 backdrop-blur-sm py-4 px-6 md:px-8 rounded-2xl mb-6 text-center"
+              transition={{ duration: 0.6 }}
+              className="w-full bg-gradient-to-br from-emerald-600 via-teal-500 to-cyan-500 rounded-3xl p-6 md:p-8 shadow-xl"
             >
-              <p className="text-lg md:text-xl font-semibold text-white tracking-wide">
-                {t('header.slogan')}
-              </p>
-            </motion.div>
-
-            {/* Search Bar - White Modern Box with AI Button */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="flex items-center gap-3"
-            >
-              <div className="flex-1 bg-white rounded-xl shadow-lg overflow-hidden">
-                <div className="relative">
-                  <MagnifyingGlassIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder={t('header.mainSearchPlaceholder')}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 text-gray-900 bg-white border-0 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-base rounded-xl"
-                  />
-                </div>
-              </div>
-
-              {/* Modo IA Button — Google-style with animated gradient */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowAIChat(true)}
-                className="relative group flex-shrink-0"
+              {/* Eslogan Section - Dark Semi-transparent Box */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                className="bg-black/40 backdrop-blur-sm py-4 px-6 md:px-8 rounded-2xl mb-6 text-center"
               >
-                {/* Animated gradient border */}
-                <div className="absolute -inset-[2px] rounded-xl opacity-75 group-hover:opacity-100 transition-opacity duration-300"
-                  style={{
-                    background: 'conic-gradient(from var(--ai-angle, 0deg), #10b981, #06b6d4, #8b5cf6, #ec4899, #f59e0b, #10b981)',
-                    animation: 'aiGradientSpin 3s linear infinite',
-                  }}
-                />
-                <div className="relative bg-white dark:bg-gray-800 rounded-xl px-5 py-3.5 flex items-center gap-2.5 shadow-sm">
-                  {/* Sparkle/Stars Icon */}
-                  <svg className="h-5 w-5 text-transparent" viewBox="0 0 24 24" fill="none" style={{ filter: 'drop-shadow(0 0 4px rgba(139, 92, 246, 0.3))' }}>
-                    <defs>
-                      <linearGradient id="aiSparkleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#8b5cf6" />
-                        <stop offset="50%" stopColor="#06b6d4" />
-                        <stop offset="100%" stopColor="#10b981" />
-                      </linearGradient>
-                    </defs>
-                    <path d="M12 2L13.09 8.26L18 6L14.74 10.91L21 12L14.74 13.09L18 18L13.09 15.74L12 22L10.91 15.74L6 18L9.26 13.09L3 12L9.26 10.91L6 6L10.91 8.26L12 2Z"
-                      fill="url(#aiSparkleGrad)" stroke="url(#aiSparkleGrad)" strokeWidth="0.5" />
-                  </svg>
-                  <span className="text-sm font-semibold bg-gradient-to-r from-violet-600 via-cyan-500 to-emerald-500 bg-clip-text text-transparent whitespace-nowrap hidden sm:inline">
-                    {t('view.ia_mode')}
-                  </span>
-                </div>
-              </motion.button>
+                <p className="text-lg md:text-xl font-semibold text-white tracking-wide">
+                  {t('header.slogan')}
+                </p>
+              </motion.div>
 
-              {/* Keyframes for the rotating gradient */}
-              <style>{`
-                @property --ai-angle {
-                  syntax: '<angle>';
-                  initial-value: 0deg;
-                  inherits: false;
-                }
-                @keyframes aiGradientSpin {
-                  to { --ai-angle: 360deg; }
-                }
-              `}</style>
+              {/* Search Bar - White Modern Box with AI Button */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+                className="flex items-center gap-3"
+              >
+                <div className="flex-1 bg-white rounded-xl shadow-lg overflow-hidden">
+                  <div className="relative">
+                    <MagnifyingGlassIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder={t('header.mainSearchPlaceholder')}
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-12 pr-4 py-4 text-gray-900 bg-white border-0 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-base rounded-xl"
+                    />
+                  </div>
+                </div>
+
+                {/* Modo IA Button — Google-style with animated gradient */}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowAIChat(true)}
+                  className="relative group flex-shrink-0"
+                >
+                  {/* Animated gradient border */}
+                  <div className="absolute -inset-[2px] rounded-xl opacity-75 group-hover:opacity-100 transition-opacity duration-300"
+                    style={{
+                      background: 'conic-gradient(from var(--ai-angle, 0deg), #10b981, #06b6d4, #8b5cf6, #ec4899, #f59e0b, #10b981)',
+                      animation: 'aiGradientSpin 3s linear infinite',
+                    }}
+                  />
+                  <div className="relative bg-white dark:bg-gray-800 rounded-xl px-5 py-3.5 flex items-center gap-2.5 shadow-sm">
+                    {/* Sparkle/Stars Icon */}
+                    <svg className="h-5 w-5 text-transparent" viewBox="0 0 24 24" fill="none" style={{ filter: 'drop-shadow(0 0 4px rgba(139, 92, 246, 0.3))' }}>
+                      <defs>
+                        <linearGradient id="aiSparkleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#8b5cf6" />
+                          <stop offset="50%" stopColor="#06b6d4" />
+                          <stop offset="100%" stopColor="#10b981" />
+                        </linearGradient>
+                      </defs>
+                      <path d="M12 2L13.09 8.26L18 6L14.74 10.91L21 12L14.74 13.09L18 18L13.09 15.74L12 22L10.91 15.74L6 18L9.26 13.09L3 12L9.26 10.91L6 6L10.91 8.26L12 2Z"
+                        fill="url(#aiSparkleGrad)" stroke="url(#aiSparkleGrad)" strokeWidth="0.5" />
+                    </svg>
+                    <span className="text-sm font-semibold bg-gradient-to-r from-violet-600 via-cyan-500 to-emerald-500 bg-clip-text text-transparent whitespace-nowrap hidden sm:inline">
+                      {t('view.ia_mode')}
+                    </span>
+                  </div>
+                </motion.button>
+
+                {/* Keyframes for the rotating gradient */}
+                <style>{`
+                  @property --ai-angle {
+                    syntax: '<angle>';
+                    initial-value: 0deg;
+                    inherits: false;
+                  }
+                  @keyframes aiGradientSpin {
+                    to { --ai-angle: 360deg; }
+                  }
+                `}</style>
+              </motion.div>
             </motion.div>
-          </motion.div>
+          </div>
         </div>
-      </div>
+      )}
+
 
 
       {/* Map Controls Bar */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm sticky top-20 z-10">
+      <div id="map-controls-bar" className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm sticky top-20 z-10">
         <div className="container mx-auto px-4 py-3 relative">
 
 
@@ -559,16 +589,35 @@ export default function Home() {
 
             {/* Right Controls - View Toggle */}
             <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-1 w-full sm:w-auto justify-center">
+              {/* Grid Toggle */}
               <button
-                onClick={() => setViewMode('grid')}
-                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-3 py-1.5 rounded-md transition-all ${viewMode === 'grid'
-                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-white/50'
+                onClick={() => { setViewMode('grid'); setViewLayout('grid'); }}
+                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-md transition-all ${viewMode === 'grid' && viewLayout === 'grid'
+                  ? 'bg-white dark:bg-gray-600 text-emerald-600 dark:text-emerald-400 shadow'
+                  : 'text-gray-500 dark:text-gray-400 hover:bg-white/50'
                   }`}
+                title="Vista Cuadrícula"
               >
                 <ViewColumnsIcon className="h-4 w-4" />
-                <span className="text-sm">{t('view.list')}</span>
+                <span className="text-xs font-semibold sm:hidden">{t('view.grid', 'Grid')}</span>
               </button>
+
+              {/* List Toggle */}
+              <button
+                onClick={() => { setViewMode('grid'); setViewLayout('list'); }}
+                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-md transition-all ${viewMode === 'grid' && viewLayout === 'list'
+                  ? 'bg-white dark:bg-gray-600 text-emerald-600 dark:text-emerald-400 shadow'
+                  : 'text-gray-500 dark:text-gray-400 hover:bg-white/50'
+                  }`}
+                title="Vista Lista"
+              >
+                <Bars3Icon className="h-4 w-4" />
+                <span className="text-xs font-semibold sm:hidden">{t('view.list')}</span>
+              </button>
+
+              <div className="w-px h-4 bg-gray-300 dark:bg-gray-600 mx-1"></div>
+
+              {/* Map Toggle */}
               <button
                 onClick={() => setViewMode('map')}
                 className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-3 py-1.5 rounded-md transition-all ${viewMode === 'map'
@@ -577,7 +626,7 @@ export default function Home() {
                   }`}
               >
                 <MapIcon className="h-4 w-4" />
-                <span className="text-sm">{t('view.map')}</span>
+                <span className="text-sm font-semibold">{t('view.map')}</span>
               </button>
             </div>
           </div>
@@ -749,7 +798,7 @@ export default function Home() {
             ref={mapContainerRef}
             className="map-fullscreen-container"
           >
-            <div className="container mx-auto px-4 my-8 md:my-16 relative">
+            <div className={`container mx-auto px-4 relative transition-all duration-500 ease-in-out ${isDrawingEnabled ? 'mt-4 mb-8 md:mt-6 md:mb-12' : 'my-8 md:my-16'}`}>
 
               {/* Toast Notificación centrada en la pantalla */}
               <AnimatePresence>
@@ -849,64 +898,97 @@ export default function Home() {
                 {/* Panel Flotante Minimalista de Dibujo MOVIDO AFUERA del mapa pero anclado al relative map-wrapper */}
                 <AnimatePresence>
                   {isDrawingEnabled && (
-                    <div className="absolute bottom-8 left-0 right-0 z-[2000] flex justify-center pointer-events-none">
+                    <div className="absolute bottom-6 left-0 right-0 z-[2000] flex justify-center pointer-events-none">
                       <motion.div
-                        className="bg-white dark:bg-gray-800 backdrop-blur-lg px-4 py-3 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 dark:border-gray-700 flex items-center gap-2 sm:gap-4 transition-all pointer-events-auto cursor-grab active:cursor-grabbing"
-                        onPointerDownCapture={(e: any) => { e.stopPropagation(); }}
-                        onMouseDownCapture={(e: any) => { e.stopPropagation(); }}
-                        onTouchStartCapture={(e: any) => { e.stopPropagation(); }}
-                        onWheelCapture={(e: any) => { e.stopPropagation(); }}
+                        className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl px-2 py-2 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/20 dark:border-gray-700 flex items-center gap-1 sm:gap-2 transition-all pointer-events-auto cursor-default origin-bottom"
+                        initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: toolbarScale }}
+                        exit={{ opacity: 0, y: 50, scale: 0.9 }}
                         drag
                         dragMomentum={false}
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 30 }}
+                        dragElastic={0.1}
+                        style={{ x: 0, y: 0 }}
                       >
-                        <button onClick={handleFinishDrawing} className="flex flex-col items-center gap-1 min-w-[64px] p-2 rounded-xl text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors group">
-                          <div className="bg-emerald-100 dark:bg-emerald-900/50 p-2 rounded-lg group-hover:scale-110 transition-transform"><CheckIcon className="h-5 w-5" /></div>
-                          <span className="text-xs font-semibold">Cerrar</span>
+                        {/* Drag Handle */}
+                        <div className="flex flex-col items-center justify-center px-1 sm:px-2 cursor-grab active:cursor-grabbing text-gray-400 hover:text-emerald-500 transition-colors">
+                          <HandRaisedIcon className="h-5 w-5" />
+                          <div className="w-1.5 h-1.5 rounded-full bg-current mt-1"></div>
+                        </div>
+
+                        <div className="w-px h-8 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+
+                        {/* Scale Controls */}
+                        <div className="flex flex-col gap-1 px-1">
+                          <button
+                            onClick={() => setToolbarScale(prev => Math.min(prev + 0.1, 1.5))}
+                            className="p-1 rounded-md hover:bg-emerald-50 dark:hover:bg-emerald-900/30 text-emerald-600 transition-colors"
+                            title="Aumentar tamaño barra"
+                          >
+                            <PlusIcon className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => setToolbarScale(prev => Math.max(prev - 0.1, 0.6))}
+                            className="p-1 rounded-md hover:bg-rose-50 dark:hover:bg-rose-900/30 text-rose-600 transition-colors"
+                            title="Reducir tamaño barra"
+                          >
+                            <MinusIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        <div className="w-px h-8 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+
+                        <button onClick={handleFinishDrawing} className="flex flex-col items-center gap-0.5 min-w-[50px] sm:min-w-[60px] p-1.5 rounded-xl text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors group">
+                          <div className="bg-emerald-100 dark:bg-emerald-900/50 p-1.5 rounded-lg group-hover:scale-110 transition-transform"><CheckIcon className="h-5 w-5" /></div>
+                          <span className="text-[10px] sm:text-[11px] font-bold">Hecho</span>
                         </button>
-                        <div className="w-px h-10 bg-gray-200 dark:bg-gray-700 mx-1"></div>
-                        <button onClick={handleRestartDrawing} className="flex flex-col items-center gap-1 min-w-[64px] p-2 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group">
-                          <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded-lg group-hover:scale-110 transition-transform"><ArrowPathIcon className="h-5 w-5" /></div>
-                          <span className="text-xs font-semibold">Repetir</span>
+
+                        <button onClick={handleRestartDrawing} className="flex flex-col items-center gap-0.5 min-w-[50px] sm:min-w-[60px] p-1.5 rounded-xl text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-colors group">
+                          <div className="bg-amber-100 dark:bg-amber-900/50 p-1.5 rounded-lg group-hover:scale-110 transition-transform"><ArrowPathIcon className="h-5 w-5" /></div>
+                          <span className="text-[10px] sm:text-[11px] font-bold">Reiniciar</span>
                         </button>
+
                         <button
                           onClick={() => {
                             setHasDrawnArea(false);
                             setDrawnArea(null);
-                            // We force a quick toggle to reset the internal state of DrawControl
                             setIsDrawingEnabled(false);
                             setTimeout(() => setIsDrawingEnabled(true), 10);
                           }}
-                          className="flex flex-col items-center gap-1 min-w-[64px] p-2 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors group"
+                          className="flex flex-col items-center gap-0.5 min-w-[50px] sm:min-w-[60px] p-1.5 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors group"
                         >
-                          <div className="bg-rose-100 dark:bg-rose-900/50 p-2 rounded-lg group-hover:scale-110 transition-transform"><TrashIcon className="h-5 w-5" /></div>
-                          <span className="text-xs font-semibold">Limpiar</span>
+                          <div className="bg-rose-100 dark:bg-rose-900/50 p-1.5 rounded-lg group-hover:scale-110 transition-transform"><TrashIcon className="h-5 w-5" /></div>
+                          <span className="text-[10px] sm:text-[11px] font-bold">Borrar</span>
                         </button>
+
                         <div className="w-px h-10 bg-gray-200 dark:bg-gray-700 mx-1"></div>
-                        <button onClick={handleZoomIn} className="flex flex-col items-center gap-1 min-w-[64px] p-2 rounded-xl text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors group">
-                          <div className="bg-blue-100 dark:bg-blue-900/50 p-2 rounded-lg group-hover:scale-110 transition-transform"><MagnifyingGlassPlusIcon className="h-5 w-5" /></div>
-                          <span className="text-xs font-semibold">Zoom +</span>
+
+                        <button onClick={handleZoomIn} className="flex flex-col items-center gap-0.5 min-w-[44px] p-1.5 rounded-xl text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors group">
+                          <div className="bg-blue-100 dark:bg-blue-900/50 p-1.5 rounded-lg group-hover:scale-110 transition-transform"><MagnifyingGlassPlusIcon className="h-5 w-5" /></div>
+                          <span className="text-[10px] font-bold">Zoom+</span>
                         </button>
-                        <button onClick={handleZoomOut} className="flex flex-col items-center gap-1 min-w-[64px] p-2 rounded-xl text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors group">
-                          <div className="bg-blue-100 dark:bg-blue-900/50 p-2 rounded-lg group-hover:scale-110 transition-transform"><MagnifyingGlassMinusIcon className="h-5 w-5" /></div>
-                          <span className="text-xs font-semibold">Zoom -</span>
+
+                        <button onClick={handleZoomOut} className="flex flex-col items-center gap-0.5 min-w-[44px] p-1.5 rounded-xl text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors group">
+                          <div className="bg-blue-100 dark:bg-blue-900/50 p-1.5 rounded-lg group-hover:scale-110 transition-transform"><MagnifyingGlassMinusIcon className="h-5 w-5" /></div>
+                          <span className="text-[10px] font-bold">Zoom-</span>
                         </button>
-                        <button onClick={toggleFullscreen} className="flex flex-col items-center gap-1 min-w-[64px] p-2 rounded-xl text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors group">
-                          <div className="bg-indigo-100 dark:bg-indigo-900/50 p-2 rounded-lg group-hover:scale-110 transition-transform">
+
+                        <button onClick={toggleFullscreen} className="flex flex-col items-center gap-0.5 min-w-[50px] sm:min-w-[60px] p-1.5 rounded-xl text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors group">
+                          <div className="bg-indigo-100 dark:bg-indigo-900/50 p-1.5 rounded-lg group-hover:scale-110 transition-transform">
                             {isFullscreen ? <ArrowsPointingInIcon className="h-5 w-5" /> : <ArrowsPointingOutIcon className="h-5 w-5" />}
                           </div>
-                          <span className="text-xs font-semibold">{isFullscreen ? 'Pant. Norm' : 'Pant. Comp'}</span>
+                          <span className="text-[10px] sm:text-[11px] font-bold">Pantalla</span>
                         </button>
-                        <button onClick={() => setShowFilters(true)} className="flex flex-col items-center gap-1 min-w-[64px] p-2 rounded-xl text-fuchsia-500 hover:bg-fuchsia-50 dark:hover:bg-fuchsia-900/30 transition-colors group hidden sm:flex">
-                          <div className="bg-fuchsia-100 dark:bg-fuchsia-900/50 p-2 rounded-lg group-hover:scale-110 transition-transform"><AdjustmentsHorizontalIcon className="h-5 w-5" /></div>
-                          <span className="text-xs font-semibold">Filtros</span>
+
+                        <button onClick={() => setShowFilters(true)} className="flex flex-col items-center gap-0.5 min-w-[50px] sm:min-w-[60px] p-1.5 rounded-xl text-fuchsia-500 hover:bg-fuchsia-50 dark:hover:bg-fuchsia-900/30 transition-colors group">
+                          <div className="bg-fuchsia-100 dark:bg-fuchsia-900/50 p-1.5 rounded-lg group-hover:scale-110 transition-transform"><AdjustmentsHorizontalIcon className="h-5 w-5" /></div>
+                          <span className="text-[10px] sm:text-[11px] font-bold">Filtros</span>
                         </button>
-                        <div className="w-px h-10 bg-gray-200 dark:bg-gray-700 mx-1 hidden sm:block"></div>
-                        <button onClick={handleCancelDrawing} className="flex flex-col items-center gap-1 min-w-[64px] p-2 rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group">
-                          <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded-lg group-hover:scale-110 transition-transform border border-gray-200 dark:border-gray-600"><XMarkIcon className="h-5 w-5" /></div>
-                          <span className="text-xs font-semibold">Salir</span>
+
+                        <div className="w-px h-10 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+
+                        <button onClick={handleCancelDrawing} className="flex flex-col items-center gap-0.5 min-w-[44px] p-1.5 rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group">
+                          <div className="bg-gray-100 dark:bg-gray-800 p-1.5 rounded-lg group-hover:scale-110 transition-transform border border-gray-200 dark:border-gray-600"><XMarkIcon className="h-5 w-5" /></div>
+                          <span className="text-[10px] font-bold">Salir</span>
                         </button>
                       </motion.div>
                     </div>
@@ -983,22 +1065,27 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          /* Grid View */
-          <div className="container mx-auto px-4 py-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          /* Grid/List View */
+          <div className="container mx-auto px-4 py-6 md:py-8">
+            <div className={
+              viewLayout === 'list'
+                ? "flex flex-col gap-6"
+                : "grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6"
+            }>
               {filteredProperties.map((property, index) => (
                 <motion.div
                   key={property.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: index * 0.1 }}
-                  whileHover={{ y: -8, transition: { duration: 0.2 } }}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  className={viewLayout === 'grid' ? 'col-span-1' : ''}
                 >
                   <PropertyCard
                     property={property}
                     onViewDetails={handleViewDetails}
                     isFavorite={favorites.includes(property.id)}
                     onToggleFavorite={user?.role === 'user' ? handleToggleFavorite : undefined}
+                    variant={viewLayout}
                   />
                 </motion.div>
               ))}

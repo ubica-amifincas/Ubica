@@ -65,6 +65,7 @@ import useDocumentTitle from './hooks/useDocumentTitle';
 function AppRoutes() {
   useDocumentTitle();
   const { showBanner, acceptAll, rejectAll, updatePreferences } = useCookieConsent();
+  const isAmiFincasDomain = window.location.hostname === 'amifincas.es' || window.location.hostname === 'www.amifincas.es';
 
   return (
     <>
@@ -73,7 +74,7 @@ function AppRoutes() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<MainLayout />}>
-            <Route index element={<Home />} />
+            <Route index element={isAmiFincasDomain ? <AmiFincas /> : <Home />} />
             <Route path="ami-fincas" element={<AmiFincas />} />
             <Route path="property/:id" element={<PropertyDetail />} />
             <Route path="about" element={<About />} />
