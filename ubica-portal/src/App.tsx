@@ -62,6 +62,7 @@ import PoliticaCookies from './pages/PoliticaCookies';
 // Quick wins
 import ScrollToTop from './components/common/ScrollToTop';
 import useDocumentTitle from './hooks/useDocumentTitle';
+import { PWAInstallPrompt } from './components/common/PWAInstallPrompt';
 
 function AppRoutes() {
   useDocumentTitle();
@@ -167,6 +168,9 @@ function AppRoutes() {
             onCustomize={updatePreferences}
           />
         )}
+
+        {/* PWA Install Prompt */}
+        <PWAInstallPrompt />
       </div>
     </>
   );
