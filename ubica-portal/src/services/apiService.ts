@@ -6,7 +6,10 @@
 
 // Simulamos el backend con datos locales para el demo
 const DEMO_MODE = false; // Desactivamos el modo demo para usar el backend real
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+// Automatically use the Render backend in production if VITE_API_URL is not set
+const isProdContainer = window.location.hostname.includes('amifincas.es') || window.location.hostname.includes('vercel.app');
+const defaultApiUrl = isProdContainer ? 'https://ubica-backend.onrender.com/api' : 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || defaultApiUrl;
 
 export interface LoginRequest {
   email: string;
