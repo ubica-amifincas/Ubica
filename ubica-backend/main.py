@@ -278,10 +278,11 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     from fastapi import HTTPException
     try:
         payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: int = payload.get("sub")
-        if user_id is None:
+        user_id_str: str = payload.get("sub")
+        if user_id_str is None:
             raise HTTPException(status_code=401, detail="Invalid token")
-    except jwt.PyJWTError:
+        user_id = int(user_id_str)
+    except jwt.PyJWTError as e:
         raise HTTPException(status_code=401, detail="Invalid token")
     
     user = session.get(models.User, user_id)
@@ -340,9 +341,10 @@ def get_user_or_none(credentials: Optional[HTTPAuthorizationCredentials] = Depen
         return None
     try:
         payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: int = payload.get("sub")
-        if user_id is None:
+        user_id_str: str = payload.get("sub")
+        if user_id_str is None:
             return None
+        user_id = int(user_id_str)
         user = session.get(models.User, user_id)
         return user
     except:
@@ -366,7 +368,7 @@ async def login(login_data: LoginRequest, session: Session = Depends(get_session
             detail="Por favor verifica tu correo electrónico para iniciar sesión"
         )
     
-    access_token = create_access_token(data={"sub": user.id})
+    access_token = create_access_token(data={"sub": str(user.id)})
     return Token(
         access_token=access_token,
         token_type="bearer",
@@ -396,7 +398,7 @@ async def register(user_data: UserCreate, session: Session = Depends(get_session
     new_id = new_user.id
     
     # Generar token de verificación
-    verify_token = create_access_token(data={"sub": new_id, "type": "verify"})
+    verify_token = create_access_token(data={"sub": str(new_id), "type": "verify"})
     verification_link = f"http://localhost:5173/verify?token={verify_token}"
     
     # Preparar el correo con FastMail
@@ -440,11 +442,12 @@ async def register(user_data: UserCreate, session: Session = Depends(get_session
 async def verify_email(token: str, session: Session = Depends(get_session)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: int = payload.get("sub")
+        user_id_str: str = payload.get("sub")
         token_type: str = payload.get("type")
         
-        if user_id is None or token_type != "verify":
+        if user_id_str is None or token_type != "verify":
             raise HTTPException(status_code=400, detail="Token inválido")
+        user_id = int(user_id_str)
             
     except jwt.PyJWTError:
         raise HTTPException(status_code=400, detail="Token expirado o inválido")
