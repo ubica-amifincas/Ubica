@@ -133,7 +133,7 @@ class Token(BaseModel):
     access_token: str
     token_type: str
     expires_in: int
-    user: User
+    user: Any
 
 class PropertyBase(BaseModel):
     title: str
