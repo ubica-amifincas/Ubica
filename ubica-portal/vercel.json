@@ -1,14 +1,28 @@
 {
     "rewrites": [
         {
-            "source": "/(.*)",
+            "source": "/((?!ami-fincas).*)",
             "has": [
                 {
                     "type": "host",
                     "value": "amifincas.es"
                 }
             ],
-            "destination": "/ami-fincas"
+            "destination": "/index.html"
+        },
+        {
+            "source": "/((?!ami-fincas).*)",
+            "has": [
+                {
+                    "type": "host",
+                    "value": "www.amifincas.es"
+                }
+            ],
+            "destination": "/index.html"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
         }
     ]
 }
