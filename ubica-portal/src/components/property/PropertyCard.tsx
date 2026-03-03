@@ -18,13 +18,15 @@ interface PropertyCardProps {
   onViewDetails: (id: number) => void;
   onToggleFavorite?: (id: number) => void;
   isFavorite?: boolean;
+  variant?: 'grid' | 'list';
 }
 
 export function PropertyCard({
   property,
   onViewDetails,
   onToggleFavorite,
-  isFavorite = false
+  isFavorite = false,
+  variant = 'grid'
 }: PropertyCardProps) {
   const { t } = useLanguage();
 
@@ -93,14 +95,15 @@ export function PropertyCard({
 
   return (
     <motion.div
-      className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-xl dark:border-gray-700 dark:bg-gray-800"
+      className={`group relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-xl dark:border-gray-700 dark:bg-gray-800 ${variant === 'list' ? 'flex flex-col sm:flex-row' : ''
+        }`}
       whileHover={{ y: -5 }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
       {/* Image */}
-      <div className="relative aspect-video w-full overflow-hidden">
+      <div className={`relative ${variant === 'list' ? 'aspect-video sm:aspect-square sm:w-48 lg:w-64' : 'aspect-video w-full'} overflow-hidden flex-shrink-0`}>
         {imageLoading && (
           <div className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-700" />
         )}
@@ -177,87 +180,62 @@ export function PropertyCard({
             )}
           </motion.button>
         )}
-
-        {/* Image overlay features (if any future ones are needed) */}
       </div>
 
       {/* Content */}
-      <div className="p-4">
-        {/* Title and Location */}
-        <div className="mb-3">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-1">
-            {property.title}
-          </h3>
-          <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-            <MapPinIcon className="mr-1 h-4 w-4" />
-            <span className="line-clamp-1">{property.location}</span>
-          </div>
-        </div>
-
-        {/* Property Type and Details */}
-        <div className="mb-4 text-xs font-semibold uppercase tracking-wider text-[#4a9d78] dark:text-[#45b894]">
-          {t(`property.${property.type.toLowerCase()}`, property.type)}
-        </div>
-        <div className="mb-4 flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-300">
-          <div className="flex items-center">
-            <span className="font-medium">{property.bedrooms}</span>
-            <span className="ml-1">{t('details.bedrooms')}</span>
-          </div>
-          <div className="flex items-center">
-            <span className="font-medium">{property.bathrooms}</span>
-            <span className="ml-1">{t('details.bathrooms')}</span>
-          </div>
-          <div className="flex items-center">
-            <span className="font-medium">{property.area}</span>
-            <span className="ml-1">m²</span>
-          </div>
-        </div>
-
-        {/* Extended Specs */}
-        <div className="mb-4 grid grid-cols-3 gap-2 border-t border-gray-100 pt-3 dark:border-gray-700">
-          {property.yearBuilt && (
-            <div className="flex flex-col text-xs text-center">
-              <span className="text-gray-400 truncate px-1" title={t('details.yearBuilt')}>{t('details.yearBuilt')}</span>
-              <span className="font-medium text-gray-700 dark:text-gray-300">{property.yearBuilt}</span>
+      <div className={`p-4 flex flex-col flex-1 min-w-0 ${variant === 'list' ? 'justify-between' : ''}`}>
+        <div>
+          {/* Title and Location */}
+          <div className="mb-2">
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white line-clamp-1">
+                {property.title}
+              </h3>
             </div>
-          )}
-          {property.orientation && (
-            <div className="flex flex-col text-xs text-center border-l border-gray-100 dark:border-gray-700">
-              <span className="text-gray-400 truncate px-1" title={t('details.orientation')}>{t('details.orientation')}</span>
-              <span className="font-medium text-gray-700 dark:text-gray-300">{property.orientation}</span>
+            <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+              <MapPinIcon className="mr-1 h-3.5 w-3.5 flex-shrink-0" />
+              <span className="line-clamp-1">{property.location}</span>
             </div>
-          )}
-          {property.energyRating && (
-            <div className="flex flex-col text-xs text-center border-l border-gray-100 dark:border-gray-700">
-              <span className="text-gray-400 truncate px-1" title={t('details.energyRating')}>{t('details.energyRating')}</span>
-              <span className="font-medium text-gray-700 dark:text-gray-300">{property.energyRating}</span>
+          </div>
+
+          {/* Property Type and Details */}
+          <div className="mb-3 text-[10px] font-bold uppercase tracking-[0.1em] text-[#4a9d78] dark:text-[#45b894]">
+            {t(`property.${property.type.toLowerCase()}`, property.type)}
+          </div>
+          <div className="mb-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-600 dark:text-gray-300">
+            <div className="flex items-center">
+              <span className="font-bold">{property.bedrooms}</span>
+              <span className="ml-1 text-xs">{t('details.bedrooms')}</span>
+            </div>
+            <div className="flex items-center">
+              <span className="font-bold">{property.bathrooms}</span>
+              <span className="ml-1 text-xs">{t('details.bathrooms')}</span>
+            </div>
+            <div className="flex items-center">
+              <span className="font-bold">{property.area}</span>
+              <span className="ml-1 text-xs">m²</span>
+            </div>
+          </div>
+
+          {/* Features - Hidden or simplified in list view if space is tight */}
+          {property.features?.length > 0 && variant === 'grid' && (
+            <div className="mb-4">
+              <div className="flex flex-wrap gap-1">
+                {property.features.slice(0, 2).map((feature, index) => (
+                  <span
+                    key={index}
+                    className="rounded bg-gray-100 px-2 py-0.5 text-[10px] text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                  >
+                    {feature}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
         </div>
-
-        {/* Features */}
-        {property.features?.length > 0 && (
-          <div className="mb-4">
-            <div className="flex flex-wrap gap-1">
-              {property.features.slice(0, 3).map((feature, index) => (
-                <span
-                  key={index}
-                  className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300"
-                >
-                  {feature}
-                </span>
-              ))}
-              {property.features.length > 3 && (
-                <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                  +{property.features.length - 3}
-                </span>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* Price and Action */}
-        <div className="flex items-center justify-between mt-4">
+        <div className={`mt-auto flex items-center justify-between border-t border-gray-100 pt-3 dark:border-gray-700 ${variant === 'list' ? 'sm:border-t-0 sm:pt-0' : ''}`}>
           <div className="flex items-center">
             <BanknotesIcon className="mr-1 h-5 w-5 text-[#4a9d78]" />
             <span className="text-xl font-bold text-gray-900 dark:text-white">
@@ -267,24 +245,14 @@ export function PropertyCard({
 
           <motion.button
             onClick={() => onViewDetails(property.id)}
-            className="flex items-center space-x-1 rounded-lg bg-[#4a9d78] px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-[#3a8d68] focus:outline-none focus:ring-2 focus:ring-[#4a9d78] focus:ring-offset-2"
+            className="flex items-center space-x-1 rounded-lg bg-[#4a9d78] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#3a8d68] focus:outline-none shadow-sm hover:shadow-md"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <EyeIcon className="h-4 w-4" />
+            <EyeIcon className="h-3.5 w-3.5" />
             <span>{t('details.viewDetails')}</span>
           </motion.button>
         </div>
-
-        {/* Investment Data */}
-        {property.investmentData && (
-          <div className="mt-3 border-t border-gray-200 pt-3 dark:border-gray-700">
-            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-              <span>ROI: {property.investmentData.roi}%</span>
-              <span>{property.investmentData.monthsOnMarket}m en mercado</span>
-            </div>
-          </div>
-        )}
       </div>
     </motion.div>
   );
