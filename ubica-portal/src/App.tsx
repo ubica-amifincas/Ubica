@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './hooks/useTheme';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
@@ -67,6 +68,13 @@ function AppRoutes() {
   const { showBanner, acceptAll, rejectAll, updatePreferences } = useCookieConsent();
   const isAmiFincasDomain = window.location.hostname === 'amifincas.es' || window.location.hostname === 'www.amifincas.es';
 
+  // Redirigir todo excepto /ami-fincas a ubica.amifincas.es
+  useEffect(() => {
+    if (isAmiFincasDomain && !window.location.pathname.startsWith('/ami-fincas')) {
+      window.location.replace(`https://ubica.amifincas.es${window.location.pathname}${window.location.search}`);
+    }
+  }, [isAmiFincasDomain]);
+
   return (
     <>
       <ScrollToTop />
@@ -74,7 +82,7 @@ function AppRoutes() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<MainLayout />}>
-            <Route index element={isAmiFincasDomain ? <Navigate to="/ami-fincas" replace /> : <Home />} />
+            <Route index element={<Home />} />
             <Route path="ami-fincas" element={<AmiFincas />} />
             <Route path="property/:id" element={<PropertyDetail />} />
             <Route path="about" element={<About />} />

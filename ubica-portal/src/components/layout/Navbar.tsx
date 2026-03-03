@@ -30,11 +30,13 @@ export default function Navbar() {
   const { theme } = useTheme();
   const { user, isAuthenticated, hasRole, logoutWithNotification } = useAuthNotifications();
 
+  const isAmiFincasDomain = window.location.hostname === 'amifincas.es' || window.location.hostname === 'www.amifincas.es';
+
   // Navegación basada en autenticación y rol
   const getNavigation = () => {
     const publicNav = [
-      { name: t('nav.home'), href: '/', icon: HomeIcon },
-      { name: 'AMI Fincas', href: '/ami-fincas', icon: BuildingOfficeIcon },
+      { name: t('nav.home'), href: isAmiFincasDomain ? 'https://ubica.amifincas.es' : '/', icon: HomeIcon, external: isAmiFincasDomain },
+      { name: 'AMI Fincas', href: '/ami-fincas', icon: BuildingOfficeIcon, external: false },
     ];
 
     if (!isAuthenticated) {
@@ -45,15 +47,15 @@ export default function Navbar() {
 
     // Agregar navegación específica por rol
     if (hasRole('admin')) {
-      dashboardNav.push({ name: t('nav.admin'), href: '/admin', icon: CogIcon });
+      dashboardNav.push({ name: t('nav.admin'), href: '/admin', icon: CogIcon, external: false });
     } else if (hasRole('realtor')) {
-      dashboardNav.push({ name: t('nav.realtor'), href: '/realtor', icon: ChartBarIcon });
+      dashboardNav.push({ name: t('nav.realtor'), href: '/realtor', icon: ChartBarIcon, external: false });
     } else if (hasRole('investor')) {
-      dashboardNav.push({ name: t('nav.investor'), href: '/investor', icon: ChartBarIcon });
+      dashboardNav.push({ name: t('nav.investor'), href: '/investor', icon: ChartBarIcon, external: false });
     } else if (hasRole('property_manager')) {
-      dashboardNav.push({ name: t('nav.property_manager'), href: '/property-manager', icon: BuildingOfficeIcon });
+      dashboardNav.push({ name: t('nav.property_manager'), href: '/property-manager', icon: BuildingOfficeIcon, external: false });
     } else {
-      dashboardNav.push({ name: t('nav.dashboard'), href: '/dashboard', icon: ChartBarIcon });
+      dashboardNav.push({ name: t('nav.dashboard'), href: '/dashboard', icon: ChartBarIcon, external: false });
     }
 
     return dashboardNav;
@@ -97,20 +99,34 @@ export default function Navbar() {
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-4">
               {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`
-                    flex items-center space-x-1 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200
-                    ${isActive(item.href)
-                      ? 'bg-[#4a9d78] text-white'
-                      : 'text-gray-700 hover:text-[#4a9d78] dark:text-gray-300 dark:hover:text-[#4a9d78]'
-                    }
-                  `}
-                >
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.name}</span>
-                </Link>
+                item.external ? (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    className={`
+                      flex items-center space-x-1 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200
+                      text-gray-700 hover:text-[#4a9d78] dark:text-gray-300 dark:hover:text-[#4a9d78]
+                    `}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.name}</span>
+                  </a>
+                ) : (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={`
+                      flex items-center space-x-1 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200
+                      ${isActive(item.href)
+                        ? 'bg-[#4a9d78] text-white'
+                        : 'text-gray-700 hover:text-[#4a9d78] dark:text-gray-300 dark:hover:text-[#4a9d78]'
+                      }
+                    `}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.name}</span>
+                  </Link>
+                )
               ))}
             </div>
           </div>
@@ -273,21 +289,36 @@ export default function Navbar() {
                 <div className="p-6 space-y-4">
                   <div className="flex flex-col space-y-2">
                     {navigation.map((item) => (
-                      <Link
-                        key={item.name}
-                        to={item.href}
-                        className={`
-                          flex items-center space-x-4 rounded-2xl px-5 py-5 text-lg font-black transition-all duration-300
-                          ${isActive(item.href)
-                            ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 scale-[1.02]'
-                            : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800/50'
-                          }
-                        `}
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <item.icon className={`h-7 w-7 ${isActive(item.href) ? 'text-white' : 'text-emerald-500'}`} />
-                        <span>{item.name}</span>
-                      </Link>
+                      item.external ? (
+                        <a
+                          key={item.name}
+                          href={item.href}
+                          className={`
+                            flex items-center space-x-4 rounded-2xl px-5 py-5 text-lg font-black transition-all duration-300
+                            text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800/50
+                          `}
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <item.icon className={`h-7 w-7 text-emerald-500`} />
+                          <span>{item.name}</span>
+                        </a>
+                      ) : (
+                        <Link
+                          key={item.name}
+                          to={item.href}
+                          className={`
+                            flex items-center space-x-4 rounded-2xl px-5 py-5 text-lg font-black transition-all duration-300
+                            ${isActive(item.href)
+                              ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 scale-[1.02]'
+                              : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800/50'
+                            }
+                          `}
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <item.icon className={`h-7 w-7 ${isActive(item.href) ? 'text-white' : 'text-emerald-500'}`} />
+                          <span>{item.name}</span>
+                        </Link>
+                      )
                     ))}
                   </div>
 
