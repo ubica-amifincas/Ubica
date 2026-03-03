@@ -429,9 +429,9 @@ async def register(user_data: UserCreate, session: Session = Depends(get_session
     fm = FastMail(mail_conf)
     try:
         await fm.send_message(message)
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] ✅ Correo de verificación enviado exitosamente a {user_data.email}")
+        print(f"[{datetime.now().strftime('%H:%M:%S')}] Correo de verificación enviado exitosamente a {user_data.email}")
     except Exception as e:
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] ❌ Error enviando correo a {user_data.email}: {e}")
+        pass
     
     return {
         "message": "Usuario registrado exitosamente. Por favor revisa tu correo electrónico para verificar tu cuenta.",
