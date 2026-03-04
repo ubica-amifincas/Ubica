@@ -27,6 +27,88 @@ import { useAuth } from '../contexts/AuthContext';
 import appService from '../services';
 import type { Property } from '../types';
 
+export function PropertyDetailSkeleton() {
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 animate-pulse">
+      {/* Header Skeleton */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between">
+          <div className="h-6 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          <div className="flex space-x-2">
+            <div className="h-9 w-9 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+            <div className="h-9 w-9 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content Skeleton */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Image Skeleton */}
+            <div className="aspect-video bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+
+            {/* Info Skeleton */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 space-y-6">
+              <div className="flex justify-between items-start">
+                <div className="space-y-3 flex-1">
+                  <div className="h-8 w-3/4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                  <div className="h-5 w-1/2 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                </div>
+                <div className="space-y-3 text-right">
+                  <div className="h-8 w-32 bg-gray-200 dark:bg-gray-700 rounded ml-auto"></div>
+                  <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 rounded-full ml-auto"></div>
+                </div>
+              </div>
+
+              {/* Stats Grid Skeleton */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-6 border-y border-gray-200 dark:border-gray-700">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="flex flex-col items-center space-y-2">
+                    <div className="h-8 w-12 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Description Skeleton */}
+              <div className="space-y-3">
+                <div className="h-6 w-40 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+                <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded"></div>
+                <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded"></div>
+                <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              </div>
+            </div>
+
+            {/* Map Skeleton */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 h-[400px]">
+              <div className="h-6 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-6"></div>
+              <div className="h-[300px] w-full bg-gray-200 dark:bg-gray-700 rounded"></div>
+            </div>
+          </div>
+
+          {/* Sidebar Skeleton */}
+          <div className="lg:col-span-1 space-y-8">
+            {/* Contact Form Skeleton */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 space-y-4">
+              <div className="h-6 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-6"></div>
+              <div className="h-12 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+              <div className="h-12 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+            </div>
+
+            {/* Similar Properties Skeleton */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 space-y-4">
+              <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-6"></div>
+              {[...Array(2)].map((_, i) => (
+                <div key={i} className="h-64 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -131,7 +213,7 @@ export default function PropertyDetail() {
   };
 
   if (loading) {
-    return <PageLoader />;
+    return <PropertyDetailSkeleton />;
   }
 
   if (!property) {
