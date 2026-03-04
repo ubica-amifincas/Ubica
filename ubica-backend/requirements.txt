@@ -10,3 +10,5 @@ sqlalchemy
 python-dotenv
 pandas
 aiohttp
+google-generativeai
+mcp

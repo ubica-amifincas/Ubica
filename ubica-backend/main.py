@@ -894,7 +894,7 @@ AI_CONFIG = {
     "enabled": True,
     "provider": "gemini",
     "api_key": os.getenv("GEMINI_API_KEY", ""),
-    "model": "gemini-flash-latest",
+    "model": "gemini-2.0-flash",
     "system_prompt": "Eres un asistente inmobiliario experto de Ubica, una plataforma de propiedades en la región de Murcia, España. Ayudas a los usuarios a encontrar propiedades, responder preguntas sobre el mercado inmobiliario y dar consejos de inversión. Responde siempre en español.",
     "max_tokens": 1024,
     "temperature": 0.7,
@@ -957,7 +957,7 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
             system_instruction=f"{AI_CONFIG['system_prompt']} El usuario que te habla es: {user_ctx['user_name']}. Rol: {user_ctx['user_role']}. "
                                f"Cuando te pidan información sobre viviendas, debes usar estrictamente las herramientas disponibles para buscar en la base de datos interna respetando sus permisos. "
                                f"Cualquier consulta general inmobiliaria de España o Murcia de la cual no estés seguro debes buscarla en internet.",
-            tools=[mcptool_buscar_propiedades, mcptool_obtener_detalles, "google_search_retrieval"]
+            tools=[mcptool_buscar_propiedades, mcptool_obtener_detalles]
         )
 
         # Build Chat History structure exactly as Gemini expects it
