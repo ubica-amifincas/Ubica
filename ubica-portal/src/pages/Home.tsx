@@ -359,7 +359,7 @@ export default function Home() {
     setIsDrawingEnabled(!isDrawingEnabled);
     if (!isDrawingEnabled && mapContainerRef.current) {
       setShowMapToast(true);
-      setTimeout(() => setShowMapToast(false), 3000);
+      // Tutorial stays until user dismisses it manually
     }
   };
 
@@ -818,24 +818,96 @@ export default function Home() {
           >
             <div className={`container mx-auto px-4 relative transition-all duration-500 ease-in-out ${isDrawingEnabled ? 'mt-4 mb-8 md:mt-6 md:mb-12' : 'my-8 md:my-16'}`}>
 
-              {/* Toast Notificación centrada en la pantalla */}
+              {/* Mini Tutorial — Drawing Instructions */}
               <AnimatePresence>
                 {showMapToast && (
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.85, y: 20 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.85, y: 20 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                    className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="fixed inset-0 z-[9999] flex items-center justify-center px-4"
+                    onClick={() => setShowMapToast(false)}
                   >
-                    <div className="bg-white/15 backdrop-blur-xl border border-white/20 text-white px-8 py-4 rounded-2xl shadow-[0_8px_32px_rgba(16,185,129,0.35)] flex items-center gap-3"
-                      style={{ background: 'linear-gradient(135deg, rgba(5,150,105,0.85) 0%, rgba(20,184,166,0.85) 100%)' }}
+                    {/* Backdrop */}
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+
+                    {/* Tutorial Card */}
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.85, y: 30 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.85, y: 30 }}
+                      transition={{ type: 'spring', stiffness: 350, damping: 25, delay: 0.1 }}
+                      className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-6 sm:p-8 max-w-md w-full pointer-events-auto"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <div className="bg-white/20 p-2 rounded-lg">
-                        <PencilIcon className="h-5 w-5" />
+                      {/* Header */}
+                      <div className="flex items-center gap-3 mb-5">
+                        <div className="bg-emerald-100 dark:bg-emerald-900/50 p-2.5 rounded-xl">
+                          <PencilIcon className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-black text-gray-900 dark:text-white">{t('map.tutorial.title')}</h3>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{t('map.tutorial.subtitle')}</p>
+                        </div>
                       </div>
-                      <span className="text-base font-semibold tracking-wide">Modo de dibujo activado</span>
-                    </div>
+
+                      {/* Steps */}
+                      <div className="space-y-4 mb-6">
+                        {/* Step 1 */}
+                        <motion.div
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.3 }}
+                          className="flex items-start gap-3"
+                        >
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-sm font-black">1</div>
+                          <div>
+                            <p className="text-sm font-bold text-gray-900 dark:text-white">{t('map.tutorial.step1.title')}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('map.tutorial.step1.desc')}</p>
+                          </div>
+                        </motion.div>
+
+                        {/* Step 2 */}
+                        <motion.div
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.5 }}
+                          className="flex items-start gap-3"
+                        >
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-teal-500 text-white flex items-center justify-center text-sm font-black">2</div>
+                          <div>
+                            <p className="text-sm font-bold text-gray-900 dark:text-white">{t('map.tutorial.step2.title')}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('map.tutorial.step2.desc')}</p>
+                          </div>
+                        </motion.div>
+
+                        {/* Step 3 */}
+                        <motion.div
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.7 }}
+                          className="flex items-start gap-3"
+                        >
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-cyan-500 text-white flex items-center justify-center text-sm font-black">3</div>
+                          <div>
+                            <p className="text-sm font-bold text-gray-900 dark:text-white">{t('map.tutorial.step3.title')}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('map.tutorial.step3.desc')}</p>
+                          </div>
+                        </motion.div>
+                      </div>
+
+                      {/* CTA */}
+                      <motion.button
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.9 }}
+                        onClick={() => setShowMapToast(false)}
+                        className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold text-sm shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 transition-all active:scale-[0.98]"
+                      >
+                        {t('map.tutorial.start')}
+                      </motion.button>
+                    </motion.div>
                   </motion.div>
                 )}
               </AnimatePresence>
