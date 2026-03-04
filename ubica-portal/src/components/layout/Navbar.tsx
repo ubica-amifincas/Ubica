@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -25,7 +25,7 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [navHidden, setNavHidden] = useState(false);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const lastScrollYRef = useRef(0);
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useLanguage();
@@ -45,19 +45,20 @@ export default function Navbar() {
 
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      if (currentScrollY > lastScrollY && currentScrollY > 80) {
-        // Scrolling down & past threshold
+      const lastY = lastScrollYRef.current;
+
+      if (currentScrollY > lastY && currentScrollY > 80) {
         setNavHidden(true);
-      } else {
-        // Scrolling up
+      } else if (currentScrollY < lastY) {
         setNavHidden(false);
       }
-      setLastScrollY(currentScrollY);
+
+      lastScrollYRef.current = currentScrollY;
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [isAmiFincasPage, lastScrollY]);
+  }, [isAmiFincasPage]);
 
   // Navegación basada en autenticación y rol
   const getNavigation = () => {
@@ -111,7 +112,7 @@ export default function Navbar() {
   }, [isUserMenuOpen, isMenuOpen]);
 
   return (
-    <nav className={`sticky top-0 z-50 border-b border-gray-200 bg-gradient-to-r from-white via-white to-emerald-50 dark:border-gray-700 dark:bg-gradient-to-r dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 shadow-sm transition-transform duration-300 ease-in-out ${navHidden ? '-translate-y-full' : 'translate-y-0'}`}>
+    <nav className={`${isAmiFincasPage ? 'fixed w-full' : 'sticky'} top-0 z-50 border-b border-gray-200 bg-gradient-to-r from-white via-white to-emerald-50 dark:border-gray-700 dark:bg-gradient-to-r dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 shadow-sm transition-all duration-300 ease-in-out`} style={isAmiFincasPage && navHidden ? { transform: 'translateY(-100%)' } : undefined}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-20 items-center justify-between">
           {/* Logo */}
