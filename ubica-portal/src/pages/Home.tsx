@@ -384,6 +384,24 @@ export default function Home() {
     }
   }, [isDrawingEnabled]);
 
+  // Scroll to map controls bar when switching to map view mode
+  useEffect(() => {
+    if (viewMode === 'map' && mapContainerRef.current) {
+      const timer = setTimeout(() => {
+        const controlsBar = document.getElementById('map-controls-bar');
+        if (controlsBar) {
+          const rect = controlsBar.getBoundingClientRect();
+          const targetY = window.pageYOffset + rect.top - 80;
+          window.scrollTo({
+            top: targetY,
+            behavior: 'smooth'
+          });
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [viewMode]);
+
   const clearDrawnArea = () => {
     setHasDrawnArea(false);
     setDrawnArea(null);
