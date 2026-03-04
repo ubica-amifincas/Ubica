@@ -47,6 +47,7 @@ const resources = {
       "status.for-rent": "En Alquiler",
       "status.sold": "Vendido",
       "status.rented": "Alquilado",
+      "status.reserved": "Reservado",
 
       // Property details
       "details.bedrooms": "Dormitorios",
@@ -687,6 +688,7 @@ const resources = {
       "status.for-rent": "For Rent",
       "status.sold": "Sold",
       "status.rented": "Rented",
+      "status.reserved": "Reserved",
 
       // Property details
       "details.bedrooms": "Bedrooms",

@@ -492,8 +492,8 @@ async def upload_images(files: List[UploadFile] = File(...)):
 # Endpoints Públicos
 @app.get("/api/properties", response_model=List[models.Property])
 async def get_properties(skip: int = 0, limit: int = 20, session: Session = Depends(get_session)):
-    # Solo mostrar propiedades en venta o en alquiler en el listado público
-    public_statuses = ['for-sale', 'for-rent']
+    # Solo mostrar propiedades en venta, alquiler o reservadas en el listado público
+    public_statuses = ['for-sale', 'for-rent', 'reserved']
     statement = select(models.Property).where(models.Property.status.in_(public_statuses)).offset(skip).limit(limit)
     results = session.exec(statement).all()
     return results
