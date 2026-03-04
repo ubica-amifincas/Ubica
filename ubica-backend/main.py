@@ -318,7 +318,7 @@ def check_ai_usage(user_id: Optional[int] = None, ip: str = "unknown", role: str
     if role in ["admin", "realtor", "investor"]:
         return True
         
-    limit = 10 if user_id else 3
+    limit = 30 if user_id else 15
 
 
     
