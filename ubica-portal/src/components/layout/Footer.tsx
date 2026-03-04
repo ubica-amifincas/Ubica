@@ -21,14 +21,12 @@ export default function Footer() {
     company: [
       { name: t('footer.about'), href: '/about' },
       { name: t('footer.ami'), href: 'https://amifincas.es', external: true },
-      { name: t('footer.careers'), href: 'https://amifincas.es', external: true },
       { name: t('footer.contact'), href: '/contact' },
     ],
     services: [
-      { name: t('footer.buy'), href: '/' },
-      { name: t('footer.sell'), href: '/contact' },
-      { name: t('footer.rent'), href: '/' },
-      { name: t('footer.invest'), href: '/' },
+      { name: t('footer.buy'), href: '/?status=for-sale' },
+      { name: t('footer.sell'), href: 'https://ubica.amifincas.es/register', external: true },
+      { name: t('footer.rent'), href: '/?status=for-rent' },
     ],
     support: [
       { name: t('footer.help'), href: '/contact' },

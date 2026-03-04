@@ -93,6 +93,37 @@ export function PropertyCard({
     setImageLoading(false);
   };
 
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    // Prevenimos propagación o comportamiento extraño
+    if (validImages.length <= 1) return;
+
+    if (isLeftSwipe) {
+      setCurrentImageIndex((prev) => (prev + 1) % validImages.length);
+    }
+    if (isRightSwipe) {
+      setCurrentImageIndex((prev) => (prev - 1 + validImages.length) % validImages.length);
+    }
+  };
+
   return (
     <motion.div
       className={`group relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-xl dark:border-gray-700 dark:bg-gray-800 ${variant === 'list' ? 'flex flex-col sm:flex-row' : ''
@@ -101,6 +132,9 @@ export function PropertyCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
     >
       {/* Image */}
       <div className={`relative ${variant === 'list' ? 'aspect-video sm:aspect-square sm:w-48 lg:w-64' : 'aspect-[4/3] sm:aspect-video w-full'} overflow-hidden flex-shrink-0`}>
@@ -232,26 +266,26 @@ export function PropertyCard({
               </div>
             </div>
           )}
-        </div>
 
-        {/* Price and Action */}
-        <div className={`mt-auto flex items-center justify-between border-t border-gray-100 pt-2 md:pt-3 dark:border-gray-700 ${variant === 'list' ? 'sm:border-t-0 sm:pt-0' : ''}`}>
-          <div className="flex items-center">
-            <BanknotesIcon className="mr-1 h-4 w-4 md:h-5 md:w-5 text-[#4a9d78]" />
-            <span className="text-base md:text-xl font-bold text-gray-900 dark:text-white">
-              {formatPrice(property.price)}
-            </span>
+          {/* Price and Action */}
+          <div className={`mt-auto flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 border-t border-gray-100 pt-2 md:pt-3 dark:border-gray-700 ${variant === 'list' ? 'sm:border-t-0 sm:pt-0' : ''}`}>
+            <div className="flex items-center">
+              <BanknotesIcon className="mr-1 h-4 w-4 md:h-5 md:w-5 text-[#4a9d78]" />
+              <span className="text-base md:text-xl font-bold text-gray-900 dark:text-white">
+                {formatPrice(property.price)}
+              </span>
+            </div>
+
+            <motion.button
+              onClick={() => onViewDetails(property.id)}
+              className="flex items-center justify-center space-x-1 w-full sm:w-auto rounded-lg bg-[#4a9d78] px-2.5 py-1.5 md:px-3 md:py-2 text-[10px] md:text-xs font-semibold text-white transition-colors hover:bg-[#3a8d68] focus:outline-none shadow-sm hover:shadow-md"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <EyeIcon className="h-3.5 w-3.5" />
+              <span>{t('details.viewDetails')}</span>
+            </motion.button>
           </div>
-
-          <motion.button
-            onClick={() => onViewDetails(property.id)}
-            className="flex items-center space-x-1 rounded-lg bg-[#4a9d78] px-2.5 py-1.5 md:px-3 md:py-2 text-[10px] md:text-xs font-semibold text-white transition-colors hover:bg-[#3a8d68] focus:outline-none shadow-sm hover:shadow-md"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <EyeIcon className="h-3.5 w-3.5" />
-            <span>{t('details.viewDetails')}</span>
-          </motion.button>
         </div>
       </div>
     </motion.div>

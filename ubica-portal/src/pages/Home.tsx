@@ -95,7 +95,7 @@ export default function Home() {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
-  const [viewLayout, setViewLayout] = useState<'grid' | 'list'>('grid');
+  const [viewLayout, setViewLayout] = useState<'grid' | 'list'>(() => window.innerWidth < 768 ? 'list' : 'grid');
   const [toolbarScale, setToolbarScale] = useState(() => window.innerWidth >= 768 ? 1.0 : 0.7);
   const [searchTerm, setSearchTerm] = useState('');
   const [mapZoom, setMapZoom] = useState(9);
@@ -434,8 +434,8 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Hero Section - Modern Search Box with Adaptive Background */}
-      {/* Hero Search Section - Ocultar si hay búsqueda activa o si se está dibujando */}
-      {!isSearchActive && !isDrawingEnabled && (
+      {/* Hero Search Section - Ocultar si se está dibujando */}
+      {!isDrawingEnabled && (
         <div className="bg-white dark:bg-gray-900 py-8 md:py-12">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             {/* Gradient Box Container */}

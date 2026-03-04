@@ -98,13 +98,13 @@ export default function About() {
                             <div className="bg-gradient-to-r from-emerald-500 to-teal-500 p-3 rounded-xl">
                                 <BuildingOffice2Icon className="h-6 w-6 text-white" />
                             </div>
-                            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{t('about.mission.title')}</h2>
+                            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">El Propósito de Ubica</h2>
                         </div>
                         <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed mb-4">
-                            {t('about.mission.desc1')}
+                            <strong>Ubica</strong> es un producto exclusivo y creado por <strong>AMI Fincas</strong>, con la ambiciosa finalidad de mejorar significativamente la claridad digital en el mercado de la vivienda.
                         </p>
                         <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed">
-                            {t('about.mission.desc2')}
+                            Nuestra plataforma ofrece una digitalización clara e intuitiva para todos nuestros clientes, unificando herramientas tanto a nivel de <strong>inmobiliaria</strong> como de <strong>inversionista</strong>, para brindar agilidad, transparencia y precisión en cada paso de tus operaciones.
                         </p>
                     </motion.div>
                 </div>
