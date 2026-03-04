@@ -144,116 +144,135 @@ export default function AmiFincas() {
         transition={{ duration: 1, delay: 2.2 }}
         className="min-h-screen bg-slate-50 dark:bg-[#0f172a] text-slate-900 dark:text-white transition-colors duration-300 overflow-hidden font-sans selection:bg-emerald-500/30"
       >
-        {/* Hero Section */}
-        <div className="relative pt-12 pb-24 md:pt-16 md:pb-40">
-          {/* Cinematic gradient background */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(16,185,129,0.05)_0%,transparent_100%)]" />
-          <div className="absolute top-0 right-0 w-[600px] md:w-[1000px] h-[600px] md:h-[1000px] bg-emerald-500/10 rounded-full blur-[80px] md:blur-[120px] -translate-y-1/2 translate-x-1/2" />
+        {/* Hero Section — Full viewport immersive */}
+        <div className="relative min-h-[100svh] flex flex-col justify-center overflow-hidden -mt-20 pt-20">
+          {/* Background image with overlay */}
+          <div className="absolute inset-0">
+            <img
+              src="/ami-fincas/3d_warm.jpg"
+              alt=""
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-slate-900/95" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
+          </div>
 
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
-              {/* Left Column: Content */}
-              <div className="flex-1 text-center lg:text-left">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.8 }}
-                  className="mb-6 inline-block"
-                >
-                  <img
-                    src="/ami-fincas/favAMI.png"
-                    alt="AMI Fincas Logo"
-                    className="h-28 md:h-36 w-auto object-contain brightness-110"
-                  />
-                </motion.div>
+          {/* Floating orbs */}
+          <div className="absolute top-1/4 right-1/4 w-48 md:w-96 h-48 md:h-96 bg-emerald-500/10 rounded-full blur-[100px] animate-pulse" />
+          <div className="absolute bottom-1/4 left-1/4 w-32 md:w-64 h-32 md:h-64 bg-teal-500/10 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: '2s' }} />
 
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2, duration: 0.8 }}
-                >
-                  <div className="inline-flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/20 px-4 py-1.5 rounded-full text-emerald-400 font-bold text-xs uppercase tracking-widest mb-8">
-                    <StarIcon className="w-4 h-4 text-yellow-500 fill-current" />
-                    <span>{t('ami.hero.certified')}</span>
-                  </div>
-
-                  <h1 className="text-4xl md:text-6xl lg:text-7xl font-black leading-tight md:leading-[1.1] mb-8">
-                    {t('ami.hero.title1')} <br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#A2D18D] to-[#2D8A9D]">{t('ami.hero.title2')}</span> <br />
-                    {t('ami.hero.title3')}
-                  </h1>
-
-                  <p className="text-xl text-slate-600 dark:text-slate-400 mb-10 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-medium">
-                    {t('ami.hero.description')}
-                  </p>
-
-                  <div className="flex flex-col sm:flex-row gap-6 justify-center lg:justify-start">
-                    <motion.a
-                      href="#contacto"
-                      whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(16,185,129,0.3)' }}
-                      whileTap={{ scale: 0.98 }}
-                      className="px-10 py-5 rounded-2xl bg-gradient-to-r from-[#A2D18D] to-[#2D8A9D] text-white font-black text-lg shadow-2xl transition-all duration-300"
-                    >
-                      {t('ami.hero.cta.contact')}
-                    </motion.a>
-                    <motion.a
-                      href="#servicios"
-                      whileHover={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
-                      className="px-10 py-5 rounded-2xl bg-slate-200/50 dark:bg-white/5 border border-slate-300 dark:border-white/10 backdrop-blur-md text-slate-900 dark:text-white font-black text-lg hover:shadow-xl transition-all duration-300"
-                    >
-                      {t('ami.hero.cta.services')}
-                    </motion.a>
-                  </div>
-                </motion.div>
-              </div>
-
-              {/* Right Column: The "Warm" 3D Image */}
+          {/* Content */}
+          <div className="container mx-auto px-5 sm:px-6 lg:px-8 relative z-10 py-12 md:py-0">
+            <div className="max-w-4xl">
+              {/* Logo */}
               <motion.div
-                initial={{ opacity: 0, rotate: 5, scale: 0.8 }}
-                animate={{ opacity: 1, rotate: 0, scale: 1 }}
-                transition={{ delay: 0.4, duration: 1, type: 'spring' }}
-                className="flex-1 relative group"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                className="mb-6 md:mb-8"
               >
-                <div className="relative z-10 w-full max-w-[550px] mx-auto">
-                  <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-[80px] group-hover:bg-emerald-500/30 transition-all duration-700" />
+                <img
+                  src="/ami-fincas/favAMI.png"
+                  alt="AMI Fincas Logo"
+                  className="h-16 sm:h-20 md:h-28 w-auto object-contain brightness-110 drop-shadow-2xl"
+                />
+              </motion.div>
 
-                  <img
-                    src="/ami-fincas/3d_warm.jpg"
-                    alt="3D Floating Real Estate Island"
-                    className="w-full h-auto drop-shadow-[0_35px_35px_rgba(0,0,0,0.6)] group-hover:rotate-1 transition-transform duration-700 pointer-events-none rounded-[3rem]"
-                  />
-
-                  <motion.div
-                    animate={{ y: [0, -10, 0] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                    className="absolute -top-10 -right-4 bg-[#1e293b]/80 backdrop-blur-xl p-4 rounded-2xl border border-white/10 shadow-2xl"
-                  >
-                    <p className="text-xs font-bold text-emerald-400 uppercase tracking-tighter">{t('ami.hero.id')}</p>
-                  </motion.div>
+              {/* Badge */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2, duration: 0.6 }}
+                className="mb-5 md:mb-8"
+              >
+                <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm border border-white/20 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full">
+                  <StarIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400 fill-current" />
+                  <span className="text-white/90 font-semibold text-[11px] sm:text-xs uppercase tracking-widest">{t('ami.hero.certified')}</span>
                 </div>
+              </motion.div>
+
+              {/* Title */}
+              <motion.h1
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.8 }}
+                className="text-[2.5rem] leading-[1.1] sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black mb-5 md:mb-8 text-white"
+              >
+                {t('ami.hero.title1')} <br className="hidden sm:block" />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#A2D18D] via-emerald-400 to-[#2D8A9D]">{t('ami.hero.title2')}</span> <br />
+                {t('ami.hero.title3')}
+              </motion.h1>
+
+              {/* Description */}
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.7 }}
+                className="text-base sm:text-lg md:text-xl text-white/70 mb-8 md:mb-12 max-w-2xl leading-relaxed font-medium"
+              >
+                {t('ami.hero.description')}
+              </motion.p>
+
+              {/* CTA Buttons */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7, duration: 0.6 }}
+                className="flex flex-col sm:flex-row gap-3 sm:gap-5 mb-12 md:mb-0"
+              >
+                <motion.a
+                  href="#contacto"
+                  whileHover={{ scale: 1.03, boxShadow: '0 0 40px rgba(16,185,129,0.35)' }}
+                  whileTap={{ scale: 0.97 }}
+                  className="px-7 py-4 sm:px-10 sm:py-5 rounded-2xl bg-gradient-to-r from-[#A2D18D] to-[#2D8A9D] text-white font-black text-base sm:text-lg shadow-2xl shadow-emerald-500/20 transition-all duration-300 text-center"
+                >
+                  {t('ami.hero.cta.contact')}
+                </motion.a>
+                <motion.a
+                  href="#servicios"
+                  whileHover={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
+                  className="px-7 py-4 sm:px-10 sm:py-5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white font-black text-base sm:text-lg hover:shadow-xl transition-all duration-300 text-center"
+                >
+                  {t('ami.hero.cta.services')}
+                </motion.a>
               </motion.div>
             </div>
           </div>
-        </div>
 
-        {/* Stats/Ticker Section */}
-        <div className="py-12 bg-slate-100 dark:bg-white/5 border-y border-slate-200 dark:border-white/5 backdrop-blur-sm">
-          <div className="container mx-auto px-4 overflow-hidden">
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-12 md:gap-24 opacity-60 grayscale hover:grayscale-0 transition-all">
-              <div className="flex items-center space-x-3">
-                <span className="text-3xl font-black">+10</span>
-                <span className="text-xs font-bold uppercase tracking-widest leading-tight">{t('ami.stats.years').split(' ').map((word: string, i: number) => <span key={i}>{word}{i === 1 ? <br /> : ' '}</span>)}</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <span className="text-3xl font-black">2</span>
-                <span className="text-xs font-bold uppercase tracking-widest leading-tight">{t('ami.stats.offices').split(' ').map((word: string, i: number) => <span key={i}>{word}{i === 0 ? <br /> : ' '}</span>)}</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <span className="text-3xl font-black">100%</span>
-                <span className="text-xs font-bold uppercase tracking-widest leading-tight">{t('ami.stats.digital').split(' ').map((word: string, i: number) => <span key={i}>{word}{i === 0 ? <br /> : ' '}</span>)}</span>
+          {/* Bottom Stats Bar */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1, duration: 0.8 }}
+            className="relative z-10 mt-auto"
+          >
+            <div className="bg-black/30 backdrop-blur-xl border-t border-white/10">
+              <div className="container mx-auto px-5 sm:px-6 lg:px-8 py-5 md:py-6">
+                <div className="flex flex-row justify-around items-center gap-4 md:gap-12">
+                  <div className="flex items-center space-x-2 md:space-x-3">
+                    <span className="text-xl sm:text-2xl md:text-3xl font-black text-white">+10</span>
+                    <span className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-widest text-white/60 leading-tight">
+                      {t('ami.stats.years').split(' ').slice(0, 2).join(' ')}<br className="hidden sm:block" />{' '}{t('ami.stats.years').split(' ').slice(2).join(' ')}
+                    </span>
+                  </div>
+                  <div className="w-px h-8 bg-white/15 hidden sm:block" />
+                  <div className="flex items-center space-x-2 md:space-x-3">
+                    <span className="text-xl sm:text-2xl md:text-3xl font-black text-white">2</span>
+                    <span className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-widest text-white/60 leading-tight">
+                      {t('ami.stats.offices').split(' ').slice(0, 1).join(' ')}<br className="hidden sm:block" />{' '}{t('ami.stats.offices').split(' ').slice(1).join(' ')}
+                    </span>
+                  </div>
+                  <div className="w-px h-8 bg-white/15 hidden sm:block" />
+                  <div className="flex items-center space-x-2 md:space-x-3">
+                    <span className="text-xl sm:text-2xl md:text-3xl font-black text-white">100%</span>
+                    <span className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-widest text-white/60 leading-tight">
+                      {t('ami.stats.digital').split(' ').slice(0, 1).join(' ')}<br className="hidden sm:block" />{' '}{t('ami.stats.digital').split(' ').slice(1).join(' ')}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Services Section with Gears Image */}

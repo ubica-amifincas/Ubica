@@ -24,6 +24,8 @@ import { useAuthNotifications } from '../../hooks/useAuthNotifications';
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [navHidden, setNavHidden] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useLanguage();
@@ -32,6 +34,30 @@ export default function Navbar() {
 
   const isAmiFincasDomain = window.location.hostname === 'amifincas.es' || window.location.hostname === 'www.amifincas.es';
   const isUbicaDomain = window.location.hostname === 'ubica.amifincas.es';
+  const isAmiFincasPage = location.pathname === '/ami-fincas' || isAmiFincasDomain;
+
+  // Auto-hide navbar on scroll (only on AMI Fincas page)
+  useEffect(() => {
+    if (!isAmiFincasPage) {
+      setNavHidden(false);
+      return;
+    }
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > lastScrollY && currentScrollY > 80) {
+        // Scrolling down & past threshold
+        setNavHidden(true);
+      } else {
+        // Scrolling up
+        setNavHidden(false);
+      }
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isAmiFincasPage, lastScrollY]);
 
   // Navegación basada en autenticación y rol
   const getNavigation = () => {
@@ -85,7 +111,7 @@ export default function Navbar() {
   }, [isUserMenuOpen, isMenuOpen]);
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-gray-200 bg-gradient-to-r from-white via-white to-emerald-50 dark:border-gray-700 dark:bg-gradient-to-r dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 shadow-sm">
+    <nav className={`sticky top-0 z-50 border-b border-gray-200 bg-gradient-to-r from-white via-white to-emerald-50 dark:border-gray-700 dark:bg-gradient-to-r dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 shadow-sm transition-transform duration-300 ease-in-out ${navHidden ? '-translate-y-full' : 'translate-y-0'}`}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-20 items-center justify-between">
           {/* Logo */}
