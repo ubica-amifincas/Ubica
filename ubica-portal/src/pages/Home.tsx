@@ -25,6 +25,7 @@ import {
   MagnifyingGlassPlusIcon,
   MagnifyingGlassMinusIcon
 } from '@heroicons/react/24/outline';
+import { Slider } from '../components/ui/slider';
 import { PropertyCard, PropertyCardSkeleton } from '../components/property/PropertyCard';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { DrawControl } from '../components/map/DrawControl';
@@ -658,7 +659,7 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.3 }}
-          className="bg-gradient-to-br from-white via-emerald-50/30 to-teal-50/30 dark:from-gray-800 dark:via-gray-800 dark:to-gray-750 border-b border-emerald-100 dark:border-gray-700 shadow-lg sticky top-0 z-30"
+          className="bg-white dark:bg-gray-900 border-b border-emerald-100 dark:border-gray-800 shadow-sm relative z-20"
         >
           <div className="container mx-auto px-4 py-6">
             {/* Row 1: Main filters */}
@@ -750,37 +751,27 @@ export default function Home() {
             </div>
 
             {/* Row 2: Price range + Clear */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 pt-3 border-t border-emerald-100 dark:border-gray-700">
-              <div className="flex flex-wrap items-end gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-1.5">
-                    {t('filters.minPrice')}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 pt-5 border-t border-emerald-100 dark:border-gray-800">
+              <div className="flex-1 w-full sm:max-w-md">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+                    {t('filters.priceRange', 'Rango de Precio')}
                   </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">€</span>
-                    <input
-                      type="number"
-                      value={filters.minPrice}
-                      onChange={(e) => handleFilterChange('minPrice', parseInt(e.target.value) || 0)}
-                      className="w-36 pl-7 pr-3 py-2.5 bg-white dark:bg-gray-700 border border-emerald-200 dark:border-gray-600 rounded-xl text-sm text-gray-700 dark:text-white shadow-sm focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all hover:border-emerald-300"
-                      placeholder="0"
-                    />
-                  </div>
+                  <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-3 py-1 rounded-full">
+                    {filters.minPrice.toLocaleString('es-ES')} € - {filters.maxPrice === 1000000 ? '+1M €' : `${filters.maxPrice.toLocaleString('es-ES')} €`}
+                  </span>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-1.5">
-                    {t('filters.maxPrice')}
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">€</span>
-                    <input
-                      type="number"
-                      value={filters.maxPrice}
-                      onChange={(e) => handleFilterChange('maxPrice', parseInt(e.target.value) || 1000000)}
-                      className="w-36 pl-7 pr-3 py-2.5 bg-white dark:bg-gray-700 border border-emerald-200 dark:border-gray-600 rounded-xl text-sm text-gray-700 dark:text-white shadow-sm focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all hover:border-emerald-300"
-                      placeholder="1.000.000"
-                    />
-                  </div>
+                <div className="px-3 pb-2">
+                  <Slider
+                    defaultValue={[filters.minPrice, filters.maxPrice]}
+                    value={[filters.minPrice, filters.maxPrice]}
+                    max={1000000}
+                    step={10000}
+                    onValueChange={(val) => {
+                      handleFilterChange('minPrice', val[0]);
+                      handleFilterChange('maxPrice', val[1]);
+                    }}
+                  />
                 </div>
               </div>
               <div className="flex gap-2">
