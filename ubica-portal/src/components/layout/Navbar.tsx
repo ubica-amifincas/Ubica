@@ -98,6 +98,8 @@ export default function Navbar() {
     return location.pathname.startsWith(href);
   };
 
+  const isHomePage = location.pathname === '/';
+
   // Cerrar menús cuando se hace clic fuera
   useEffect(() => {
     const handleClickOutside = () => {
@@ -111,8 +113,11 @@ export default function Navbar() {
     }
   }, [isUserMenuOpen, isMenuOpen]);
 
+  // Determinar posicionamiento del Navbar
+  const navPosition = isAmiFincasPage ? 'fixed w-full' : isHomePage ? 'relative' : 'sticky';
+
   return (
-    <nav className={`${isAmiFincasPage ? 'fixed w-full' : 'sticky'} top-0 z-50 border-b border-gray-200 bg-gradient-to-r from-white via-white to-emerald-50 dark:border-gray-700 dark:bg-gradient-to-r dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 shadow-sm transition-all duration-300 ease-in-out`} style={isAmiFincasPage && navHidden ? { transform: 'translateY(-100%)' } : undefined}>
+    <nav className={`${navPosition} top-0 z-50 border-b border-gray-200 bg-gradient-to-r from-white via-white to-emerald-50 dark:border-gray-700 dark:bg-gradient-to-r dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 shadow-sm transition-all duration-300 ease-in-out`} style={isAmiFincasPage && navHidden ? { transform: 'translateY(-100%)' } : undefined}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-20 items-center justify-between">
           {/* Logo */}

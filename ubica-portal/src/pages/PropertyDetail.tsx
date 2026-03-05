@@ -120,10 +120,44 @@ export default function PropertyDetail() {
   const [allProperties, setAllProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [validImages, setValidImages] = useState<string[]>([]);
   const [isFavorite, setIsFavorite] = useState(false);
   const [showContactForm, setShowContactForm] = useState(false);
   const [messageForm, setMessageForm] = useState({ name: '', email: '', message: '' });
   const [messageStatus, setMessageStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+
+  // Touch/swipe state for carousel
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    if (validImages.length <= 1) return;
+    if (distance > minSwipeDistance) {
+      setCurrentImageIndex(prev => (prev + 1) % validImages.length);
+    } else if (distance < -minSwipeDistance) {
+      setCurrentImageIndex(prev => (prev - 1 + validImages.length) % validImages.length);
+    }
+  };
+
+  const handleImageError = () => {
+    setValidImages(prev => {
+      const filtered = prev.filter((_, idx) => idx !== currentImageIndex);
+      if (currentImageIndex >= filtered.length) {
+        setCurrentImageIndex(Math.max(0, filtered.length - 1));
+      }
+      return filtered;
+    });
+  };
 
   const { user } = useAuth();
 
@@ -132,6 +166,11 @@ export default function PropertyDetail() {
       try {
         const foundProperty = await appService.getProperty(Number(id));
         setProperty(foundProperty);
+
+        // Filter valid images
+        const imgs = foundProperty.images?.filter((img: string) => img && typeof img === 'string' && img.trim() !== '') || [];
+        setValidImages(imgs);
+        setCurrentImageIndex(0);
 
         const allData = await appService.getProperties(0, 100);
         setAllProperties(allData);
@@ -287,18 +326,36 @@ export default function PropertyDetail() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <div className="aspect-video relative">
-                <img
-                  src={property.images[currentImageIndex] || '/images/casa-moderna.jpg'}
-                  alt={property.title}
-                  className="w-full h-full object-cover"
-                />
+              <div
+                className="aspect-video relative"
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+              >
+                {validImages.length > 0 ? (
+                  <img
+                    key={currentImageIndex}
+                    src={validImages[currentImageIndex]}
+                    alt={property.title}
+                    className="w-full h-full object-cover"
+                    onError={handleImageError}
+                  />
+                ) : (
+                  <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-gray-700 dark:via-gray-750 dark:to-gray-800">
+                    <div className="rounded-full bg-white/60 dark:bg-gray-600/40 p-6 mb-3 shadow-inner">
+                      <HomeIcon className="h-16 w-16 text-emerald-400 dark:text-emerald-500" />
+                    </div>
+                    <span className="text-sm font-medium text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-wider">
+                      Sin imagen
+                    </span>
+                  </div>
+                )}
 
-                {property.images.length > 1 && (
+                {validImages.length > 1 && (
                   <>
                     <button
                       onClick={() => setCurrentImageIndex(prev =>
-                        prev === 0 ? property.images.length - 1 : prev - 1
+                        prev === 0 ? validImages.length - 1 : prev - 1
                       )}
                       className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
                     >
@@ -306,7 +363,7 @@ export default function PropertyDetail() {
                     </button>
                     <button
                       onClick={() => setCurrentImageIndex(prev =>
-                        prev === property.images.length - 1 ? 0 : prev + 1
+                        prev === validImages.length - 1 ? 0 : prev + 1
                       )}
                       className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
                     >
@@ -316,7 +373,7 @@ export default function PropertyDetail() {
                 )}
 
                 <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                  {property.images.map((_, index) => (
+                  {validImages.map((_, index) => (
                     <button
                       key={index}
                       onClick={() => setCurrentImageIndex(index)}
