@@ -466,43 +466,34 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Sticky Header Wrapper */}
-      <div className={`sticky top-0 z-40 flex flex-col transition-all duration-300 ${isScrolled ? 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-md' : 'bg-white dark:bg-gray-900'}`}>
+      <div
+        className={`sticky top-0 z-40 transition-all duration-500 ease-in-out ${isScrolled ? 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-lg' : 'bg-white dark:bg-gray-900'}`}
+        style={{ willChange: 'background-color, box-shadow' }}
+      >
 
         {/* Hero Section - Modern Search Box with Adaptive Background */}
-        {/* Hero Search Section - Ocultar si se está dibujando */}
         {!isDrawingEnabled && (
-          <div className={`transition-all duration-300 ${isScrolled ? 'py-3 px-4 sm:px-6 lg:px-8 border-b border-gray-100 dark:border-gray-800' : 'py-8 md:py-12 px-4 sm:px-6 lg:px-8'} mx-auto max-w-7xl w-full`}>
+          <div
+            className={`mx-auto max-w-7xl w-full transition-all duration-500 ease-in-out ${isScrolled ? 'py-2.5 px-3 sm:px-4 lg:px-6' : 'py-8 md:py-12 px-4 sm:px-6 lg:px-8'}`}
+            style={{ willChange: 'padding' }}
+          >
             {/* Gradient Box Container */}
-            <motion.div
-              layout
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className={`w-full bg-gradient-to-br from-emerald-600 via-teal-500 to-cyan-500 transition-all duration-300 overflow-hidden ${isScrolled ? 'rounded-2xl lg:rounded-full p-2 sm:p-3 shadow-md' : 'rounded-3xl p-6 md:p-8 shadow-xl'
-                }`}
+            <div
+              className={`w-full bg-gradient-to-br from-emerald-600 via-teal-500 to-cyan-500 transition-all duration-500 ease-in-out overflow-hidden ${isScrolled ? 'rounded-2xl lg:rounded-full p-2 sm:p-2.5 shadow-md' : 'rounded-3xl p-6 md:p-8 shadow-xl'}`}
+              style={{ willChange: 'padding, border-radius' }}
             >
-              {/* Eslogan Section - Dark Semi-transparent Box */}
-              <AnimatePresence>
-                {!isScrolled && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-                    animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
-                    exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="bg-black/40 backdrop-blur-sm py-4 px-6 md:px-8 rounded-2xl text-center overflow-hidden"
-                  >
-                    <p className="text-lg md:text-xl font-semibold text-white tracking-wide">
-                      {t('header.slogan')}
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {/* Eslogan Section */}
+              <div
+                className={`bg-black/40 backdrop-blur-sm px-6 md:px-8 rounded-2xl text-center overflow-hidden transition-all duration-500 ease-in-out ${isScrolled ? 'max-h-0 opacity-0 py-0 mb-0' : 'max-h-24 opacity-100 py-4 mb-6'}`}
+                style={{ willChange: 'max-height, opacity, padding, margin' }}
+              >
+                <p className="text-lg md:text-xl font-semibold text-white tracking-wide whitespace-nowrap">
+                  {t('header.slogan')}
+                </p>
+              </div>
 
               {/* Search Bar - White Modern Box with AI Button */}
-              <motion.div
-                layout
-                className="flex items-center gap-2 sm:gap-3"
-              >
+              <div className="flex items-center gap-2 sm:gap-3">
                 <div className="flex-1 bg-white rounded-xl shadow-lg overflow-hidden">
                   <div className="relative">
                     <MagnifyingGlassIcon className={`absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 ${isScrolled ? 'h-4 w-4' : 'h-5 w-5'}`} />
@@ -511,7 +502,7 @@ export default function Home() {
                       placeholder={t('header.mainSearchPlaceholder')}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className={`w-full pl-10 sm:pl-12 pr-4 text-gray-900 bg-white border-0 focus:ring-2 focus:ring-emerald-500 focus:outline-none rounded-xl transition-all duration-300 ${isScrolled ? 'py-2.5 text-sm' : 'py-4 text-base'}`}
+                      className={`w-full pl-10 sm:pl-12 pr-4 text-gray-900 bg-white border-0 focus:ring-2 focus:ring-emerald-500 focus:outline-none rounded-xl transition-all duration-300 ${isScrolled ? 'py-2 text-sm' : 'py-4 text-base'}`}
                     />
                   </div>
                 </div>
@@ -530,8 +521,7 @@ export default function Home() {
                       animation: 'aiGradientSpin 3s linear infinite',
                     }}
                   />
-                  <div className={`relative bg-white dark:bg-gray-800 rounded-xl flex items-center gap-2 shadow-sm transition-all duration-300 ${isScrolled ? 'px-3 py-2.5 sm:px-4 sm:py-2.5' : 'px-5 py-3.5'}`}>
-                    {/* Sparkle/Stars Icon */}
+                  <div className={`relative bg-white dark:bg-gray-800 rounded-xl flex items-center gap-2 shadow-sm transition-all duration-300 ${isScrolled ? 'px-3 py-2 sm:px-4' : 'px-5 py-3.5'}`}>
                     <svg className={`text-transparent transition-all duration-300 ${isScrolled ? 'h-4 w-4' : 'h-5 w-5'}`} viewBox="0 0 24 24" fill="none" style={{ filter: 'drop-shadow(0 0 4px rgba(139, 92, 246, 0.3))' }}>
                       <defs>
                         <linearGradient id="aiSparkleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -560,8 +550,8 @@ export default function Home() {
                     to { --ai-angle: 360deg; }
                   }
                 `}</style>
-              </motion.div>
-            </motion.div>
+              </div>
+            </div>
           </div>
         )}
       </div> {/* Closes Sticky Header Wrapper */}
