@@ -466,94 +466,165 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Sticky Header Wrapper */}
-      <div
-        className={`sticky top-0 z-40 transition-all duration-500 ease-in-out ${isScrolled ? 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-lg' : 'bg-white dark:bg-gray-900'}`}
-        style={{ willChange: 'background-color, box-shadow' }}
-      >
+      <div className={`sticky top-0 z-40 ${isScrolled ? 'shadow-lg' : ''}`}>
 
-        {/* Hero Section - Modern Search Box with Adaptive Background */}
+        {/* ===== FULL HERO (visible when NOT scrolled) ===== */}
         {!isDrawingEnabled && (
           <div
-            className={`mx-auto max-w-7xl w-full transition-all duration-500 ease-in-out ${isScrolled ? 'py-2.5 px-3 sm:px-4 lg:px-6' : 'py-8 md:py-12 px-4 sm:px-6 lg:px-8'}`}
-            style={{ willChange: 'padding' }}
+            className="absolute inset-x-0 top-0 bg-white dark:bg-gray-900"
+            style={{
+              opacity: isScrolled ? 0 : 1,
+              pointerEvents: isScrolled ? 'none' : 'auto',
+              transition: 'opacity 0.35s ease',
+            }}
           >
-            {/* Gradient Box Container */}
-            <div
-              className={`w-full bg-gradient-to-br from-emerald-600 via-teal-500 to-cyan-500 transition-all duration-500 ease-in-out overflow-hidden ${isScrolled ? 'rounded-2xl lg:rounded-full p-2 sm:p-2.5 shadow-md' : 'rounded-3xl p-6 md:p-8 shadow-xl'}`}
-              style={{ willChange: 'padding, border-radius' }}
-            >
-              {/* Eslogan Section */}
-              <div
-                className={`bg-black/40 backdrop-blur-sm px-6 md:px-8 rounded-2xl text-center overflow-hidden transition-all duration-500 ease-in-out ${isScrolled ? 'max-h-0 opacity-0 py-0 mb-0' : 'max-h-24 opacity-100 py-4 mb-6'}`}
-                style={{ willChange: 'max-height, opacity, padding, margin' }}
-              >
-                <p className="text-lg md:text-xl font-semibold text-white tracking-wide whitespace-nowrap">
-                  {t('header.slogan')}
-                </p>
-              </div>
-
-              {/* Search Bar - White Modern Box with AI Button */}
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="flex-1 bg-white rounded-xl shadow-lg overflow-hidden">
-                  <div className="relative">
-                    <MagnifyingGlassIcon className={`absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 ${isScrolled ? 'h-4 w-4' : 'h-5 w-5'}`} />
-                    <input
-                      type="text"
-                      placeholder={t('header.mainSearchPlaceholder')}
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className={`w-full pl-10 sm:pl-12 pr-4 text-gray-900 bg-white border-0 focus:ring-2 focus:ring-emerald-500 focus:outline-none rounded-xl transition-all duration-300 ${isScrolled ? 'py-2 text-sm' : 'py-4 text-base'}`}
-                    />
-                  </div>
+            <div className="mx-auto max-w-7xl w-full py-8 md:py-12 px-4 sm:px-6 lg:px-8">
+              <div className="w-full bg-gradient-to-br from-emerald-600 via-teal-500 to-cyan-500 rounded-3xl p-6 md:p-8 shadow-xl overflow-hidden">
+                {/* Eslogan */}
+                <div className="bg-black/40 backdrop-blur-sm py-4 px-6 md:px-8 rounded-2xl text-center mb-6">
+                  <p className="text-lg md:text-xl font-semibold text-white tracking-wide">
+                    {t('header.slogan')}
+                  </p>
                 </div>
-
-                {/* Modo IA Button — Google-style with animated gradient */}
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowAIChat(true)}
-                  className="relative group flex-shrink-0"
-                >
-                  {/* Animated gradient border */}
-                  <div className="absolute -inset-[2px] rounded-xl opacity-75 group-hover:opacity-100 transition-opacity duration-300"
-                    style={{
-                      background: 'conic-gradient(from var(--ai-angle, 0deg), #10b981, #06b6d4, #8b5cf6, #ec4899, #f59e0b, #10b981)',
-                      animation: 'aiGradientSpin 3s linear infinite',
-                    }}
-                  />
-                  <div className={`relative bg-white dark:bg-gray-800 rounded-xl flex items-center gap-2 shadow-sm transition-all duration-300 ${isScrolled ? 'px-3 py-2 sm:px-4' : 'px-5 py-3.5'}`}>
-                    <svg className={`text-transparent transition-all duration-300 ${isScrolled ? 'h-4 w-4' : 'h-5 w-5'}`} viewBox="0 0 24 24" fill="none" style={{ filter: 'drop-shadow(0 0 4px rgba(139, 92, 246, 0.3))' }}>
-                      <defs>
-                        <linearGradient id="aiSparkleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#8b5cf6" />
-                          <stop offset="50%" stopColor="#06b6d4" />
-                          <stop offset="100%" stopColor="#10b981" />
-                        </linearGradient>
-                      </defs>
-                      <path d="M12 2L13.09 8.26L18 6L14.74 10.91L21 12L14.74 13.09L18 18L13.09 15.74L12 22L10.91 15.74L6 18L9.26 13.09L3 12L9.26 10.91L6 6L10.91 8.26L12 2Z"
-                        fill="url(#aiSparkleGrad)" stroke="url(#aiSparkleGrad)" strokeWidth="0.5" />
-                    </svg>
-                    <span className={`font-semibold bg-gradient-to-r from-violet-600 via-cyan-500 to-emerald-500 bg-clip-text text-transparent whitespace-nowrap hidden sm:inline transition-all duration-300 ${isScrolled ? 'text-xs md:text-sm' : 'text-sm'}`}>
-                      {t('view.ia_mode')}
-                    </span>
+                {/* Search + AI */}
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="flex-1 bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div className="relative">
+                      <MagnifyingGlassIcon className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder={t('header.mainSearchPlaceholder')}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 sm:pl-12 pr-4 py-4 text-base text-gray-900 bg-white border-0 focus:ring-2 focus:ring-emerald-500 focus:outline-none rounded-xl"
+                      />
+                    </div>
                   </div>
-                </motion.button>
-
-                {/* Keyframes for the rotating gradient */}
-                <style>{`
-                  @property --ai-angle {
-                    syntax: '<angle>';
-                    initial-value: 0deg;
-                    inherits: false;
-                  }
-                  @keyframes aiGradientSpin {
-                    to { --ai-angle: 360deg; }
-                  }
-                `}</style>
+                  {/* AI Button */}
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowAIChat(true)}
+                    className="relative group flex-shrink-0"
+                  >
+                    <div className="absolute -inset-[2px] rounded-xl opacity-75 group-hover:opacity-100 transition-opacity duration-300"
+                      style={{
+                        background: 'conic-gradient(from var(--ai-angle, 0deg), #10b981, #06b6d4, #8b5cf6, #ec4899, #f59e0b, #10b981)',
+                        animation: 'aiGradientSpin 3s linear infinite',
+                      }}
+                    />
+                    <div className="relative bg-white dark:bg-gray-800 rounded-xl px-5 py-3.5 flex items-center gap-2 shadow-sm">
+                      <svg className="h-5 w-5 text-transparent" viewBox="0 0 24 24" fill="none" style={{ filter: 'drop-shadow(0 0 4px rgba(139, 92, 246, 0.3))' }}>
+                        <defs>
+                          <linearGradient id="aiSparkleGradFull" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#8b5cf6" />
+                            <stop offset="50%" stopColor="#06b6d4" />
+                            <stop offset="100%" stopColor="#10b981" />
+                          </linearGradient>
+                        </defs>
+                        <path d="M12 2L13.09 8.26L18 6L14.74 10.91L21 12L14.74 13.09L18 18L13.09 15.74L12 22L10.91 15.74L6 18L9.26 13.09L3 12L9.26 10.91L6 6L10.91 8.26L12 2Z"
+                          fill="url(#aiSparkleGradFull)" stroke="url(#aiSparkleGradFull)" strokeWidth="0.5" />
+                      </svg>
+                      <span className="text-sm font-semibold bg-gradient-to-r from-violet-600 via-cyan-500 to-emerald-500 bg-clip-text text-transparent whitespace-nowrap hidden sm:inline">
+                        {t('view.ia_mode')}
+                      </span>
+                    </div>
+                  </motion.button>
+                </div>
               </div>
             </div>
           </div>
         )}
+
+        {/* ===== COMPACT PILL (visible when scrolled) ===== */}
+        {!isDrawingEnabled && (
+          <div
+            className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md"
+            style={{
+              opacity: isScrolled ? 1 : 0,
+              pointerEvents: isScrolled ? 'auto' : 'none',
+              transition: 'opacity 0.35s ease',
+            }}
+          >
+            <div className="mx-auto max-w-7xl w-full py-2.5 px-3 sm:px-4 lg:px-6">
+              <div className="w-full bg-gradient-to-br from-emerald-600 via-teal-500 to-cyan-500 rounded-2xl lg:rounded-full p-2 sm:p-2.5 shadow-md overflow-hidden">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="flex-1 bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div className="relative">
+                      <MagnifyingGlassIcon className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder={t('header.mainSearchPlaceholder')}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 sm:pl-12 pr-4 py-2 text-sm text-gray-900 bg-white border-0 focus:ring-2 focus:ring-emerald-500 focus:outline-none rounded-xl"
+                      />
+                    </div>
+                  </div>
+                  {/* AI Button compact */}
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowAIChat(true)}
+                    className="relative group flex-shrink-0"
+                  >
+                    <div className="absolute -inset-[2px] rounded-xl opacity-75 group-hover:opacity-100 transition-opacity duration-300"
+                      style={{
+                        background: 'conic-gradient(from var(--ai-angle, 0deg), #10b981, #06b6d4, #8b5cf6, #ec4899, #f59e0b, #10b981)',
+                        animation: 'aiGradientSpin 3s linear infinite',
+                      }}
+                    />
+                    <div className="relative bg-white dark:bg-gray-800 rounded-xl px-3 py-2 sm:px-4 flex items-center gap-2 shadow-sm">
+                      <svg className="h-4 w-4 text-transparent" viewBox="0 0 24 24" fill="none" style={{ filter: 'drop-shadow(0 0 4px rgba(139, 92, 246, 0.3))' }}>
+                        <defs>
+                          <linearGradient id="aiSparkleGradCompact" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#8b5cf6" />
+                            <stop offset="50%" stopColor="#06b6d4" />
+                            <stop offset="100%" stopColor="#10b981" />
+                          </linearGradient>
+                        </defs>
+                        <path d="M12 2L13.09 8.26L18 6L14.74 10.91L21 12L14.74 13.09L18 18L13.09 15.74L12 22L10.91 15.74L6 18L9.26 13.09L3 12L9.26 10.91L6 6L10.91 8.26L12 2Z"
+                          fill="url(#aiSparkleGradCompact)" stroke="url(#aiSparkleGradCompact)" strokeWidth="0.5" />
+                      </svg>
+                      <span className="text-xs md:text-sm font-semibold bg-gradient-to-r from-violet-600 via-cyan-500 to-emerald-500 bg-clip-text text-transparent whitespace-nowrap hidden sm:inline">
+                        {t('view.ia_mode')}
+                      </span>
+                    </div>
+                  </motion.button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Spacer: reserves height of the full hero so content doesn't jump */}
+        {!isDrawingEnabled && !isScrolled && (
+          <div className="invisible" aria-hidden="true">
+            <div className="mx-auto max-w-7xl w-full py-8 md:py-12 px-4 sm:px-6 lg:px-8">
+              <div className="w-full rounded-3xl p-6 md:p-8">
+                <div className="py-4 px-6 md:px-8 rounded-2xl mb-6">
+                  <p className="text-lg md:text-xl">&nbsp;</p>
+                </div>
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="flex-1"><div className="relative"><div className="pl-10 sm:pl-12 pr-4 py-4 text-base">&nbsp;</div></div></div>
+                  <div className="px-5 py-3.5 flex items-center gap-2"><div className="h-5 w-5"></div><span className="text-sm hidden sm:inline">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Keyframes for the rotating gradient */}
+        <style>{`
+          @property --ai-angle {
+            syntax: '<angle>';
+            initial-value: 0deg;
+            inherits: false;
+          }
+          @keyframes aiGradientSpin {
+            to { --ai-angle: 360deg; }
+          }
+        `}</style>
       </div> {/* Closes Sticky Header Wrapper */}
 
       {/* Map Controls Bar - Not Sticky */}
