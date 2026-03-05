@@ -32,8 +32,8 @@ import { DrawControl } from '../components/map/DrawControl';
 import { useLanguage } from '../hooks/useLanguage';
 import appService from '../services';
 import type { Property, PropertyFilters } from '../types';
-import AIChatModal from '../components/ai/AIChatModal';
 import { useAuth } from '../contexts/AuthContext';
+import { useAIChat } from '../contexts/AIChatContext';
 
 // Custom marker icon for properties with price
 const createPriceMarker = (price: number, isSelected: boolean = false) => {
@@ -105,7 +105,7 @@ export default function Home() {
   const [isDrawingEnabled, setIsDrawingEnabled] = useState(false);
   const [hasDrawnArea, setHasDrawnArea] = useState(false);
   const [showMapToast, setShowMapToast] = useState(false);
-  const [showAIChat, setShowAIChat] = useState(false);
+  const { openChat } = useAIChat();
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
   const { user } = useAuth();
@@ -504,7 +504,7 @@ export default function Home() {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => setShowAIChat(true)}
+                    onClick={() => openChat(searchTerm)}
                     className="relative group flex-shrink-0"
                   >
                     <div className="absolute -inset-[2px] rounded-xl opacity-75 group-hover:opacity-100 transition-opacity duration-300"
@@ -565,7 +565,7 @@ export default function Home() {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => setShowAIChat(true)}
+                    onClick={() => openChat(searchTerm)}
                     className="relative group flex-shrink-0"
                   >
                     <div className="absolute -inset-[2px] rounded-xl opacity-75 group-hover:opacity-100 transition-opacity duration-300"
@@ -1321,14 +1321,7 @@ export default function Home() {
           </div>
         )
         }
-      </div >
-
-      {/* AI Chat Modal */}
-      <AIChatModal
-        isOpen={showAIChat}
-        onClose={() => setShowAIChat(false)}
-        searchContext={searchTerm}
-      />
-    </div >
+      </div>
+    </div>
   );
 }

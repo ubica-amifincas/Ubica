@@ -63,6 +63,8 @@ import PoliticaCookies from './pages/PoliticaCookies';
 import ScrollToTop from './components/common/ScrollToTop';
 import useDocumentTitle from './hooks/useDocumentTitle';
 import { PWAInstallPrompt } from './components/common/PWAInstallPrompt';
+import { AIChatProvider } from './contexts/AIChatContext';
+import AIChatModal from './components/ai/AIChatModal';
 
 function AppRoutes() {
   useDocumentTitle();
@@ -171,6 +173,9 @@ function AppRoutes() {
 
         {/* PWA Install Prompt */}
         <PWAInstallPrompt />
+
+        {/* Global AI Chat */}
+        <AIChatModal />
       </div>
     </>
   );
@@ -181,9 +186,11 @@ function App() {
     <ThemeProvider>
       <NotificationProvider>
         <AuthProvider>
-          <Router>
-            <AppRoutes />
-          </Router>
+          <AIChatProvider>
+            <Router>
+              <AppRoutes />
+            </Router>
+          </AIChatProvider>
         </AuthProvider>
       </NotificationProvider>
     </ThemeProvider>
