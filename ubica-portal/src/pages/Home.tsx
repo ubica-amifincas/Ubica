@@ -114,6 +114,8 @@ export default function Home() {
   // Header background & shadow
   const headerOpacity = useTransform(scrollY, [0, 100], [0, 0.95]);
   const headerShadow = useTransform(scrollY, [0, 100], ['none', '0 10px 15px -3px rgb(0 0 0 / 0.1)']);
+  const headerBgColor = useTransform(scrollY, [0, 100], ['rgba(255,255,255,0)', 'rgba(255,255,255,0.95)']);
+  const headerBlur = useTransform(scrollY, [0, 100], ['blur(0px)', 'blur(12px)']);
 
   // Hero container transforms
   const heroPadding = useTransform(scrollY, [0, 150], ['2rem 1rem', '0.625rem 0.75rem']);
@@ -502,8 +504,8 @@ export default function Home() {
       <motion.div
         className="sticky top-0 z-40 bg-white/0 dark:bg-gray-900/0 backdrop-blur-none"
         style={{
-          backgroundColor: useTransform(scrollY, [0, 100], ['rgba(255,255,255,0)', 'rgba(255,255,255,0.95)']),
-          backdropFilter: useTransform(scrollY, [0, 100], ['blur(0px)', 'blur(12px)']),
+          backgroundColor: headerBgColor,
+          backdropFilter: headerBlur,
           boxShadow: headerShadow
         }}
       >
