@@ -36,7 +36,14 @@ try:
     GEMINI_AVAILABLE = True
 except ImportError:
     GEMINI_AVAILABLE = False
-    print("WARNING: google-generativeai or mcp_server not installed. AI features will be mocked.")
+    print("WARNING: google-generativeai or mcp_server not installed. Gemini features will be mocked.")
+
+try:
+    import openai
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OPENAI_AVAILABLE = False
+    print("WARNING: openai not installed. Groq/OpenRouter features will be mocked.")
 
 load_dotenv()
 
@@ -45,8 +52,10 @@ if GEMINI_API_KEY and GEMINI_AVAILABLE:
     genai.configure(api_key=GEMINI_API_KEY)
     print("Google Gemini AI configured successfully!")
 else:
-    print("No GEMINI_API_KEY found or Gemini unavailable. AI chat will use fallback/mock.")
+    print("No GEMINI_API_KEY found or Gemini unavailable.")
 
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 # Configuración JWT
 SECRET_KEY = "ubica-enterprise-secret-key-2024"
 ALGORITHM = "HS256"
@@ -897,7 +906,7 @@ AI_CONFIG = {
     "model": "gemini-2.0-flash",
     "system_prompt": "Eres un asistente inmobiliario experto de Ubica, una plataforma de propiedades en la región de Murcia, España. Ayudas a los usuarios a encontrar propiedades, responder preguntas sobre el mercado inmobiliario y dar consejos de inversión. Responde siempre en español.",
     "max_tokens": 1024,
-    "temperature": 0.7,
+    "temperature": 0.5,
 }
 
 class AIChatRequest(BaseModel):
@@ -907,8 +916,7 @@ class AIChatRequest(BaseModel):
 @app.post("/api/ai/chat")
 async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Optional[User] = Depends(get_user_or_none)):
     """
-    Endpoint de chat con IA (Gemini).
-    Utiliza el modelo Gemini con Google Search Grounding y Herramientas Locales (MCP).
+    Endpoint de chat con IA en cascada (Gemini -> Groq -> OpenRouter).
     """
     
     # 1. Verificar Límites (Freemium)
@@ -929,118 +937,157 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
         "user_name": current_user.full_name if current_user else "Invitado"
     }
 
-    # 2. Check if we have Gemini integrated and configured
-    if not GEMINI_AVAILABLE or not GEMINI_API_KEY:
-        # Fallback to mock mechanism if no real credentials are set
-        msg = request.message.lower()
-        if "villa" in msg or "chalet" in msg:
-            answer = "Tenemos varias villas disponibles en la región de Murcia. ¿Quieres que busque por alguna zona?"
-        else:
-            answer = "Vaya, parece que la inteligencia artificial (Gemini) no está configurada o falta tu API KEY en el backend."
-        return {"message": answer, "provider": "mock", "model": "placeholder"}
+    # Contexto base del sistema
+    system_instruction = f"{AI_CONFIG['system_prompt']} El usuario que te habla es: {user_ctx['user_name']}. Rol: {user_ctx['user_role']}. " \
+                         f"Cuando te pidan información sobre viviendas, debes usar estrictamente las herramientas disponibles para buscar en la base de datos interna respetando sus permisos. " \
+                         f"Cualquier consulta general inmobiliaria de España o Murcia de la cual no estés seguro debes buscarla en internet."
 
-    # 3. Handle Gemini Execution
-    try:
-        # Prepare the MCP tools as callable functions for Gemini
-        # We need to wrap them so we can inject the security context implicitly
-        async def mcptool_buscar_propiedades(ubicacion: str = "", precio_maximo: float = 0.0, tipo: str = "") -> str:
-            """Busca propiedades en la base de datos aplicando filtros."""
-            return await buscar_propiedades(ubicacion, precio_maximo, tipo, ctx=user_ctx)
+    # Define common tool wrappers
+    async def mcptool_buscar_propiedades(ubicacion: str = "", precio_maximo: float = 0.0, tipo: str = "") -> str:
+        """Busca propiedades en la base de datos aplicando filtros."""
+        return await buscar_propiedades(ubicacion, precio_maximo, tipo, ctx=user_ctx)
 
-        async def mcptool_obtener_detalles(propiedad_id: int) -> str:
-            """Obtiene todos los detalles, descripción y datos de inversión de una propiedad usando su ID."""
-            return await obtener_detalles_propiedad(propiedad_id, ctx=user_ctx)
+    async def mcptool_obtener_detalles(propiedad_id: int) -> str:
+        """Obtiene todos los detalles, descripción y datos de inversión de una propiedad usando su ID."""
+        return await obtener_detalles_propiedad(propiedad_id, ctx=user_ctx)
 
-        # Configurar modelo con System Instruction y Tools
-        model = genai.GenerativeModel(
-            model_name=AI_CONFIG["model"], 
-            system_instruction=f"{AI_CONFIG['system_prompt']} El usuario que te habla es: {user_ctx['user_name']}. Rol: {user_ctx['user_role']}. "
-                               f"Cuando te pidan información sobre viviendas, debes usar estrictamente las herramientas disponibles para buscar en la base de datos interna respetando sus permisos. "
-                               f"Cualquier consulta general inmobiliaria de España o Murcia de la cual no estés seguro debes buscarla en internet.",
-            tools=[mcptool_buscar_propiedades, mcptool_obtener_detalles]
-        )
-
-        # Build Chat History structure exactly as Gemini expects it
-        chat_history = []
-        for msg in request.history:
-            role = "user" if msg.get("role") == "user" else "model"
-            chat_history.append({"role": role, "parts": [msg.get("content")]})
-
-        # Empezar sesión de chat
-        chat_session = model.start_chat(history=chat_history, enable_automatic_function_calling=True)
-        
-        # Mandar el nuevo mensaje de forma ASINCRONA
-        response = await chat_session.send_message_async(request.message)
-
-        res_text = response.text if response.text else "Estoy procesando tu solicitud, dame un segundo."
-
-        return {
-            "message": res_text,
-            "provider": "gemini",
-            "model": AI_CONFIG["model"]
+    # Tool definitions for OpenAI-compatible APIs
+    openai_tools = [
+        {
+            "type": "function",
+            "function": {
+                "name": "buscar_propiedades",
+                "description": "Busca propiedades en la base de datos aplicando filtros.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "ubicacion": {"type": "string", "description": "Ciudad, barrio o dirección"},
+                        "precio_maximo": {"type": "number", "description": "Precio máximo a buscar"},
+                        "tipo": {"type": "string", "description": "Tipo de propiedad (e.g. villa, apartamento)"}
+                    }
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "obtener_detalles",
+                "description": "Obtiene todos los detalles, descripción y datos de inversión de una propiedad usando su ID.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "propiedad_id": {"type": "integer", "description": "ID de la propiedad a consultar"}
+                    },
+                    "required": ["propiedad_id"]
+                }
+            }
         }
+    ]
 
-    except Exception as e:
-        error_msg = str(e)
-        print(f"Error in Gemini chat: {error_msg}")
+    async def run_openai_provider(api_key, base_url, model_name):
+        client = openai.AsyncOpenAI(api_key=api_key, base_url=base_url)
+        messages = [{"role": "system", "content": system_instruction}]
         
-        # Manejo específico para errores de cuota (429)
-        if "429" in error_msg or "ResourceExhausted" in error_msg:
-             raise HTTPException(
-                status_code=429, 
-                detail="Has alcanzado tu límite de consultas gratuitas por hoy. 🚀 ¡Regístrate o actualiza a un plan Premium para seguir consultando!"
-            )
+        # Build history
+        for msg in request.history:
+            messages.append({"role": msg.get("role", "user"), "content": msg.get("content", "")})
+        messages.append({"role": "user", "content": request.message})
+        
+        response = await client.chat.completions.create(
+            model=model_name,
+            messages=messages,
+            tools=openai_tools,
+            temperature=AI_CONFIG["temperature"],
+            max_tokens=AI_CONFIG["max_tokens"]
+        )
+        msg_out = response.choices[0].message
+        
+        if msg_out.tool_calls:
+            messages.append(msg_out)
+            for tool_call in msg_out.tool_calls:
+                func_name = tool_call.function.name
+                args = {}
+                try:
+                    args = json.loads(tool_call.function.arguments)
+                except:
+                    pass
+                if func_name == "buscar_propiedades":
+                    result = await mcptool_buscar_propiedades(args.get("ubicacion", ""), float(args.get("precio_maximo", 0.0)), args.get("tipo", ""))
+                elif func_name == "obtener_detalles":
+                    result = await mcptool_obtener_detalles(int(args.get("propiedad_id", 0)))
+                else:
+                    result = "{}"
+                    
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tool_call.id,
+                    "name": func_name,
+                    "content": result
+                })
             
-        raise HTTPException(status_code=500, detail=error_msg)
-    
-    # ── FUTURO: Descomentar para usar un LLM real ──
-    # if AI_CONFIG["provider"] == "openai":
-    #     import openai
-    #     client = openai.OpenAI(api_key=AI_CONFIG["api_key"])
-    #     messages = [{"role": "system", "content": AI_CONFIG["system_prompt"]}]
-    #     messages.extend(request.history)
-    #     messages.append({"role": "user", "content": request.message})
-    #     response = client.chat.completions.create(
-    #         model=AI_CONFIG["model"],
-    #         messages=messages,
-    #         max_tokens=AI_CONFIG["max_tokens"],
-    #         temperature=AI_CONFIG["temperature"],
-    #     )
-    #     return {"message": response.choices[0].message.content, "provider": "openai"}
-    
-    # ── Respuestas simuladas inteligentes ──
+            # Second call with tool results
+            response = await client.chat.completions.create(
+                model=model_name,
+                messages=messages,
+                temperature=AI_CONFIG["temperature"],
+                max_tokens=AI_CONFIG["max_tokens"]
+            )
+            return response.choices[0].message.content
+        return msg_out.content
+
+    # Cascade 1: try Gemini
+    if GEMINI_AVAILABLE and GEMINI_API_KEY:
+        try:
+            model = genai.GenerativeModel(
+                model_name=AI_CONFIG["model"], 
+                system_instruction=system_instruction,
+                tools=[mcptool_buscar_propiedades, mcptool_obtener_detalles]
+            )
+            chat_history = []
+            for msg in request.history:
+                role = "user" if msg.get("role") == "user" else "model"
+                chat_history.append({"role": role, "parts": [msg.get("content")]})
+            
+            chat_session = model.start_chat(history=chat_history, enable_automatic_function_calling=True)
+            res = await chat_session.send_message_async(request.message)
+            return {"message": res.text or "Procesado.", "provider": "gemini", "model": AI_CONFIG["model"]}
+        except Exception as e:
+            print(f"Gemini failed: {e}")
+            # If 429 quota specifically, we bypass and try fallback.
+            # Usually ResourceExhausted means out of free tier limits.
+
+    # Cascade 2: try Groq
+    if OPENAI_AVAILABLE and GROQ_API_KEY:
+        try:
+            groq_model = "llama3-70b-8192" # standard tool-capable model on Groq
+            res_text = await run_openai_provider(GROQ_API_KEY, "https://api.groq.com/openai/v1", groq_model)
+            return {"message": res_text, "provider": "groq", "model": groq_model}
+        except Exception as e:
+            print(f"Groq failed: {e}")
+
+    # Cascade 3: try OpenRouter
+    if OPENAI_AVAILABLE and OPENROUTER_API_KEY:
+        try:
+            or_model = "google/gemini-2.5-flash" # tool-capable map to gemini via openrouter
+            res_text = await run_openai_provider(OPENROUTER_API_KEY, "https://openrouter.ai/api/v1", or_model)
+            return {"message": res_text, "provider": "openrouter", "model": or_model}
+        except Exception as e:
+            print(f"OpenRouter failed: {e}")
+
+    # Fallback si todo falla
     msg = request.message.lower()
-    
-    if any(w in msg for w in ["villa", "chalet", "casa grande"]):
-        answer = f"Tenemos varias villas disponibles en la region de Murcia. Actualmente hay {len([p for p in properties_db if 'villa' in p.type.lower()])} villas en nuestro catalogo. Te recomiendo explorar las opciones en Cartagena y Mar Menor, donde encontraras propiedades con excelentes vistas y piscina privada. Quieres que te filtre por alguna zona concreta?"
-    elif any(w in msg for w in ["apartamento", "piso", "apartment"]):
-        answer = f"Disponemos de {len([p for p in properties_db if 'apartamento' in p.type.lower() or 'apartment' in p.type.lower()])} apartamentos en la zona. Las mejores opciones estan en Murcia centro y la costa. Quieres que busque por un rango de precio especifico?"
-    elif any(w in msg for w in ["precio", "cuanto", "costar", "economico", "barato", "caro"]):
-        prices = [p.price for p in properties_db if p.price > 0]
-        avg_price = sum(prices) / len(prices) if prices else 0
-        min_price = min(prices) if prices else 0
-        max_price = max(prices) if prices else 0
-        answer = f"Los precios en nuestra cartera van desde {min_price:,.0f}EUR hasta {max_price:,.0f}EUR, con un precio medio de {avg_price:,.0f}EUR. Puedo ayudarte a encontrar opciones dentro de tu presupuesto. Cual es tu rango de precio?"
-    elif any(w in msg for w in ["invertir", "inversion", "roi", "rentabilidad"]):
-        answer = "La region de Murcia ofrece excelentes oportunidades de inversion inmobiliaria. El rendimiento medio de alquiler ronda el 7-8% anual, y la apreciacion del mercado ha sido del 5.2% en el ultimo ano. Las zonas costeras como Mar Menor y Cartagena son especialmente atractivas para inversion."
-    elif any(w in msg for w in ["alquiler", "alquilar", "rentar", "rent"]):
-        answer = "Tenemos propiedades disponibles para alquiler en toda la region de Murcia. Los alquileres varian segun la zona: desde 400EUR/mes en zonas del interior hasta 1.200EUR/mes en primera linea de playa. Que zona te interesa?"
-    elif any(w in msg for w in ["zona", "ubicacion", "donde", "barrio", "cartagena", "murcia", "lorca"]):
-        cities = list(set(p.city for p in properties_db if p.city))
-        answer = f"Trabajamos en las siguientes zonas: {', '.join(cities[:10])}. Cada zona tiene sus ventajas: el centro de Murcia para servicios, Cartagena para playa, y Lorca para precios mas asequibles. Sobre que zona quieres mas informacion?"
-    elif any(w in msg for w in ["hola", "buenos", "buenas", "hey", "saludos"]):
-        answer = "Hola! Bienvenido al asistente de Ubica. Puedo ayudarte con:\n\n- Buscar propiedades (villas, apartamentos, casas...)\n- Informacion sobre precios y zonas\n- Consejos de inversion inmobiliaria\n- Opciones de alquiler\n\nQue te gustaria saber?"
-    elif any(w in msg for w in ["gracias", "thanks", "genial", "perfecto"]):
-        answer = "De nada! Estoy aqui para ayudarte. Si tienes mas preguntas sobre propiedades o el mercado inmobiliario de Murcia, no dudes en preguntar."
-    else:
-        total = len(properties_db)
-        answer = f"Interesante pregunta. Actualmente tenemos {total} propiedades en nuestra plataforma cubriendo toda la region de Murcia. Puedo ayudarte a buscar por tipo de propiedad, precio, zona o como inversion. Que aspecto te interesa mas?"
-    
+    answer = "Lo siento, nuestros sistemas de IA están actualmente sobrecargados. Por favor, intenta de nuevo más tarde."
+    if "villa" in msg or "chalet" in msg:
+        answer = "Tenemos varias villas disponibles en la región de Murcia. ¿Te interesa alguna zona en particular?"
+    elif "apartamento" in msg or "piso" in msg:
+        answer = "Disponemos de apartamentos. ¿Qué ubicación estás buscando?"
+        
     return {
         "message": answer,
-        "provider": AI_CONFIG["provider"],
-        "model": AI_CONFIG["model"] or "placeholder",
+        "provider": "mock",
+        "model": "placeholder",
     }
+
 
 @app.get("/api/ai/config")
 async def get_ai_config(current_user: User = Depends(require_role(["admin"]))):
