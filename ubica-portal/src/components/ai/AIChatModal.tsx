@@ -199,7 +199,14 @@ export default function AIChatModal({ isOpen, onClose, searchContext }: AIChatMo
                                                         ol: ({ children }) => <ol className="list-decimal ml-4 mb-2">{children}</ol>,
                                                         li: ({ children }) => <li className="mb-1">{children}</li>,
                                                         strong: ({ children }) => <strong className="font-bold text-violet-600 dark:text-violet-400">{children}</strong>,
-                                                        code: ({ children }) => <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded font-mono text-xs">{children}</code>
+                                                        code: ({ children }) => <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded font-mono text-xs">{children}</code>,
+                                                        a: ({ node, ...props }) => {
+                                                            const isInternal = props.href?.startsWith('/');
+                                                            if (isInternal) {
+                                                                return <Link to={props.href!} onClick={onClose} className="inline-flex items-center gap-1 px-2 py-0.5 mt-1 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded-md font-semibold text-xs hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors">{props.children} →</Link>;
+                                                            }
+                                                            return <a {...props} target="_blank" rel="noopener noreferrer" className="text-violet-600 dark:text-violet-400 font-semibold hover:underline" />;
+                                                        }
                                                     }}
                                                 >
                                                     {message.content}

@@ -940,6 +940,7 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
     # Contexto base del sistema
     system_instruction = f"{AI_CONFIG['system_prompt']} El usuario que te habla es: {user_ctx['user_name']}. Rol: {user_ctx['user_role']}. " \
                          f"Cuando te pidan información sobre viviendas, debes usar estrictamente las herramientas disponibles para buscar en la base de datos interna respetando sus permisos. " \
+                         f"IMPORTANTE: Siempre que menciones o recomiendes una propiedad específica, OBLIGATORIAMENTE debes incluir un enlace Markdown hacia ella con el formato: [Ver Propiedad](/property/ID_DE_LA_PROPIEDAD). Por ejemplo, si recomiendas la propiedad con ID 15, escribe: [Ver Propiedad](/property/15). " \
                          f"Cualquier consulta general inmobiliaria de España o Murcia de la cual no estés seguro debes buscarla en internet."
 
     # Define common tool wrappers
