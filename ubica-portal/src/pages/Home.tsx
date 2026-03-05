@@ -569,19 +569,41 @@ export default function Home() {
 
               {/* Drawing Tools - Only show in map mode */}
               {viewMode === 'map' && (
-                <>
+                <div className="relative isolate flex items-center gap-1.5 sm:gap-2">
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={toggleDrawingMode}
-                    className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow border transition-all ${isDrawingEnabled
-                      ? 'bg-emerald-500 text-white border-emerald-600'
-                      : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:shadow-md'
+                    className={`relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow-sm border transition-all z-10 ${isDrawingEnabled
+                        ? 'bg-emerald-500 text-white border-emerald-600'
+                        : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:shadow-md'
                       }`}
                   >
                     <PencilIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                     <span className="hidden sm:inline">{t('map.drawArea')}</span>
                   </motion.button>
+
+                  {/* Tutorial Highlight Animation for "Draw Area" */}
+                  {!hasDrawnArea && !isDrawingEnabled && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{
+                        repeat: Infinity,
+                        repeatType: "reverse",
+                        duration: 1.5,
+                        ease: "easeInOut"
+                      }}
+                      className="absolute -inset-1.5 bg-emerald-400/30 rounded-xl z-0 pointer-events-none"
+                    />
+                  )}
+                  {/* Ping effect for "Draw Area" */}
+                  {!hasDrawnArea && !isDrawingEnabled && (
+                    <span className="absolute -top-1 -right-1 flex h-3 w-3 z-20">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                    </span>
+                  )}
 
                   {hasDrawnArea && (
                     <motion.button
@@ -590,13 +612,13 @@ export default function Home() {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={clearDrawnArea}
-                      className="flex items-center gap-1.5 sm:gap-2 bg-red-500 text-white px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow border border-red-600 hover:bg-red-600 transition-all"
+                      className="flex items-center gap-1.5 sm:gap-2 bg-red-500 text-white px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow-sm border border-red-600 hover:bg-red-600 transition-all z-10 relative"
                     >
                       <TrashIcon className="h-4 w-4" />
                       <span className="hidden sm:inline">{t('map.clearArea')}</span>
                     </motion.button>
                   )}
-                </>
+                </div>
               )}
 
               <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
@@ -751,20 +773,44 @@ export default function Home() {
             </div>
 
             {/* Row 2: Price range + Clear */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 pt-5 border-t border-emerald-100 dark:border-gray-800">
-              <div className="flex-1 w-full sm:max-w-md">
-                <div className="flex items-center justify-between mb-3">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pt-5 border-t border-emerald-100 dark:border-gray-800">
+              <div className="flex-1 w-full max-w-2xl">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4">
                   <label className="block text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
                     {t('filters.priceRange', 'Rango de Precio')}
                   </label>
-                  <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-3 py-1 rounded-full">
-                    {filters.minPrice.toLocaleString('es-ES')} € - {filters.maxPrice === 1000000 ? '+1M €' : `${filters.maxPrice.toLocaleString('es-ES')} €`}
-                  </span>
+
+                  {/* Manual Inputs + Status */}
+                  <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <div className="relative flex-1 sm:w-32">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">€</span>
+                      <input
+                        type="number"
+                        value={filters.minPrice}
+                        onChange={(e) => handleFilterChange('minPrice', parseInt(e.target.value) || 0)}
+                        className="w-full pl-7 pr-3 py-1.5 bg-white dark:bg-gray-800 border border-emerald-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
+                        placeholder="Min"
+                      />
+                    </div>
+                    <span className="text-gray-400">-</span>
+                    <div className="relative flex-1 sm:w-32">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">€</span>
+                      <input
+                        type="number"
+                        value={filters.maxPrice}
+                        onChange={(e) => handleFilterChange('maxPrice', parseInt(e.target.value) || 1000000)}
+                        className="w-full pl-7 pr-3 py-1.5 bg-white dark:bg-gray-800 border border-emerald-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
+                        placeholder="Max"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="px-3 pb-2">
+
+                {/* Range Slider */}
+                <div className="px-3 pb-2 mt-4 sm:mt-0">
                   <Slider
                     defaultValue={[filters.minPrice, filters.maxPrice]}
-                    value={[filters.minPrice, filters.maxPrice]}
+                    value={[filters.minPrice, Math.min(filters.maxPrice, 1000000)]}
                     max={1000000}
                     step={10000}
                     onValueChange={(val) => {
@@ -772,6 +818,11 @@ export default function Home() {
                       handleFilterChange('maxPrice', val[1]);
                     }}
                   />
+                  <div className="flex justify-between mt-2 text-xs text-gray-400 font-medium px-1">
+                    <span>0 €</span>
+                    <span>500k €</span>
+                    <span>1M+ €</span>
+                  </div>
                 </div>
               </div>
               <div className="flex gap-2">
