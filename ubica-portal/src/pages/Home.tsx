@@ -110,7 +110,10 @@ export default function Home() {
 
   const { user } = useAuth();
   const [favorites, setFavorites] = useState<number[]>([]);
+  const [tutorialKeyMode, setTutorialKeyMode] = useState(0);
+  const [isScrolled, setIsScrolled] = useState(false);
 
+  // Focus effect for drawing tools
   useEffect(() => {
     if (user?.role === 'user') {
       appService.getFavorites().then(favs => setFavorites(favs.map(f => f.id))).catch(console.error);
@@ -385,6 +388,16 @@ export default function Home() {
     }
   }, [isDrawingEnabled]);
 
+  // Handle scroll for sticky hero
+  useEffect(() => {
+    const handleScroll = () => {
+      // Usar 80px como punto de quiebre (altura de la navbar aprox)
+      setIsScrolled(window.scrollY > 80);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   // Scroll to map controls bar when switching to map view mode
   useEffect(() => {
     if (viewMode === 'map' && mapContainerRef.current) {
@@ -452,46 +465,53 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Hero Section - Modern Search Box with Adaptive Background */}
-      {/* Hero Search Section - Ocultar si se está dibujando */}
-      {!isDrawingEnabled && (
-        <div className="bg-white dark:bg-gray-900 py-8 md:py-12">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      {/* Sticky Header Wrapper */}
+      <div className={`sticky top-20 z-40 flex flex-col transition-all duration-300 ${isScrolled ? 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-md' : 'bg-white dark:bg-gray-900'}`}>
+
+        {/* Hero Section - Modern Search Box with Adaptive Background */}
+        {/* Hero Search Section - Ocultar si se está dibujando */}
+        {!isDrawingEnabled && (
+          <div className={`transition-all duration-300 ${isScrolled ? 'py-3 px-4 sm:px-6 lg:px-8 border-b border-gray-100 dark:border-gray-800' : 'py-8 md:py-12 px-4 sm:px-6 lg:px-8'} mx-auto max-w-7xl w-full`}>
             {/* Gradient Box Container */}
             <motion.div
+              layout
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="w-full bg-gradient-to-br from-emerald-600 via-teal-500 to-cyan-500 rounded-3xl p-6 md:p-8 shadow-xl"
+              className={`w-full bg-gradient-to-br from-emerald-600 via-teal-500 to-cyan-500 transition-all duration-300 overflow-hidden ${isScrolled ? 'rounded-2xl lg:rounded-full p-2 sm:p-3 shadow-md' : 'rounded-3xl p-6 md:p-8 shadow-xl'
+                }`}
             >
               {/* Eslogan Section - Dark Semi-transparent Box */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-                className="bg-black/40 backdrop-blur-sm py-4 px-6 md:px-8 rounded-2xl mb-6 text-center"
-              >
-                <p className="text-lg md:text-xl font-semibold text-white tracking-wide">
-                  {t('header.slogan')}
-                </p>
-              </motion.div>
+              <AnimatePresence>
+                {!isScrolled && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                    animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
+                    exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="bg-black/40 backdrop-blur-sm py-4 px-6 md:px-8 rounded-2xl text-center overflow-hidden"
+                  >
+                    <p className="text-lg md:text-xl font-semibold text-white tracking-wide">
+                      {t('header.slogan')}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Search Bar - White Modern Box with AI Button */}
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.4 }}
-                className="flex items-center gap-3"
+                layout
+                className="flex items-center gap-2 sm:gap-3"
               >
                 <div className="flex-1 bg-white rounded-xl shadow-lg overflow-hidden">
                   <div className="relative">
-                    <MagnifyingGlassIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <MagnifyingGlassIcon className={`absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 ${isScrolled ? 'h-4 w-4' : 'h-5 w-5'}`} />
                     <input
                       type="text"
                       placeholder={t('header.mainSearchPlaceholder')}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-12 pr-4 py-4 text-gray-900 bg-white border-0 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-base rounded-xl"
+                      className={`w-full pl-10 sm:pl-12 pr-4 text-gray-900 bg-white border-0 focus:ring-2 focus:ring-emerald-500 focus:outline-none rounded-xl transition-all duration-300 ${isScrolled ? 'py-2.5 text-sm' : 'py-4 text-base'}`}
                     />
                   </div>
                 </div>
@@ -510,9 +530,9 @@ export default function Home() {
                       animation: 'aiGradientSpin 3s linear infinite',
                     }}
                   />
-                  <div className="relative bg-white dark:bg-gray-800 rounded-xl px-5 py-3.5 flex items-center gap-2.5 shadow-sm">
+                  <div className={`relative bg-white dark:bg-gray-800 rounded-xl flex items-center gap-2 shadow-sm transition-all duration-300 ${isScrolled ? 'px-3 py-2.5 sm:px-4 sm:py-2.5' : 'px-5 py-3.5'}`}>
                     {/* Sparkle/Stars Icon */}
-                    <svg className="h-5 w-5 text-transparent" viewBox="0 0 24 24" fill="none" style={{ filter: 'drop-shadow(0 0 4px rgba(139, 92, 246, 0.3))' }}>
+                    <svg className={`text-transparent transition-all duration-300 ${isScrolled ? 'h-4 w-4' : 'h-5 w-5'}`} viewBox="0 0 24 24" fill="none" style={{ filter: 'drop-shadow(0 0 4px rgba(139, 92, 246, 0.3))' }}>
                       <defs>
                         <linearGradient id="aiSparkleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                           <stop offset="0%" stopColor="#8b5cf6" />
@@ -523,7 +543,7 @@ export default function Home() {
                       <path d="M12 2L13.09 8.26L18 6L14.74 10.91L21 12L14.74 13.09L18 18L13.09 15.74L12 22L10.91 15.74L6 18L9.26 13.09L3 12L9.26 10.91L6 6L10.91 8.26L12 2Z"
                         fill="url(#aiSparkleGrad)" stroke="url(#aiSparkleGrad)" strokeWidth="0.5" />
                     </svg>
-                    <span className="text-sm font-semibold bg-gradient-to-r from-violet-600 via-cyan-500 to-emerald-500 bg-clip-text text-transparent whitespace-nowrap hidden sm:inline">
+                    <span className={`font-semibold bg-gradient-to-r from-violet-600 via-cyan-500 to-emerald-500 bg-clip-text text-transparent whitespace-nowrap hidden sm:inline transition-all duration-300 ${isScrolled ? 'text-xs md:text-sm' : 'text-sm'}`}>
                       {t('view.ia_mode')}
                     </span>
                   </div>
@@ -543,317 +563,315 @@ export default function Home() {
               </motion.div>
             </motion.div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Map Controls Bar */}
+        <div id="map-controls-bar" className={`bg-white/95 dark:bg-gray-800/95 backdrop-blur shadow-sm ${!isScrolled ? 'border-b border-gray-200 dark:border-gray-700' : ''}`}>
+          <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-3 relative">
 
 
 
-      {/* Map Controls Bar */}
-      <div id="map-controls-bar" className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm sticky top-20 z-10">
-        <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-3 relative">
+            <div className="flex flex-row justify-between items-center gap-2 sm:gap-4">
+              {/* Left Controls */}
+              <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink min-w-0">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="flex items-center gap-1.5 sm:gap-2 bg-white dark:bg-gray-700 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow border border-gray-200 dark:border-gray-600 hover:shadow-md transition-all"
+                >
+                  <AdjustmentsHorizontalIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 dark:text-gray-400" />
+                  <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300 font-medium">{t('common.filters')}</span>
+                </motion.button>
 
-
-
-          <div className="flex flex-row justify-between items-center gap-2 sm:gap-4">
-            {/* Left Controls */}
-            <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink min-w-0">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-1.5 sm:gap-2 bg-white dark:bg-gray-700 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow border border-gray-200 dark:border-gray-600 hover:shadow-md transition-all"
-              >
-                <AdjustmentsHorizontalIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 dark:text-gray-400" />
-                <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300 font-medium">{t('common.filters')}</span>
-              </motion.button>
-
-              {/* Drawing Tools - Only show in map mode */}
-              {viewMode === 'map' && (
-                <div className="relative isolate flex items-center gap-1.5 sm:gap-2">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={toggleDrawingMode}
-                    className={`relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow-sm border transition-all z-10 ${isDrawingEnabled
-                      ? 'bg-emerald-500 text-white border-emerald-600'
-                      : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:shadow-md'
-                      }`}
-                  >
-                    <PencilIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-                    <span className="hidden sm:inline">{t('map.drawArea')}</span>
-                  </motion.button>
-
-                  {/* Tutorial Highlight Animation for "Draw Area" */}
-                  {!hasDrawnArea && !isDrawingEnabled && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{
-                        repeat: Infinity,
-                        repeatType: "reverse",
-                        duration: 1.5,
-                        ease: "easeInOut"
-                      }}
-                      className="absolute -inset-1.5 bg-emerald-400/30 rounded-xl z-0 pointer-events-none"
-                    />
-                  )}
-                  {/* Ping effect for "Draw Area" */}
-                  {!hasDrawnArea && !isDrawingEnabled && (
-                    <span className="absolute -top-1 -right-1 flex h-3 w-3 z-20">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                    </span>
-                  )}
-
-                  {hasDrawnArea && (
+                {/* Drawing Tools - Only show in map mode */}
+                {viewMode === 'map' && (
+                  <div className="relative isolate flex items-center gap-1.5 sm:gap-2">
                     <motion.button
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      onClick={clearDrawnArea}
-                      className="flex items-center gap-1.5 sm:gap-2 bg-red-500 text-white px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow-sm border border-red-600 hover:bg-red-600 transition-all z-10 relative"
+                      onClick={toggleDrawingMode}
+                      className={`relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow-sm border transition-all z-10 ${isDrawingEnabled
+                        ? 'bg-emerald-500 text-white border-emerald-600'
+                        : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:shadow-md'
+                        }`}
                     >
-                      <TrashIcon className="h-4 w-4" />
-                      <span className="hidden sm:inline">{t('map.clearArea')}</span>
+                      <PencilIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+                      <span className="hidden sm:inline">{t('map.drawArea')}</span>
+                    </motion.button>
+
+                    {/* Tutorial Highlight Animation for "Draw Area" */}
+                    {!hasDrawnArea && !isDrawingEnabled && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{
+                          repeat: Infinity,
+                          repeatType: "reverse",
+                          duration: 1.5,
+                          ease: "easeInOut"
+                        }}
+                        className="absolute -inset-1.5 bg-emerald-400/30 rounded-xl z-0 pointer-events-none"
+                      />
+                    )}
+                    {/* Ping effect for "Draw Area" */}
+                    {!hasDrawnArea && !isDrawingEnabled && (
+                      <span className="absolute -top-1 -right-1 flex h-3 w-3 z-20">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                      </span>
+                    )}
+
+                    {hasDrawnArea && (
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={clearDrawnArea}
+                        className="flex items-center gap-1.5 sm:gap-2 bg-red-500 text-white px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow-sm border border-red-600 hover:bg-red-600 transition-all z-10 relative"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                        <span className="hidden sm:inline">{t('map.clearArea')}</span>
+                      </motion.button>
+                    )}
+                  </div>
+                )}
+
+                <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                  {hasDrawnArea
+                    ? t('view.propertiesInArea', { count: filteredProperties.length })
+                    : t('view.properties', { count: filteredProperties.length })}
+                </div>
+              </div>
+
+              {/* Right Controls - View Toggle */}
+              <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5 sm:p-1 flex-shrink-0">
+                {/* Grid Toggle */}
+                <button
+                  onClick={() => { setViewMode('grid'); setViewLayout('grid'); }}
+                  className={`flex items-center justify-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md transition-all ${viewMode === 'grid' && viewLayout === 'grid'
+                    ? 'bg-white dark:bg-gray-600 text-emerald-600 dark:text-emerald-400 shadow'
+                    : 'text-gray-500 dark:text-gray-400 hover:bg-white/50'
+                    }`}
+                  title="Vista Cuadrícula"
+                >
+                  <ViewColumnsIcon className="h-4 w-4" />
+                  <span className="text-xs font-semibold hidden">{t('view.grid', 'Grid')}</span>
+                </button>
+
+                {/* List Toggle */}
+                <button
+                  onClick={() => { setViewMode('grid'); setViewLayout('list'); }}
+                  className={`flex items-center justify-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md transition-all ${viewMode === 'grid' && viewLayout === 'list'
+                    ? 'bg-white dark:bg-gray-600 text-emerald-600 dark:text-emerald-400 shadow'
+                    : 'text-gray-500 dark:text-gray-400 hover:bg-white/50'
+                    }`}
+                  title="Vista Lista"
+                >
+                  <Bars3Icon className="h-4 w-4" />
+                  <span className="text-xs font-semibold hidden">{t('view.list')}</span>
+                </button>
+
+                <div className="w-px h-4 bg-gray-300 dark:bg-gray-600"></div>
+
+                {/* Map Toggle */}
+                <button
+                  onClick={() => setViewMode('map')}
+                  className={`flex items-center justify-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md transition-all ${viewMode === 'map'
+                    ? 'bg-emerald-500 text-white shadow'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-white/50'
+                    }`}
+                >
+                  <MapIcon className="h-4 w-4" />
+                  <span className="text-xs sm:text-sm font-semibold">{t('view.map')}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Filters Panel */}
+        {showFilters && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white dark:bg-gray-900 border-b border-emerald-100 dark:border-gray-800 shadow-sm relative z-20"
+          >
+            <div className="container mx-auto px-4 py-6">
+              {/* Row 1: Main filters */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                {/* Type */}
+                <div>
+                  <label className="block text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-1.5">
+                    {t('filters.propertyType')}
+                  </label>
+                  <select
+                    value={filters.type}
+                    onChange={(e) => handleFilterChange('type', e.target.value)}
+                    className="w-full px-3 py-2.5 bg-white dark:bg-gray-700 border border-emerald-200 dark:border-gray-600 rounded-xl text-sm text-gray-700 dark:text-white shadow-sm focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all appearance-none cursor-pointer hover:border-emerald-300"
+                  >
+                    <option value="">{t('filters.allTypes')}</option>
+                    <option value="apartment">{t('property.apartment')}</option>
+                    <option value="piso">{t('property.flat')}</option>
+                    <option value="house">{t('property.house')}</option>
+                    <option value="villa">{t('property.villa')}</option>
+                    <option value="penthouse">{t('property.penthouse')}</option>
+                    <option value="chalet">{t('property.chalet')}</option>
+                    <option value="estudio">{t('property.studio')}</option>
+                    <option value="duplex">{t('property.duplex')}</option>
+                    <option value="terreno">{t('property.land')}</option>
+                  </select>
+                </div>
+
+                {/* Location */}
+                <div>
+                  <label className="block text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-1.5">
+                    {t('filters.location')}
+                  </label>
+                  <select
+                    value={filters.location}
+                    onChange={(e) => handleFilterChange('location', e.target.value)}
+                    className="w-full px-3 py-2.5 bg-white dark:bg-gray-700 border border-emerald-200 dark:border-gray-600 rounded-xl text-sm text-gray-700 dark:text-white shadow-sm focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all appearance-none cursor-pointer hover:border-emerald-300"
+                  >
+                    <option value="">{t('filters.allLocations')}</option>
+                    <option value="murcia">{t('location.murcia')}</option>
+                    <option value="cartagena">{t('location.cartagena')}</option>
+                    <option value="lorca">{t('location.lorca')}</option>
+                    <option value="molina">{t('location.molina')}</option>
+                    <option value="torre">{t('location.torre')}</option>
+                    <option value="aguilas">{t('location.aguilas')}</option>
+                    <option value="cieza">{t('location.cieza')}</option>
+                    <option value="yecla">{t('location.yecla')}</option>
+                    <option value="jumilla">{t('location.jumilla')}</option>
+                    <option value="san javier">{t('location.sanjavier')}</option>
+                    <option value="mazarron">{t('location.mazarron')}</option>
+                    <option value="mar menor">{t('location.marmenor')}</option>
+                  </select>
+                </div>
+
+                {/* Bedrooms */}
+                <div>
+                  <label className="block text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-1.5">
+                    {t('filters.bedrooms')}
+                  </label>
+                  <select
+                    value={filters.bedrooms}
+                    onChange={(e) => handleFilterChange('bedrooms', parseInt(e.target.value))}
+                    className="w-full px-3 py-2.5 bg-white dark:bg-gray-700 border border-emerald-200 dark:border-gray-600 rounded-xl text-sm text-gray-700 dark:text-white shadow-sm focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all appearance-none cursor-pointer hover:border-emerald-300"
+                  >
+                    <option value="0">{t('filters.anyAmount')}</option>
+                    <option value="1">1+</option>
+                    <option value="2">2+</option>
+                    <option value="3">3+</option>
+                    <option value="4">4+</option>
+                    <option value="5">5+</option>
+                  </select>
+                </div>
+
+                {/* Status */}
+                <div>
+                  <label className="block text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-1.5">
+                    {t('properties.status_field')}
+                  </label>
+                  <select
+                    value={filters.status}
+                    onChange={(e) => handleFilterChange('status', e.target.value)}
+                    className="w-full px-3 py-2.5 bg-white dark:bg-gray-700 border border-emerald-200 dark:border-gray-600 rounded-xl text-sm text-gray-700 dark:text-white shadow-sm focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all appearance-none cursor-pointer hover:border-emerald-300"
+                  >
+                    <option value="">{t('filters.allStatuses')}</option>
+                    <option value="for-sale">{t('status.for-sale')}</option>
+                    <option value="for-rent">{t('status.for-rent')}</option>
+                    <option value="reserved">{t('filters.reserved')}</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 2: Price range + Clear */}
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pt-5 border-t border-emerald-100 dark:border-gray-800">
+                <div className="flex-1 w-full max-w-2xl">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4">
+                    <label className="block text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+                      {t('filters.priceRange', 'Rango de Precio')}
+                    </label>
+
+                    {/* Manual Inputs + Status */}
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                      <div className="relative flex-1 sm:w-32">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">€</span>
+                        <input
+                          type="number"
+                          value={filters.minPrice === 0 ? '' : filters.minPrice}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            handleFilterChange('minPrice', val === '' ? 0 : Math.max(0, parseInt(val) || 0));
+                          }}
+                          className="w-full pl-7 pr-3 py-1.5 bg-white dark:bg-gray-800 border border-emerald-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
+                          placeholder="Min"
+                        />
+                      </div>
+                      <span className="text-gray-400">-</span>
+                      <div className="relative flex-1 sm:w-32">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">€</span>
+                        <input
+                          type="number"
+                          value={filters.maxPrice === 1000000 ? '' : filters.maxPrice}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            handleFilterChange('maxPrice', val === '' ? 1000000 : Math.max(0, parseInt(val) || 0));
+                          }}
+                          className="w-full pl-7 pr-3 py-1.5 bg-white dark:bg-gray-800 border border-emerald-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
+                          placeholder="Max"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Range Slider */}
+                  <div className="px-3 pb-2 mt-4 sm:mt-0">
+                    <Slider
+                      value={[filters.minPrice, Math.min(filters.maxPrice, 1000000)]}
+                      max={1000000}
+                      step={10000}
+                      onValueChange={(val) => {
+                        handleFilterChange('minPrice', val[0]);
+                        handleFilterChange('maxPrice', val[1]);
+                      }}
+                    />
+                    <div className="flex justify-between mt-2 text-xs text-gray-400 font-medium px-1">
+                      <span>0 €</span>
+                      <span>500k €</span>
+                      <span>1M+ €</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <motion.button
+                    onClick={resetFilters}
+                    className="px-5 py-2.5 bg-white dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-gray-600 rounded-xl text-sm font-medium hover:bg-emerald-50 dark:hover:bg-gray-600 transition-all shadow-sm"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {t('common.clearFilters')}
+                  </motion.button>
+                  {user && (
+                    <motion.button
+                      onClick={handleSaveSearch}
+                      className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-all shadow-sm"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      {t('view.save_search')}
                     </motion.button>
                   )}
                 </div>
-              )}
-
-              <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                {hasDrawnArea
-                  ? t('view.propertiesInArea', { count: filteredProperties.length })
-                  : t('view.properties', { count: filteredProperties.length })}
               </div>
             </div>
-
-            {/* Right Controls - View Toggle */}
-            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5 sm:p-1 flex-shrink-0">
-              {/* Grid Toggle */}
-              <button
-                onClick={() => { setViewMode('grid'); setViewLayout('grid'); }}
-                className={`flex items-center justify-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md transition-all ${viewMode === 'grid' && viewLayout === 'grid'
-                  ? 'bg-white dark:bg-gray-600 text-emerald-600 dark:text-emerald-400 shadow'
-                  : 'text-gray-500 dark:text-gray-400 hover:bg-white/50'
-                  }`}
-                title="Vista Cuadrícula"
-              >
-                <ViewColumnsIcon className="h-4 w-4" />
-                <span className="text-xs font-semibold hidden">{t('view.grid', 'Grid')}</span>
-              </button>
-
-              {/* List Toggle */}
-              <button
-                onClick={() => { setViewMode('grid'); setViewLayout('list'); }}
-                className={`flex items-center justify-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md transition-all ${viewMode === 'grid' && viewLayout === 'list'
-                  ? 'bg-white dark:bg-gray-600 text-emerald-600 dark:text-emerald-400 shadow'
-                  : 'text-gray-500 dark:text-gray-400 hover:bg-white/50'
-                  }`}
-                title="Vista Lista"
-              >
-                <Bars3Icon className="h-4 w-4" />
-                <span className="text-xs font-semibold hidden">{t('view.list')}</span>
-              </button>
-
-              <div className="w-px h-4 bg-gray-300 dark:bg-gray-600"></div>
-
-              {/* Map Toggle */}
-              <button
-                onClick={() => setViewMode('map')}
-                className={`flex items-center justify-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md transition-all ${viewMode === 'map'
-                  ? 'bg-emerald-500 text-white shadow'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-white/50'
-                  }`}
-              >
-                <MapIcon className="h-4 w-4" />
-                <span className="text-xs sm:text-sm font-semibold">{t('view.map')}</span>
-              </button>
-            </div>
-          </div>
-        </div>
+          </motion.div>
+        )}
       </div>
-
-      {/* Filters Panel */}
-      {showFilters && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.3 }}
-          className="bg-white dark:bg-gray-900 border-b border-emerald-100 dark:border-gray-800 shadow-sm relative z-20"
-        >
-          <div className="container mx-auto px-4 py-6">
-            {/* Row 1: Main filters */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-              {/* Type */}
-              <div>
-                <label className="block text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-1.5">
-                  {t('filters.propertyType')}
-                </label>
-                <select
-                  value={filters.type}
-                  onChange={(e) => handleFilterChange('type', e.target.value)}
-                  className="w-full px-3 py-2.5 bg-white dark:bg-gray-700 border border-emerald-200 dark:border-gray-600 rounded-xl text-sm text-gray-700 dark:text-white shadow-sm focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all appearance-none cursor-pointer hover:border-emerald-300"
-                >
-                  <option value="">{t('filters.allTypes')}</option>
-                  <option value="apartment">{t('property.apartment')}</option>
-                  <option value="piso">{t('property.flat')}</option>
-                  <option value="house">{t('property.house')}</option>
-                  <option value="villa">{t('property.villa')}</option>
-                  <option value="penthouse">{t('property.penthouse')}</option>
-                  <option value="chalet">{t('property.chalet')}</option>
-                  <option value="estudio">{t('property.studio')}</option>
-                  <option value="duplex">{t('property.duplex')}</option>
-                  <option value="terreno">{t('property.land')}</option>
-                </select>
-              </div>
-
-              {/* Location */}
-              <div>
-                <label className="block text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-1.5">
-                  {t('filters.location')}
-                </label>
-                <select
-                  value={filters.location}
-                  onChange={(e) => handleFilterChange('location', e.target.value)}
-                  className="w-full px-3 py-2.5 bg-white dark:bg-gray-700 border border-emerald-200 dark:border-gray-600 rounded-xl text-sm text-gray-700 dark:text-white shadow-sm focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all appearance-none cursor-pointer hover:border-emerald-300"
-                >
-                  <option value="">{t('filters.allLocations')}</option>
-                  <option value="murcia">{t('location.murcia')}</option>
-                  <option value="cartagena">{t('location.cartagena')}</option>
-                  <option value="lorca">{t('location.lorca')}</option>
-                  <option value="molina">{t('location.molina')}</option>
-                  <option value="torre">{t('location.torre')}</option>
-                  <option value="aguilas">{t('location.aguilas')}</option>
-                  <option value="cieza">{t('location.cieza')}</option>
-                  <option value="yecla">{t('location.yecla')}</option>
-                  <option value="jumilla">{t('location.jumilla')}</option>
-                  <option value="san javier">{t('location.sanjavier')}</option>
-                  <option value="mazarron">{t('location.mazarron')}</option>
-                  <option value="mar menor">{t('location.marmenor')}</option>
-                </select>
-              </div>
-
-              {/* Bedrooms */}
-              <div>
-                <label className="block text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-1.5">
-                  {t('filters.bedrooms')}
-                </label>
-                <select
-                  value={filters.bedrooms}
-                  onChange={(e) => handleFilterChange('bedrooms', parseInt(e.target.value))}
-                  className="w-full px-3 py-2.5 bg-white dark:bg-gray-700 border border-emerald-200 dark:border-gray-600 rounded-xl text-sm text-gray-700 dark:text-white shadow-sm focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all appearance-none cursor-pointer hover:border-emerald-300"
-                >
-                  <option value="0">{t('filters.anyAmount')}</option>
-                  <option value="1">1+</option>
-                  <option value="2">2+</option>
-                  <option value="3">3+</option>
-                  <option value="4">4+</option>
-                  <option value="5">5+</option>
-                </select>
-              </div>
-
-              {/* Status */}
-              <div>
-                <label className="block text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-1.5">
-                  {t('properties.status_field')}
-                </label>
-                <select
-                  value={filters.status}
-                  onChange={(e) => handleFilterChange('status', e.target.value)}
-                  className="w-full px-3 py-2.5 bg-white dark:bg-gray-700 border border-emerald-200 dark:border-gray-600 rounded-xl text-sm text-gray-700 dark:text-white shadow-sm focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all appearance-none cursor-pointer hover:border-emerald-300"
-                >
-                  <option value="">{t('filters.allStatuses')}</option>
-                  <option value="for-sale">{t('status.for-sale')}</option>
-                  <option value="for-rent">{t('status.for-rent')}</option>
-                  <option value="reserved">{t('filters.reserved')}</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Row 2: Price range + Clear */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pt-5 border-t border-emerald-100 dark:border-gray-800">
-              <div className="flex-1 w-full max-w-2xl">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4">
-                  <label className="block text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
-                    {t('filters.priceRange', 'Rango de Precio')}
-                  </label>
-
-                  {/* Manual Inputs + Status */}
-                  <div className="flex items-center gap-3 w-full sm:w-auto">
-                    <div className="relative flex-1 sm:w-32">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">€</span>
-                      <input
-                        type="number"
-                        value={filters.minPrice === 0 ? '' : filters.minPrice}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          handleFilterChange('minPrice', val === '' ? 0 : Math.max(0, parseInt(val) || 0));
-                        }}
-                        className="w-full pl-7 pr-3 py-1.5 bg-white dark:bg-gray-800 border border-emerald-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
-                        placeholder="Min"
-                      />
-                    </div>
-                    <span className="text-gray-400">-</span>
-                    <div className="relative flex-1 sm:w-32">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">€</span>
-                      <input
-                        type="number"
-                        value={filters.maxPrice === 1000000 ? '' : filters.maxPrice}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          handleFilterChange('maxPrice', val === '' ? 1000000 : Math.max(0, parseInt(val) || 0));
-                        }}
-                        className="w-full pl-7 pr-3 py-1.5 bg-white dark:bg-gray-800 border border-emerald-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
-                        placeholder="Max"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Range Slider */}
-                <div className="px-3 pb-2 mt-4 sm:mt-0">
-                  <Slider
-                    value={[filters.minPrice, Math.min(filters.maxPrice, 1000000)]}
-                    max={1000000}
-                    step={10000}
-                    onValueChange={(val) => {
-                      handleFilterChange('minPrice', val[0]);
-                      handleFilterChange('maxPrice', val[1]);
-                    }}
-                  />
-                  <div className="flex justify-between mt-2 text-xs text-gray-400 font-medium px-1">
-                    <span>0 €</span>
-                    <span>500k €</span>
-                    <span>1M+ €</span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <motion.button
-                  onClick={resetFilters}
-                  className="px-5 py-2.5 bg-white dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-gray-600 rounded-xl text-sm font-medium hover:bg-emerald-50 dark:hover:bg-gray-600 transition-all shadow-sm"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {t('common.clearFilters')}
-                </motion.button>
-                {user && (
-                  <motion.button
-                    onClick={handleSaveSearch}
-                    className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-all shadow-sm"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    {t('view.save_search')}
-                  </motion.button>
-                )}
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      )}
 
       {/* Content Area */}
       <div className="relative">
