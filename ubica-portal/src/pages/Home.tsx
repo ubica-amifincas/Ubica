@@ -126,7 +126,7 @@ export default function Home() {
   const boxRadius = useTransform(scrollY, [0, 150], ['1.5rem', '2rem']);
 
   // Use a constant for the breakpoint to avoid inconsistencies during SSR/Hydration if applicable
-  const boxRadiusFinal = useTransform(scrollY, [0, 150], ['1.5rem', '9999px']);
+  const boxRadiusFinal = useTransform(scrollY, [0, 150], ['1.5rem', '1.5rem']);
 
   // Slogan transforms
   const sloganHeight = useTransform(scrollY, [0, 100], ['auto', '0px']);
