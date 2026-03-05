@@ -575,8 +575,8 @@ export default function Home() {
                     whileTap={{ scale: 0.98 }}
                     onClick={toggleDrawingMode}
                     className={`relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow-sm border transition-all z-10 ${isDrawingEnabled
-                        ? 'bg-emerald-500 text-white border-emerald-600'
-                        : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:shadow-md'
+                      ? 'bg-emerald-500 text-white border-emerald-600'
+                      : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:shadow-md'
                       }`}
                   >
                     <PencilIcon className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -786,8 +786,11 @@ export default function Home() {
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">€</span>
                       <input
                         type="number"
-                        value={filters.minPrice}
-                        onChange={(e) => handleFilterChange('minPrice', parseInt(e.target.value) || 0)}
+                        value={filters.minPrice === 0 ? '' : filters.minPrice}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          handleFilterChange('minPrice', val === '' ? 0 : Math.max(0, parseInt(val) || 0));
+                        }}
                         className="w-full pl-7 pr-3 py-1.5 bg-white dark:bg-gray-800 border border-emerald-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
                         placeholder="Min"
                       />
@@ -797,8 +800,11 @@ export default function Home() {
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">€</span>
                       <input
                         type="number"
-                        value={filters.maxPrice}
-                        onChange={(e) => handleFilterChange('maxPrice', parseInt(e.target.value) || 1000000)}
+                        value={filters.maxPrice === 1000000 ? '' : filters.maxPrice}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          handleFilterChange('maxPrice', val === '' ? 1000000 : Math.max(0, parseInt(val) || 0));
+                        }}
                         className="w-full pl-7 pr-3 py-1.5 bg-white dark:bg-gray-800 border border-emerald-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-white focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all"
                         placeholder="Max"
                       />
@@ -809,7 +815,6 @@ export default function Home() {
                 {/* Range Slider */}
                 <div className="px-3 pb-2 mt-4 sm:mt-0">
                   <Slider
-                    defaultValue={[filters.minPrice, filters.maxPrice]}
                     value={[filters.minPrice, Math.min(filters.maxPrice, 1000000)]}
                     max={1000000}
                     step={10000}
