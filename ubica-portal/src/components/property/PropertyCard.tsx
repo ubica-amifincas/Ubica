@@ -139,7 +139,10 @@ export function PropertyCard({
       onTouchEnd={onTouchEnd}
     >
       {/* Image */}
-      <div className={`relative ${variant === 'list' ? 'aspect-video sm:aspect-square sm:w-48 lg:w-64' : 'aspect-[4/3] sm:aspect-video w-full'} overflow-hidden flex-shrink-0`}>
+      <div
+        className={`relative cursor-pointer ${variant === 'list' ? 'aspect-video sm:aspect-square sm:w-48 lg:w-64' : 'aspect-[4/3] sm:aspect-video w-full'} overflow-hidden flex-shrink-0`}
+        onClick={() => onViewDetails(property.id)}
+      >
         {imageLoading && (
           <div className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-700" />
         )}
