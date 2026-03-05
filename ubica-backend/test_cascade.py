@@ -11,7 +11,7 @@ def test_chat():
     print(f"Provider set in config: {AI_CONFIG['provider']}")
     
     payload = {
-        "message": "¿Qué propiedades tienes en Lorca por menos de 200000?",
+        "message": "¿Qué propiedades tienes en alquiler?",
         "history": []
     }
     

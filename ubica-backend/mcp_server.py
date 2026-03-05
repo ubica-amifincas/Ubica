@@ -43,6 +43,7 @@ async def buscar_propiedades(
     ubicacion: str = "", 
     precio_maximo: float = 0.0, 
     tipo: str = "",
+    estado: str = "",
     ctx: dict = None
 ) -> str:
     """Busca propiedades en la base de datos de Ubica aplicando filtros. Retorna una lista en formato JSON."""
@@ -65,6 +66,8 @@ async def buscar_propiedades(
             statement = statement.where(models.Property.price <= precio_maximo)
         if tipo:
             statement = statement.where(models.Property.type.ilike(f"%{tipo}%"))
+        if estado:
+            statement = statement.where(models.Property.status.ilike(f"%{estado}%"))
             
         # Limit results
         statement = statement.limit(15)

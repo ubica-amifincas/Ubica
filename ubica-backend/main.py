@@ -944,9 +944,9 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
                          f"Cualquier consulta general inmobiliaria de España o Murcia de la cual no estés seguro debes buscarla en internet."
 
     # Define common tool wrappers
-    async def mcptool_buscar_propiedades(ubicacion: str = "", precio_maximo: float = 0.0, tipo: str = "") -> str:
+    async def mcptool_buscar_propiedades(ubicacion: str = "", precio_maximo: float = 0.0, tipo: str = "", estado: str = "") -> str:
         """Busca propiedades en la base de datos aplicando filtros."""
-        return await buscar_propiedades(ubicacion, precio_maximo, tipo, ctx=user_ctx)
+        return await buscar_propiedades(ubicacion, precio_maximo, tipo, estado, ctx=user_ctx)
 
     async def mcptool_obtener_detalles(propiedad_id: int) -> str:
         """Obtiene todos los detalles, descripción y datos de inversión de una propiedad usando su ID."""
@@ -964,7 +964,8 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
                     "properties": {
                         "ubicacion": {"type": "string", "description": "Ciudad, barrio o dirección"},
                         "precio_maximo": {"type": "number", "description": "Precio máximo a buscar"},
-                        "tipo": {"type": "string", "description": "Tipo de propiedad (e.g. villa, apartamento)"}
+                        "tipo": {"type": "string", "description": "Tipo de propiedad (e.g. villa, apartamento)"},
+                        "estado": {"type": "string", "description": "Estado de la propiedad (e.g. alquiler, venta, for-rent, for-sale)"}
                     }
                 }
             }
@@ -1013,7 +1014,7 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
                 except:
                     pass
                 if func_name == "buscar_propiedades":
-                    result = await mcptool_buscar_propiedades(args.get("ubicacion", ""), float(args.get("precio_maximo", 0.0)), args.get("tipo", ""))
+                    result = await mcptool_buscar_propiedades(args.get("ubicacion", ""), float(args.get("precio_maximo", 0.0)), args.get("tipo", ""), args.get("estado", ""))
                 elif func_name == "obtener_detalles":
                     result = await mcptool_obtener_detalles(int(args.get("propiedad_id", 0)))
                 else:
@@ -1036,28 +1037,7 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
             return response.choices[0].message.content
         return msg_out.content
 
-    # Cascade 1: try Gemini
-    if GEMINI_AVAILABLE and GEMINI_API_KEY:
-        try:
-            model = genai.GenerativeModel(
-                model_name=AI_CONFIG["model"], 
-                system_instruction=system_instruction,
-                tools=[mcptool_buscar_propiedades, mcptool_obtener_detalles]
-            )
-            chat_history = []
-            for msg in request.history:
-                role = "user" if msg.get("role") == "user" else "model"
-                chat_history.append({"role": role, "parts": [msg.get("content")]})
-            
-            chat_session = model.start_chat(history=chat_history, enable_automatic_function_calling=True)
-            res = await chat_session.send_message_async(request.message)
-            return {"message": res.text or "Procesado.", "provider": "gemini", "model": AI_CONFIG["model"]}
-        except Exception as e:
-            print(f"Gemini failed: {e}")
-            # If 429 quota specifically, we bypass and try fallback.
-            # Usually ResourceExhausted means out of free tier limits.
-
-    # Cascade 2: try Groq
+    # Cascade 1: try Groq (Gemini disabled via user instruction to reduce latency)
     if OPENAI_AVAILABLE and GROQ_API_KEY:
         try:
             groq_model = "llama3-70b-8192" # standard tool-capable model on Groq
@@ -1066,7 +1046,7 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
         except Exception as e:
             print(f"Groq failed: {e}")
 
-    # Cascade 3: try OpenRouter
+    # Cascade 2: try OpenRouter
     if OPENAI_AVAILABLE and OPENROUTER_API_KEY:
         try:
             or_model = "google/gemini-2.5-flash" # tool-capable map to gemini via openrouter
