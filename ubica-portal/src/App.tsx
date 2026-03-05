@@ -23,8 +23,7 @@ import ProfileSettings from './pages/Dashboard/ProfileSettings';
 import WealthManagement from './pages/Dashboard/WealthManagement';
 
 // Auth pages
-import LoginForm from './components/auth/LoginForm';
-import RegisterForm from './components/auth/RegisterForm';
+import AuthPage from './pages/AuthPage';
 import VerifyEmail from './pages/VerifyEmail';
 
 // Layout components
@@ -97,8 +96,8 @@ function AppRoutes() {
           </Route>
 
           {/* Auth Routes */}
-          <Route path="/login" element={<LoginForm />} />
-          <Route path="/register" element={<RegisterForm />} />
+          <Route path="/login" element={<AuthPage />} />
+          <Route path="/register" element={<AuthPage />} />
           <Route path="/verify" element={<VerifyEmail />} />
 
           {/* Protected Dashboard Routes */}
