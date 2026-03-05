@@ -108,6 +108,36 @@ export default function Home() {
   const { openChat } = useAIChat();
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
+  // Scroll-linked animations for the header (Placed BEFORE loading check to avoid React Error #310)
+  const { scrollY } = useScroll();
+
+  // Header background & shadow
+  const headerOpacity = useTransform(scrollY, [0, 100], [0, 0.95]);
+  const headerShadow = useTransform(scrollY, [0, 100], ['none', '0 10px 15px -3px rgb(0 0 0 / 0.1)']);
+
+  // Hero container transforms
+  const heroPadding = useTransform(scrollY, [0, 150], ['2rem 1rem', '0.625rem 0.75rem']); // py-8 md:py-12 -> py-2.5
+  const heroMaxWidth = useTransform(scrollY, [0, 150], ['100%', '100%']); // Keeping max-w-7xl constant
+
+  // Gradient box transforms
+  const boxPadding = useTransform(scrollY, [0, 150], ['1.5rem 2rem', '0.5rem 0.625rem']); // p-6 md:p-8 -> p-2 sm:p-2.5
+  const boxRadius = useTransform(scrollY, [0, 150], ['1.5rem', '2rem']); // rounded-3xl -> rounded-2xl (it will become full later)
+  const isLg = typeof window !== 'undefined' && window.innerWidth >= 1024;
+  const boxRadiusFinal = useTransform(scrollY, [0, 150], ['1.5rem', isLg ? '9999px' : '1.5rem']);
+
+  // Slogan transforms
+  const sloganHeight = useTransform(scrollY, [0, 100], ['auto', '0px']);
+  const sloganOpacity = useTransform(scrollY, [0, 80], [1, 0]);
+  const sloganMargin = useTransform(scrollY, [0, 100], ['1.5rem', '0rem']); // mb-6 -> mb-0
+
+  // Search input transforms
+  const inputPadding = useTransform(scrollY, [0, 150], ['1rem', '0.5rem']); // py-4 -> py-2
+  const inputFontSize = useTransform(scrollY, [0, 150], ['1rem', '0.875rem']); // text-base -> text-sm
+  const iconSize = useTransform(scrollY, [0, 150], ['1.25rem', '1rem']); // h-5 -> h-4
+
+  // AI Button transforms
+  const aiButtonPadding = useTransform(scrollY, [0, 150], ['0.875rem 1.25rem', '0.5rem 0.75rem']); // px-5 py-3.5 -> px-3 py-2
+
   const { user } = useAuth();
   const [favorites, setFavorites] = useState<number[]>([]);
   const [tutorialKeyMode, setTutorialKeyMode] = useState(0);
@@ -463,35 +493,7 @@ export default function Home() {
     );
   }
 
-  // Scroll-linked animations for the header
-  const { scrollY } = useScroll();
 
-  // Header background & shadow
-  const headerOpacity = useTransform(scrollY, [0, 100], [0, 0.95]);
-  const headerShadow = useTransform(scrollY, [0, 100], ['none', '0 10px 15px -3px rgb(0 0 0 / 0.1)']);
-
-  // Hero container transforms
-  const heroPadding = useTransform(scrollY, [0, 150], ['2rem 1rem', '0.625rem 0.75rem']); // py-8 md:py-12 -> py-2.5
-  const heroMaxWidth = useTransform(scrollY, [0, 150], ['100%', '100%']); // Keeping max-w-7xl constant
-
-  // Gradient box transforms
-  const boxPadding = useTransform(scrollY, [0, 150], ['1.5rem 2rem', '0.5rem 0.625rem']); // p-6 md:p-8 -> p-2 sm:p-2.5
-  const boxRadius = useTransform(scrollY, [0, 150], ['1.5rem', '2rem']); // rounded-3xl -> rounded-2xl (it will become full later)
-  const isLg = typeof window !== 'undefined' && window.innerWidth >= 1024;
-  const boxRadiusFinal = useTransform(scrollY, [0, 150], ['1.5rem', isLg ? '9999px' : '1.5rem']);
-
-  // Slogan transforms
-  const sloganHeight = useTransform(scrollY, [0, 100], ['auto', '0px']);
-  const sloganOpacity = useTransform(scrollY, [0, 80], [1, 0]);
-  const sloganMargin = useTransform(scrollY, [0, 100], ['1.5rem', '0rem']); // mb-6 -> mb-0
-
-  // Search input transforms
-  const inputPadding = useTransform(scrollY, [0, 150], ['1rem', '0.5rem']); // py-4 -> py-2
-  const inputFontSize = useTransform(scrollY, [0, 150], ['1rem', '0.875rem']); // text-base -> text-sm
-  const iconSize = useTransform(scrollY, [0, 150], ['1.25rem', '1rem']); // h-5 -> h-4
-
-  // AI Button transforms
-  const aiButtonPadding = useTransform(scrollY, [0, 150], ['0.875rem 1.25rem', '0.5rem 0.75rem']); // px-5 py-3.5 -> px-3 py-2
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
