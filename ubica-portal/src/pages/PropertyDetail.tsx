@@ -473,6 +473,7 @@ export default function PropertyDetail() {
                   zoom={15}
                   scrollWheelZoom={false}
                   className="h-full w-full"
+                  attributionControl={false}
                 >
                   <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

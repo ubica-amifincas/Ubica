@@ -462,8 +462,8 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                             <div
                                 {...getRootProps()}
                                 className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md transition-colors ${isDragActive
-                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                        : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                    : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
                                     }`}
                             >
                                 <div className="space-y-1 text-center cursor-pointer">
@@ -614,6 +614,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                     zoom={13}
                                     style={{ height: '100%', width: '100%' }}
                                     scrollWheelZoom={true}
+                                    attributionControl={false}
                                 >
                                     <TileLayer
                                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
