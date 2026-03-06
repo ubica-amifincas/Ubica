@@ -56,10 +56,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ isEmbedded }) => {
             <img src="/logo_ubica.png" alt="Ubica" className="h-24 md:h-32 object-contain" />
           </div>
         )}
-        <h2 className={`text-center font-black text-gray-900 dark:text-white ${isEmbedded ? 'text-4xl' : 'text-3xl mt-4'}`}>
+        <h2 className={`text-center font-black text-gray-900 dark:text-white ${isEmbedded ? 'text-2xl sm:text-3xl md:text-4xl' : 'text-3xl mt-4'}`}>
           {t('auth.login_title')}
         </h2>
-        <p className={`text-center text-gray-400 dark:text-gray-500 font-medium ${isEmbedded ? 'text-lg mt-2 mb-8' : 'mt-2 text-sm'}`}>
+        <p className={`text-center text-gray-400 dark:text-gray-500 font-medium ${isEmbedded ? 'text-base sm:text-lg mt-2 mb-6 md:mb-8' : 'mt-2 text-sm'}`}>
           {t('auth.login_subtitle')}
         </p>
       </div>

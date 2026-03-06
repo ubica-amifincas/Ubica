@@ -117,10 +117,14 @@ export default function Home() {
   // Header background & shadow
   const headerOpacity = useTransform(scrollY, [0, 100], [0, 0.95]);
   const headerShadow = useTransform(scrollY, [0, 100], ['none', '0 10px 15px -3px rgb(0 0 0 / 0.1)']);
-  const headerBgColor = useTransform(scrollY, [0, 100], [
-    'rgba(255, 255, 255, 0)',
-    theme === 'dark' ? 'rgba(17, 24, 39, 0.95)' : 'rgba(255, 255, 255, 0.95)'
-  ]);
+  const headerBgColor = useTransform(
+    scrollY,
+    [0, 100],
+    [
+      theme === 'dark' ? 'rgba(17, 24, 39, 0)' : 'rgba(255, 255, 255, 0)',
+      theme === 'dark' ? 'rgba(17, 24, 39, 0.95)' : 'rgba(255, 255, 255, 0.95)'
+    ]
+  );
   const headerBlur = useTransform(scrollY, [0, 100], ['blur(0px)', 'blur(12px)']);
 
   // Hero container transforms

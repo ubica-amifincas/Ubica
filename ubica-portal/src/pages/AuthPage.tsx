@@ -30,7 +30,7 @@ const AuthPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4 sm:p-6 lg:p-8 overflow-hidden">
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4 sm:p-6 lg:p-8">
             {/* Floating Background Elements */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-emerald-500/10 blur-[120px]" />
@@ -39,10 +39,10 @@ const AuthPage: React.FC = () => {
 
             {/* Back to Home Button - Standardized Style */}
             <motion.button
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
                 onClick={() => navigate('/')}
-                className="fixed top-6 left-6 z-50 flex items-center gap-2 px-6 py-2.5 bg-gray-900/10 dark:bg-white/10 backdrop-blur-md rounded-full border border-gray-900/10 dark:border-white/10 text-gray-900 dark:text-white hover:bg-gray-900/20 dark:hover:bg-white/20 transition-all font-bold text-sm shadow-sm"
+                className="fixed top-4 md:top-6 left-4 md:left-6 z-50 flex items-center gap-2 px-4 md:px-6 py-2 md:py-2.5 bg-white/60 dark:bg-gray-800/60 backdrop-blur-md rounded-full border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white hover:bg-white/80 dark:hover:bg-gray-700/80 transition-all font-bold text-xs md:text-sm shadow-lg"
             >
                 <ArrowLeftIcon className="h-4 w-4 stroke-[3]" />
                 <span>{t('auth.back_to_home')}</span>
@@ -52,7 +52,7 @@ const AuthPage: React.FC = () => {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="relative w-full max-w-[1000px] min-h-[500px] md:h-[650px] bg-white dark:bg-gray-800 rounded-[32px] md:rounded-[48px] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] overflow-hidden flex flex-col md:flex-row"
+                className="relative w-full max-w-[1000px] min-h-[550px] md:h-[650px] bg-white dark:bg-gray-800 rounded-[32px] md:rounded-[48px] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] overflow-hidden flex flex-col md:flex-row my-8 md:my-0"
             >
                 {/* Animated Background Panel (Sliding Overlay) */}
                 <motion.div
