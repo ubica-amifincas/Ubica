@@ -34,6 +34,7 @@ import appService from '../services';
 import type { Property, PropertyFilters } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useAIChat } from '../contexts/AIChatContext';
+import { useTheme } from '../hooks/useTheme';
 
 // Custom marker icon for properties with price
 const createPriceMarker = (price: number, isSelected: boolean = false) => {
@@ -105,6 +106,8 @@ export default function Home() {
   const [isDrawingEnabled, setIsDrawingEnabled] = useState(false);
   const [hasDrawnArea, setHasDrawnArea] = useState(false);
   const [showMapToast, setShowMapToast] = useState(false);
+  const { t } = useLanguage();
+  const { theme } = useTheme();
   const { openChat } = useAIChat();
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
@@ -114,7 +117,10 @@ export default function Home() {
   // Header background & shadow
   const headerOpacity = useTransform(scrollY, [0, 100], [0, 0.95]);
   const headerShadow = useTransform(scrollY, [0, 100], ['none', '0 10px 15px -3px rgb(0 0 0 / 0.1)']);
-  const headerBgColor = useTransform(scrollY, [0, 100], ['rgba(255,255,255,0)', 'rgba(255,255,255,0.95)']);
+  const headerBgColor = useTransform(scrollY, [0, 100], [
+    'rgba(255, 255, 255, 0)',
+    theme === 'dark' ? 'rgba(17, 24, 39, 0.95)' : 'rgba(255, 255, 255, 0.95)'
+  ]);
   const headerBlur = useTransform(scrollY, [0, 100], ['blur(0px)', 'blur(12px)']);
 
   // Hero container transforms
@@ -184,7 +190,6 @@ export default function Home() {
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { t } = useLanguage();
 
   // Initialize filters from URL search params
   useEffect(() => {
@@ -431,14 +436,23 @@ export default function Home() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // No longer scrolling to map controls when switching to map view mode
-  // because we want the header to stay at the top (static/full state)
-  useEffect(() => {
-    if (viewMode === 'map') {
+  const scrollToControls = () => {
+    const controlsBar = document.getElementById('map-controls-bar');
+    if (controlsBar) {
+      const rect = controlsBar.getBoundingClientRect();
+      const targetY = window.pageYOffset + rect.top - 80;
       window.scrollTo({
-        top: 0,
+        top: targetY,
         behavior: 'smooth'
       });
+    }
+  };
+
+  // Scroll to map controls bar when switching to map view mode (Restored Centering)
+  useEffect(() => {
+    if (viewMode === 'map') {
+      const timer = setTimeout(scrollToControls, 150);
+      return () => clearTimeout(timer);
     }
   }, [viewMode]);
 
@@ -492,7 +506,7 @@ export default function Home() {
 
 
   return (
-    <div className={`min-h-screen bg-gray-50 dark:bg-gray-900 ${viewMode === 'map' ? 'overflow-hidden h-screen' : ''}`}>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Sticky Header Wrapper */}
       <motion.div
         className="sticky top-0 z-40 bg-white/0 dark:bg-gray-900/0 backdrop-blur-none"
@@ -534,7 +548,7 @@ export default function Home() {
 
               {/* Search Bar - White Modern Box with AI Button */}
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="flex-1 bg-white rounded-xl shadow-lg overflow-hidden">
+                <div className="flex-1 bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
                   <div className="relative">
                     <motion.div
                       className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400"
@@ -547,7 +561,7 @@ export default function Home() {
                       placeholder={t('header.mainSearchPlaceholder')}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 sm:pl-12 pr-4 text-gray-900 bg-white border-0 focus:ring-2 focus:ring-emerald-500 focus:outline-none rounded-xl"
+                      className="w-full pl-10 sm:pl-12 pr-4 text-gray-900 dark:text-white bg-white dark:bg-gray-800 border-0 focus:ring-2 focus:ring-emerald-500 focus:outline-none rounded-xl"
                       style={{
                         paddingTop: inputPadding,
                         paddingBottom: inputPadding,
