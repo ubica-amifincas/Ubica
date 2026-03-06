@@ -37,22 +37,22 @@ const AuthPage: React.FC = () => {
                 <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-cyan-500/10 blur-[120px]" />
             </div>
 
-            {/* Back to Home Button */}
+            {/* Back to Home Button - Standardized Style */}
             <motion.button
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 onClick={() => navigate('/')}
-                className="fixed top-6 left-6 z-50 flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-full shadow-lg border border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:text-emerald-500 dark:hover:text-emerald-400 transition-all font-medium"
+                className="fixed top-6 left-6 z-50 flex items-center gap-2 px-6 py-2.5 bg-gray-900/10 dark:bg-white/10 backdrop-blur-md rounded-full border border-gray-900/10 dark:border-white/10 text-gray-900 dark:text-white hover:bg-gray-900/20 dark:hover:bg-white/20 transition-all font-bold text-sm shadow-sm"
             >
-                <ArrowLeftIcon className="h-4 w-4" />
-                <span className="text-sm">{t('auth.back_to_home')}</span>
+                <ArrowLeftIcon className="h-4 w-4 stroke-[3]" />
+                <span>{t('auth.back_to_home')}</span>
             </motion.button>
 
             {/* Main Container */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="relative w-full max-w-[1000px] h-[650px] bg-white dark:bg-gray-800 rounded-[32px] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] overflow-hidden flex flex-col md:flex-row"
+                className="relative w-full max-w-[1000px] min-h-[500px] md:h-[650px] bg-white dark:bg-gray-800 rounded-[32px] md:rounded-[48px] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] overflow-hidden flex flex-col md:flex-row"
             >
                 {/* Animated Background Panel (Sliding Overlay) */}
                 <motion.div

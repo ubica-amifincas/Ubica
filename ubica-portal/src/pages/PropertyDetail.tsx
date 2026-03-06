@@ -283,10 +283,10 @@ export default function PropertyDetail() {
           <div className="flex items-center justify-between">
             <motion.button
               onClick={() => navigate('/')}
-              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors duration-200"
+              className="flex items-center space-x-2 px-6 py-2.5 bg-gray-900/10 dark:bg-white/10 backdrop-blur-md rounded-full border border-gray-900/10 dark:border-white/10 text-gray-900 dark:text-white hover:bg-gray-900/20 dark:hover:bg-white/20 transition-all font-bold text-sm shadow-sm"
               whileHover={{ x: -4 }}
             >
-              <ArrowLeftIcon className="h-5 w-5" />
+              <ArrowLeftIcon className="h-4 w-4 stroke-[3]" />
               <span>{t('details.backToSearch')}</span>
             </motion.button>
 
@@ -392,21 +392,21 @@ export default function PropertyDetail() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
             >
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                <div className="flex-1 w-full">
+                  <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white mb-2 leading-tight">
                     {property.title}
                   </h1>
-                  <div className="flex items-center text-gray-600 dark:text-gray-400">
-                    <MapPinIcon className="h-5 w-5 mr-1" />
-                    <span>{property.address}</span>
+                  <div className="flex items-center text-gray-500 dark:text-gray-400">
+                    <MapPinIcon className="h-4 w-4 mr-1.5 text-emerald-500" />
+                    <span className="text-sm md:text-base font-medium">{property.address}</span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 bg-clip-text text-transparent">
+                <div className="w-full md:w-auto flex flex-row md:flex-col justify-between items-center md:items-end gap-2 bg-emerald-50/50 dark:bg-emerald-900/10 p-3 md:p-0 rounded-2xl md:bg-transparent">
+                  <div className="text-2xl md:text-3xl font-black bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
                     {formatPrice(property.price)}
                   </div>
-                  <span className="inline-block px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full dark:bg-green-900/30 dark:text-green-300">
+                  <span className="inline-block px-3 py-1 bg- emerald-100/50 text-emerald-700 text-xs font-bold rounded-full dark:bg-emerald-900/30 dark:text-emerald-400 uppercase tracking-wider">
                     {t(`status.${property.status}`)}
                   </span>
                 </div>

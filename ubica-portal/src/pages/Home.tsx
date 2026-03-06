@@ -431,21 +431,14 @@ export default function Home() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Scroll to map controls bar when switching to map view mode
+  // No longer scrolling to map controls when switching to map view mode
+  // because we want the header to stay at the top (static/full state)
   useEffect(() => {
-    if (viewMode === 'map' && mapContainerRef.current) {
-      const timer = setTimeout(() => {
-        const controlsBar = document.getElementById('map-controls-bar');
-        if (controlsBar) {
-          const rect = controlsBar.getBoundingClientRect();
-          const targetY = window.pageYOffset + rect.top - 80;
-          window.scrollTo({
-            top: targetY,
-            behavior: 'smooth'
-          });
-        }
-      }, 150);
-      return () => clearTimeout(timer);
+    if (viewMode === 'map') {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
     }
   }, [viewMode]);
 
@@ -499,7 +492,7 @@ export default function Home() {
 
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className={`min-h-screen bg-gray-50 dark:bg-gray-900 ${viewMode === 'map' ? 'overflow-hidden h-screen' : ''}`}>
       {/* Sticky Header Wrapper */}
       <motion.div
         className="sticky top-0 z-40 bg-white/0 dark:bg-gray-900/0 backdrop-blur-none"
