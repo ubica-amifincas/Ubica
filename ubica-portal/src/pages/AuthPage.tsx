@@ -145,13 +145,13 @@ const AuthPage: React.FC = () => {
                 </div>
 
                 {/* Mobile Switch Footer (Visible only on mobile) */}
-                <div className="md:hidden p-6 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 text-center">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                <div className="md:hidden p-6 border-t border-gray-100 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-800/30 text-center">
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-3">
                         {isLogin ? '¿No tienes una cuenta?' : '¿Ya tienes una cuenta?'}
                     </p>
                     <button
                         onClick={toggleAuth}
-                        className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-bold rounded-2xl shadow-lg"
+                        className="w-full py-3.5 bg-transparent border-2 border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-500 font-black rounded-2xl hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all uppercase text-xs tracking-widest"
                     >
                         {isLogin ? 'Crear Cuenta' : 'Iniciar Sesión'}
                     </button>

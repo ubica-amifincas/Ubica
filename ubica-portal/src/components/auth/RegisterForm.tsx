@@ -104,12 +104,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ isEmbedded }) => {
   }
 
   const formContent = (
-    <div className={isEmbedded ? "max-h-[550px] overflow-y-auto pr-3 mr-[-8px] custom-scrollbar" : "max-w-md w-full bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700"}>
-      <div>
-        <h2 className={`text-center font-black text-gray-900 dark:text-white ${isEmbedded ? 'text-2xl sm:text-3xl md:text-4xl mb-2' : 'text-3xl mt-4'}`}>
+    <div className={isEmbedded ? "md:max-h-[550px] md:overflow-y-auto pr-0 md:pr-3 md:mr-[-8px] md:custom-scrollbar" : "max-w-md w-full bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700"}>
+      <div className="pt-2 md:pt-0">
+        <h2 className={`text-center font-black text-gray-900 dark:text-white ${isEmbedded ? 'text-2xl sm:text-3xl md:text-4xl mb-1' : 'text-3xl mt-4'}`}>
           {t('auth.register_title')}
         </h2>
-        <p className={`text-center text-gray-400 dark:text-gray-500 font-medium ${isEmbedded ? 'text-base sm:text-lg mt-1 mb-2 md:mb-6' : 'mt-2 text-sm'}`}>
+        <p className={`text-center text-gray-400 dark:text-gray-500 font-medium ${isEmbedded ? 'text-base sm:text-lg mt-1 mb-3 md:mb-6' : 'mt-2 text-sm'}`}>
           {t('auth.register_subtitle')}
         </p>
       </div>
