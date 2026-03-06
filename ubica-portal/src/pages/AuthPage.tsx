@@ -115,33 +115,37 @@ const AuthPage: React.FC = () => {
 
                 {/* Forms Sections */}
                 <div className="flex-1 relative flex overflow-hidden">
-                    {/* Login Section */}
-                    <motion.div
-                        className="w-full md:w-1/2 h-full flex items-center justify-center p-8 md:p-12 absolute inset-y-0"
-                        animate={{
-                            x: isLogin ? '0%' : '-100%',
-                            opacity: isLogin ? 1 : 0
-                        }}
-                        transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-                    >
-                        <div className="w-full max-w-[360px]">
-                            <LoginForm isEmbedded />
-                        </div>
-                    </motion.div>
-
-                    {/* Register Section */}
-                    <motion.div
-                        className="w-full md:w-1/2 h-full flex items-center justify-center p-8 md:p-12 absolute inset-y-0 right-0"
-                        animate={{
-                            x: !isLogin ? '0%' : '100%',
-                            opacity: !isLogin ? 1 : 0
-                        }}
-                        transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-                    >
-                        <div className="w-full max-w-[360px]">
-                            <RegisterForm isEmbedded />
-                        </div>
-                    </motion.div>
+                    <AnimatePresence mode="wait">
+                        {isLogin ? (
+                            /* Login Section */
+                            <motion.div
+                                key="login-section"
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                                transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+                                className="w-full md:w-1/2 h-full flex items-center justify-center p-6 sm:p-8 md:p-12 md:absolute md:inset-y-0 md:left-0"
+                            >
+                                <div className="w-full max-w-[360px]">
+                                    <LoginForm isEmbedded />
+                                </div>
+                            </motion.div>
+                        ) : (
+                            /* Register Section */
+                            <motion.div
+                                key="register-section"
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 20 }}
+                                transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+                                className="w-full md:w-1/2 h-full flex items-center justify-center p-6 sm:p-8 md:p-12 md:absolute md:inset-y-0 md:right-0"
+                            >
+                                <div className="w-full max-w-[360px]">
+                                    <RegisterForm isEmbedded />
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
 
                 {/* Mobile Switch Footer (Visible only on mobile) */}
