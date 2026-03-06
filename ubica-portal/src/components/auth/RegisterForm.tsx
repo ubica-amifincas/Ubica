@@ -109,12 +109,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ isEmbedded }) => {
         <h2 className={`text-center font-black text-gray-900 dark:text-white ${isEmbedded ? 'text-2xl sm:text-3xl md:text-4xl mb-2' : 'text-3xl mt-4'}`}>
           {t('auth.register_title')}
         </h2>
-        <p className={`text-center text-gray-400 dark:text-gray-500 font-medium ${isEmbedded ? 'text-base sm:text-lg mt-2 mb-4 md:mb-6' : 'mt-2 text-sm'}`}>
+        <p className={`text-center text-gray-400 dark:text-gray-500 font-medium ${isEmbedded ? 'text-base sm:text-lg mt-1 mb-2 md:mb-6' : 'mt-2 text-sm'}`}>
           {t('auth.register_subtitle')}
         </p>
       </div>
 
-      <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
+      <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
         {error && (
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl text-sm">
             {error}

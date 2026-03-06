@@ -30,7 +30,7 @@ const AuthPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4 sm:p-6 lg:p-8">
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-2 sm:p-6 lg:p-8">
             {/* Floating Background Elements */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-emerald-500/10 blur-[120px]" />
@@ -52,7 +52,7 @@ const AuthPage: React.FC = () => {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="relative w-full max-w-[1000px] min-h-[550px] md:h-[650px] bg-white dark:bg-gray-800 rounded-[32px] md:rounded-[48px] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] overflow-hidden flex flex-col md:flex-row my-8 md:my-0"
+                className="relative w-full max-w-[1000px] min-h-[550px] md:h-[650px] bg-white dark:bg-gray-800 rounded-[32px] md:rounded-[48px] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] overflow-hidden flex flex-col md:flex-row my-2 md:my-0"
             >
                 {/* Animated Background Panel (Sliding Overlay) */}
                 <motion.div

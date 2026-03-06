@@ -639,8 +639,12 @@ export default function Home() {
         )}
       </motion.div> {/* Closes Sticky Header Wrapper */}
 
-      {/* Map Controls Bar - Not Sticky */}
-      <div id="map-controls-bar" className={`bg-white dark:bg-gray-800 shadow-sm ${!isScrolled ? 'border-b border-gray-200 dark:border-gray-700' : ''}`}>
+      {/* Map Controls Bar - Sticky in Map Mode */}
+      <div
+        id="map-controls-bar"
+        className={`bg-white/95 dark:bg-gray-800/95 backdrop-blur-md shadow-sm z-[30] transition-all ${viewMode === 'map' ? 'sticky top-[72px] sm:top-[80px]' : 'relative'
+          } ${!isScrolled ? 'border-b border-gray-200 dark:border-gray-700' : ''}`}
+      >
         <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-3 relative">
 
           <div className="flex flex-row justify-between items-center gap-2 sm:gap-4">
