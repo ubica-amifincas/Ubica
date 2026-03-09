@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { X, Shield, Settings } from 'lucide-react';
+import { Shield, Settings } from 'lucide-react';
 
 interface CookieConsentBannerProps {
   onAcceptAll: () => void;
@@ -30,12 +30,6 @@ export function CookieConsentBanner({ onAcceptAll, onRejectAll, onCustomize }: C
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[10000] overflow-y-auto">
       <div className="w-full max-w-2xl bg-white rounded-lg shadow-2xl border-0 my-auto">
         <div className="p-4 sm:p-6 relative">
-          <button
-            onClick={onRejectAll}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X className="h-6 w-6" />
-          </button>
 
           <div className="flex items-start gap-3 mb-4">
             <Shield className="h-8 w-8 text-emerald-600 flex-shrink-0 mt-1" />
@@ -176,8 +170,8 @@ export function CookieConsentBanner({ onAcceptAll, onRejectAll, onCustomize }: C
 
           <div className="text-xs text-gray-500 text-center">
             Para más información, consulte nuestra{' '}
-            <Link to="/privacy" className="text-emerald-600 hover:underline">Política de Privacidad</Link> y{' '}
-            <Link to="/politica-cookies" className="text-emerald-600 hover:underline">Política de Cookies</Link>
+            <Link to="/privacy" target="_blank" rel="noopener noreferrer" className="text-emerald-600 hover:underline">Política de Privacidad</Link> y{' '}
+            <Link to="/politica-cookies" target="_blank" rel="noopener noreferrer" className="text-emerald-600 hover:underline">Política de Cookies</Link>
           </div>
         </div>
       </div>
