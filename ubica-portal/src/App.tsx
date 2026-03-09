@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './hooks/useTheme';
 import { AuthProvider } from './contexts/AuthContext';
@@ -62,7 +62,9 @@ import PoliticaCookies from './pages/PoliticaCookies';
 import EntertainmentHub from './pages/Entertainment/EntertainmentHub';
 import TasadorExpress from './pages/Entertainment/TasadorExpress';
 import UbicaPuzzle from './pages/Entertainment/UbicaPuzzle';
-import UbicaBalance from './pages/Entertainment/UbicaBalance';
+
+// Lazy load heavy 3D components to avoid crashing the main bundle
+const UbicaBalance = lazy(() => import('./pages/Entertainment/UbicaBalance'));
 
 // Quick wins
 import ScrollToTop from './components/common/ScrollToTop';
@@ -104,7 +106,18 @@ function AppRoutes() {
             <Route path="entretenimiento" element={<EntertainmentHub />} />
             <Route path="entretenimiento/tasador" element={<TasadorExpress />} />
             <Route path="entretenimiento/puzzle" element={<UbicaPuzzle />} />
-            <Route path="entretenimiento/balance" element={<UbicaBalance />} />
+            <Route path="entretenimiento/balance" element={
+              <Suspense fallback={
+                <div className="min-h-screen flex items-center justify-center bg-slate-900">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
+                    <p className="text-emerald-400 font-bold">Cargando motor 3D...</p>
+                  </div>
+                </div>
+              }>
+                <UbicaBalance />
+              </Suspense>
+            } />
           </Route>
 
           {/* Auth Routes */}
