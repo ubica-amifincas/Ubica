@@ -21,6 +21,7 @@ const resources = {
       "nav.login": "Iniciar Sesión",
       "nav.mobile_menu": "Abrir menú principal",
       "nav.settings": "Ajustes",
+      "nav.entertainment": "Juegos",
 
       // Header
       "header.welcome": "Bienvenido a Ubica",
@@ -671,6 +672,7 @@ const resources = {
       "nav.login": "Login",
       "nav.mobile_menu": "Open main menu",
       "nav.settings": "Settings",
+      "nav.entertainment": "Games",
 
       // Header
       "header.welcome": "Welcome to Ubica",

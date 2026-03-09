@@ -58,6 +58,11 @@ import { CookieConsentBanner } from './components/cookies/CookieConsentBanner';
 import { useCookieConsent } from './hooks/useCookieConsent';
 import PoliticaCookies from './pages/PoliticaCookies';
 
+// Entertainment
+import EntertainmentHub from './pages/Entertainment/EntertainmentHub';
+import TasadorExpress from './pages/Entertainment/TasadorExpress';
+import UbicaPuzzle from './pages/Entertainment/UbicaPuzzle';
+
 // Quick wins
 import ScrollToTop from './components/common/ScrollToTop';
 import useDocumentTitle from './hooks/useDocumentTitle';
@@ -93,6 +98,11 @@ function AppRoutes() {
             <Route path="terms" element={<Terms />} />
             <Route path="privacy" element={<Privacy />} />
             <Route path="politica-cookies" element={<PoliticaCookies />} />
+
+            {/* Entertainment Routes */}
+            <Route path="entretenimiento" element={<EntertainmentHub />} />
+            <Route path="entretenimiento/tasador" element={<TasadorExpress />} />
+            <Route path="entretenimiento/puzzle" element={<UbicaPuzzle />} />
           </Route>
 
           {/* Auth Routes */}

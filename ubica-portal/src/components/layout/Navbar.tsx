@@ -12,7 +12,8 @@ import {
   CogIcon,
   KeyIcon,
   EnvelopeIcon,
-  ShieldCheckIcon
+  ShieldCheckIcon,
+  PuzzlePieceIcon
 } from '@heroicons/react/24/outline';
 import { ThemeToggle } from '../common/ThemeToggle';
 import { LanguageSelector } from '../common/LanguageSelector';
@@ -65,6 +66,7 @@ export default function Navbar() {
     const publicNav = [
       { name: t('nav.home'), href: isAmiFincasDomain ? 'https://ubica.amifincas.es' : '/', icon: HomeIcon, external: isAmiFincasDomain },
       { name: 'AMI Fincas', href: isUbicaDomain ? 'https://amifincas.es/ami-fincas' : '/ami-fincas', icon: BuildingOfficeIcon, external: isUbicaDomain },
+      { name: t('nav.entertainment', 'Juegos'), href: '/entretenimiento', icon: PuzzlePieceIcon, external: false },
     ];
 
     if (!isAuthenticated) {
