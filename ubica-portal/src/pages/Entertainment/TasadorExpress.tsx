@@ -227,6 +227,9 @@ export default function TasadorExpress() {
                                     src={properties[currentRound].images[0] || 'https://via.placeholder.com/800x600?text=Sin+Imagen'}
                                     alt="Propiedad Misteriosa"
                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                    onError={(e) => {
+                                        e.currentTarget.src = 'https://via.placeholder.com/800x600?text=Sin+Imagen';
+                                    }}
                                 />
 
                                 {/* Round indicator & Timer Overlay */}

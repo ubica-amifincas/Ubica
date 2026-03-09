@@ -1279,6 +1279,9 @@ export default function Home() {
                             src={property.images?.[0] || '/images/casa-moderna.jpg'}
                             alt={property.title}
                             className="w-full h-32 object-cover rounded-lg mb-2"
+                            onError={(e) => {
+                              e.currentTarget.src = '/images/casa-moderna.jpg';
+                            }}
                           />
                           <h3 className="font-bold text-gray-900 mb-1">{property.title}</h3>
                           <p className="text-sm text-gray-600 mb-2">{property.location}</p>
