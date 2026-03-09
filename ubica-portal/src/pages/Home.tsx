@@ -554,8 +554,8 @@ export default function Home() {
                   marginBottom: sloganMargin
                 }}
               >
-                <div className="py-4">
-                  <p className="text-lg md:text-xl font-semibold text-white tracking-wide whitespace-nowrap">
+                <div className="py-4 px-2 sm:px-0">
+                  <p className="text-sm sm:text-lg md:text-xl font-semibold text-white tracking-wide text-balance leading-snug">
                     {t('header.slogan')}
                   </p>
                 </div>
