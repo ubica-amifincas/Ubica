@@ -1,0 +1,1 @@
+src/pages/Entertainment/UbicaBalance.tsx(3,68): error TS2724: '"@react-three/rapier"' has no exported member named 'RigidBodyApi'. Did you mean 'RigidBody'?

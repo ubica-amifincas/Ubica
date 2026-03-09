@@ -62,6 +62,7 @@ import PoliticaCookies from './pages/PoliticaCookies';
 import EntertainmentHub from './pages/Entertainment/EntertainmentHub';
 import TasadorExpress from './pages/Entertainment/TasadorExpress';
 import UbicaPuzzle from './pages/Entertainment/UbicaPuzzle';
+import UbicaBalance from './pages/Entertainment/UbicaBalance';
 
 // Quick wins
 import ScrollToTop from './components/common/ScrollToTop';
@@ -103,6 +104,7 @@ function AppRoutes() {
             <Route path="entretenimiento" element={<EntertainmentHub />} />
             <Route path="entretenimiento/tasador" element={<TasadorExpress />} />
             <Route path="entretenimiento/puzzle" element={<UbicaPuzzle />} />
+            <Route path="entretenimiento/balance" element={<UbicaBalance />} />
           </Route>
 
           {/* Auth Routes */}

@@ -24,7 +24,7 @@ interface StatCardProps {
   title: string;
   value: string | number;
   change?: number;
-  icon: React.ElementType;
+  icon: any;
   color: 'blue' | 'green' | 'purple' | 'orange' | 'red';
 }
 

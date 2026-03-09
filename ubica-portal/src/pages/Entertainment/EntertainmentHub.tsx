@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '../../hooks/useLanguage';
 import { useAuth } from '../../contexts/AuthContext';
 import { motion } from 'framer-motion';
-import { PlayCircleIcon, PuzzlePieceIcon, CalculatorIcon, LockClosedIcon } from '@heroicons/react/24/outline';
+import { PlayCircleIcon, PuzzlePieceIcon, CalculatorIcon, LockClosedIcon, BuildingOffice2Icon } from '@heroicons/react/24/outline';
 
 export default function EntertainmentHub() {
     const { t } = useLanguage();
@@ -26,6 +26,15 @@ export default function EntertainmentHub() {
             path: '/entretenimiento/puzzle',
             color: 'from-indigo-500 to-purple-500',
             requiresAuth: true, // Only for registered users
+        },
+        {
+            id: 'balance',
+            title: 'La Torre Fincas (3D)',
+            description: 'Demuestra tu pulso de arquitecto. Apila bloques usando físicas reales para construir el rascacielos más alto posible.',
+            icon: BuildingOffice2Icon,
+            path: '/entretenimiento/balance',
+            color: 'from-sky-500 to-blue-600',
+            requiresAuth: true, // Only for registered users (global rankings)
         }
     ];
 
@@ -50,32 +59,32 @@ export default function EntertainmentHub() {
                     </motion.p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {games.map((game, index) => (
                         <motion.div
                             key={game.id}
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: 0.2 + index * 0.1 }}
-                            className={`relative rounded-3xl overflow-hidden shadow-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 group ${!user && game.requiresAuth ? 'opacity-80' : ''}`}
+                            className={`relative flex flex-col rounded-3xl overflow-hidden shadow-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 group ${!user && game.requiresAuth ? 'opacity-80' : ''}`}
                         >
-                            <div className={`h-32 bg-gradient-to-r ${game.color} p-6 flex flex-col justify-end relative overflow-hidden`}>
+                            <div className={`h-32 bg-gradient-to-r ${game.color} p-6 flex flex-col justify-end relative overflow-hidden shrink-0`}>
                                 <div className="absolute right-0 top-0 opacity-20 -translate-y-1/4 translate-x-1/4">
                                     <game.icon className="w-48 h-48 text-white" />
                                 </div>
                                 <h2 className="text-2xl font-bold text-white relative z-10 flex items-center gap-2">
-                                    <game.icon className="w-8 h-8" />
+                                    <game.icon className="w-8 h-8 shrink-0" />
                                     {game.title}
                                 </h2>
                             </div>
 
-                            <div className="p-6">
-                                <p className="text-gray-600 dark:text-gray-300 mb-6 h-20">
+                            <div className="p-6 flex-1 flex flex-col justify-between">
+                                <p className="text-gray-600 dark:text-gray-300 mb-6">
                                     {game.description}
                                 </p>
 
                                 {!user && game.requiresAuth ? (
-                                    <div className="bg-gray-100 dark:bg-gray-700/50 rounded-xl p-4 flex items-start gap-3">
+                                    <div className="bg-gray-100 dark:bg-gray-700/50 rounded-xl p-4 flex items-start gap-3 mt-auto">
                                         <LockClosedIcon className="w-6 h-6 text-gray-400 shrink-0 mt-0.5" />
                                         <div>
                                             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Requiere cuenta gratuita</h3>
@@ -86,15 +95,17 @@ export default function EntertainmentHub() {
                                         </div>
                                     </div>
                                 ) : (
-                                    <Link
-                                        to={game.path}
-                                        className={`block w-full text-center py-3 px-4 rounded-xl font-bold text-white transition-all bg-gradient-to-r ${game.color} opacity-90 hover:opacity-100 shadow-md transform hover:-translate-y-0.5`}
-                                    >
-                                        <span className="flex items-center justify-center gap-2">
-                                            <PlayCircleIcon className="w-6 h-6" />
-                                            {!user && !game.requiresAuth ? 'Jugar Demo' : 'Jugar Ahora'}
-                                        </span>
-                                    </Link>
+                                    <div className="mt-auto">
+                                        <Link
+                                            to={game.path}
+                                            className={`block w-full text-center py-3 px-4 rounded-xl font-bold text-white transition-all bg-gradient-to-r ${game.color} opacity-90 hover:opacity-100 shadow-md transform hover:-translate-y-0.5`}
+                                        >
+                                            <span className="flex items-center justify-center gap-2">
+                                                <PlayCircleIcon className="w-6 h-6" />
+                                                {!user && !game.requiresAuth ? 'Jugar Demo' : 'Jugar Ahora'}
+                                            </span>
+                                        </Link>
+                                    </div>
                                 )}
                             </div>
                         </motion.div>
