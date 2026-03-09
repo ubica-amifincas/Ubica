@@ -1276,11 +1276,11 @@ export default function Home() {
                       <Popup>
                         <div className="p-2 min-w-[200px]">
                           <img
-                            src={property.images?.[0] || '/images/casa-moderna.jpg'}
+                            src={property.images?.[0] || 'https://via.placeholder.com/400x300?text=Sin+Imagen'}
                             alt={property.title}
                             className="w-full h-32 object-cover rounded-lg mb-2"
                             onError={(e) => {
-                              e.currentTarget.src = '/images/casa-moderna.jpg';
+                              e.currentTarget.src = 'https://via.placeholder.com/400x300?text=Sin+Imagen';
                             }}
                           />
                           <h3 className="font-bold text-gray-900 mb-1">{property.title}</h3>

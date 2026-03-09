@@ -58,6 +58,24 @@ class ApiService {
     };
   }
 
+  private isImageValid(img: string): boolean {
+    if (!img || typeof img !== 'string') return false;
+    if (img.startsWith('http') || img.startsWith('data:image')) return true;
+
+    const KNOWN_LOCAL_IMAGES = [
+      '/images/apartamento-torre-pacheco.jpg',
+      '/images/atico.jpg',
+      '/images/casa-moderna.jpg',
+      '/images/gen_apt_ext.png',
+      '/images/gen_apt_int.png',
+      '/images/gen_house_ext.png',
+      '/images/gen_house_int.png',
+      '/images/gen_villa_ext.png',
+      '/images/gen_villa_int.png'
+    ];
+    return KNOWN_LOCAL_IMAGES.includes(img);
+  }
+
   private async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -70,8 +88,12 @@ class ApiService {
 
   // Mapear datos del backend (snake_case y coords planas) al frontend (camelCase y coords anidadas)
   private mapProperty(data: any): Property {
+    const rawImages = Array.isArray(data.images) ? data.images : (typeof data.images === 'string' ? JSON.parse(data.images || '[]') : []);
+    const validImages = rawImages.filter((img: string) => this.isImageValid(img));
+
     return {
       ...data,
+      images: validImages,
       location: data.location || data.city || '',
       description: data.description || '',
       coordinates: {
