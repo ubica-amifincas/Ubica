@@ -1,10 +1,10 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 @layer base {
   :root {
-    --radius: 0.5rem
-  ;
+    --radius: 0.5rem;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -12,7 +12,9 @@
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%}
+    --sidebar-ring: 217.2 91.2% 59.8%
+  }
+
   .dark {
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
@@ -29,3 +31,20 @@
   }
 }
 
+/* Map Mode Full Screen Override */
+body.map-mode-active {
+  overflow: hidden !important;
+}
+
+body.map-mode-active footer {
+  display: none !important;
+}
+
+body.map-mode-active .map-fullscreen-container>.container {
+  margin-top: 1rem !important;
+  margin-bottom: 0 !important;
+}
+
+body.map-mode-active .map-wrapper {
+  height: calc(100vh - 190px) !important;
+}

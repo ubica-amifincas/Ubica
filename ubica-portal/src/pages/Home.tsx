@@ -455,9 +455,20 @@ export default function Home() {
   // Scroll to map controls bar when switching to map view mode (Restored Centering)
   useEffect(() => {
     if (viewMode === 'map') {
+      document.body.classList.add('map-mode-active');
       const timer = setTimeout(scrollToControls, 150);
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        document.body.classList.remove('map-mode-active');
+      };
+    } else {
+      document.body.classList.remove('map-mode-active');
     }
+
+    // Cleanup on unmount
+    return () => {
+      document.body.classList.remove('map-mode-active');
+    };
   }, [viewMode]);
 
   const clearDrawnArea = () => {
