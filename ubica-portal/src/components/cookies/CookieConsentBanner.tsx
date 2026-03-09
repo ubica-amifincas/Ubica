@@ -27,9 +27,9 @@ export function CookieConsentBanner({ onAcceptAll, onRejectAll, onCustomize }: C
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[9999]">
-      <div className="w-full max-w-2xl bg-white rounded-lg shadow-2xl border-0">
-        <div className="p-6 relative">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[10000] overflow-y-auto">
+      <div className="w-full max-w-2xl bg-white rounded-lg shadow-2xl border-0 my-auto">
+        <div className="p-4 sm:p-6 relative">
           <button
             onClick={onRejectAll}
             className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
@@ -52,7 +52,7 @@ export function CookieConsentBanner({ onAcceptAll, onRejectAll, onCustomize }: C
 
           {/* Cookie categories indicators */}
           {!showPersonalizar && (
-            <div className="grid grid-cols-4 gap-3 text-sm mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm mb-6">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
                 <span className="text-gray-600">Necesarias (Activas)</span>
@@ -133,7 +133,7 @@ export function CookieConsentBanner({ onAcceptAll, onRejectAll, onCustomize }: C
           )}
 
           {/* Action buttons */}
-          <div className="flex space-x-3 mb-4">
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
             {!showPersonalizar ? (
               <>
                 <button

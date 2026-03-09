@@ -21,7 +21,6 @@ export default function Footer() {
     company: [
       { name: t('footer.about'), href: '/about' },
       { name: t('footer.ami'), href: 'https://amifincas.es', external: true },
-      { name: t('footer.contact'), href: '/contact' },
     ],
     services: [
       { name: t('footer.buy'), href: '/?status=for-sale' },
@@ -31,34 +30,18 @@ export default function Footer() {
     support: [
       { name: t('footer.help'), href: '/contact' },
       { name: t('footer.terms'), href: '/terms' },
-      { name: t('footer.privacy'), href: '/privacy' },
-      { name: t('footer.cookies'), href: '/politica-cookies' },
     ],
+    social: [
+      { name: 'Instagram', href: 'https://www.instagram.com/amifincas', external: true, icon: InstagramIcon },
+    ]
   };
 
   return (
     <footer className="bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:py-12 sm:px-6 lg:px-8">
         {/* Main Footer Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-12">
-          {/* Column 1: Ubica Brand */}
-          <div className="col-span-2 lg:col-span-1 space-y-3 sm:space-y-4">
-            <h3 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 bg-clip-text text-transparent">
-              Ubica
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              {t('footer.brand_desc')}
-            </p>
-            <p className="text-sm text-gray-700 dark:text-gray-300">
-              {t('footer.slogan').split(t('footer.precision'))[0]}
-              <span className="font-bold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
-                {t('footer.precision')}
-              </span>
-              {t('footer.slogan').split(t('footer.precision'))[1]}
-            </p>
-          </div>
-
-          {/* Column 2: Empresa */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-12">
+          {/* Column 1: Empresa */}
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
               {t('footer.company')}
@@ -88,7 +71,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Column 3: Servicios */}
+          {/* Column 2: Servicios */}
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
               {t('footer.services')}
@@ -118,7 +101,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Column 4: Soporte */}
+          {/* Column 3: Soporte */}
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
               {t('footer.support')}
@@ -147,69 +130,68 @@ export default function Footer() {
               ))}
             </ul>
           </div>
-        </div>
 
-        {/* Contact Section */}
-        <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-200 dark:border-gray-700">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 sm:mb-6">
-            {t('footer.contact_title')}
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
-            {/* Murcia Office */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">{t('footer.murcia_office')}</h4>
-              <div className="flex items-start space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                <MapPinIcon className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                <span>C. Ángeles, 41, 30007 Murcia</span>
-              </div>
-              <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                <PhoneIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                <div className="flex flex-wrap gap-x-3">
-                  <a href="tel:+34676626933" className="hover:text-emerald-600 transition-colors">+34 676 62 69 33</a>
-                  <a href="tel:+34609008864" className="hover:text-emerald-600 transition-colors">+34 609 00 88 64</a>
-                </div>
-              </div>
-            </div>
-
-            {/* San Pedro Office */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">{t('footer.sanpedro_office')}</h4>
-              <div className="flex items-start space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                <MapPinIcon className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                <span>C. Panamá, 2A, 30740 San Pedro del Pinatar</span>
-              </div>
-              <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                <PhoneIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                <div className="flex flex-wrap gap-x-3">
-                  <a href="tel:+34968179180" className="hover:text-emerald-600 transition-colors">+34 968 17 91 80</a>
-                  <a href="tel:+34609008864" className="hover:text-emerald-600 transition-colors">+34 609 00 88 64</a>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="mt-6 flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-            <EnvelopeIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
-            <a href="mailto:info@amifincas.es" className="hover:text-emerald-600 transition-colors">info@amifincas.es</a>
+          {/* Column 4: Redes */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+              Redes
+            </h3>
+            <ul className="space-y-2 sm:space-y-3">
+              {footerLinks.social.map((item) => (
+                <li key={item.name}>
+                  <a
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center space-x-2 text-sm text-gray-600 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors duration-200"
+                  >
+                    {item.icon && <item.icon />}
+                    <span>{item.name}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
         {/* Bottom Section */}
-        <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex flex-col sm:flex-row items-center justify-between">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {t('footer.rights')}
-            </p>
-            <motion.a
-              href="https://www.instagram.com/amifincas"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-4 sm:mt-0 text-gray-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              <span className="sr-only">Instagram</span>
-              <InstagramIcon />
-            </motion.a>
+        <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex flex-col lg:flex-row justify-between items-center sm:items-start gap-6 lg:gap-8">
+
+            {/* Ubica Info moved here */}
+            <div className="flex-1 max-w-md text-center sm:text-left space-y-2">
+              <h3 className="text-xl font-bold bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 bg-clip-text text-transparent">
+                Ubica
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {t('footer.brand_desc')}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                {t('footer.slogan').split(t('footer.precision'))[0]}
+                <span className="font-bold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
+                  {t('footer.precision')}
+                </span>
+                {t('footer.slogan').split(t('footer.precision'))[1]}
+              </p>
+            </div>
+
+            {/* Legal Links & Copyright */}
+            <div className="flex flex-col items-center lg:items-end space-y-4">
+              <div className="flex flex-wrap justify-center lg:justify-end gap-x-6 gap-y-2">
+                <Link to="/contact" className="text-sm font-medium text-gray-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors">
+                  {t('footer.contact')}
+                </Link>
+                <Link to="/privacy" className="text-sm font-medium text-gray-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors">
+                  {t('footer.privacy')}
+                </Link>
+                <Link to="/politica-cookies" className="text-sm font-medium text-gray-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors">
+                  {t('footer.cookies')}
+                </Link>
+              </div>
+              <p className="text-sm text-gray-400 dark:text-gray-500">
+                {t('footer.rights')}
+              </p>
+            </div>
           </div>
         </div>
       </div>
