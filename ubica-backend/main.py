@@ -17,7 +17,6 @@ import os
 import shutil
 import uuid
 import io
-import pandas as pd
 import aiohttp
 import asyncio
 from datetime import datetime, timedelta
@@ -30,30 +29,19 @@ import models
 
 # --- AI & MCP Server Imports ---
 try:
-    import google.generativeai as genai
-    from google.generativeai.types import content_types
     from mcp_server import buscar_propiedades, obtener_detalles_propiedad
-    GEMINI_AVAILABLE = True
 except ImportError:
-    GEMINI_AVAILABLE = False
-    print("WARNING: google-generativeai or mcp_server not installed. Gemini features will be mocked.")
+    print("WARNING: mcp_server not installed. MCP features will be mocked.")
 
-try:
-    import openai
-    OPENAI_AVAILABLE = True
-except ImportError:
-    OPENAI_AVAILABLE = False
+import importlib.util
+OPENAI_AVAILABLE = importlib.util.find_spec("openai") is not None
+if not OPENAI_AVAILABLE:
     print("WARNING: openai not installed. Groq/OpenRouter features will be mocked.")
 
+from dotenv import load_dotenv
 load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if GEMINI_API_KEY and GEMINI_AVAILABLE:
-    genai.configure(api_key=GEMINI_API_KEY)
-    print("Google Gemini AI configured successfully!")
-else:
-    print("No GEMINI_API_KEY found or Gemini unavailable.")
-
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 # Configuración JWT
@@ -99,6 +87,29 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# --- Keep-Alive Task ---
+async def render_keep_alive():
+    """Background task to ping the service itself to prevent Render free tier spin down"""
+    render_url = os.getenv("RENDER_EXTERNAL_URL")
+    
+    # Si no hay URL de Render, probamos con el localhost solo para logging en dev
+    ping_url = f"{render_url}/api/ping" if render_url else "http://localhost:8000/api/ping"
+    print(f"Starting keep-alive task pinging {ping_url} every 14 minutes.")
+    
+    async with aiohttp.ClientSession() as session:
+        while True:
+            await asyncio.sleep(14 * 60) # 14 minutes
+            try:
+                async with session.get(ping_url) as response:
+                    print(f"[{datetime.now().strftime('%H:%M:%S')}] Keep-alive ping sent. Status: {response.status}")
+            except Exception as e:
+                print(f"Keep-alive ping failed: {e}")
+
+@app.on_event("startup")
+async def startup_event():
+    # Solo en background
+    asyncio.create_task(render_keep_alive())
 
 # Configurar directorio de uploads
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
@@ -650,6 +661,7 @@ async def import_properties(file: UploadFile = File(...), current_user: models.U
     # ... (skipping dataframe parsing logic for brevity as it's the same) ...
     # Simplified for the refactor snippet:
     try:
+        import pandas as pd
         if file.filename.endswith('.csv'):
             df = pd.read_csv(io.BytesIO(content))
         elif file.filename.endswith('.json'):
@@ -987,6 +999,7 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
     ]
 
     async def run_openai_provider(api_key, base_url, model_name):
+        import openai
         client = openai.AsyncOpenAI(api_key=api_key, base_url=base_url)
         messages = [{"role": "system", "content": system_instruction}]
         
@@ -1223,6 +1236,11 @@ async def reply_message(message_id: int, msg_data: dict, current_user: models.Us
     session.commit()
     session.refresh(new_msg)
     return {"message": "Respuesta enviada", "id": new_msg.id}
+
+@app.get("/api/ping")
+async def ping():
+    """Endpoint muy ligero para scripts de Keep-Awake (cron-job.org) y evitar el spin-down de Render."""
+    return {"status": "ok", "message": "pong"}
 
 # Health check
 @app.get("/health")
