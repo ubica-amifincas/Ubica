@@ -540,7 +540,7 @@ const resources = {
       "ami.transition.p2": "de fincas",
 
       // About Page
-      "about.hero.since": "Desde 2004 en Murcia",
+      "about.hero.since": "Desde 2014 en Murcia",
       "about.hero.title": "Sobre Nosotros",
       "about.hero.description": "Ubica es la plataforma inmobiliaria de AMI Fincas que combina la experiencia de más de dos décadas con la tecnología más avanzada del mercado.",
       "about.stats.managed": "Propiedades gestionadas",
