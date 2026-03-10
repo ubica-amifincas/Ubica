@@ -26,6 +26,8 @@ const ROUTE_TITLES: Record<string, string> = {
     '/cookies': 'Cookies | Ubica',
     '/about': 'Sobre Nosotros | Ubica',
     '/contact': 'Contacto | Ubica',
+    '/ami-fincas': 'Ami Fincas - Administración de fincas',
+    '/amifincas': 'Ami Fincas - Administración de fincas',
 };
 
 export default function useDocumentTitle() {
