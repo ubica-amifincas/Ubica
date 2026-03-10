@@ -392,8 +392,14 @@ export default function AmiFincas() {
                   </p>
                 </motion.div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 relative z-20">
-                  {services.map((service, index) => (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-20 md:auto-rows-[1fr]">
+                  {services.map((service, index) => {
+                    let bentoClass = "";
+                    if (index === 1) bentoClass = "md:row-span-2";
+                    else if (index === 5) bentoClass = "md:col-span-2";
+                    else bentoClass = "md:col-span-1";
+
+                    return (
                     <motion.div
                       key={service.title}
                       initial={{ opacity: 0, scale: 0.95 }}
@@ -401,7 +407,8 @@ export default function AmiFincas() {
                       viewport={{ once: true }}
                       transition={{ delay: index * 0.1 }}
                       className={`
-                        p-6 rounded-[2rem] border shadow-sm transition-all duration-300 group overflow-hidden relative
+                        p-6 md:p-8 flex flex-col justify-center rounded-[2rem] border shadow-sm transition-all duration-300 group overflow-hidden relative
+                        ${bentoClass}
                         ${service.highlight 
                           ? 'bg-gradient-to-br from-white to-emerald-50 dark:from-slate-800 dark:to-slate-900 border-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.15)] hover:shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:-translate-y-1' 
                           : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/10 hover:border-emerald-500/50 dark:shadow-none hover:-translate-y-1'
@@ -426,7 +433,7 @@ export default function AmiFincas() {
                       <h4 className="text-lg font-bold mb-2">{service.title}</h4>
                       <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">{service.description}</p>
                     </motion.div>
-                  ))}
+                  )})}
                 </div>
               </div>
             </div>
