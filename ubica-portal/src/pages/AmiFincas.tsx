@@ -24,41 +24,61 @@ const PageTransition = ({ t }: { t: any }) => (
     initial={{ opacity: 1 }}
     exit={{ opacity: 0 }}
     transition={{ duration: 0.8, ease: "easeInOut" }}
-    className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-50 dark:bg-slate-900 border-none"
+    className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-50 dark:bg-[#0f172a] overflow-hidden"
   >
-    <div className="text-center">
+    {/* Cinematic Background Blurs */}
+    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(16,185,129,0.05)_0%,transparent_100%)]" />
+    <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-emerald-500/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
+    <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-teal-500/20 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2" />
+
+    <div className="relative z-10 w-full max-w-2xl px-6 flex flex-col items-center justify-center">
+      {/* Glassmorphic Container for Loading Content */}
       <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.8 }}
-        className="mb-4"
+        initial={{ y: 20, opacity: 0, scale: 0.95 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="relative bg-white/40 dark:bg-white/5 backdrop-blur-2xl border border-white/20 dark:border-white/10 shadow-2xl rounded-[3rem] p-8 md:p-16 text-center w-full"
       >
-        <img
-          src="/ami-fincas/favAMI.png"
-          alt="AMI Fincas"
-          className="h-40 md:h-56 mx-auto mb-8 dark:brightness-110 drop-shadow-2xl scale-110"
-        />
-        <h2 className="text-3xl font-black tracking-[0.4em] uppercase text-emerald-600 dark:text-emerald-400">
-          AMI Fincas
-        </h2>
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.8, type: "spring" }}
+          className="mb-8"
+        >
+          <img
+            src="/ami-fincas/favAMI.png"
+            alt="AMI Fincas Loading"
+            className="h-32 md:h-48 mx-auto object-contain drop-shadow-[0_20px_20px_rgba(16,185,129,0.3)] dark:brightness-110"
+          />
+        </motion.div>
+
+        <motion.div
+          initial={{ y: 10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.6, duration: 0.8 }}
+          className="space-y-4"
+        >
+          <h2 className="text-sm md:text-base font-black tracking-[0.4em] uppercase text-emerald-600 dark:text-emerald-400">
+            AMI Fincas
+          </h2>
+          <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-slate-800 dark:text-white leading-tight">
+            {t('ami.transition.p1')} <br className="hidden sm:block" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#A2D18D] to-[#2D8A9D]">
+              {t('ami.transition.p2')}
+            </span>
+          </h1>
+        </motion.div>
+
+        {/* Loading Progress Bar Container */}
+        <div className="mt-12 max-w-xs mx-auto w-full relative h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+          <motion.div
+            initial={{ width: "0%" }}
+            animate={{ width: "100%" }}
+            transition={{ delay: 0.8, duration: 1.5, ease: "easeInOut" }}
+            className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#A2D18D] to-[#2D8A9D] rounded-full"
+          />
+        </div>
       </motion.div>
-      <motion.h1
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.8, duration: 1, type: "spring" }}
-        className="text-5xl md:text-7xl font-black text-slate-900 dark:text-white leading-tight"
-      >
-        {t('ami.transition.p1')} <br />
-        <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#A2D18D] to-[#2D8A9D]">
-          {t('ami.transition.p2')}
-        </span>
-      </motion.h1>
-      <motion.div
-        initial={{ width: 0 }}
-        animate={{ width: "100%" }}
-        transition={{ delay: 1.2, duration: 1 }}
-        className="h-1 bg-gradient-to-r from-[#A2D18D] to-[#2D8A9D] mt-8 max-w-xs mx-auto rounded-full"
-      />
     </div>
   </motion.div>
 );
