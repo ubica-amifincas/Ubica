@@ -36,7 +36,7 @@ const PageTransition = ({ t }: { t: any }) => (
         <img
           src="/ami-fincas/favAMI.png"
           alt="AMI Fincas"
-          className="h-24 mx-auto mb-6 dark:brightness-110"
+          className="h-32 md:h-40 mx-auto mb-6 dark:brightness-110 drop-shadow-xl"
         />
         <h2 className="text-2xl font-black tracking-[0.3em] uppercase text-emerald-600 dark:text-emerald-400">
           AMI Fincas
@@ -532,27 +532,25 @@ export default function AmiFincas() {
                   ))}
                 </motion.h3>
 
-                <div className="flex flex-col md:flex-row gap-8 justify-center items-center mb-16">
+                <div className="flex flex-col lg:flex-row gap-8 justify-center items-stretch mb-16 max-w-5xl mx-auto">
                   <motion.a
                     whileHover={{ scale: 1.05, y: -5 }}
                     whileTap={{ scale: 0.95 }}
                     href="mailto:info@amifincas.es"
-                    className="px-14 py-7 rounded-[2rem] bg-emerald-500 dark:bg-white text-white dark:text-black font-black text-2xl shadow-[0_20px_50px_rgba(16,185,129,0.3)] dark:shadow-[0_20px_50px_rgba(255,255,255,0.2)] hover:shadow-[0_25px_60px_rgba(16,185,129,0.4)] dark:hover:shadow-[0_25px_60px_rgba(255,255,255,0.3)] transition-all flex items-center space-x-3"
+                    className="flex-1 px-10 py-8 rounded-[2rem] bg-emerald-500 dark:bg-white text-white dark:text-slate-900 font-black text-2xl shadow-[0_20px_50px_rgba(16,185,129,0.3)] dark:shadow-[0_20px_50px_rgba(255,255,255,0.2)] hover:shadow-[0_25px_60px_rgba(16,185,129,0.4)] dark:hover:shadow-[0_25px_60px_rgba(255,255,255,0.3)] transition-all flex items-center justify-center space-x-3"
                   >
                     <span>{t('ami.cta.button')}</span>
                   </motion.a>
 
                   <motion.div
                     whileHover={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
-                    className="px-10 py-6 rounded-[2rem] bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 backdrop-blur-xl flex flex-col md:flex-row items-center gap-4 transition-all"
+                    className="flex-[1.5] px-10 py-8 rounded-[2rem] bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 backdrop-blur-xl flex flex-col justify-center items-center lg:items-start gap-4 transition-all"
                   >
-                    <div className="flex flex-col items-center md:items-start">
-                      <span className="text-slate-500 font-bold text-xs uppercase tracking-widest mb-1">{t('ami.cta.sub')}</span>
-                      <div className="flex flex-wrap justify-center md:justify-start gap-x-6">
-                        <a href="tel:+34676626933" className="text-xl font-black text-slate-900 dark:text-white hover:text-emerald-500 transition-all font-mono">676 62 69 33</a>
-                        <a href="tel:+34968179180" className="text-xl font-black text-slate-900 dark:text-white hover:text-emerald-500 transition-all font-mono">968 17 91 80</a>
-                        <a href="tel:+34609008864" className="text-xl font-black text-slate-900 dark:text-white hover:text-emerald-500 transition-all font-mono">609 00 88 64</a>
-                      </div>
+                    <span className="text-slate-500 font-bold text-xs uppercase tracking-widest">{t('ami.cta.sub')}</span>
+                    <div className="flex flex-wrap justify-center lg:justify-start gap-x-8 gap-y-4">
+                      <a href="tel:+34676626933" className="text-2xl font-black text-slate-900 dark:text-white hover:text-emerald-500 transition-all font-mono tracking-tight">676 62 69 33</a>
+                      <a href="tel:+34968179180" className="text-2xl font-black text-slate-900 dark:text-white hover:text-emerald-500 transition-all font-mono tracking-tight">968 17 91 80</a>
+                      <a href="tel:+34609008864" className="text-2xl font-black text-slate-900 dark:text-white hover:text-emerald-500 transition-all font-mono tracking-tight">609 00 88 64</a>
                     </div>
                   </motion.div>
                 </div>
