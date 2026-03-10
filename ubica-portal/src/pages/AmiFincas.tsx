@@ -542,6 +542,44 @@ export default function AmiFincas() {
               ))}
             </div>
 
+            {/* Fun Fact Section */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="mt-24 max-w-4xl mx-auto"
+            >
+              <div className="relative p-8 md:p-10 rounded-[2.5rem] bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 dark:border-emerald-400/10 backdrop-blur-xl overflow-hidden flex flex-col md:flex-row items-center gap-8 group">
+                <div className="absolute inset-0 bg-white/40 dark:bg-black/20 pointer-events-none" />
+                
+                {/* Decorative glowing blob */}
+                <div className="absolute -left-20 -top-20 w-40 h-40 bg-teal-400/20 blur-[50px] rounded-full group-hover:bg-teal-400/30 transition-colors duration-700 pointer-events-none" />
+
+                <div className="relative z-10 w-16 h-16 shrink-0 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-lg border border-emerald-100 dark:border-slate-700/50 rotate-3 group-hover:rotate-6 transition-transform">
+                  <span className="text-3xl">💡</span>
+                </div>
+
+                <div className="relative z-10 flex-1 text-center md:text-left">
+                  <h4 className="text-lg font-black text-emerald-800 dark:text-emerald-400 uppercase tracking-widest mb-2">
+                    Dato Curioso
+                  </h4>
+                  <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+                    ¿Te has fijado en los pequeños logos triangulares que aparecen sobre las islas y los edificios en las imágenes 3D de esta página? Son el sello de <strong className="text-emerald-600 dark:text-emerald-400">Ubica</strong>. AMI Fincas forma parte integral del sólido ecosistema tecnológico de nuestro portal inmobiliario. 
+                    <a 
+                      href="https://ubica.amifincas.es/about" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center ml-2 text-emerald-600 dark:text-emerald-400 hover:text-teal-600 dark:hover:text-teal-300 font-bold underline decoration-emerald-500/30 hover:decoration-teal-500 transition-all underline-offset-4"
+                    >
+                      Descubre más sobre Ubica aquí
+                      <span className="ml-1">→</span>
+                    </a>
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
             {/* Enhanced Large CTA - Asymmetric Glassmorphism Design */}
             <motion.div
               initial={{ opacity: 0, y: 100 }}
