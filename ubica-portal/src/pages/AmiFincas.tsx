@@ -102,6 +102,30 @@ export default function AmiFincas() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Effect to dynamically handle Favicon and Document Title exclusively for this page
+  useEffect(() => {
+    // Save original values
+    const originalTitle = document.title;
+    const faviconNode = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+    const appleIconNode = document.querySelector("link[rel~='apple-touch-icon']") as HTMLLinkElement;
+    
+    const originalFaviconHref = faviconNode?.href;
+    const originalAppleIconHref = appleIconNode?.href;
+
+    // Set new values
+    document.title = "Ami Fincas - Administración de fincas";
+    
+    if (faviconNode) faviconNode.href = "/ami-fincas/favAMI.png";
+    if (appleIconNode) appleIconNode.href = "/ami-fincas/favAMI.png";
+
+    // Cleanup function: Restore original title and icons on unmount (when leaving route)
+    return () => {
+      document.title = originalTitle;
+      if (faviconNode && originalFaviconHref) faviconNode.href = originalFaviconHref;
+      if (appleIconNode && originalAppleIconHref) appleIconNode.href = originalAppleIconHref;
+    };
+  }, []);
+
   const services = [
     {
       icon: BuildingOfficeIcon,
