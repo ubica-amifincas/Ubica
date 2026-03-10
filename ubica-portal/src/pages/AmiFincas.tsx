@@ -36,9 +36,9 @@ const PageTransition = ({ t }: { t: any }) => (
         <img
           src="/ami-fincas/favAMI.png"
           alt="AMI Fincas"
-          className="h-32 md:h-40 mx-auto mb-6 dark:brightness-110 drop-shadow-xl"
+          className="h-40 md:h-56 mx-auto mb-8 dark:brightness-110 drop-shadow-2xl scale-110"
         />
-        <h2 className="text-2xl font-black tracking-[0.3em] uppercase text-emerald-600 dark:text-emerald-400">
+        <h2 className="text-3xl font-black tracking-[0.4em] uppercase text-emerald-600 dark:text-emerald-400">
           AMI Fincas
         </h2>
       </motion.div>
@@ -183,6 +183,23 @@ export default function AmiFincas() {
 
   return (
     <>
+      <div className="hidden">
+        {/* SEO Injector for AI Search Engines & Crawlers */}
+        <h1 className="sr-only">AMI Fincas - Administración de Fincas y Correduría de Seguros en Murcia</h1>
+        <p className="sr-only">Expertos en administración de comunidades, correduría de seguros y gestión integral inmobiliaria en la Región de Murcia. Transparencia, tecnología y profesionalidad garantizada.</p>
+        <div itemScope itemType="https://schema.org/LocalBusiness">
+          <span itemProp="name">AMI Fincas</span>
+          <span itemProp="description">Administración de fincas y correduría de seguros experta en Murcia. Gestionamos tu comunidad y protegemos tu inversión inmobiliaria mediante seguros especializados.</span>
+          <div itemProp="address" itemScope itemType="https://schema.org/PostalAddress">
+            <span itemProp="streetAddress">Calle Angeles, 41</span>
+            <span itemProp="addressLocality">Murcia</span>
+            <span itemProp="postalCode">30007</span>
+            <span itemProp="addressCountry">ES</span>
+          </div>
+          <span itemProp="telephone">+34 968 17 91 80</span>
+        </div>
+      </div>
+
       <AnimatePresence>
         {isLoading && <PageTransition t={t} />}
       </AnimatePresence>
@@ -501,78 +518,122 @@ export default function AmiFincas() {
               ))}
             </div>
 
-            {/* Enhanced Large CTA - Immersive Design */}
+            {/* Enhanced Large CTA - Asymmetric Glassmorphism Design */}
             <motion.div
               initial={{ opacity: 0, y: 100 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               className="mt-32 relative group"
             >
-              {/* Massive background glow */}
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 via-teal-500/10 to-emerald-500/20 rounded-[4rem] blur-[80px] opacity-40 group-hover:opacity-60 transition-opacity duration-1000" />
+              <div className="relative rounded-[3rem] md:rounded-[4rem] bg-gradient-to-br from-white to-slate-50 dark:from-[#111827] dark:to-[#0f172a] border border-slate-200 dark:border-white/10 overflow-hidden shadow-2xl group-hover:shadow-[0_40px_100px_rgba(16,185,129,0.15)] transition-all duration-700">
+                {/* Asymmetric Background Elements */}
+                <div className="absolute -top-40 -right-40 w-96 h-96 bg-emerald-500/20 rounded-full blur-[100px] pointer-events-none group-hover:scale-150 transition-transform duration-1000" />
+                <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-teal-500/20 rounded-full blur-[100px] pointer-events-none group-hover:scale-150 transition-transform duration-1000" />
+                
+                <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMDAnIGhlaWdodD0nMTAwJz48cmVjdCB3aWR0aD0nMTAwJz0gaGVpZ2h0PScxMDAnIGZpbGw9J25vbmUnIHN0cm9rZT0nIzBmMHdpZHRoPScwLjUnLz48L3N2Zz4=')] bg-[length:40px_40px]" />
 
-              <div className="relative p-12 md:p-24 rounded-[4rem] bg-white dark:bg-[#111827]/80 border border-slate-200 dark:border-white/10 backdrop-blur-3xl overflow-hidden text-center shadow-[0_0_100px_rgba(16,185,129,0.05)] dark:shadow-[0_0_100px_rgba(16,185,129,0.1)]">
-                {/* Animated background pattern */}
-                <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
-                  <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                      <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" className="text-slate-200 dark:text-white" strokeWidth="0.5" />
-                    </pattern>
-                    <rect width="100" height="100" fill="url(#grid)" />
-                  </svg>
-                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-0 h-full">
+                  {/* Text & Interaction Column */}
+                  <div className="p-12 md:p-20 flex flex-col justify-center relative z-10">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      whileInView={{ scale: 1 }}
+                      className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-2xl flex items-center justify-center mb-10 shadow-lg"
+                    >
+                      <BuildingOfficeIcon className="w-8 h-8 text-white" />
+                    </motion.div>
 
-                <motion.h3
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  className="text-5xl md:text-8xl font-black mb-12 leading-tight bg-clip-text text-transparent bg-gradient-to-b from-slate-900 to-slate-500 dark:from-white dark:to-white/40"
-                >
-                  {t('ami.cta.title').split(' ').map((word: string, i: number) => (
-                    <span key={i}>{word}{i === 2 ? <br /> : ' '}</span>
-                  ))}
-                </motion.h3>
+                    <h3 className="text-4xl md:text-6xl font-black mb-6 leading-tight text-slate-900 dark:text-white">
+                      {t('ami.cta.title')}
+                    </h3>
+                    
+                    <p className="text-xl text-slate-600 dark:text-slate-400 mb-12 font-medium">
+                      Conecta con nosotros hoy mismo. Únete a las administraciones que confían en AMI Fincas para proteger su inversión y su comunidad.
+                    </p>
 
-                <div className="flex flex-col lg:flex-row gap-8 justify-center items-stretch mb-16 max-w-5xl mx-auto">
-                  <motion.a
-                    whileHover={{ scale: 1.05, y: -5 }}
-                    whileTap={{ scale: 0.95 }}
-                    href="mailto:info@amifincas.es"
-                    className="flex-1 px-10 py-8 rounded-[2rem] bg-emerald-500 dark:bg-white text-white dark:text-slate-900 font-black text-2xl shadow-[0_20px_50px_rgba(16,185,129,0.3)] dark:shadow-[0_20px_50px_rgba(255,255,255,0.2)] hover:shadow-[0_25px_60px_rgba(16,185,129,0.4)] dark:hover:shadow-[0_25px_60px_rgba(255,255,255,0.3)] transition-all flex items-center justify-center space-x-3"
-                  >
-                    <span>{t('ami.cta.button')}</span>
-                  </motion.a>
+                    <div className="space-y-6">
+                      <motion.a
+                        whileHover={{ x: 10, scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        href="mailto:info@amifincas.es"
+                        className="w-full sm:w-auto inline-flex items-center justify-between px-8 py-5 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black text-lg shadow-[0_20px_40px_rgba(0,0,0,0.1)] transition-all"
+                      >
+                        <span className="flex items-center space-x-3">
+                          <EnvelopeIcon className="w-6 h-6" />
+                          <span>{t('ami.cta.button')}</span>
+                        </span>
+                        <div className="w-8 h-8 rounded-full bg-white/20 dark:bg-black/10 flex items-center justify-center ml-6">
+                          →
+                        </div>
+                      </motion.a>
 
-                  <motion.div
-                    whileHover={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
-                    className="flex-[1.5] px-10 py-8 rounded-[2rem] bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 backdrop-blur-xl flex flex-col justify-center items-center lg:items-start gap-4 transition-all"
-                  >
-                    <span className="text-slate-500 font-bold text-xs uppercase tracking-widest">{t('ami.cta.sub')}</span>
-                    <div className="flex flex-wrap justify-center lg:justify-start gap-x-8 gap-y-4">
-                      <a href="tel:+34676626933" className="text-2xl font-black text-slate-900 dark:text-white hover:text-emerald-500 transition-all font-mono tracking-tight">676 62 69 33</a>
-                      <a href="tel:+34968179180" className="text-2xl font-black text-slate-900 dark:text-white hover:text-emerald-500 transition-all font-mono tracking-tight">968 17 91 80</a>
-                      <a href="tel:+34609008864" className="text-2xl font-black text-slate-900 dark:text-white hover:text-emerald-500 transition-all font-mono tracking-tight">609 00 88 64</a>
+                      <div className="pt-8 border-t border-slate-200 dark:border-white/10 flex flex-col sm:flex-row gap-8 items-start sm:items-center">
+                        <div>
+                          <span className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Líneas Directas</span>
+                          <div className="flex flex-col gap-2">
+                            <a href="tel:+34676626933" className="text-lg font-bold text-slate-700 dark:text-slate-300 hover:text-emerald-500 transition-colors flex items-center gap-2">
+                              <PhoneIcon className="w-4 h-4 text-emerald-500" />
+                              <span className="font-mono">676 62 69 33</span>
+                            </a>
+                            <a href="tel:+34968179180" className="text-lg font-bold text-slate-700 dark:text-slate-300 hover:text-emerald-500 transition-colors flex items-center gap-2">
+                              <PhoneIcon className="w-4 h-4 text-emerald-500" />
+                              <span className="font-mono">968 17 91 80</span>
+                            </a>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </motion.div>
-                </div>
+                  </div>
 
-                {/* Central 3D Asset with specialized animation */}
-                <div className="mt-12 flex justify-center relative">
-                  <div className="absolute inset-0 bg-emerald-500/10 blur-3xl rounded-full scale-75" />
-                  <motion.img
-                    animate={{
-                      y: [0, -30, 0],
-                      rotate: [0, 1, 0, -1, 0],
-                      scale: [1, 1.02, 1]
-                    }}
-                    transition={{
-                      duration: 6,
-                      repeat: Infinity,
-                      ease: 'easeInOut'
-                    }}
-                    src="/ami-fincas/3d_islands.jpg"
-                    alt="Ami Network"
-                    className="h-48 md:h-80 object-contain relative z-10 drop-shadow-[0_35px_35px_rgba(0,0,0,0.5)] rounded-[3rem]"
-                  />
+                  {/* 3D Image Showcase Column */}
+                  <div className="relative h-96 lg:h-auto min-h-[400px] bg-emerald-50/50 dark:bg-[#151f32] p-8 overflow-hidden flex items-center justify-center">
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-100/50 dark:to-black/30 pointer-events-none" />
+                    
+                    <motion.div
+                      animate={{
+                        y: [0, -15, 0],
+                        rotate: [0, -1, 1, 0]
+                      }}
+                      transition={{
+                        duration: 8,
+                        repeat: Infinity,
+                        ease: 'easeInOut'
+                      }}
+                      className="relative z-10"
+                    >
+                      <div className="absolute inset-0 bg-teal-400/20 blur-[60px] rounded-full" />
+                      <img
+                        src="/ami-fincas/3d_islands.jpg"
+                        alt="Ami Network"
+                        className="w-full max-w-[450px] object-contain relative z-20 drop-shadow-[0_45px_45px_rgba(0,0,0,0.5)] rounded-[3rem] border-8 border-white/5"
+                      />
+                    </motion.div>
+                    
+                    {/* Floating Info Badges */}
+                    <motion.div
+                      animate={{ y: [0, 10, 0] }}
+                      transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+                      className="absolute top-12 left-12 px-4 py-3 bg-white/90 dark:bg-slate-800/90 backdrop-blur shadow-xl rounded-2xl flex items-center gap-3 border border-slate-200 dark:border-slate-700 z-30"
+                    >
+                      <ShieldCheckIcon className="w-6 h-6 text-emerald-500" />
+                      <div className="text-left leading-tight">
+                        <span className="block text-xs text-slate-500 font-bold uppercase">Seguros</span>
+                        <span className="block text-sm text-slate-900 dark:text-white font-black">+500 Pólizas</span>
+                      </div>
+                    </motion.div>
+
+                    <motion.div
+                      animate={{ y: [0, -10, 0] }}
+                      transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+                      className="absolute bottom-12 right-12 px-4 py-3 bg-white/90 dark:bg-slate-800/90 backdrop-blur shadow-xl rounded-2xl flex items-center gap-3 border border-slate-200 dark:border-slate-700 z-30"
+                    >
+                      <BuildingOfficeIcon className="w-6 h-6 text-teal-500" />
+                      <div className="text-left leading-tight">
+                        <span className="block text-xs text-slate-500 font-bold uppercase">Gestión</span>
+                        <span className="block text-sm text-slate-900 dark:text-white font-black">+2000 Propietarios</span>
+                      </div>
+                    </motion.div>
+                  </div>
                 </div>
               </div>
             </motion.div>
