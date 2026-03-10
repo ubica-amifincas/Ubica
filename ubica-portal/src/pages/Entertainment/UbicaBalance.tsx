@@ -42,7 +42,7 @@ function BasePlatform() {
 }
 
 // 2. Construction Drone (Replaces Crane)
-function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed }: { onDrop: (x: number, z: number, y: number) => void, isSpawning: boolean, targetY: number, difficultySpeed: number }) {
+function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextColor }: { onDrop: (x: number, z: number, y: number) => void, isSpawning: boolean, targetY: number, difficultySpeed: number, nextColor: string }) {
     const groupRef = useRef<THREE.Group>(null);
     const laserRef = useRef<THREE.Mesh>(null);
     const ringRef = useRef<THREE.Mesh>(null);
@@ -80,7 +80,8 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed }: { o
             if ((e.target as HTMLElement).tagName.toLowerCase() === 'a' || (e.target as HTMLElement).closest('a')) return;
 
             if (!isSpawning && groupRef.current) {
-                onDrop(groupRef.current.position.x, groupRef.current.position.z, groupRef.current.position.y);
+                // Drop from the hook's Y position
+                onDrop(groupRef.current.position.x, groupRef.current.position.z, groupRef.current.position.y - 2.6);
             }
         };
 
@@ -90,25 +91,85 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed }: { o
 
     return (
         <group ref={groupRef}>
-            {/* Main Body */}
-            <mesh castShadow>
-                <cylinderGeometry args={[0.8, 0.6, 0.4, 16]} />
+            {/* Main Body Core */}
+            <mesh castShadow position={[0, 0, 0]}>
+                <boxGeometry args={[1.2, 0.4, 1.2]} />
                 <meshStandardMaterial color="#1e293b" metalness={0.8} roughness={0.2} />
+                <Edges scale={1} threshold={15} color="#0f172a" />
+            </mesh>
+
+            {/* Top dome */}
+            <mesh position={[0, 0.2, 0]}>
+                <cylinderGeometry args={[0.4, 0.4, 0.2, 16]} />
+                <meshStandardMaterial color="#0f172a" metalness={0.9} roughness={0.1} />
             </mesh>
             
             {/* Glowing Ring */}
-            <mesh ref={ringRef}>
-                <torusGeometry args={[1, 0.05, 16, 32]} />
-                <meshStandardMaterial color={isSpawning ? "#ef4444" : "#10b981"} emissive={isSpawning ? "#ef4444" : "#10b981"} emissiveIntensity={2} />
+            <mesh ref={ringRef} position={[0, -0.21, 0]} rotation={[Math.PI/2, 0, 0]}>
+                <torusGeometry args={[0.3, 0.05, 16, 32]} />
+                <meshStandardMaterial color={isSpawning ? "#ef4444" : "#10b981"} emissive={isSpawning ? "#ef4444" : "#10b981"} emissiveIntensity={3} toneMapped={false} />
             </mesh>
 
-            {/* Rotors */}
-            {[0, Math.PI/2, Math.PI, Math.PI*1.5].map((rot, i) => (
-                <mesh key={i} position={[Math.cos(rot)*1.1, 0.1, Math.sin(rot)*1.1]} rotation={[0, 0, 0]}>
-                    <cylinderGeometry args={[0.25, 0.25, 0.05, 16]} />
-                    <meshStandardMaterial color="#334155" metalness={0.5} roughness={0.5}/>
-                </mesh>
+            {/* Arms & Rotors */}
+            {[[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([x, z], i) => (
+                <group key={i} position={[x * 0.8, 0, z * 0.8]}>
+                    {/* Arm connecting to body */}
+                    <mesh castShadow position={[-x * 0.15, 0, -z * 0.15]} rotation={[0, Math.atan2(x, z), 0]}>
+                        <boxGeometry args={[0.1, 0.1, 0.6]} />
+                        <meshStandardMaterial color="#334155" metalness={0.6} roughness={0.4} />
+                    </mesh>
+                    {/* Rotor Motor */}
+                    <mesh castShadow position={[0, 0.1, 0]}>
+                        <cylinderGeometry args={[0.15, 0.15, 0.2, 16]} />
+                        <meshStandardMaterial color="#0f172a" metalness={0.8} roughness={0.2} />
+                    </mesh>
+                    {/* Propeller */}
+                    <mesh position={[0, 0.25, 0]}>
+                        <cylinderGeometry args={[0.4, 0.4, 0.02, 16]} />
+                        <meshStandardMaterial color="#cbd5e1" transparent opacity={0.6} metalness={0.5} roughness={0.2} />
+                    </mesh>
+                </group>
             ))}
+
+            {/* Cable & Hook */}
+            <mesh position={[0, -1, 0]}>
+                <cylinderGeometry args={[0.02, 0.02, 2, 8]} />
+                <meshStandardMaterial color="#64748b" metalness={0.8} roughness={0.2} />
+            </mesh>
+            
+            {/* Claw Base */}
+            <mesh position={[0, -2, 0]}>
+                <boxGeometry args={[0.6, 0.1, 0.6]} />
+                <meshStandardMaterial color="#1e293b" metalness={0.8} roughness={0.2} />
+            </mesh>
+            {/* Claw Arms */}
+            <mesh position={[0.3, -2.1, 0]} rotation={[0, 0, -Math.PI/8]}>
+                <boxGeometry args={[0.05, 0.3, 0.4]} />
+                <meshStandardMaterial color="#ef4444" metalness={0.5} roughness={0.5} />
+            </mesh>
+            <mesh position={[-0.3, -2.1, 0]} rotation={[0, 0, Math.PI/8]}>
+                <boxGeometry args={[0.05, 0.3, 0.4]} />
+                <meshStandardMaterial color="#ef4444" metalness={0.5} roughness={0.5} />
+            </mesh>
+
+            {/* Held Block Visually */}
+            {!isSpawning && (
+                 <group position={[0, -2.6, 0]}>
+                     <mesh castShadow receiveShadow>
+                        <boxGeometry args={[1.5, 1, 1.5]} />
+                        <meshStandardMaterial color={nextColor} roughness={0.7} metalness={0.2} />
+                        <Edges scale={1} threshold={15} color="#0f172a" />
+                        <mesh position={[0, 0, 0.751]}>
+                            <planeGeometry args={[1.2, 0.6]} />
+                            <meshBasicMaterial color="#ffffff" opacity={0.2} transparent />
+                        </mesh>
+                        <mesh position={[0, 0, -0.751]} rotation={[0, Math.PI, 0]}>
+                            <planeGeometry args={[1.2, 0.6]} />
+                            <meshBasicMaterial color="#ffffff" opacity={0.2} transparent />
+                        </mesh>
+                    </mesh>
+                 </group>
+            )}
 
             {/* Holographic Laser */}
             <mesh ref={laserRef} position={[0, -10, 0]}>
@@ -193,6 +254,7 @@ export default function UbicaBalance() {
     const [comboMultiplier, setComboMultiplier] = useState(1);
     const [difficultySpeed, setDifficultySpeed] = useState(1);
     const [scoreAnimation, setScoreAnimation] = useState(false);
+    const [nextColor, setNextColor] = useState(() => BLOCK_COLORS[Math.floor(Math.random() * BLOCK_COLORS.length)]);
 
     useEffect(() => {
         if (score > bestScore) {
@@ -239,7 +301,7 @@ export default function UbicaBalance() {
         const newBlock: BlockData = {
             id: `block-${Date.now()}`,
             position: [x, y, z],
-            color: BLOCK_COLORS[Math.floor(Math.random() * BLOCK_COLORS.length)],
+            color: nextColor,
             type: 'building'
         };
 
@@ -259,8 +321,9 @@ export default function UbicaBalance() {
 
         setTimeout(() => {
             setIsSpawning(false);
+            setNextColor(BLOCK_COLORS[Math.floor(Math.random() * BLOCK_COLORS.length)]);
         }, 800);
-    }, [gameOver, isSpawning, comboMultiplier]);
+    }, [gameOver, isSpawning, comboMultiplier, nextColor]);
 
     const restartGame = () => {
         setBlocks([]);
@@ -271,6 +334,7 @@ export default function UbicaBalance() {
         setComboMultiplier(1);
         setComboText("");
         setDifficultySpeed(1);
+        setNextColor(BLOCK_COLORS[Math.floor(Math.random() * BLOCK_COLORS.length)]);
     };
 
     if (!user) {
@@ -302,7 +366,7 @@ export default function UbicaBalance() {
     }
 
     return (
-        <div className="w-full h-screen relative bg-gradient-to-b from-[#0f172a] via-[#1e293b] to-[#334155] overflow-hidden font-sans select-none touch-none">
+        <div className="w-full h-screen relative bg-slate-900 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-950 overflow-hidden font-sans select-none touch-none">
 
             {/* HUD & UI - Rediseñado y responsivo */}
             <div className="absolute top-0 left-0 w-full p-4 md:p-6 flex flex-wrap gap-4 justify-between items-start z-10 pointer-events-none">
@@ -437,7 +501,7 @@ export default function UbicaBalance() {
                 </Physics>
 
                 {!gameOver && (
-                    <ConstructionDrone onDrop={handleDrop} isSpawning={isSpawning} targetY={highestY} difficultySpeed={difficultySpeed} />
+                    <ConstructionDrone onDrop={handleDrop} isSpawning={isSpawning} targetY={highestY} difficultySpeed={difficultySpeed} nextColor={nextColor} />
                 )}
 
                 <ContactShadows position={[0, -0.49, 0]} opacity={0.5} scale={20} blur={2.5} far={10} color="#000000" />

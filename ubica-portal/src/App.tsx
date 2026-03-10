@@ -106,19 +106,21 @@ function AppRoutes() {
             <Route path="entretenimiento" element={<EntertainmentHub />} />
             <Route path="entretenimiento/tasador" element={<TasadorExpress />} />
             <Route path="entretenimiento/puzzle" element={<UbicaPuzzle />} />
-            <Route path="entretenimiento/balance" element={
-              <Suspense fallback={
-                <div className="min-h-screen flex items-center justify-center bg-slate-900">
-                  <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
-                    <p className="text-emerald-400 font-bold">Cargando motor 3D...</p>
-                  </div>
-                </div>
-              }>
-                <UbicaBalance />
-              </Suspense>
-            } />
           </Route>
+
+          {/* Fullscreen Games (Outside MainLayout) */}
+          <Route path="/entretenimiento/balance" element={
+            <Suspense fallback={
+              <div className="min-h-screen flex items-center justify-center bg-slate-900">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
+                  <p className="text-emerald-400 font-bold">Cargando motor 3D...</p>
+                </div>
+              </div>
+            }>
+              <UbicaBalance />
+            </Suspense>
+          } />
 
           {/* Auth Routes */}
           <Route path="/login" element={<AuthPage />} />
