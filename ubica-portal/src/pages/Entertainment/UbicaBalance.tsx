@@ -626,7 +626,6 @@ export default function UbicaBalance() {
             {/* 3D RENDER ENGINE */}
             <Canvas shadows dpr={[1, 2]} camera={{ position: [0, 8, 12], fov: 50 }}>
                 {/* Entorno y Luces Atmosféricas */}
-                <color attach="background" args={['transparent']} />
 
                 <ambientLight intensity={0.4} />
                 <directionalLight
