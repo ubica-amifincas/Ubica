@@ -357,85 +357,90 @@ export default function AmiFincas() {
         <section id="servicios" className="py-32 relative">
           <div className="absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-500/5 rounded-full blur-[100px]" />
 
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col lg:flex-row gap-20 items-center">
-              {/* Left: Gears 3D Image */}
-              <div className="lg:w-1/2 order-2 lg:order-1 relative z-10">
-                <motion.div
-                  initial={{ opacity: 0, x: -30 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  style={{ y: yParallaxMedium }}
-                  className="relative group block"
-                >
-                  <div className="absolute inset-0 bg-teal-500/10 rounded-[3rem] blur-3xl group-hover:bg-teal-500/20 transition-all duration-700" />
-                  <img
-                    src="/ami-fincas/3d_gears.jpg"
-                    alt="3D Property Mechanics"
-                    className="w-full h-auto rounded-[3rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] border border-white/5 group-hover:rotate-1 group-hover:scale-105 transition-all duration-700 pointer-events-auto"
-                  />
-                </motion.div>
-              </div>
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-[1400px]">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center mb-16 relative z-20"
+            >
+              <h2 className="text-emerald-500 font-black tracking-[0.2em] uppercase text-sm mb-4">{t('ami.services.badge')}</h2>
+              <h3 className="text-4xl md:text-5xl font-black mb-6">{t('ami.services.title')}</h3>
+              <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed max-w-3xl mx-auto">
+                {t('ami.services.description')}
+              </p>
+            </motion.div>
 
-              {/* Right: Service Cards */}
-              <div className="lg:w-1/2 order-1 lg:order-2">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  className="mb-12"
-                >
-                  <h2 className="text-emerald-500 font-black tracking-[0.2em] uppercase text-sm mb-4">{t('ami.services.badge')}</h2>
-                  <h3 className="text-4xl md:text-5xl font-black mb-6">{t('ami.services.title')}</h3>
-                  <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed">
-                    {t('ami.services.description')}
-                  </p>
-                </motion.div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-20 md:auto-rows-[1fr]">
-                  {services.map((service, index) => {
-                    let bentoClass = "";
-                    if (index === 1) bentoClass = "md:row-span-2";
-                    else if (index === 5) bentoClass = "md:col-span-2";
-                    else bentoClass = "md:col-span-1";
-
-                    return (
-                    <motion.div
-                      key={service.title}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      whileInView={{ opacity: 1, scale: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: index * 0.1 }}
-                      className={`
-                        p-6 md:p-8 flex flex-col justify-center rounded-[2rem] border shadow-sm transition-all duration-300 group overflow-hidden relative
-                        ${bentoClass}
-                        ${service.highlight 
-                          ? 'bg-gradient-to-br from-white to-emerald-50 dark:from-slate-800 dark:to-slate-900 border-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.15)] hover:shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:-translate-y-1' 
-                          : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/10 hover:border-emerald-500/50 dark:shadow-none hover:-translate-y-1'
-                        }
-                      `}
-                    >
-                      {/* Glow effect that tracks the mouse - approximated with CSS center radial gradient */}
-                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.1)_0%,transparent_70%)] pointer-events-none" />
-
-                      <div className="flex items-center justify-between mb-4">
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-lg ${service.highlight ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-[#A2D18D] to-[#2D8A9D]'}`}>
-                          <service.icon className="w-6 h-6" />
-                        </div>
-                        {service.highlight && (
-                          <div className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xs font-black uppercase rounded-full shadow-inner flex items-center space-x-1 animate-pulse">
-                            <SparklesIcon className="w-3 h-3" />
-                            <span>Nuevo</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <h4 className="text-lg font-bold mb-2">{service.title}</h4>
-                      <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">{service.description}</p>
-                    </motion.div>
-                  )})}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 relative z-20">
+              
+              {/* Image Bento Item */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                className="col-span-1 md:col-span-2 md:row-span-2 relative group rounded-[2rem] overflow-hidden shadow-sm border border-slate-200 dark:border-white/5 bg-slate-100 dark:bg-slate-800/50 min-h-[350px] md:min-h-0"
+              >
+                <div className="absolute inset-0 bg-teal-500/10 blur-3xl group-hover:bg-teal-500/20 transition-all duration-700 z-0" />
+                <img
+                  src="/ami-fincas/3d_gears.jpg"
+                  alt="3D Property Mechanics"
+                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 relative z-10"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-20 pointer-events-none" />
+                <div className="absolute bottom-8 left-8 right-8 z-30 pointer-events-none">
+                  <span className="text-white/80 font-bold uppercase tracking-widest text-xs mb-2 block">El Motor de tu Inversión</span>
+                  <span className="text-white font-black text-2xl md:text-3xl drop-shadow-lg leading-tight">La maquinaria de gestión perfecta.</span>
                 </div>
-              </div>
+              </motion.div>
+
+              {/* Service Cards */}
+              {services.map((service, index) => {
+                let bentoClass = "";
+                if (index === 0) bentoClass = "col-span-1";
+                else if (index === 1) bentoClass = "col-span-1 md:row-span-2";
+                else if (index === 2) bentoClass = "col-span-1";
+                else if (index === 3) bentoClass = "col-span-1";
+                else if (index === 4) bentoClass = "col-span-1";
+                else if (index === 5) bentoClass = "col-span-1 md:col-span-2";
+
+                return (
+                  <motion.div
+                    key={service.title}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.1 }}
+                    className={`
+                      p-6 md:p-8 flex flex-col rounded-[2rem] border shadow-sm transition-all duration-300 group overflow-hidden relative
+                      ${bentoClass}
+                      ${service.highlight 
+                        ? 'bg-gradient-to-br from-white to-emerald-50 dark:from-slate-800 dark:to-slate-900 border-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.15)] hover:shadow-[0_0_40px_rgba(16,185,129,0.3)] hover:-translate-y-1' 
+                        : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/10 hover:border-emerald-500/50 dark:shadow-none hover:-translate-y-1'
+                      }
+                    `}
+                  >
+                    {/* Glow effect that tracks the mouse - approximated with CSS center radial gradient */}
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.1)_0%,transparent_70%)] pointer-events-none" />
+
+                    <div className="flex items-center justify-between mb-4 mt-auto md:max-w-[70%] lg:max-w-full">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-lg shrink-0 ${service.highlight ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-[#A2D18D] to-[#2D8A9D]'}`}>
+                        <service.icon className="w-6 h-6" />
+                      </div>
+                      {service.highlight && (
+                        <div className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xs font-black uppercase rounded-full shadow-inner flex items-center space-x-1 animate-pulse shrink-0">
+                          <SparklesIcon className="w-3 h-3" />
+                          <span>Nuevo</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <h4 className="text-xl font-bold mb-3 mt-4">{service.title}</h4>
+                      <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base leading-relaxed">{service.description}</p>
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
           </div>
         </section>
