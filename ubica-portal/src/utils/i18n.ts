@@ -511,8 +511,8 @@ const resources = {
       "ami.services.item4.desc": "Selección, comunicación y atención personalizada a inquilinos para garantizar una convivencia armoniosa.",
       "ami.services.item5.title": "Contabilidad y Reclamaciones",
       "ami.services.item5.desc": "Control financiero completo, reportes detallados y gestión de cobros y pagos de manera profesional.",
-      "ami.services.item6.title": "Seguros y Asesoría",
-      "ami.services.item6.desc": "Protegemos tu inversión con los mejores seguros de impago y hogar del mercado.",
+      "ami.services.item6.title": "Correduría de Seguros",
+      "ami.services.item6.desc": "Protegemos tu inversión con nuestro propio servicio de correduría, adaptando los mejores seguros a las necesidades de tu hogar y comunidad.",
 
       "ami.benefits.title": "Compromiso y profesionalidad para cada cliente",
       "ami.benefits.description": "En AMI Fincas, creemos en una gestión transparente y directa. No somos solo administradores, somos tus aliados en la protección y mantenimiento de tu mayor activo: tu hogar.",
@@ -1176,8 +1176,8 @@ const resources = {
       "ami.services.item4.desc": "Selection, communication, and personalized attention to tenants to ensure harmonious coexistence.",
       "ami.services.item5.title": "Accounting and Claims",
       "ami.services.item5.desc": "Complete financial control, detailed reports, and professional management of collections and payments.",
-      "ami.services.item6.title": "Insurance and Advisory",
-      "ami.services.item6.desc": "We protect your investment with the best default and home insurance on the market.",
+      "ami.services.item6.title": "Insurance Brokerage",
+      "ami.services.item6.desc": "We protect your investment with our own brokerage service, tailoring the best insurance policies to the needs of your home and community.",
 
       "ami.benefits.title": "Commitment and professionalism for each client",
       "ami.benefits.description": "At AMI Fincas, we believe in transparent and direct management. We're not just managers; we're your allies in protecting and maintaining your greatest asset: your home.",

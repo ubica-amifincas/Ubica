@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useScroll, useTransform, useInView, animate } from 'framer-motion';
 import {
   BuildingOfficeIcon,
   WrenchScrewdriverIcon,
@@ -11,7 +11,8 @@ import {
   StarIcon,
   MapPinIcon,
   ClockIcon,
-  ShieldCheckIcon
+  ShieldCheckIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
 import { useLanguage } from '../hooks/useLanguage';
 
@@ -65,6 +66,34 @@ const PageTransition = ({ t }: { t: any }) => (
 export default function AmiFincas() {
   const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Parallax configuration hooks
+  const { scrollYProgress } = useScroll();
+  const yParallaxHeavy = useTransform(scrollYProgress, [0, 1], [0, -250]);
+  const yParallaxMedium = useTransform(scrollYProgress, [0, 1], [0, -150]);
+  const yParallaxLight = useTransform(scrollYProgress, [0, 1], [0, -80]);
+
+  // Framer-motion counter logic component
+  const Counter = ({ from, to, duration = 2 }: { from: number; to: number; duration?: number }) => {
+    const nodeRef = useRef<HTMLSpanElement>(null);
+    const inView = useInView(nodeRef, { once: true, margin: "-100px" });
+
+    useEffect(() => {
+      const node = nodeRef.current;
+      if (node && inView) {
+        const controls = animate(from, to, {
+          duration: duration,
+          ease: "easeOut",
+          onUpdate(value) {
+            node.textContent = Math.round(value).toString();
+          },
+        });
+        return () => controls.stop();
+      }
+    }, [from, to, duration, inView]);
+
+    return <span ref={nodeRef} />;
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -102,7 +131,8 @@ export default function AmiFincas() {
     {
       icon: ShieldCheckIcon,
       title: t('ami.services.item6.title'),
-      description: t('ami.services.item6.desc')
+      description: t('ami.services.item6.desc'),
+      highlight: true
     }
   ];
 
@@ -131,6 +161,25 @@ export default function AmiFincas() {
       mapUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3143.9!2d-0.78!3d37.83!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd63!2sC.%20Panam%C3%A1%2C%202A%2C%2030740%20San%20Pedro%20del%20Pinatar!5e0!3m2!1ses!2ses!4v1620000000000!5m2!1ses!2ses'
     }
   ];
+
+  const MapIframe = ({ src }: { src: string }) => {
+    const [mapLoaded, setMapLoaded] = useState(false);
+    return (
+      <>
+        {!mapLoaded && (
+          <div className="absolute inset-0 bg-slate-200 dark:bg-slate-800 animate-pulse flex items-center justify-center -z-0">
+            <span className="text-slate-400 font-medium">Cargando mapa...</span>
+          </div>
+        )}
+        <iframe
+          src={src}
+          onLoad={() => setMapLoaded(true)}
+          className={`w-full h-full border-0 absolute z-10 grayscale dark:invert filter opacity-50 contrast-125 group-hover:opacity-80 group-hover:grayscale-0 dark:group-hover:invert-0 transition-all duration-700 ${mapLoaded ? 'visible' : 'invisible'}`}
+          loading="lazy"
+        />
+      </>
+    );
+  };
 
   return (
     <>
@@ -163,7 +212,7 @@ export default function AmiFincas() {
                   <img
                     src="/ami-fincas/favAMI.png"
                     alt="AMI Fincas Logo"
-                    className="h-28 md:h-36 w-auto object-contain brightness-110"
+                    className="h-32 md:h-48 w-auto object-contain font-black brightness-110 drop-shadow-xl"
                   />
                 </motion.div>
 
@@ -212,6 +261,7 @@ export default function AmiFincas() {
                 initial={{ opacity: 0, rotate: 5, scale: 0.8 }}
                 animate={{ opacity: 1, rotate: 0, scale: 1 }}
                 transition={{ delay: 0.4, duration: 1, type: 'spring' }}
+                style={{ y: yParallaxLight }}
                 className="flex-1 relative group"
               >
                 <div className="relative z-10 w-full max-w-[550px] mx-auto">
@@ -220,7 +270,7 @@ export default function AmiFincas() {
                   <img
                     src="/ami-fincas/3d_warm.jpg"
                     alt="3D Floating Real Estate Island"
-                    className="w-full h-auto drop-shadow-[0_35px_35px_rgba(0,0,0,0.6)] group-hover:rotate-1 transition-transform duration-700 pointer-events-none rounded-[3rem]"
+                    className="w-full h-auto drop-shadow-[0_45px_45px_rgba(0,0,0,0.6)] group-hover:rotate-2 group-hover:scale-105 group-hover:drop-shadow-[0_55px_55px_rgba(16,185,129,0.3)] transition-all duration-700 pointer-events-auto rounded-[3rem]"
                   />
 
                   <motion.div
@@ -237,20 +287,26 @@ export default function AmiFincas() {
         </div>
 
         {/* Stats/Ticker Section */}
-        <div className="py-12 bg-slate-100 dark:bg-white/5 border-y border-slate-200 dark:border-white/5 backdrop-blur-sm">
+        <div className="py-12 bg-slate-100 dark:bg-white/5 border-y border-slate-200 dark:border-white/5 backdrop-blur-sm relative z-20 shadow-[-10px_-20px_40px_rgba(0,0,0,0.1)]">
           <div className="container mx-auto px-4 overflow-hidden">
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-12 md:gap-24 opacity-60 grayscale hover:grayscale-0 transition-all">
-              <div className="flex items-center space-x-3">
-                <span className="text-3xl font-black">+10</span>
-                <span className="text-xs font-bold uppercase tracking-widest leading-tight">{t('ami.stats.years').split(' ').map((word: string, i: number) => <span key={i}>{word}{i === 1 ? <br /> : ' '}</span>)}</span>
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-12 md:gap-24 opacity-80 transition-all">
+              <div className="flex items-center space-x-3 group">
+                <span className="text-4xl font-black text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
+                  +<Counter from={0} to={10} duration={2.5} />
+                </span>
+                <span className="text-xs font-bold uppercase tracking-widest leading-tight text-slate-500 dark:text-slate-400">{t('ami.stats.years').split(' ').map((word: string, i: number) => <span key={i}>{word}{i === 1 ? <br /> : ' '}</span>)}</span>
               </div>
-              <div className="flex items-center space-x-3">
-                <span className="text-3xl font-black">2</span>
-                <span className="text-xs font-bold uppercase tracking-widest leading-tight">{t('ami.stats.offices').split(' ').map((word: string, i: number) => <span key={i}>{word}{i === 0 ? <br /> : ' '}</span>)}</span>
+              <div className="flex items-center space-x-3 group">
+                <span className="text-4xl font-black text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
+                  <Counter from={0} to={2} duration={1.5} />
+                </span>
+                <span className="text-xs font-bold uppercase tracking-widest leading-tight text-slate-500 dark:text-slate-400">{t('ami.stats.offices').split(' ').map((word: string, i: number) => <span key={i}>{word}{i === 0 ? <br /> : ' '}</span>)}</span>
               </div>
-              <div className="flex items-center space-x-3">
-                <span className="text-3xl font-black">100%</span>
-                <span className="text-xs font-bold uppercase tracking-widest leading-tight">{t('ami.stats.digital').split(' ').map((word: string, i: number) => <span key={i}>{word}{i === 0 ? <br /> : ' '}</span>)}</span>
+              <div className="flex items-center space-x-3 group">
+                <span className="text-4xl font-black text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
+                  <Counter from={0} to={100} duration={3} />%
+                </span>
+                <span className="text-xs font-bold uppercase tracking-widest leading-tight text-slate-500 dark:text-slate-400">{t('ami.stats.digital').split(' ').map((word: string, i: number) => <span key={i}>{word}{i === 0 ? <br /> : ' '}</span>)}</span>
               </div>
             </div>
           </div>
@@ -263,18 +319,19 @@ export default function AmiFincas() {
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col lg:flex-row gap-20 items-center">
               {/* Left: Gears 3D Image */}
-              <div className="lg:w-1/2 order-2 lg:order-1">
+              <div className="lg:w-1/2 order-2 lg:order-1 relative z-10">
                 <motion.div
                   initial={{ opacity: 0, x: -30 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
-                  className="relative"
+                  style={{ y: yParallaxMedium }}
+                  className="relative group block"
                 >
-                  <div className="absolute inset-0 bg-teal-500/10 rounded-[3rem] blur-3xl" />
+                  <div className="absolute inset-0 bg-teal-500/10 rounded-[3rem] blur-3xl group-hover:bg-teal-500/20 transition-all duration-700" />
                   <img
                     src="/ami-fincas/3d_gears.jpg"
                     alt="3D Property Mechanics"
-                    className="w-full h-auto rounded-[3rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] border border-white/5"
+                    className="w-full h-auto rounded-[3rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] border border-white/5 group-hover:rotate-1 group-hover:scale-105 transition-all duration-700 pointer-events-auto"
                   />
                 </motion.div>
               </div>
@@ -294,7 +351,7 @@ export default function AmiFincas() {
                   </p>
                 </motion.div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 relative z-20">
                   {services.map((service, index) => (
                     <motion.div
                       key={service.title}
@@ -302,13 +359,31 @@ export default function AmiFincas() {
                       whileInView={{ opacity: 1, scale: 1 }}
                       viewport={{ once: true }}
                       transition={{ delay: index * 0.1 }}
-                      className="p-6 rounded-[2rem] bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/10 hover:border-emerald-500/30 shadow-sm dark:shadow-none transition-all group"
+                      className={`
+                        p-6 rounded-[2rem] border shadow-sm transition-all duration-300 group overflow-hidden relative
+                        ${service.highlight 
+                          ? 'bg-gradient-to-br from-white to-emerald-50 dark:from-slate-800 dark:to-slate-900 border-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.15)] hover:shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:-translate-y-1' 
+                          : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/10 hover:border-emerald-500/50 dark:shadow-none hover:-translate-y-1'
+                        }
+                      `}
                     >
-                      <div className="w-12 h-12 mb-4 rounded-xl bg-gradient-to-br from-[#A2D18D] to-[#2D8A9D] flex items-center justify-center text-white group-hover:scale-110 transition-transform">
-                        <service.icon className="w-6 h-6" />
+                      {/* Glow effect that tracks the mouse - approximated with CSS center radial gradient */}
+                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.1)_0%,transparent_70%)] pointer-events-none" />
+
+                      <div className="flex items-center justify-between mb-4">
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-lg ${service.highlight ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-[#A2D18D] to-[#2D8A9D]'}`}>
+                          <service.icon className="w-6 h-6" />
+                        </div>
+                        {service.highlight && (
+                          <div className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xs font-black uppercase rounded-full shadow-inner flex items-center space-x-1 animate-pulse">
+                            <SparklesIcon className="w-3 h-3" />
+                            <span>Nuevo</span>
+                          </div>
+                        )}
                       </div>
+                      
                       <h4 className="text-lg font-bold mb-2">{service.title}</h4>
-                      <p className="text-slate-600 dark:text-slate-500 text-sm leading-relaxed">{service.description}</p>
+                      <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">{service.description}</p>
                     </motion.div>
                   ))}
                 </div>
@@ -354,16 +429,18 @@ export default function AmiFincas() {
                 </motion.div>
               </div>
 
-              <div className="flex-1">
+              <div className="flex-1 relative z-20">
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
                   whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                   viewport={{ once: true }}
+                  style={{ y: yParallaxHeavy }}
+                  className="group"
                 >
                   <img
                     src="/ami-fincas/3d_circular.jpg"
                     alt="Success Growth 3D"
-                    className="w-full max-w-[500px] mx-auto drop-shadow-[0_40px_40px_rgba(16,185,129,0.2)] rounded-[3rem]"
+                    className="w-full max-w-[500px] mx-auto drop-shadow-[0_40px_40px_rgba(16,185,129,0.2)] rounded-[3rem] group-hover:-rotate-3 group-hover:scale-105 transition-all duration-1000"
                   />
                 </motion.div>
               </div>
@@ -390,13 +467,9 @@ export default function AmiFincas() {
                   transition={{ delay: idx * 0.2 }}
                   className="group relative bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-[3rem] overflow-hidden hover:border-emerald-500/50 transition-all duration-500 shadow-xl dark:shadow-2xl"
                 >
-                  <div className="h-64 md:h-80 relative overflow-hidden">
-                    <iframe
-                      src={office.mapUrl}
-                      className="w-full h-full border-0 absolute grayscale dark:invert filter opacity-50 contrast-125 group-hover:opacity-80 group-hover:grayscale-0 dark:group-hover:invert-0 transition-all duration-700"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-[#0a0f1c] via-transparent to-transparent" />
+                  <div className="h-64 md:h-80 relative overflow-hidden bg-slate-100 dark:bg-slate-800">
+                    <MapIframe src={office.mapUrl} />
+                    <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-[#0a0f1c] via-transparent to-transparent pointer-events-none z-20" />
                   </div>
 
                   <div className="p-10 relative">
