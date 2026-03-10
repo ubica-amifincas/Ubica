@@ -397,10 +397,15 @@ export default function PropertyDetail() {
                   <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white mb-2 leading-tight">
                     {property.title}
                   </h1>
-                  <div className="flex items-center text-gray-500 dark:text-gray-400">
-                    <MapPinIcon className="h-4 w-4 mr-1.5 text-emerald-500" />
-                    <span className="text-sm md:text-base font-medium">{property.address}</span>
-                  </div>
+                  <a 
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property.address)}`}
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors group"
+                  >
+                    <MapPinIcon className="h-4 w-4 mr-1.5 text-emerald-500 group-hover:animate-bounce" />
+                    <span className="text-sm md:text-base font-medium underline decoration-transparent group-hover:decoration-emerald-500/50 underline-offset-4 transition-all">{property.address}</span>
+                  </a>
                 </div>
                 <div className="w-full md:w-auto flex flex-row md:flex-col justify-between items-center md:items-end gap-2 bg-emerald-50/50 dark:bg-emerald-900/10 p-3 md:p-0 rounded-2xl md:bg-transparent">
                   <div className="text-2xl md:text-3xl font-black bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
