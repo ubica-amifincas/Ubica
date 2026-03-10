@@ -37,14 +37,25 @@ export default function Navbar() {
   const isUbicaDomain = window.location.hostname === 'ubica.amifincas.es';
   const isAmiFincasPage = location.pathname === '/ami-fincas' || isAmiFincasDomain;
 
-  // Auto-hide navbar on scroll (only on AMI Fincas page)
+  // Auto-hide navbar on scroll or hover (only on AMI Fincas page)
   useEffect(() => {
     if (!isAmiFincasPage) {
       setNavHidden(false);
       return;
     }
 
+    // Set initially hidden dynamically when the component mounts or state resets
+    if (!isMenuOpen && !isUserMenuOpen && window.scrollY <= 10) {
+      setNavHidden(true);
+    }
+
+    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    let leaveTimeout: NodeJS.Timeout;
+
     const handleScroll = () => {
+      // Prevent hiding when menus are active
+      if (isMenuOpen || isUserMenuOpen) return;
+      
       const currentScrollY = window.scrollY;
       const lastY = lastScrollYRef.current;
 
@@ -57,9 +68,38 @@ export default function Navbar() {
       lastScrollYRef.current = currentScrollY;
     };
 
+    const handleMouseMove = (e: MouseEvent) => {
+      // Si menú móvil o de usuario está abierto, nunca auto-ocultar
+      if (isMenuOpen || isUserMenuOpen) {
+        setNavHidden(false);
+        return;
+      }
+
+      const navEl = document.querySelector('nav');
+      const isOverNav = navEl?.contains(e.target as Node);
+
+      // 90px es aproximadamente la altura del navbar garantizando que no desaparezca al posar
+      if (e.clientY <= 90 || isOverNav) {
+        clearTimeout(leaveTimeout);
+        setNavHidden(false);
+      } else if (!isTouch) {
+        // En desktop ratón, ocultamos si se aleja de la zona.
+        clearTimeout(leaveTimeout);
+        leaveTimeout = setTimeout(() => {
+          setNavHidden(true);
+        }, 150);
+      }
+    };
+
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [isAmiFincasPage]);
+    window.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('mousemove', handleMouseMove);
+      clearTimeout(leaveTimeout);
+    };
+  }, [isAmiFincasPage, isMenuOpen, isUserMenuOpen]);
 
   // Navegación basada en autenticación y rol
   const getNavigation = () => {
