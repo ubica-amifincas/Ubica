@@ -46,6 +46,11 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
     const groupRef = useRef<THREE.Group>(null);
     const laserRef = useRef<THREE.Mesh>(null);
     const ringRef = useRef<THREE.Mesh>(null);
+    const hookGroupRef = useRef<THREE.Group>(null);
+    
+    // Track previous position to calculate velocity for pendulum effect
+    const prevPos = useRef(new THREE.Vector3());
+    const velocity = useRef(new THREE.Vector3());
 
     useFrame((state) => {
         if (!groupRef.current) return;
@@ -60,8 +65,30 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
         const tiltX = Math.cos(t * speed) * 0.15;
         const tiltZ = Math.sin(t * speed * 0.8) * -0.15;
 
-        groupRef.current.position.set(x, targetY + 6, z);
+        const currentPos = new THREE.Vector3(x, targetY + 6, z);
+        groupRef.current.position.copy(currentPos);
         groupRef.current.rotation.set(tiltZ, t * 1.5, tiltX);
+        
+        // Calculate velocity for hook swing
+        velocity.current.subVectors(currentPos, prevPos.current);
+        prevPos.current.copy(currentPos);
+
+        if (hookGroupRef.current) {
+            // Pendulum effect based on drone velocity
+            // We counter-rotate the hook based on movement direction
+            const swingX = velocity.current.z * 10;
+            const swingZ = -velocity.current.x * 10;
+            
+            // Recoil effect when dropping
+            const recoil = isSpawning ? 0.2 : 0;
+            
+            // Smoothly interpolate current rotation to target rotation
+            hookGroupRef.current.rotation.x = THREE.MathUtils.lerp(hookGroupRef.current.rotation.x, swingX, 0.1);
+            hookGroupRef.current.rotation.z = THREE.MathUtils.lerp(hookGroupRef.current.rotation.z, swingZ, 0.1);
+            
+            // Add a small bounce on Y when dropping
+            hookGroupRef.current.position.y = THREE.MathUtils.lerp(hookGroupRef.current.position.y, isSpawning ? 0.3 : 0, 0.2);
+        }
 
         if (laserRef.current) {
             const material = laserRef.current.material as THREE.MeshBasicMaterial;
@@ -131,45 +158,49 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
                 </group>
             ))}
 
-            {/* Cable & Hook */}
-            <mesh position={[0, -1, 0]}>
-                <cylinderGeometry args={[0.02, 0.02, 2, 8]} />
-                <meshStandardMaterial color="#64748b" metalness={0.8} roughness={0.2} />
-            </mesh>
-            
-            {/* Claw Base */}
-            <mesh position={[0, -2, 0]}>
-                <boxGeometry args={[0.6, 0.1, 0.6]} />
-                <meshStandardMaterial color="#1e293b" metalness={0.8} roughness={0.2} />
-            </mesh>
-            {/* Claw Arms */}
-            <mesh position={[0.3, -2.1, 0]} rotation={[0, 0, -Math.PI/8]}>
-                <boxGeometry args={[0.05, 0.3, 0.4]} />
-                <meshStandardMaterial color="#ef4444" metalness={0.5} roughness={0.5} />
-            </mesh>
-            <mesh position={[-0.3, -2.1, 0]} rotation={[0, 0, Math.PI/8]}>
-                <boxGeometry args={[0.05, 0.3, 0.4]} />
-                <meshStandardMaterial color="#ef4444" metalness={0.5} roughness={0.5} />
-            </mesh>
+            {/* Animated Cable & Hook Assembly */}
+            <group ref={hookGroupRef}>
+                {/* Cable */}
+                <mesh position={[0, -1, 0]}>
+                    <cylinderGeometry args={[0.02, 0.02, 2, 8]} />
+                    <meshStandardMaterial color="#64748b" metalness={0.8} roughness={0.2} />
+                </mesh>
+                
+                {/* Claw Base */}
+                <mesh position={[0, -2, 0]}>
+                    <boxGeometry args={[0.6, 0.1, 0.6]} />
+                    <meshStandardMaterial color="#1e293b" metalness={0.8} roughness={0.2} />
+                </mesh>
+                
+                {/* Claw Arms (Animate opening when spawning) */}
+                <mesh position={[0.3, -2.1, 0]} rotation={[0, 0, isSpawning ? -Math.PI/4 : -Math.PI/8]}>
+                    <boxGeometry args={[0.05, 0.3, 0.4]} />
+                    <meshStandardMaterial color="#ef4444" metalness={0.5} roughness={0.5} />
+                </mesh>
+                <mesh position={[-0.3, -2.1, 0]} rotation={[0, 0, isSpawning ? Math.PI/4 : Math.PI/8]}>
+                    <boxGeometry args={[0.05, 0.3, 0.4]} />
+                    <meshStandardMaterial color="#ef4444" metalness={0.5} roughness={0.5} />
+                </mesh>
 
-            {/* Held Block Visually */}
-            {!isSpawning && (
-                 <group position={[0, -2.6, 0]}>
-                     <mesh castShadow receiveShadow>
-                        <boxGeometry args={[1.5, 1, 1.5]} />
-                        <meshStandardMaterial color={nextColor} roughness={0.7} metalness={0.2} />
-                        <Edges scale={1} threshold={15} color="#0f172a" />
-                        <mesh position={[0, 0, 0.751]}>
-                            <planeGeometry args={[1.2, 0.6]} />
-                            <meshBasicMaterial color="#ffffff" opacity={0.2} transparent />
+                {/* Held Block Visually */}
+                {!isSpawning && (
+                     <group position={[0, -2.6, 0]}>
+                         <mesh castShadow receiveShadow>
+                            <boxGeometry args={[1.5, 1, 1.5]} />
+                            <meshStandardMaterial color={nextColor} roughness={0.7} metalness={0.2} />
+                            <Edges scale={1} threshold={15} color="#0f172a" />
+                            <mesh position={[0, 0, 0.751]}>
+                                <planeGeometry args={[1.2, 0.6]} />
+                                <meshBasicMaterial color="#ffffff" opacity={0.2} transparent />
+                            </mesh>
+                            <mesh position={[0, 0, -0.751]} rotation={[0, Math.PI, 0]}>
+                                <planeGeometry args={[1.2, 0.6]} />
+                                <meshBasicMaterial color="#ffffff" opacity={0.2} transparent />
+                            </mesh>
                         </mesh>
-                        <mesh position={[0, 0, -0.751]} rotation={[0, Math.PI, 0]}>
-                            <planeGeometry args={[1.2, 0.6]} />
-                            <meshBasicMaterial color="#ffffff" opacity={0.2} transparent />
-                        </mesh>
-                    </mesh>
-                 </group>
-            )}
+                     </group>
+                )}
+            </group>
 
             {/* Holographic Laser */}
             <mesh ref={laserRef} position={[0, -10, 0]}>
