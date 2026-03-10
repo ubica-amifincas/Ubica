@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Physics, RigidBody } from '@react-three/rapier';
+import { Physics, RigidBody, useRapier } from '@react-three/rapier';
 import { Environment, ContactShadows, Edges, Circle } from '@react-three/drei';
 import { ChevronLeftIcon, LockClosedIcon, SunIcon, MoonIcon, ArrowUpIcon, ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon, ArrowsPointingInIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
@@ -55,6 +55,7 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
     const shadowDotRef = useRef<THREE.Mesh>(null);
     const ringRef = useRef<THREE.Mesh>(null);
     const hookGroupRef = useRef<THREE.Group>(null);
+    const { rapier, world } = useRapier();
     
     // Track previous position to calculate velocity for pendulum effect
     const prevPos = useRef(new THREE.Vector3());
@@ -107,7 +108,16 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
 
         // Move the shadow prediction dot to stay right under the drone, but resting on the highest block
         if (shadowDotRef.current) {
-             shadowDotRef.current.position.set(currentPos.x, targetY, currentPos.z);
+             const ray = new rapier.Ray(currentPos, { x: 0, y: -1, z: 0 });
+             const hit = world.castRay(ray, 50, true);
+             
+             if (hit && (hit as any).toi) {
+                 const hitPoint = ray.pointAt((hit as any).toi);
+                 shadowDotRef.current.position.set(hitPoint.x, hitPoint.y + 0.05, hitPoint.z);
+             } else {
+                 shadowDotRef.current.position.set(currentPos.x, Math.max(0, targetY - 10), currentPos.z);
+             }
+             
              const material = shadowDotRef.current.material as THREE.MeshBasicMaterial;
              material.opacity = isSpawning ? 0.8 : 0.4 + Math.sin(t * 8) * 0.2;
              
@@ -314,12 +324,14 @@ function CameraRig({ targetY, offset }: { targetY: number, offset: { x: number, 
     const { camera } = useThree();
 
     useFrame(() => {
-        const desiredY = Math.max(8, targetY + 6) + offset.y;
-        const desiredZ = Math.max(12, targetY + 10) + offset.z;
+        // Move camera higher and pull back more to see the drone
+        const desiredY = Math.max(10, targetY + 8) + offset.y;
+        const desiredZ = Math.max(16, targetY + 12) + offset.z;
         const desiredX = offset.x;
 
         camera.position.lerp(new THREE.Vector3(desiredX, desiredY, desiredZ), 0.05);
-        camera.lookAt(desiredX * 0.5, targetY / 2, 0); // pan look target slightly too
+        // Look between the origin and the highest drone height
+        camera.lookAt(desiredX * 0.5, targetY * 0.7, 0); 
     });
 
     return null;
@@ -724,11 +736,11 @@ export default function UbicaBalance() {
                     ))}
 
                     <CameraRig targetY={highestY} offset={cameraOffset} />
-                </Physics>
 
-                {!gameOver && (
-                    <ConstructionDrone onDrop={handleDrop} isSpawning={isSpawning} targetY={highestY} difficultySpeed={difficultySpeed} nextColor={nextColor} />
-                )}
+                    {!gameOver && (
+                        <ConstructionDrone onDrop={handleDrop} isSpawning={isSpawning} targetY={highestY} difficultySpeed={difficultySpeed} nextColor={nextColor} />
+                    )}
+                </Physics>
 
                 <ContactShadows position={[0, -0.49, 0]} opacity={0.5} scale={20} blur={2.5} far={10} color="#000000" />
             </Canvas>
