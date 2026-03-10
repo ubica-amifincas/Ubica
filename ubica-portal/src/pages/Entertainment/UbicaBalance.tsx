@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Physics, RigidBody } from '@react-three/rapier';
-import { Environment, ContactShadows, Edges } from '@react-three/drei';
-import { ChevronLeftIcon, LockClosedIcon } from '@heroicons/react/24/outline';
+import { Environment, ContactShadows, Edges, Circle } from '@react-three/drei';
+import { ChevronLeftIcon, LockClosedIcon, SunIcon, MoonIcon, ArrowUpIcon, ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon, ArrowsPointingInIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 import { useAuth, useAuthenticatedFetch } from '../../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -52,7 +52,7 @@ function BasePlatform() {
 // 2. Construction Drone (Replaces Crane)
 function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextColor }: { onDrop: (x: number, z: number, y: number, vx: number, vz: number, isLogo: boolean) => void, isSpawning: boolean, targetY: number, difficultySpeed: number, nextColor: string }) {
     const groupRef = useRef<THREE.Group>(null);
-    const laserRef = useRef<THREE.Mesh>(null);
+    const shadowDotRef = useRef<THREE.Mesh>(null);
     const ringRef = useRef<THREE.Mesh>(null);
     const hookGroupRef = useRef<THREE.Group>(null);
     
@@ -100,14 +100,20 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
             hookGroupRef.current.position.y = THREE.MathUtils.lerp(hookGroupRef.current.position.y, isSpawning ? 0.3 : 0, 0.2);
         }
 
-        if (laserRef.current) {
-            const material = laserRef.current.material as THREE.MeshBasicMaterial;
-            material.opacity = isSpawning ? 0.8 : 0.2 + Math.sin(t * 10) * 0.1;
-        }
-        
         if (ringRef.current) {
              const mat = ringRef.current.material as THREE.MeshStandardMaterial;
              mat.emissiveIntensity = isSpawning ? 3 : 1 + Math.sin(t * 5) * 0.5;
+        }
+
+        // Move the shadow prediction dot to stay right under the drone, but resting on the highest block
+        if (shadowDotRef.current) {
+             shadowDotRef.current.position.set(currentPos.x, targetY, currentPos.z);
+             const material = shadowDotRef.current.material as THREE.MeshBasicMaterial;
+             material.opacity = isSpawning ? 0.8 : 0.4 + Math.sin(t * 8) * 0.2;
+             
+             // Scale it down as difficulty increases to represent the challenge
+             const scale = Math.max(0.5, 1.5 - (difficultySpeed * 0.3));
+             shadowDotRef.current.scale.set(scale, scale, 1);
         }
     });
 
@@ -135,7 +141,8 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
     }, [onDrop, isSpawning, nextColor]);
 
     return (
-        <group ref={groupRef}>
+        <>
+            <group ref={groupRef}>
             {/* Main Body Core */}
             <mesh castShadow position={[0, 0, 0]}>
                 <boxGeometry args={[1.2, 0.4, 1.2]} />
@@ -230,14 +237,20 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
                          )}
                      </group>
                 )}
-            </group>
-
-            {/* Holographic Laser */}
-            <mesh ref={laserRef} position={[0, -10, 0]}>
-                <cylinderGeometry args={[0.04, 0.04, 20, 8]} />
-                <meshBasicMaterial color={isSpawning ? "#ef4444" : "#10b981"} transparent opacity={0.3} blending={THREE.AdditiveBlending} depthWrite={false} />
-            </mesh>
-        </group>
+             </group>
+         </group>
+         
+         {/* Prediction Shadow Dot (Floor Level) */}
+         <mesh ref={shadowDotRef} position={[0, targetY, 0]} rotation={[-Math.PI/2, 0, 0]}>
+             <circleGeometry args={[0.4, 32]} />
+             <meshBasicMaterial color={isSpawning ? "#ef4444" : "#10b981"} transparent opacity={0.5} depthWrite={false} blending={THREE.AdditiveBlending} />
+             {/* Inner precise dot */}
+             <mesh position={[0, 0, 0.01]}>
+                 <circleGeometry args={[0.1, 16]} />
+                 <meshBasicMaterial color="#ffffff" transparent opacity={0.8} depthWrite={false} />
+             </mesh>
+         </mesh>
+         </>
     );
 }
 
@@ -297,15 +310,16 @@ function BuildingBlock({ position, color, initialVelocity, isLogo, onFallOut }: 
 }
 
 // 4. Dynamic Camera
-function CameraRig({ targetY }: { targetY: number }) {
+function CameraRig({ targetY, offset }: { targetY: number, offset: { x: number, y: number, z: number } }) {
     const { camera } = useThree();
 
     useFrame(() => {
-        const desiredY = Math.max(8, targetY + 6);
-        const desiredZ = Math.max(12, targetY + 10);
+        const desiredY = Math.max(8, targetY + 6) + offset.y;
+        const desiredZ = Math.max(12, targetY + 10) + offset.z;
+        const desiredX = offset.x;
 
-        camera.position.lerp(new THREE.Vector3(0, desiredY, desiredZ), 0.05);
-        camera.lookAt(0, targetY / 2, 0);
+        camera.position.lerp(new THREE.Vector3(desiredX, desiredY, desiredZ), 0.05);
+        camera.lookAt(desiredX * 0.5, targetY / 2, 0); // pan look target slightly too
     });
 
     return null;
@@ -331,6 +345,10 @@ export default function UbicaBalance() {
     const [scoreAnimation, setScoreAnimation] = useState(false);
     const [nextColor, setNextColor] = useState(getNextRandomColor);
     const [leaderboard, setLeaderboard] = useState<any[]>([]);
+    
+    // Phase 3 states
+    const [isDarkMode, setIsDarkMode] = useState(true);
+    const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0, z: 0 });
 
     const fetchLeaderboard = useCallback(async () => {
         try {
@@ -468,6 +486,14 @@ export default function UbicaBalance() {
         fetchLeaderboard(); // refresh stats
     };
 
+    const adjustCamera = (axis: 'x' | 'y' | 'z', amount: number) => {
+        setCameraOffset(prev => ({ ...prev, [axis]: prev[axis] + amount }));
+    };
+
+    const resetCamera = () => {
+        setCameraOffset({ x: 0, y: 0, z: 0 });
+    };
+
     if (!user) {
         return (
             <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pt-20 flex flex-col items-center justify-center p-4 transition-colors">
@@ -497,21 +523,37 @@ export default function UbicaBalance() {
     }
 
     return (
-        <div className="w-full h-screen relative bg-slate-900 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-950 overflow-hidden font-sans select-none touch-none">
+        <div className={`w-full h-screen relative transition-colors duration-700 overflow-hidden font-sans select-none touch-none ${
+            isDarkMode ? 'bg-slate-900 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-950' : 'bg-slate-50 bg-gradient-to-b from-sky-50 via-slate-100 to-slate-200'
+        }`}>
 
             {/* HUD & UI - Rediseñado y responsivo */}
             <div className="absolute top-0 left-0 w-full p-4 md:p-6 flex flex-wrap gap-4 justify-between items-start z-10 pointer-events-none">
-                <div className="w-full sm:w-auto flex justify-between sm:block">
-                    <Link to="/entretenimiento" className="flex items-center text-white/80 hover:text-white font-bold bg-white/10 backdrop-blur-md px-4 py-2 rounded-full pointer-events-auto transition-all hover:bg-white/20 border border-white/10">
+                <div className="flex gap-4 items-center">
+                    <Link to="/entretenimiento" className={`flex items-center font-bold backdrop-blur-md px-4 py-2 rounded-full pointer-events-auto transition-all border ${
+                        isDarkMode ? 'text-white/80 hover:text-white bg-white/10 hover:bg-white/20 border-white/10' : 'text-slate-700 hover:text-slate-900 bg-black/5 hover:bg-black/10 border-black/10 shadow-sm'
+                    }`}>
                         <ChevronLeftIcon className="w-5 h-5 mr-1" />
                         Salir
                     </Link>
+                    
+                    <button 
+                        onClick={() => setIsDarkMode(!isDarkMode)}
+                        className={`p-2 rounded-full pointer-events-auto transition-all border backdrop-blur-md ${
+                            isDarkMode ? 'text-amber-300 bg-white/10 hover:bg-white/20 border-white/10' : 'text-slate-700 bg-black/5 hover:bg-black/10 border-black/10 shadow-sm'
+                        }`}
+                        title={isDarkMode ? "Cambiar a Día" : "Cambiar a Noche"}
+                    >
+                        {isDarkMode ? <SunIcon className="w-6 h-6" /> : <MoonIcon className="w-6 h-6" />}
+                    </button>
                 </div>
                 
                 <div className="flex gap-2 sm:gap-4 ml-auto">
-                    <div className="bg-white/5 backdrop-blur-md rounded-2xl px-4 py-2 sm:px-6 sm:py-3 text-center pointer-events-auto border border-white/10 shadow-xl hidden sm:block">
-                        <h3 className="text-white/60 text-[8px] sm:text-[10px] font-black uppercase tracking-widest mb-1">Récord Mundial</h3>
-                        <p className="text-white text-xl sm:text-2xl font-black font-mono leading-none">{bestScore} <span className="text-xs font-medium">pts</span></p>
+                    <div className={`backdrop-blur-md rounded-2xl px-4 py-2 sm:px-6 sm:py-3 text-center pointer-events-auto border shadow-xl hidden sm:block ${
+                        isDarkMode ? 'bg-white/5 border-white/10 text-white' : 'bg-white/80 border-slate-200 text-slate-800'
+                    }`}>
+                        <h3 className={`text-[8px] sm:text-[10px] font-black uppercase tracking-widest mb-1 ${isDarkMode ? 'text-white/60' : 'text-slate-500'}`}>Récord Mundial</h3>
+                        <p className="text-xl sm:text-2xl font-black font-mono leading-none">{bestScore} <span className="text-xs font-medium">pts</span></p>
                     </div>
                     
                     <motion.div 
@@ -527,7 +569,9 @@ export default function UbicaBalance() {
 
             {/* LEFT SIDE - Leaderboard */}
             <div className="absolute top-24 left-4 sm:left-6 z-20 pointer-events-auto w-48 sm:w-64">
-                 <div className="bg-slate-900/60 backdrop-blur-lg rounded-2xl p-4 border border-slate-700/50 shadow-2xl">
+                 <div className={`backdrop-blur-lg rounded-2xl p-4 border shadow-2xl transition-colors ${
+                     isDarkMode ? 'bg-slate-900/60 border-slate-700/50' : 'bg-white/80 border-slate-200'
+                 }`}>
                      <h3 className="text-emerald-400 font-black text-[10px] sm:text-xs uppercase tracking-widest mb-3 flex items-center">
                          <span className="mr-2">🏆</span> Top 10 Oficial
                      </h3>
@@ -541,11 +585,11 @@ export default function UbicaBalance() {
                                          <span className={`font-bold ${idx === 0 ? 'text-amber-400' : idx === 1 ? 'text-slate-300' : idx === 2 ? 'text-orange-400' : 'text-slate-500'}`}>
                                             {idx + 1}.
                                          </span>
-                                         <span className="text-slate-200 truncate font-semibold w-24 sm:w-32" title={lb.user_name}>
+                                         <span className={`truncate font-semibold w-24 sm:w-32 ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`} title={lb.user_name}>
                                             {lb.user_name}
                                          </span>
                                      </div>
-                                     <span className="text-emerald-300 font-bold tabular-nums pl-1">
+                                     <span className={`font-bold tabular-nums pl-1 ${isDarkMode ? 'text-emerald-300' : 'text-emerald-600'}`}>
                                          {lb.score}
                                      </span>
                                  </div>
@@ -571,11 +615,33 @@ export default function UbicaBalance() {
                 )}
             </AnimatePresence>
 
+            {/* Camera Controls Overlay */}
+            <div className="absolute bottom-6 left-6 z-20 pointer-events-auto hidden md:flex flex-col items-center gap-1 opacity-60 hover:opacity-100 transition-opacity">
+                <div className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${isDarkMode ? 'text-white/50' : 'text-slate-500'}`}>Cámara</div>
+                <button onClick={() => adjustCamera('y', 2)} className={`p-2 rounded-t-lg backdrop-blur-sm border ${isDarkMode ? 'bg-white/10 hover:bg-white/20 border-white/10 text-white' : 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-800'}`}>
+                    <ArrowUpIcon className="w-5 h-5" />
+                </button>
+                <div className="flex gap-1">
+                    <button onClick={() => adjustCamera('x', -2)} className={`p-2 rounded-l-lg backdrop-blur-sm border ${isDarkMode ? 'bg-white/10 hover:bg-white/20 border-white/10 text-white' : 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-800'}`}>
+                        <ArrowLeftIcon className="w-5 h-5" />
+                    </button>
+                    <button onClick={resetCamera} className={`p-2 backdrop-blur-sm border ${isDarkMode ? 'bg-white/10 hover:bg-white/20 border-white/10 text-emerald-400' : 'bg-black/5 hover:bg-black/10 border-black/10 text-emerald-600'}`} title="Centrar">
+                        <ArrowsPointingInIcon className="w-5 h-5" />
+                    </button>
+                    <button onClick={() => adjustCamera('x', 2)} className={`p-2 rounded-r-lg backdrop-blur-sm border ${isDarkMode ? 'bg-white/10 hover:bg-white/20 border-white/10 text-white' : 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-800'}`}>
+                        <ArrowRightIcon className="w-5 h-5" />
+                    </button>
+                </div>
+                <button onClick={() => adjustCamera('y', -2)} className={`p-2 rounded-b-lg backdrop-blur-sm border ${isDarkMode ? 'bg-white/10 hover:bg-white/20 border-white/10 text-white' : 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-800'}`}>
+                    <ArrowDownIcon className="w-5 h-5" />
+                </button>
+            </div>
+
             {/* Instrucciones Centradas */}
             {blocks.length === 0 && !gameOver && (
                 <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center z-10 pointer-events-none opacity-80 animate-pulse w-[90%] md:w-auto">
-                    <h2 className="text-4xl md:text-6xl font-black text-white drop-shadow-2xl tracking-tight mb-4">Ubica Balance</h2>
-                    <p className="text-white/90 text-sm sm:text-lg font-medium drop-shadow-md bg-black/40 px-6 py-3 rounded-full inline-block backdrop-blur-sm border border-white/10">
+                    <h2 className={`text-4xl md:text-6xl font-black drop-shadow-2xl tracking-tight mb-4 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Ubica Balance</h2>
+                    <p className={`text-sm sm:text-lg font-medium drop-shadow-md px-6 py-3 rounded-full inline-block backdrop-blur-sm border ${isDarkMode ? 'text-white/90 bg-black/40 border-white/10' : 'text-slate-800 bg-white/60 border-black/10'}`}>
                         Toca la pantalla para soltar. ¡Cerca del centro da más puntos!
                     </p>
                 </div>
@@ -588,21 +654,21 @@ export default function UbicaBalance() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-[#0f172a]/80 backdrop-blur-xl flex flex-col items-center justify-center z-30"
+                        className={`absolute inset-0 backdrop-blur-xl flex flex-col items-center justify-center z-30 ${isDarkMode ? 'bg-[#0f172a]/80' : 'bg-slate-200/80'}`}
                     >
                         <motion.div 
                             initial={{ scale: 0.8, y: 50 }}
                             animate={{ scale: 1, y: 0 }}
                             transition={{ type: "spring", bounce: 0.5 }}
-                            className="bg-white/10 p-8 sm:p-10 rounded-[2rem] shadow-[0_0_50px_rgba(0,0,0,0.5)] max-w-sm w-[90%] text-center border border-white/20 relative overflow-hidden"
+                            className={`p-8 sm:p-10 rounded-[2rem] shadow-[0_0_50px_rgba(0,0,0,0.5)] max-w-sm w-[90%] text-center border relative overflow-hidden ${isDarkMode ? 'bg-white/10 border-white/20' : 'bg-white border-slate-200'}`}
                         >
                             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-500 to-rose-500" />
                             
-                            <h2 className="text-3xl sm:text-4xl font-black text-white mb-2">¡Derrumbe!</h2>
-                            <p className="text-white/60 font-medium mb-8 text-sm sm:text-base">Tu torre colapsó. La estructura no soportó la presión.</p>
+                            <h2 className={`text-3xl sm:text-4xl font-black mb-2 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>¡Derrumbe!</h2>
+                            <p className={`font-medium mb-8 text-sm sm:text-base ${isDarkMode ? 'text-white/60' : 'text-slate-500'}`}>Tu torre colapsó. La estructura no soportó la presión.</p>
 
-                            <div className="bg-black/30 rounded-2xl p-6 mb-8 border border-white/5">
-                                <span className="block text-xs text-white/50 font-black uppercase tracking-widest mb-2">Puntuación Final</span>
+                            <div className={`rounded-2xl p-6 mb-8 border ${isDarkMode ? 'bg-black/30 border-white/5' : 'bg-slate-100 border-slate-200'}`}>
+                                <span className={`block text-xs font-black uppercase tracking-widest mb-2 ${isDarkMode ? 'text-white/50' : 'text-slate-400'}`}>Puntuación Final</span>
                                 <span className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">{score}</span>
                             </div>
 
@@ -626,23 +692,21 @@ export default function UbicaBalance() {
             {/* 3D RENDER ENGINE */}
             <Canvas shadows dpr={[1, 2]} camera={{ position: [0, 8, 12], fov: 50 }}>
                 {/* Entorno y Luces Atmosféricas */}
-
-                <ambientLight intensity={0.4} />
-                <directionalLight
-                    position={[10, 20, 10]}
-                    castShadow
-                    intensity={1.5}
-                    color="#fef08a"
-                    shadow-mapSize={[1024, 1024]}
-                    shadow-camera-left={-10}
-                    shadow-camera-right={10}
-                    shadow-camera-top={10}
-                    shadow-camera-bottom={-10}
-                    shadow-bias={-0.0001}
-                />
-                {/* Luz azulada desde abajo para contraste */}
-                <pointLight position={[0, -5, 0]} intensity={2} color="#38bdf8" />
-                <hemisphereLight intensity={0.3} color="#ffffff" groundColor="#0f172a" />
+                {isDarkMode ? (
+                    <>
+                        <ambientLight intensity={0.4} />
+                        <directionalLight position={[10, 20, 10]} castShadow intensity={1.5} color="#fef08a" shadow-mapSize={[1024, 1024]} shadow-bias={-0.0001} />
+                        <pointLight position={[0, -5, 0]} intensity={2} color="#38bdf8" />
+                        <hemisphereLight intensity={0.3} color="#ffffff" groundColor="#0f172a" />
+                    </>
+                ) : (
+                    <>
+                        <ambientLight intensity={0.8} />
+                        <directionalLight position={[5, 15, 5]} castShadow intensity={2.5} color="#ffffff" shadow-mapSize={[1024, 1024]} shadow-bias={-0.0001} />
+                        <pointLight position={[0, -5, 0]} intensity={1} color="#f0f9ff" />
+                        <hemisphereLight intensity={0.6} color="#sky-200" groundColor="#slate-300" />
+                    </>
+                )}
 
                 <Physics gravity={[0, -9.81, 0]}>
                     <BasePlatform />
@@ -659,7 +723,7 @@ export default function UbicaBalance() {
                         />
                     ))}
 
-                    <CameraRig targetY={highestY} />
+                    <CameraRig targetY={highestY} offset={cameraOffset} />
                 </Physics>
 
                 {!gameOver && (
