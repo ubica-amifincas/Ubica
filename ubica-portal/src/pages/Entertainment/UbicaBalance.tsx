@@ -4,7 +4,7 @@ import { Physics, RigidBody } from '@react-three/rapier';
 import { Environment, ContactShadows, Edges } from '@react-three/drei';
 import { ChevronLeftIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth, useAuthenticatedFetch } from '../../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
 
@@ -14,6 +14,8 @@ interface BlockData {
     position: [number, number, number];
     color: string;
     type: 'base' | 'building';
+    initialVelocity?: [number, number, number];
+    isLogo?: boolean;
 }
 
 // Brand Colors
@@ -25,6 +27,12 @@ const BLOCK_COLORS = [
     '#8b5cf6', // violet-500
     '#f59e0b', // amber-500
 ];
+
+const getNextRandomColor = () => {
+    // 10% chance for a 'LOGO' block
+    if (Math.random() < 0.1) return 'LOGO';
+    return BLOCK_COLORS[Math.floor(Math.random() * BLOCK_COLORS.length)];
+};
 
 // --- 3D COMPONENTS ---
 
@@ -42,7 +50,7 @@ function BasePlatform() {
 }
 
 // 2. Construction Drone (Replaces Crane)
-function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextColor }: { onDrop: (x: number, z: number, y: number) => void, isSpawning: boolean, targetY: number, difficultySpeed: number, nextColor: string }) {
+function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextColor }: { onDrop: (x: number, z: number, y: number, vx: number, vz: number, isLogo: boolean) => void, isSpawning: boolean, targetY: number, difficultySpeed: number, nextColor: string }) {
     const groupRef = useRef<THREE.Group>(null);
     const laserRef = useRef<THREE.Mesh>(null);
     const ringRef = useRef<THREE.Mesh>(null);
@@ -69,8 +77,10 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
         groupRef.current.position.copy(currentPos);
         groupRef.current.rotation.set(tiltZ, t * 1.5, tiltX);
         
-        // Calculate velocity for hook swing
+        // Calculate velocity for hook swing and block momentum
         velocity.current.subVectors(currentPos, prevPos.current);
+        // Normalize velocity conceptually to time delta (roughly 60fps -> * 60)
+        // for dropping physics
         prevPos.current.copy(currentPos);
 
         if (hookGroupRef.current) {
@@ -108,13 +118,21 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
 
             if (!isSpawning && groupRef.current) {
                 // Drop from the hook's Y position
-                onDrop(groupRef.current.position.x, groupRef.current.position.z, groupRef.current.position.y - 2.6);
+                // Apply a portion of the drone's velocity (x60 for fps scaling) to the block
+                onDrop(
+                    groupRef.current.position.x, 
+                    groupRef.current.position.z, 
+                    groupRef.current.position.y - 2.6,
+                    velocity.current.x * 60 * 0.5,
+                    velocity.current.z * 60 * 0.5,
+                    nextColor === 'LOGO'
+                );
             }
         };
 
         window.addEventListener('pointerdown', handlePointerDown);
         return () => window.removeEventListener('pointerdown', handlePointerDown);
-    }, [onDrop, isSpawning]);
+    }, [onDrop, isSpawning, nextColor]);
 
     return (
         <group ref={groupRef}>
@@ -185,19 +203,31 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
                 {/* Held Block Visually */}
                 {!isSpawning && (
                      <group position={[0, -2.6, 0]}>
-                         <mesh castShadow receiveShadow>
-                            <boxGeometry args={[1.5, 1, 1.5]} />
-                            <meshStandardMaterial color={nextColor} roughness={0.7} metalness={0.2} />
-                            <Edges scale={1} threshold={15} color="#0f172a" />
-                            <mesh position={[0, 0, 0.751]}>
-                                <planeGeometry args={[1.2, 0.6]} />
-                                <meshBasicMaterial color="#ffffff" opacity={0.2} transparent />
+                         {nextColor !== 'LOGO' ? (
+                             <mesh castShadow receiveShadow>
+                                <boxGeometry args={[1.5, 1, 1.5]} />
+                                <meshStandardMaterial color={nextColor} roughness={0.7} metalness={0.2} />
+                                <Edges scale={1} threshold={15} color="#0f172a" />
+                                <mesh position={[0, 0, 0.751]}>
+                                    <planeGeometry args={[1.2, 0.6]} />
+                                    <meshBasicMaterial color="#ffffff" opacity={0.2} transparent />
+                                </mesh>
+                                <mesh position={[0, 0, -0.751]} rotation={[0, Math.PI, 0]}>
+                                    <planeGeometry args={[1.2, 0.6]} />
+                                    <meshBasicMaterial color="#ffffff" opacity={0.2} transparent />
+                                </mesh>
                             </mesh>
-                            <mesh position={[0, 0, -0.751]} rotation={[0, Math.PI, 0]}>
-                                <planeGeometry args={[1.2, 0.6]} />
-                                <meshBasicMaterial color="#ffffff" opacity={0.2} transparent />
-                            </mesh>
-                        </mesh>
+                         ) : (
+                             <mesh castShadow receiveShadow>
+                                <boxGeometry args={[1.6, 1.2, 1.6]} />
+                                <meshStandardMaterial color="#ffffff" roughness={0.4} metalness={0.6} />
+                                <Edges scale={1} threshold={15} color="#10b981" />
+                                <mesh position={[0, 0, 0.801]}>
+                                    <boxGeometry args={[0.5, 0.5, 0.05]} />
+                                    <meshStandardMaterial color="#10b981" emissive="#10b981" emissiveIntensity={0.5} />
+                                </mesh>
+                             </mesh>
+                         )}
                      </group>
                 )}
             </group>
@@ -212,7 +242,7 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
 }
 
 // 3. Falling Blocks
-function BuildingBlock({ position, color, onFallOut }: { position: [number, number, number], color: string, id: string, onFallOut: () => void }) {
+function BuildingBlock({ position, color, initialVelocity, isLogo, onFallOut }: { position: [number, number, number], color: string, isLogo: boolean, initialVelocity: [number, number, number], id: string, onFallOut: () => void }) {
     const rigidBodyRef = useRef<any>(null);
 
     useFrame(() => {
@@ -228,27 +258,40 @@ function BuildingBlock({ position, color, onFallOut }: { position: [number, numb
             ref={rigidBodyRef}
             type="dynamic"
             position={position}
-            mass={1.5}
+            mass={isLogo ? 3.0 : 1.5}
             friction={0.9}
-            restitution={0.05}
+            restitution={isLogo ? 0.3 : 0.05}
             linearDamping={0.5}
             angularDamping={0.5}
+            linearVelocity={initialVelocity}
             canSleep={false}
         >
-            <mesh castShadow receiveShadow>
-                <boxGeometry args={[1.5, 1, 1.5]} />
-                <meshStandardMaterial color={color} roughness={0.7} metalness={0.2} />
-                <Edges scale={1} threshold={15} color="#0f172a" />
+            {isLogo ? (
+                <mesh castShadow receiveShadow>
+                    <boxGeometry args={[1.6, 1.2, 1.6]} />
+                    <meshStandardMaterial color="#ffffff" roughness={0.4} metalness={0.6} />
+                    <Edges scale={1} threshold={15} color="#10b981" />
+                    <mesh position={[0, 0, 0.801]}>
+                        <boxGeometry args={[0.5, 0.5, 0.05]} />
+                        <meshStandardMaterial color="#10b981" emissive="#10b981" emissiveIntensity={0.5} />
+                    </mesh>
+                 </mesh>
+            ) : (
+                <mesh castShadow receiveShadow>
+                    <boxGeometry args={[1.5, 1, 1.5]} />
+                    <meshStandardMaterial color={color} roughness={0.7} metalness={0.2} />
+                    <Edges scale={1} threshold={15} color="#0f172a" />
 
-                <mesh position={[0, 0, 0.751]}>
-                    <planeGeometry args={[1.2, 0.6]} />
-                    <meshBasicMaterial color="#ffffff" opacity={0.2} transparent />
+                    <mesh position={[0, 0, 0.751]}>
+                        <planeGeometry args={[1.2, 0.6]} />
+                        <meshBasicMaterial color="#ffffff" opacity={0.2} transparent />
+                    </mesh>
+                    <mesh position={[0, 0, -0.751]} rotation={[0, Math.PI, 0]}>
+                        <planeGeometry args={[1.2, 0.6]} />
+                        <meshBasicMaterial color="#ffffff" opacity={0.2} transparent />
+                    </mesh>
                 </mesh>
-                <mesh position={[0, 0, -0.751]} rotation={[0, Math.PI, 0]}>
-                    <planeGeometry args={[1.2, 0.6]} />
-                    <meshBasicMaterial color="#ffffff" opacity={0.2} transparent />
-                </mesh>
-            </mesh>
+            )}
         </RigidBody>
     );
 }
@@ -271,6 +314,7 @@ function CameraRig({ targetY }: { targetY: number }) {
 // --- MAIN UX COMPONENT ---
 export default function UbicaBalance() {
     const { user } = useAuth();
+    const appService = useAuthenticatedFetch(); // To make API calls for Leaderboard
 
     const [blocks, setBlocks] = useState<BlockData[]>([]);
     const [highestY, setHighestY] = useState(0);
@@ -285,14 +329,61 @@ export default function UbicaBalance() {
     const [comboMultiplier, setComboMultiplier] = useState(1);
     const [difficultySpeed, setDifficultySpeed] = useState(1);
     const [scoreAnimation, setScoreAnimation] = useState(false);
-    const [nextColor, setNextColor] = useState(() => BLOCK_COLORS[Math.floor(Math.random() * BLOCK_COLORS.length)]);
+    const [nextColor, setNextColor] = useState(getNextRandomColor);
+    const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
-    useEffect(() => {
-        if (score > bestScore) {
-            setBestScore(score);
-            localStorage.setItem('ubica_balance_best', score.toString());
+    const fetchLeaderboard = useCallback(async () => {
+        try {
+            // Re-using the known appService api pattern or default fetch
+            const token = localStorage.getItem('access_token');
+            const apiUrl = import.meta.env.VITE_API_URL || (window.location.hostname.includes('amifincas.es') || window.location.hostname.includes('vercel.app') ? 'https://ubica-backend.onrender.com/api' : 'http://localhost:8000/api');
+            
+            const res = await fetch(`${apiUrl}/games/balance/leaderboard`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setLeaderboard(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch leaderboard", error);
         }
-    }, [score, bestScore]);
+    }, []);
+
+    // Fetch on mount
+    useEffect(() => {
+        if (user) {
+            fetchLeaderboard();
+        }
+    }, [user, fetchLeaderboard]);
+
+    // Save score when game over
+    useEffect(() => {
+        if (gameOver && score > 0 && user) {
+            const saveScore = async () => {
+                try {
+                    const token = localStorage.getItem('access_token');
+                    const apiUrl = import.meta.env.VITE_API_URL || (window.location.hostname.includes('amifincas.es') || window.location.hostname.includes('vercel.app') ? 'https://ubica-backend.onrender.com/api' : 'http://localhost:8000/api');
+                    
+                    const res = await fetch(`${apiUrl}/games/score`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}` 
+                        },
+                        body: JSON.stringify({ game_name: 'balance', score: score })
+                    });
+                    
+                    if (res.ok) {
+                        fetchLeaderboard();
+                    }
+                } catch (e) {
+                    console.error("Error saving score", e);
+                }
+            };
+            saveScore();
+        }
+    }, [gameOver, score, user, fetchLeaderboard]);
 
     const handleFallOut = useCallback(() => {
         if (!gameOver) {
@@ -300,12 +391,13 @@ export default function UbicaBalance() {
         }
     }, [gameOver]);
 
-    const handleDrop = useCallback((x: number, z: number, y: number) => {
+    const handleDrop = useCallback((x: number, z: number, y: number, vx: number, vz: number, isLogo: boolean) => {
         if (gameOver || isSpawning) return;
 
         setIsSpawning(true);
 
         // Combo Logic based on drop precision to origin (0,0)
+        // If it's a LOGO block, extra points!
         const dist = Math.hypot(x, z);
         let pts = 1;
         let txt = "";
@@ -323,6 +415,11 @@ export default function UbicaBalance() {
             txt = "";
             setComboMultiplier(1);
         }
+        
+        if (isLogo) {
+             pts *= 2;
+             txt = txt ? `UBICA! +${pts}` : `UBICA! +${pts}`;
+        }
 
         if (txt) {
             setComboText(txt);
@@ -332,7 +429,9 @@ export default function UbicaBalance() {
         const newBlock: BlockData = {
             id: `block-${Date.now()}`,
             position: [x, y, z],
+            initialVelocity: [vx, 0, vz],
             color: nextColor,
+            isLogo: isLogo,
             type: 'building'
         };
 
@@ -352,7 +451,7 @@ export default function UbicaBalance() {
 
         setTimeout(() => {
             setIsSpawning(false);
-            setNextColor(BLOCK_COLORS[Math.floor(Math.random() * BLOCK_COLORS.length)]);
+            setNextColor(getNextRandomColor());
         }, 800);
     }, [gameOver, isSpawning, comboMultiplier, nextColor]);
 
@@ -365,7 +464,8 @@ export default function UbicaBalance() {
         setComboMultiplier(1);
         setComboText("");
         setDifficultySpeed(1);
-        setNextColor(BLOCK_COLORS[Math.floor(Math.random() * BLOCK_COLORS.length)]);
+        setNextColor(getNextRandomColor());
+        fetchLeaderboard(); // refresh stats
     };
 
     if (!user) {
@@ -423,6 +523,36 @@ export default function UbicaBalance() {
                         <p className="text-white text-2xl sm:text-3xl font-black font-mono leading-none">{score}</p>
                     </motion.div>
                 </div>
+            </div>
+
+            {/* LEFT SIDE - Leaderboard */}
+            <div className="absolute top-24 left-4 sm:left-6 z-20 pointer-events-auto w-48 sm:w-64">
+                 <div className="bg-slate-900/60 backdrop-blur-lg rounded-2xl p-4 border border-slate-700/50 shadow-2xl">
+                     <h3 className="text-emerald-400 font-black text-[10px] sm:text-xs uppercase tracking-widest mb-3 flex items-center">
+                         <span className="mr-2">🏆</span> Top 10 Oficial
+                     </h3>
+                     <div className="space-y-2">
+                         {leaderboard.length === 0 ? (
+                             <div className="text-slate-500 text-xs italic">Cargando...</div>
+                         ) : (
+                             leaderboard.map((lb, idx) => (
+                                 <div key={lb.id} className="flex justify-between items-center text-xs sm:text-sm">
+                                     <div className="flex items-center gap-2 overflow-hidden">
+                                         <span className={`font-bold ${idx === 0 ? 'text-amber-400' : idx === 1 ? 'text-slate-300' : idx === 2 ? 'text-orange-400' : 'text-slate-500'}`}>
+                                            {idx + 1}.
+                                         </span>
+                                         <span className="text-slate-200 truncate font-semibold w-24 sm:w-32" title={lb.user_name}>
+                                            {lb.user_name}
+                                         </span>
+                                     </div>
+                                     <span className="text-emerald-300 font-bold tabular-nums pl-1">
+                                         {lb.score}
+                                     </span>
+                                 </div>
+                             ))
+                         )}
+                     </div>
+                 </div>
             </div>
 
             {/* Texto Flotante de Combos */}
@@ -524,6 +654,8 @@ export default function UbicaBalance() {
                             id={block.id}
                             position={block.position}
                             color={block.color}
+                            initialVelocity={block.initialVelocity || [0, 0, 0]}
+                            isLogo={block.isLogo || false}
                             onFallOut={handleFallOut}
                         />
                     ))}

@@ -100,4 +100,14 @@ class Investment(SQLModel, table=True):
     rental_yield: float
     appreciation_rate: float
     holding_period_months: int
+    holding_period_months: int
     status: str = "active"
+
+class GameScore(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id")
+    game_name: str = Field(index=True)
+    score: int = Field(index=True)
+    created_at: datetime = Field(default_factory=datetime.now)
+    
+    user: User = Relationship()
