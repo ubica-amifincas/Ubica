@@ -93,14 +93,14 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
             const swingZ = -velocity.current.x * 10;
             
             // Recoil effect when dropping
-            const recoil = isSpawning ? 0.2 : 0;
+            const recoil = isSpawning ? 0.4 : 0;
             
             // Smoothly interpolate current rotation to target rotation
             hookGroupRef.current.rotation.x = THREE.MathUtils.lerp(hookGroupRef.current.rotation.x, swingX, 0.1);
             hookGroupRef.current.rotation.z = THREE.MathUtils.lerp(hookGroupRef.current.rotation.z, swingZ, 0.1);
             
-            // Add a small bounce on Y when dropping
-            hookGroupRef.current.position.y = THREE.MathUtils.lerp(hookGroupRef.current.position.y, isSpawning ? 0.3 : 0, 0.2);
+            // Add a crisp bounce on Y when dropping, simulating weight release
+            hookGroupRef.current.position.y = THREE.MathUtils.lerp(hookGroupRef.current.position.y, isSpawning ? 0.6 : 0, 0.3);
         }
 
         if (ringRef.current) {
@@ -221,13 +221,13 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
                     <meshStandardMaterial color="#1e293b" metalness={0.8} roughness={0.2} />
                 </mesh>
                 
-                {/* Claw Arms (Animate opening when spawning) */}
-                <mesh position={[0.3, -2.1, 0]} rotation={[0, 0, isSpawning ? -Math.PI/4 : -Math.PI/8]}>
-                    <boxGeometry args={[0.05, 0.3, 0.4]} />
+                {/* Claw Arms (Animate opening when spawning, wider opening) */}
+                <mesh position={[0.3, -2.1, 0]} rotation={[0, 0, isSpawning ? -Math.PI/3 : -Math.PI/8]}>
+                    <boxGeometry args={[0.05, 0.4, 0.4]} />
                     <meshStandardMaterial color="#ef4444" metalness={0.5} roughness={0.5} />
                 </mesh>
-                <mesh position={[-0.3, -2.1, 0]} rotation={[0, 0, isSpawning ? Math.PI/4 : Math.PI/8]}>
-                    <boxGeometry args={[0.05, 0.3, 0.4]} />
+                <mesh position={[-0.3, -2.1, 0]} rotation={[0, 0, isSpawning ? Math.PI/3 : Math.PI/8]}>
+                    <boxGeometry args={[0.05, 0.4, 0.4]} />
                     <meshStandardMaterial color="#ef4444" metalness={0.5} roughness={0.5} />
                 </mesh>
 
@@ -376,6 +376,7 @@ export default function UbicaBalance() {
     // Phase 3 states
     const [isDarkMode, setIsDarkMode] = useState(true);
     const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0, z: 0 });
+    const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(true);
 
     const fetchLeaderboard = useCallback(async () => {
         try {
@@ -392,6 +393,8 @@ export default function UbicaBalance() {
             }
         } catch (error) {
             console.error("Failed to fetch leaderboard", error);
+        } finally {
+            setIsLoadingLeaderboard(false);
         }
     }, []);
 
@@ -604,8 +607,10 @@ export default function UbicaBalance() {
                          <span className="mr-2">🏆</span> Top 10 Oficial
                      </h3>
                      <div className="space-y-2">
-                         {leaderboard.length === 0 ? (
+                         {isLoadingLeaderboard ? (
                              <div className="text-slate-500 text-xs italic">Cargando...</div>
+                         ) : leaderboard.length === 0 ? (
+                             <div className="text-slate-500 text-xs italic">Sé el primero en jugar</div>
                          ) : (
                              leaderboard.map((lb, idx) => (
                                  <div key={lb.id} className="flex justify-between items-center text-xs sm:text-sm">
