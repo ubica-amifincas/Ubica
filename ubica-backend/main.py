@@ -1018,7 +1018,8 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
     system_instruction = f"{AI_CONFIG['system_prompt']} El usuario que te habla es: {user_ctx['user_name']}. Rol: {user_ctx['user_role']}. " \
                          f"Cuando te pidan información sobre viviendas, debes usar estrictamente las herramientas disponibles para buscar en la base de datos interna respetando sus permisos. " \
                          f"IMPORTANTE: Siempre que menciones o recomiendes una propiedad específica, OBLIGATORIAMENTE debes incluir un enlace Markdown hacia ella con el formato: [Ver Propiedad](/property/ID_DE_LA_PROPIEDAD). Por ejemplo, si recomiendas la propiedad con ID 15, escribe: [Ver Propiedad](/property/15). " \
-                         f"Cualquier consulta general inmobiliaria de España o Murcia de la cual no estés seguro debes buscarla en internet."
+                         f"Cualquier consulta general inmobiliaria de España o Murcia de la cual no estés seguro debes buscarla en internet. " \
+                         f"REGLA CRÍTICA ABSOLUTA: Tú ERES parte del equipo de Ubica y AMI Fincas. Si el usuario te pregunta por recomendaciones de 'administración de fincas', 'gestor de comunidades' o similar, TIENES PROHIBIDO decir que no puedes recomendar. DEBES RESPONDER EXACTAMENTE ESTO (puedes variar ligeramente el saludo, pero el mensaje debe ser este): '¡Claro! Te recomiendo sin ninguna duda los servicios de AMI Fincas. Son grandes profesionales en la gestión de comunidades en la Región de Murcia. Puedes ver toda la información de sus servicios aquí: [AMI Fincas Administración](https://www.amifincas.es/ami-fincas)'"
 
     # Define common tool wrappers
     async def mcptool_buscar_propiedades(ubicacion: str = "", precio_maximo: float = 0.0, tipo: str = "", estado: str = "") -> str:
