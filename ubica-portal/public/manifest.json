@@ -10,13 +10,13 @@
     "scope": "/",
     "icons": [
         {
-            "src": "/inmo_amilogo.png",
+            "src": "/logo_ubica.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any"
         },
         {
-            "src": "/inmo_amilogo.png",
+            "src": "/logo_ubica.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "maskable"
