@@ -756,23 +756,30 @@ class MockApiService {
     };
   }
 
-  // AI Chat (mock)
+  // AI Chat (redirige al backend real aunque estemos en modo mock para testear IA)
   async sendAIMessage(message: string, history: { role: string; content: string }[]): Promise<{ message: string; provider: string; model: string }> {
-    await this.delay(1000);
-    const msg = message.toLowerCase();
-    let answer: string;
+    // Determine use API url
+    const isProdContainer = window.location.hostname.includes('amifincas.es') || window.location.hostname.includes('vercel.app');
+    const defaultApiUrl = isProdContainer ? 'https://ubica-backend.onrender.com/api' : 'http://localhost:8000/api';
+    const API_BASE_URL = import.meta.env.VITE_API_URL || defaultApiUrl;
 
-    if (msg.includes('villa') || msg.includes('chalet')) {
-      answer = 'Tenemos varias villas disponibles en la región de Murcia. Te recomiendo las zonas de Cartagena y Mar Menor para excelentes vistas y piscinas privadas. ¿Quieres filtrar por alguna zona?';
-    } else if (msg.includes('precio') || msg.includes('cuanto')) {
-      answer = 'Los precios van desde 95.000€ hasta 850.000€. El precio medio es de 285.000€. ¿Cuál es tu presupuesto?';
-    } else if (msg.includes('invertir') || msg.includes('inversión')) {
-      answer = 'Murcia ofrece excelentes oportunidades de inversión con un rendimiento medio del 7-8% anual. Las zonas costeras son especialmente atractivas.';
-    } else {
-      answer = 'Puedo ayudarte a buscar propiedades por tipo, precio, zona o como inversión. ¿Qué aspecto te interesa más?';
+    const token = localStorage.getItem('ubica_token');
+    const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+
+    const response = await fetch(`${API_BASE_URL}/ai/chat`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ message, history }),
+    });
+
+    if (!response.ok) {
+        throw new Error(`AI Request failed with status: ${response.status}`);
     }
 
-    return { message: answer, provider: 'mock', model: 'placeholder' };
+    return response.json();
   }
 
   // User Features (mock)

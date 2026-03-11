@@ -1023,11 +1023,45 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
     # Define common tool wrappers
     async def mcptool_buscar_propiedades(ubicacion: str = "", precio_maximo: float = 0.0, tipo: str = "", estado: str = "") -> str:
         """Busca propiedades en la base de datos aplicando filtros."""
-        return await buscar_propiedades(ubicacion, precio_maximo, tipo, estado, ctx=user_ctx)
+        # buscar_propiedades is a FastMCP tool wrapper, the actual async function might be accessible differently
+        # or we just import the internal logic. Since mcp_server.py has the logic, let's call the original function
+        import mcp_server
+        # FastMCP tools wrap the original function in .func or similar, but the easiest way is to bypass the decorator for direct internal use if needed.
+        # Actually in FastMCP, decorated functions are replaced by a Tool object.
+        # Let's re-implement the quick DB call here to avoid FastMCP wrapper issues during OpenAI direct testing:
+        from sqlmodel import Session, select, or_
+        from database import engine
+        import models
+        import json
+        with Session(engine) as session:
+            statement = mcp_server.get_allowed_properties_statement(user_id, user_role)
+            if ubicacion:
+                statement = statement.where(or_(models.Property.city.ilike(f"%{ubicacion}%"), models.Property.address.ilike(f"%{ubicacion}%"), models.Property.title.ilike(f"%{ubicacion}%")))
+            if precio_maximo > 0:
+                statement = statement.where(models.Property.price <= precio_maximo)
+            if tipo:
+                statement = statement.where(models.Property.type.ilike(f"%{tipo}%"))
+            if estado:
+                statement = statement.where(models.Property.status.ilike(f"%{estado}%"))
+            statement = statement.limit(15)
+            properties = session.exec(statement).all()
+            results = [{"id": p.id, "titulo": p.title, "precio": p.price, "ubicacion": p.city, "tipo": p.type, "habitaciones": p.bedrooms, "area": p.area, "estado": p.status} for p in properties]
+            return json.dumps(results, ensure_ascii=False)
 
     async def mcptool_obtener_detalles(propiedad_id: int) -> str:
         """Obtiene todos los detalles, descripción y datos de inversión de una propiedad usando su ID."""
-        return await obtener_detalles_propiedad(propiedad_id, ctx=user_ctx)
+        import mcp_server
+        from sqlmodel import Session
+        from database import engine
+        import models
+        import json
+        with Session(engine) as session:
+            p = session.get(models.Property, propiedad_id)
+            if not p: return json.dumps({"error": f"No se encontró la propiedad con ID {propiedad_id}"})
+            public_statuses = ["available", "for-sale", "for-rent"]
+            if user_role == "admin" or p.status in public_statuses or (user_id is not None and (p.owner_id == user_id or p.realtor_id == user_id)):
+                return json.dumps(p.model_dump(), default=str, ensure_ascii=False)
+        return json.dumps({"error": "No tienes permisos."})
 
     # Tool definitions for OpenAI-compatible APIs
     openai_tools = [
