@@ -61,7 +61,6 @@ import PoliticaCookies from './pages/PoliticaCookies';
 // Entertainment
 import EntertainmentHub from './pages/Entertainment/EntertainmentHub';
 import TasadorExpress from './pages/Entertainment/TasadorExpress';
-import UbicaPuzzle from './pages/Entertainment/UbicaPuzzle';
 
 // Lazy load heavy 3D components to avoid crashing the main bundle
 const UbicaBalance = lazy(() => import('./pages/Entertainment/UbicaBalance'));
@@ -105,7 +104,6 @@ function AppRoutes() {
             {/* Entertainment Routes */}
             <Route path="entretenimiento" element={<EntertainmentHub />} />
             <Route path="entretenimiento/tasador" element={<TasadorExpress />} />
-            <Route path="entretenimiento/puzzle" element={<UbicaPuzzle />} />
           </Route>
 
           {/* Fullscreen Games (Outside MainLayout) */}

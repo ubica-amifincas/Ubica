@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '../../hooks/useLanguage';
 import { useAuth } from '../../contexts/AuthContext';
 import { motion } from 'framer-motion';
-import { PlayCircleIcon, PuzzlePieceIcon, CalculatorIcon, LockClosedIcon, BuildingOffice2Icon } from '@heroicons/react/24/outline';
+import { PlayCircleIcon, CalculatorIcon, LockClosedIcon, BuildingOffice2Icon } from '@heroicons/react/24/outline';
 
 export default function EntertainmentHub() {
     const { t } = useLanguage();
@@ -17,15 +17,6 @@ export default function EntertainmentHub() {
             path: '/entretenimiento/tasador',
             color: 'from-emerald-500 to-teal-500',
             requiresAuth: false, // The demo is free, but the full game requires login
-        },
-        {
-            id: 'puzzle',
-            title: 'Ubica Puzzle',
-            description: 'Construye tu propio imperio inmobiliario combinando recursos en este adictivo rompecabezas.',
-            icon: PuzzlePieceIcon,
-            path: '/entretenimiento/puzzle',
-            color: 'from-indigo-500 to-purple-500',
-            requiresAuth: true, // Only for registered users
         },
         {
             id: 'balance',
