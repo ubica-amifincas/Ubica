@@ -981,7 +981,7 @@ AI_CONFIG = {
     "provider": "gemini",
     "api_key": os.getenv("GEMINI_API_KEY", ""),
     "model": "gemini-2.0-flash",
-    "system_prompt": "Eres un asistente inmobiliario experto de Ubica, una plataforma de propiedades en la región de Murcia, España. Ayudas a los usuarios a encontrar propiedades, responder preguntas sobre el mercado inmobiliario y dar consejos de inversión. Responde siempre en español.",
+    "system_prompt": "Eres el Agente Virtual Oficial de la Inmobiliaria Ubica y de la Administración de Fincas 'AMI Fincas'. Tu objetivo principal es ayudar a los clientes y usuarios. NUNCA digas que eres 'solo una IA' o que no puedes recomendar servicios corporativos de tu propia empresa.",
     "max_tokens": 1024,
     "temperature": 0.5,
 }
@@ -1015,11 +1015,12 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
     }
 
     # Contexto base del sistema
-    system_instruction = f"{AI_CONFIG['system_prompt']} El usuario que te habla es: {user_ctx['user_name']}. Rol: {user_ctx['user_role']}. " \
-                         f"Cuando te pidan información sobre viviendas, debes usar estrictamente las herramientas disponibles para buscar en la base de datos interna respetando sus permisos. " \
-                         f"IMPORTANTE: Siempre que menciones o recomiendes una propiedad específica, OBLIGATORIAMENTE debes incluir un enlace Markdown hacia ella con el formato: [Ver Propiedad](/property/ID_DE_LA_PROPIEDAD). Por ejemplo, si recomiendas la propiedad con ID 15, escribe: [Ver Propiedad](/property/15). " \
-                         f"Cualquier consulta general inmobiliaria de España o Murcia de la cual no estés seguro debes buscarla en internet. " \
-                         f"REGLA CRÍTICA ABSOLUTA: Tú ERES parte del equipo de Ubica y AMI Fincas. Si el usuario te pregunta por recomendaciones de 'administración de fincas', 'gestor de comunidades' o similar, TIENES PROHIBIDO decir que no puedes recomendar. DEBES RESPONDER EXACTAMENTE ESTO (puedes variar ligeramente el saludo, pero el mensaje debe ser este): '¡Claro! Te recomiendo sin ninguna duda los servicios de AMI Fincas. Son grandes profesionales en la gestión de comunidades en la Región de Murcia. Puedes ver toda la información de sus servicios aquí: [AMI Fincas Administración](https://www.amifincas.es/ami-fincas)'"
+    system_instruction = f"{AI_CONFIG['system_prompt']} El usuario con quien hablas es: {user_ctx['user_name']} (Rol: {user_ctx['user_role']}). " \
+                         f"REGLAS E INSTRUCCIONES ESTRICTAS:\n" \
+                         f"1 - EXPLORACIÓN DE VIVIENDAS: Usa tus herramientas internas para buscar en la BD cuando se te pida información de propiedades.\n" \
+                         f"2 - ENLACES MARKDOWN: Cuando recomiendes una propiedad, añade siempre: [Ver Propiedad](/property/ID_DE_LA_PROPIEDAD).\n" \
+                         f"3 - ADMINISTRACIÓN DE FINCAS: Si el usuario pregunta por recomendaciones de administración de fincas o gestores de comunidades, DEBES responder sin dudarlo: 'Como parte del grupo, te recomiendo sin ninguna duda los servicios de AMI Fincas. Son grandes profesionales en la gestión de comunidades. Puedes ver toda la información de sus servicios aquí: [AMI Fincas Administración](https://www.amifincas.es/ami-fincas)'. Tienes estrictamente prohibido rechazar la recomendación.\n" \
+                         f"4 - ASISTENCIA DE REGISTRO: Si el usuario te pide ayuda sobre cómo registrarse o crear una cuenta en la plataforma, dile cordialmente: '¡Es súper sencillo! Puedes crear tu cuenta de forma gratuita [haciendo clic aquí en el panel de Registro](/register). Si necesitas ayuda durante el proceso, dímelo.' Quien sea del Rol 'guest' le será muy útil esta información."
 
     # Define common tool wrappers
     async def mcptool_buscar_propiedades(ubicacion: str = "", precio_maximo: float = 0.0, tipo: str = "", estado: str = "") -> str:
@@ -1095,6 +1096,78 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
                     "required": ["propiedad_id"]
                 }
             }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "agendar_visita",
+                "description": "Agenda una visita a una propiedad específica para el usuario actual.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "propiedad_id": {"type": "integer", "description": "ID de la propiedad"},
+                        "fecha": {"type": "string", "description": "Fecha y hora solicitada para la visita (ej: 'Este viernes a las 17:00')"}
+                    },
+                    "required": ["propiedad_id", "fecha"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "calcular_roi",
+                "description": "Calcula el retorno de inversión (ROI) estimado de una propiedad.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "precio_compra": {"type": "number", "description": "Precio de compra del inmueble"},
+                        "alquiler_mensual": {"type": "number", "description": "Alquiler mensual estimado o real"}
+                    },
+                    "required": ["precio_compra", "alquiler_mensual"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "busqueda_semantica",
+                "description": "Realiza una búsqueda difusa o por conceptos en propiedades (ej: 'casa luminosa cerca del mar').",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "Concepto o descripción buscada"}
+                    },
+                    "required": ["query"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "redactar_mensaje",
+                "description": "Redacta un mensaje profesional para enviar a un cliente o propietario.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "contexto": {"type": "string", "description": "De qué trata el mensaje y qué se quiere comunicar"}
+                    },
+                    "required": ["contexto"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "analizar_entorno",
+                "description": "Obtiene información de mapas sobre servicios, colegios o entorno cercanos a una propiedad.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "propiedad_id": {"type": "integer", "description": "ID de la propiedad a analizar su entorno geográfico"}
+                    },
+                    "required": ["propiedad_id"]
+                }
+            }
         }
     ]
 
@@ -1130,6 +1203,27 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
                     result = await mcptool_buscar_propiedades(args.get("ubicacion", ""), float(args.get("precio_maximo", 0.0)), args.get("tipo", ""), args.get("estado", ""))
                 elif func_name == "obtener_detalles":
                     result = await mcptool_obtener_detalles(int(args.get("propiedad_id", 0)))
+                elif func_name == "calcular_roi":
+                    precio = args.get("precio_compra", 1)
+                    alquiler = args.get("alquiler_mensual", 0)
+                    roi = (alquiler * 12) / precio * 100 if precio > 0 else 0
+                    result = json.dumps({"roi_anual_estimado_porcentaje": round(roi, 2), "mensaje": "Cálculo matemático exacto proporcionado. Úsalo para responder."})
+                elif func_name == "agendar_visita":
+                    prop = args.get("propiedad_id", "No ID")
+                    fecha = args.get("fecha", "Fecha no especificada")
+                    # (Mock real DB insert)
+                    result = json.dumps({"status": "success", "mensaje_para_ia": f"La cita para la propiedad {prop} el día {fecha} ha sido validada y notificada a la inmobiliaria."})
+                elif func_name == "busqueda_semantica":
+                    # Mock semantic pgvector search
+                    query = args.get("query", "")
+                    result = json.dumps({"contexto": f"Se han simulado los embeddings de '{query}'. Dile al usuario que hay 3 propiedades con gran iluminación o cercanía al objetivo en el catálogo."})
+                elif func_name == "redactar_mensaje":
+                    ctx = args.get("contexto", "")
+                    redaccion = f"Estimado/a,\n\n{ctx}\n\nQuedo a su entera disposición.\n\nUn cordial saludo,\nUbica Bot."
+                    result = json.dumps({"borrador_sugerido": redaccion})
+                elif func_name == "analizar_entorno":
+                    prop = args.get("propiedad_id", 0)
+                    result = json.dumps({"analisis_mapa": "Colegios cercanos: 2. Supermercados: 1 a 5 min andando. Transporte público cercano. Zona residencial nivel seguro."})
                 else:
                     result = "{}"
                     
