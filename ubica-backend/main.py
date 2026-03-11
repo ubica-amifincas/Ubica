@@ -989,9 +989,10 @@ AI_CONFIG = {
 class AIChatRequest(BaseModel):
     message: str
     history: Optional[List[Dict[str, str]]] = []
+    conversation_id: Optional[int] = None
 
 @app.post("/api/ai/chat")
-async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Optional[User] = Depends(get_user_or_none)):
+async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Optional[User] = Depends(get_user_or_none), session: Session = Depends(get_session)):
     """
     Endpoint de chat con IA en cascada (Gemini -> Groq -> OpenRouter).
     """
@@ -1006,6 +1007,13 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
             status_code=429, 
             detail="Has alcanzado tu límite de consultas gratuitas por hoy. 🚀 ¡Regístrate o actualiza a un plan Premium para seguir consultando!"
         )
+
+    # Validate conversation ownership if provided
+    db_conversation = None
+    if request.conversation_id and current_user:
+        db_conversation = session.get(models.AIConversation, request.conversation_id)
+        if db_conversation and db_conversation.user_id != user_id:
+            db_conversation = None # Not theirs, ignore or could raise 403
 
     # 1.1 Contexto para las MCP Tools basado en el usuario
     user_ctx = {
@@ -1244,12 +1252,56 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
             return response.choices[0].message.content
         return msg_out.content
 
+    # Helper to save conversation to DB
+    def persist_conversation(final_message: str):
+        if not current_user:
+            return None
+        
+        # Build the updated history array
+        updated_history = [m for m in request.history]
+        updated_history.append({"role": "user", "content": request.message})
+        updated_history.append({"role": "assistant", "content": final_message})
+
+        nonlocal db_conversation
+        if db_conversation:
+            # Update existing
+            db_conversation.messages = updated_history
+            db_conversation.updated_at = datetime.now()
+            session.add(db_conversation)
+        else:
+            # Create new
+            title = request.message[:50] + "..." if len(request.message) > 50 else request.message
+            db_conversation = models.AIConversation(
+                user_id=current_user.id,
+                title=title,
+                messages=updated_history
+            )
+            session.add(db_conversation)
+            
+        session.commit()
+        session.refresh(db_conversation)
+        
+        # Keep only the last 5 conversations per user
+        user_convs = session.exec(
+            select(models.AIConversation)
+            .where(models.AIConversation.user_id == current_user.id)
+            .order_by(models.AIConversation.updated_at.desc())
+        ).all()
+        
+        if len(user_convs) > 5:
+            for conv in user_convs[5:]:
+                session.delete(conv)
+            session.commit()
+            
+        return db_conversation.id
+
     # Cascade 1: try Groq (Gemini disabled via user instruction to reduce latency)
     if OPENAI_AVAILABLE and GROQ_API_KEY:
         try:
             groq_model = "llama3-70b-8192" # standard tool-capable model on Groq
             res_text = await run_openai_provider(GROQ_API_KEY, "https://api.groq.com/openai/v1", groq_model)
-            return {"message": res_text, "provider": "groq", "model": groq_model}
+            conv_id = persist_conversation(res_text)
+            return {"message": res_text, "provider": "groq", "model": groq_model, "conversation_id": conv_id}
         except Exception as e:
             print(f"Groq failed: {e}")
 
@@ -1258,7 +1310,8 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
         try:
             or_model = "google/gemini-2.5-flash" # tool-capable map to gemini via openrouter
             res_text = await run_openai_provider(OPENROUTER_API_KEY, "https://openrouter.ai/api/v1", or_model)
-            return {"message": res_text, "provider": "openrouter", "model": or_model}
+            conv_id = persist_conversation(res_text)
+            return {"message": res_text, "provider": "openrouter", "model": or_model, "conversation_id": conv_id}
         except Exception as e:
             print(f"OpenRouter failed: {e}")
 
@@ -1270,10 +1323,12 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
     elif "apartamento" in msg or "piso" in msg:
         answer = "Disponemos de apartamentos. ¿Qué ubicación estás buscando?"
         
+    conv_id = persist_conversation(answer)
     return {
         "message": answer,
         "provider": "mock",
         "model": "placeholder",
+        "conversation_id": conv_id
     }
 
 
@@ -1287,6 +1342,41 @@ async def get_ai_config(current_user: User = Depends(require_role(["admin"]))):
         "has_api_key": bool(AI_CONFIG["api_key"]),
         "max_tokens": AI_CONFIG["max_tokens"],
         "temperature": AI_CONFIG["temperature"],
+    }
+
+@app.get("/api/ai/conversations")
+async def get_ai_conversations(current_user: models.User = Depends(get_current_user), session: Session = Depends(get_session)):
+    """API para obtener las ultimas 5 conversaciones de IA del usuario."""
+    conversations = session.exec(
+        select(models.AIConversation)
+        .where(models.AIConversation.user_id == current_user.id)
+        .order_by(models.AIConversation.updated_at.desc())
+        .limit(5)
+    ).all()
+    
+    # Return limited metadata to the UI 
+    results = []
+    for c in conversations:
+        results.append({
+            "id": c.id,
+            "title": c.title,
+            "updated_at": c.updated_at.isoformat(),
+            "message_count": len(c.messages)
+        })
+    return results
+
+@app.get("/api/ai/conversations/{conversation_id}")
+async def get_ai_conversation_details(conversation_id: int, current_user: models.User = Depends(get_current_user), session: Session = Depends(get_session)):
+    """API para obtener el historial completo de una conversacion especifica"""
+    conversation = session.get(models.AIConversation, conversation_id)
+    if not conversation or conversation.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Conversación no encontrada o sin acceso")
+    
+    return {
+        "id": conversation.id,
+        "title": conversation.title,
+        "updated_at": conversation.updated_at.isoformat(),
+        "messages": conversation.messages
     }
 
 # --- User Features Endpoints ---

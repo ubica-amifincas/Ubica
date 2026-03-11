@@ -757,7 +757,7 @@ class MockApiService {
   }
 
   // AI Chat (redirige al backend real aunque estemos en modo mock para testear IA)
-  async sendAIMessage(message: string, history: { role: string; content: string }[]): Promise<{ message: string; provider: string; model: string }> {
+  async sendAIMessage(message: string, history: { role: string; content: string }[], conversationId?: number | null): Promise<{ message: string; provider: string; model: string; conversation_id?: number }> {
     // Determine use API url
     const isProdContainer = window.location.hostname.includes('amifincas.es') || window.location.hostname.includes('vercel.app');
     const defaultApiUrl = isProdContainer ? 'https://ubica-backend.onrender.com/api' : 'http://localhost:8000/api';
@@ -772,7 +772,7 @@ class MockApiService {
     const response = await fetch(`${API_BASE_URL}/ai/chat`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ message, history }),
+        body: JSON.stringify({ message, history, conversation_id: conversationId }),
     });
 
     if (!response.ok) {
@@ -781,6 +781,34 @@ class MockApiService {
 
     return response.json();
   }
+
+  async getAIConversations(): Promise<any[]> {
+    // Redirect to real backend as well since user state requires it
+    const isProdContainer = window.location.hostname.includes('amifincas.es') || window.location.hostname.includes('vercel.app');
+    const defaultApiUrl = isProdContainer ? 'https://ubica-backend.onrender.com/api' : 'http://localhost:8000/api';
+    const API_BASE_URL = import.meta.env.VITE_API_URL || defaultApiUrl;
+    
+    const token = localStorage.getItem('ubica_token');
+    const response = await fetch(`${API_BASE_URL}/ai/conversations`, {
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }
+    });
+    if (!response.ok) return [];
+    return response.json();
+  }
+
+  async getAIConversationDetails(conversationId: number): Promise<any> {
+    const isProdContainer = window.location.hostname.includes('amifincas.es') || window.location.hostname.includes('vercel.app');
+    const defaultApiUrl = isProdContainer ? 'https://ubica-backend.onrender.com/api' : 'http://localhost:8000/api';
+    const API_BASE_URL = import.meta.env.VITE_API_URL || defaultApiUrl;
+    
+    const token = localStorage.getItem('ubica_token');
+    const response = await fetch(`${API_BASE_URL}/ai/conversations/${conversationId}`, {
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }
+    });
+    if (!response.ok) throw new Error("Could not fetch conversation details");
+    return response.json();
+  }
+
 
   // User Features (mock)
   async getFavorites(): Promise<Property[]> {

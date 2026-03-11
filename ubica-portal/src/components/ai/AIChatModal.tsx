@@ -16,7 +16,16 @@ interface Message {
 }
 
 export default function AIChatModal() {
-    const { isOpen, isMinimized, searchContext, closeChat, minimizeChat, maximizeChat } = useAIChat();
+    const { 
+        isOpen, 
+        isMinimized, 
+        searchContext, 
+        activeConversationId, 
+        preloadedMessages, 
+        closeChat, 
+        minimizeChat, 
+        maximizeChat 
+    } = useAIChat();
 
     const [messages, setMessages] = useState<Message[]>([
         {
@@ -49,10 +58,33 @@ export default function AIChatModal() {
 
     // Pre-fill with search context if provided
     useEffect(() => {
-        if (isOpen && searchContext && messages.length === 1) {
+        if (isOpen && searchContext && messages.length === 1 && !activeConversationId) {
             setInput(searchContext);
         }
-    }, [isOpen, searchContext]);
+    }, [isOpen, searchContext, activeConversationId]);
+
+    // Load preloaded conversation if one is set
+    useEffect(() => {
+        if (activeConversationId && preloadedMessages && preloadedMessages.length > 0) {
+            const parsedMessages: Message[] = preloadedMessages.map((msg, idx) => ({
+                id: `history-${idx}`,
+                role: msg.role as 'user' | 'assistant',
+                content: msg.content,
+                timestamp: new Date() // El timestamp en JSON no importa ahora, solo el orden
+            }));
+            setMessages(parsedMessages);
+        } else if (!activeConversationId) {
+             // Reset to welcome prompt if we change to a new unknown id
+              setMessages([
+                  {
+                      id: 'welcome',
+                      role: 'assistant',
+                      content: '¡Hola! 👋 Soy el asistente inmobiliario de Ubica. Puedo ayudarte a encontrar la propiedad ideal. ¿Qué tipo de propiedad estás buscando?',
+                      timestamp: new Date(),
+                  },
+              ]);
+        }
+    }, [activeConversationId, preloadedMessages]);
 
     const sendMessage = async () => {
         const text = input.trim();
@@ -70,7 +102,11 @@ export default function AIChatModal() {
         setIsLoading(true);
 
         try {
-            const response = await appService.sendAIMessage(text, messages.map(m => ({ role: m.role, content: m.content })));
+            const response = await appService.sendAIMessage(
+                text, 
+                messages.map(m => ({ role: m.role, content: m.content })),
+                activeConversationId
+            );
 
             const assistantMessage: Message = {
                 id: `assistant-${Date.now()}`,

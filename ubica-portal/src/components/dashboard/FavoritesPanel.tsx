@@ -55,7 +55,7 @@ export default function FavoritesPanel() {
     if (favorites.length === 0) {
         return (
             <motion.div
-                className="flex flex-col items-center justify-center py-20 bg-white dark:bg-gray-800 rounded-xl border border-dashed border-gray-300 dark:border-gray-700"
+                className="flex flex-col items-center justify-center py-20 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
             >

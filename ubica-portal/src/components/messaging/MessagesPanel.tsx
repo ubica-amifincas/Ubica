@@ -134,7 +134,7 @@ export default function MessagesPanel() {
     if (selectedConv) {
         return (
             <motion.div
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col"
+                className="bg-white dark:bg-gray-800 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 flex flex-col"
                 style={{ height: '500px' }}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -211,7 +211,7 @@ export default function MessagesPanel() {
     // Conversation list
     return (
         <motion.div
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700"
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 overflow-hidden"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
         >

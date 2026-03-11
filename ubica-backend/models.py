@@ -111,3 +111,12 @@ class GameScore(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.now)
     
     user: User = Relationship()
+
+class AIConversation(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id")
+    title: str = Field(max_length=150)
+    messages: List[Dict[str, Any]] = Field(default=[], sa_column=Column(JSON))
+    updated_at: datetime = Field(default_factory=datetime.now)
+    
+    user: User = Relationship()

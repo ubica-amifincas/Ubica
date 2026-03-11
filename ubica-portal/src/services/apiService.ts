@@ -383,13 +383,27 @@ class ApiService {
   }
 
   // AI Chat
-  async sendAIMessage(message: string, history: { role: string; content: string }[]): Promise<{ message: string; provider: string; model: string }> {
+  async sendAIMessage(message: string, history: { role: string; content: string }[], conversationId?: number | null): Promise<{ message: string; provider: string; model: string; conversation_id?: number }> {
     const response = await fetch(`${API_BASE_URL}/ai/chat`, {
       method: 'POST',
       headers: this.getAuthHeaders(),
-      body: JSON.stringify({ message, history }),
+      body: JSON.stringify({ message, history, conversation_id: conversationId }),
     });
     return this.handleResponse(response);
+  }
+
+  async getAIConversations(): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/ai/conversations`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse<any[]>(response);
+  }
+
+  async getAIConversationDetails(conversationId: number): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/ai/conversations/${conversationId}`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse<any>(response);
   }
 
   // Health check

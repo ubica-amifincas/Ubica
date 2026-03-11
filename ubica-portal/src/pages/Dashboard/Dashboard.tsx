@@ -19,6 +19,7 @@ import { useAuth, useAuthenticatedFetch } from '../../contexts/AuthContext';
 import MessagesPanel from '../../components/messaging/MessagesPanel';
 import FavoritesPanel from '../../components/dashboard/FavoritesPanel';
 import SavedSearchesPanel from '../../components/dashboard/SavedSearchesPanel';
+import { AIHistoryPanel } from '../../components/dashboard/AIHistoryPanel';
 
 interface StatCardProps {
   title: string;
@@ -39,8 +40,8 @@ const StatCard = ({ title, value, change, icon: Icon, color }: StatCardProps) =>
 
   return (
     <motion.div
-      className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6"
-      whileHover={{ y: -2 }}
+      className="bg-white dark:bg-gray-800 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 p-6"
+      whileHover={{ y: -4, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)' }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -59,7 +60,7 @@ const StatCard = ({ title, value, change, icon: Icon, color }: StatCardProps) =>
             </p>
           )}
         </div>
-        <div className={`p-3 rounded-full ${colorClasses[color]}`}>
+        <div className={`p-3 rounded-md ${colorClasses[color]}`}>
           <Icon className="h-6 w-6" />
         </div>
       </div>
@@ -70,7 +71,7 @@ const StatCard = ({ title, value, change, icon: Icon, color }: StatCardProps) =>
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [userMetrics, setUserMetrics] = useState<any>(null);
-  const [activeView, setActiveView] = useState<'dashboard' | 'messages' | 'favorites' | 'searches'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'messages' | 'favorites' | 'searches' | 'ia_history'>('dashboard');
   const { t } = useLanguage();
   const { user } = useAuth();
   const apiService = useAuthenticatedFetch();
@@ -85,6 +86,7 @@ export default function Dashboard() {
     if (view === 'messages') setActiveView('messages');
     else if (view === 'favorites') setActiveView('favorites');
     else if (view === 'searches') setActiveView('searches');
+    else if (view === 'ia_history') setActiveView('ia_history');
     else setActiveView('dashboard');
   }, [location.search]);
 
@@ -185,9 +187,40 @@ export default function Dashboard() {
         </p>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Tus consultas IA */}
+        <div className="rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-violet-100 dark:border-gray-800 p-6 md:p-8 flex flex-col justify-between col-span-1 md:col-span-2 lg:col-span-4 bg-gradient-to-r from-violet-50 via-white to-white dark:from-violet-900/10 dark:via-gray-800 dark:to-gray-800 transition-all duration-300 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] hover:-translate-y-1">
+          <div className="flex justify-between items-center sm:items-start mb-2">
+             <div className="flex items-center space-x-4">
+                 <div className="p-3 bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 w-max rounded-lg">
+                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                   </svg>
+                 </div>
+                 <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Tus Consultas IA</h3>
+                    <p className="text-gray-500 text-sm mt-1 max-w-lg">
+                      Retoma tus conversaciones con el asistente virtual de AMI Fincas. Repasa tus cálculos de rentabilidad, visitas agendadas o dudas sobre nuestro servicio.
+                    </p>
+                 </div>
+             </div>
+             <button
+                onClick={() => navigate('/dashboard?view=ia_history')}
+                className="hidden sm:inline-flex px-4 py-2 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 transition"
+              >
+                Ver Historial
+              </button>
+          </div>
+          <button
+            onClick={() => navigate('/dashboard?view=ia_history')}
+            className="sm:hidden w-full text-center mt-4 px-4 py-2 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 transition"
+          >
+            Ver Historial
+          </button>
+        </div>
+
         {/* Tus Favoritos */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col justify-between">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 p-6 md:p-8 flex flex-col justify-between transition-all duration-300 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] hover:-translate-y-1">
           <div>
             <div className="p-3 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 w-max rounded-lg mb-4">
               <HeartIcon className="w-6 h-6" />
@@ -208,7 +241,7 @@ export default function Dashboard() {
         </div>
 
         {/* Búsquedas Guardadas */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col justify-between">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 p-6 md:p-8 flex flex-col justify-between transition-all duration-300 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] hover:-translate-y-1">
           <div>
             <div className="p-3 bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 w-max rounded-lg mb-4">
               <MagnifyingGlassIcon className="w-6 h-6" />
@@ -229,7 +262,7 @@ export default function Dashboard() {
         </div>
 
         {/* Mensajes Inmobiliarios */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col justify-between">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 p-6 md:p-8 flex flex-col justify-between lg:col-span-2 transition-all duration-300 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] hover:-translate-y-1">
           <div>
             <div className="p-3 bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400 w-max rounded-lg mb-4">
               <ChatBubbleLeftRightIcon className="w-6 h-6" />
@@ -237,15 +270,15 @@ export default function Dashboard() {
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Mensajes Inmobiliarios</h3>
             <p className="text-gray-500 text-sm mb-4">
               {userMetrics.messagesCount > 0
-                ? `Tienes ${userMetrics.messagesCount} conversaciones activas.`
-                : 'Consulta el estado de tus solicitudes de información.'}
+                ? `Tienes ${userMetrics.messagesCount} conversaciones activas con agentes o de propiedades.`
+                : 'Consulta el estado de tus solicitudes de información hacia las agencias de AMI Fincas.'}
             </p>
           </div>
           <button
             onClick={() => navigate('/dashboard?view=messages')}
             className="text-sm font-medium text-emerald-600 hover:text-emerald-500 text-left border-t border-gray-200 dark:border-gray-700 pt-3 mt-2"
           >
-            Mis mensajes →
+            Ir al buzón →
           </button>
         </div>
       </div>
@@ -271,7 +304,7 @@ export default function Dashboard() {
       </div>
 
       <motion.div
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col md:flex-row items-center justify-between gap-4"
+        className="bg-white dark:bg-gray-800 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-4"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
@@ -291,7 +324,7 @@ export default function Dashboard() {
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 p-6 md:p-8 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] transition-all duration-300">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Rendimiento</h2>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={userMetrics.revenueData}>
@@ -303,7 +336,7 @@ export default function Dashboard() {
             </LineChart>
           </ResponsiveContainer>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 p-6 md:p-8 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] transition-all duration-300">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Distribución</h2>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -375,6 +408,22 @@ export default function Dashboard() {
               </button>
             </div>
             <SavedSearchesPanel />
+          </div>
+        );
+      case 'ia_history':
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Conversaciones IA</h1>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <XMarkIcon className="w-5 h-5" />
+                Volver al Dashboard
+              </button>
+            </div>
+            <AIHistoryPanel />
           </div>
         );
       default:

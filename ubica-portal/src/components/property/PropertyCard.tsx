@@ -128,7 +128,7 @@ export function PropertyCard({
 
   return (
     <motion.div
-      className={`group relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-xl dark:border-gray-700 dark:bg-gray-800 ${variant === 'list' ? 'flex flex-col sm:flex-row' : ''
+      className={`group relative overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] transition-all duration-300 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] hover:-translate-y-1 dark:border-gray-800 dark:bg-gray-800 ${variant === 'list' ? 'flex flex-col sm:flex-row' : ''
         }`}
       whileHover={{ y: -5 }}
       initial={{ opacity: 0, y: 20 }}

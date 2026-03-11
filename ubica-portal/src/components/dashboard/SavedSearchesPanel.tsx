@@ -65,7 +65,7 @@ export default function SavedSearchesPanel() {
     if (searches.length === 0) {
         return (
             <motion.div
-                className="flex flex-col items-center justify-center py-20 bg-white dark:bg-gray-800 rounded-xl border border-dashed border-gray-300 dark:border-gray-700"
+                className="flex flex-col items-center justify-center py-20 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
             >
@@ -103,7 +103,7 @@ export default function SavedSearchesPanel() {
                 {searches.map((search) => (
                     <motion.div
                         key={search.id}
-                        className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow"
+                        className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] transition-all duration-300"
                         whileHover={{ x: 5 }}
                     >
                         <div className="flex-1">

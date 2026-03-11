@@ -115,17 +115,18 @@ export default function Navbar() {
 
     const dashboardNav = [...publicNav];
 
+    // Siempre añadir la opción de Dashboard General para usuarios registrados
+    dashboardNav.push({ name: t('nav.dashboard', 'Mi Área'), href: '/dashboard', icon: ChartBarIcon, external: false });
+
     // Agregar navegación específica por rol
     if (hasRole('admin')) {
       dashboardNav.push({ name: t('nav.admin'), href: '/admin', icon: CogIcon, external: false });
     } else if (hasRole('realtor')) {
-      dashboardNav.push({ name: t('nav.realtor'), href: '/realtor', icon: ChartBarIcon, external: false });
+      dashboardNav.push({ name: t('nav.realtor'), href: '/realtor', icon: BuildingOfficeIcon, external: false });
     } else if (hasRole('investor')) {
-      dashboardNav.push({ name: t('nav.investor'), href: '/investor', icon: ChartBarIcon, external: false });
+      dashboardNav.push({ name: t('nav.investor', 'Inversor'), href: '/investor', icon: ChartBarIcon, external: false });
     } else if (hasRole('property_manager')) {
       dashboardNav.push({ name: t('nav.property_manager'), href: '/property-manager', icon: BuildingOfficeIcon, external: false });
-    } else {
-      dashboardNav.push({ name: t('nav.dashboard'), href: '/dashboard', icon: ChartBarIcon, external: false });
     }
 
     return dashboardNav;

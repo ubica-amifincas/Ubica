@@ -16,6 +16,7 @@ import {
   ShieldCheckIcon,
   WalletIcon,
   HeartIcon,
+  SparklesIcon,
   MagnifyingGlassIcon
 } from '@heroicons/react/24/outline';
 import { ThemeToggle } from '../common/ThemeToggle';
@@ -46,6 +47,7 @@ export default function DashboardLayout() {
     ...(!isInvestor && !isStandardUser ? [{ name: t('dashboard.investments'), href: '/dashboard/investments', icon: ArrowTrendingUpIcon }] : []),
     { name: 'Patrimonio', href: '/dashboard/wealth', icon: WalletIcon },
     { name: 'Mensajes', href: '/dashboard?view=messages', icon: EnvelopeIcon },
+    { name: 'Historial IA', href: '/dashboard?view=ia_history', icon: SparklesIcon },
     ...(isStandardUser ? [
       { name: 'Favoritos', href: '/dashboard?view=favorites', icon: HeartIcon },
       { name: 'Búsquedas', href: '/dashboard?view=searches', icon: MagnifyingGlassIcon },
