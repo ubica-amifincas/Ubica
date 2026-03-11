@@ -12,6 +12,7 @@ import * as THREE from 'three';
 interface BlockData {
     id: string;
     position: [number, number, number];
+    rotation?: [number, number, number];
     color: string;
     type: 'base' | 'building';
     initialVelocity?: [number, number, number];
@@ -50,11 +51,12 @@ function BasePlatform() {
 }
 
 // 2. Construction Drone (Replaces Crane)
-function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextColor }: { onDrop: (x: number, z: number, y: number, vx: number, vz: number, isLogo: boolean) => void, isSpawning: boolean, targetY: number, difficultySpeed: number, nextColor: string }) {
+function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextColor }: { onDrop: (x: number, z: number, y: number, vx: number, vz: number, isLogo: boolean, rx?: number, ry?: number, rz?: number) => void, isSpawning: boolean, targetY: number, difficultySpeed: number, nextColor: string }) {
     const groupRef = useRef<THREE.Group>(null);
     const shadowDotRef = useRef<THREE.Mesh>(null);
     const ringRef = useRef<THREE.Mesh>(null);
     const hookGroupRef = useRef<THREE.Group>(null);
+    const heldBlockRef = useRef<THREE.Group>(null);
     const { rapier, world } = useRapier();
     
     // Track previous position to calculate velocity for pendulum effect
@@ -132,22 +134,34 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
             if ((e.target as HTMLElement).tagName.toLowerCase() === 'button' || (e.target as HTMLElement).closest('button')) return;
             if ((e.target as HTMLElement).tagName.toLowerCase() === 'a' || (e.target as HTMLElement).closest('a')) return;
 
-            if (!isSpawning && groupRef.current) {
-                // Drop from the hook's Y position
-                // Apply a portion of the drone's velocity (x60 for fps scaling) to the block
+            if (!isSpawning && groupRef.current && heldBlockRef.current) {
+                const worldPos = new THREE.Vector3();
+                heldBlockRef.current.getWorldPosition(worldPos);
+
+                const worldQuat = new THREE.Quaternion();
+                heldBlockRef.current.getWorldQuaternion(worldQuat);
+                const euler = new THREE.Euler().setFromQuaternion(worldQuat);
+
                 onDrop(
-                    groupRef.current.position.x, 
-                    groupRef.current.position.z, 
-                    groupRef.current.position.y - 2.6,
+                    worldPos.x, 
+                    worldPos.z, 
+                    worldPos.y,
                     velocity.current.x * 60 * 0.5,
                     velocity.current.z * 60 * 0.5,
-                    nextColor === 'LOGO'
+                    nextColor === 'LOGO',
+                    euler.x,
+                    euler.y,
+                    euler.z
                 );
             }
         };
 
         window.addEventListener('pointerdown', handlePointerDown);
-        return () => window.removeEventListener('pointerdown', handlePointerDown);
+        window.addEventListener('keydown', (e) => { if(e.code === 'Space') handlePointerDown(e as any) });
+        return () => {
+            window.removeEventListener('pointerdown', handlePointerDown);
+            window.removeEventListener('keydown', (e) => { if(e.code === 'Space') handlePointerDown(e as any) });
+        };
     }, [onDrop, isSpawning, nextColor]);
 
     return (
@@ -219,7 +233,7 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
 
                 {/* Held Block Visually */}
                 {!isSpawning && (
-                     <group position={[0, -2.6, 0]}>
+                     <group position={[0, -2.6, 0]} ref={heldBlockRef}>
                          {nextColor !== 'LOGO' ? (
                              <mesh castShadow receiveShadow>
                                 <boxGeometry args={[1.5, 1, 1.5]} />
@@ -265,7 +279,7 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
 }
 
 // 3. Falling Blocks
-function BuildingBlock({ position, color, initialVelocity, isLogo, onFallOut }: { position: [number, number, number], color: string, isLogo: boolean, initialVelocity: [number, number, number], id: string, onFallOut: () => void }) {
+function BuildingBlock({ position, rotation, color, initialVelocity, isLogo, onFallOut }: { position: [number, number, number], rotation?: [number, number, number], color: string, isLogo: boolean, initialVelocity: [number, number, number], id: string, onFallOut: () => void }) {
     const rigidBodyRef = useRef<any>(null);
 
     useFrame(() => {
@@ -281,6 +295,7 @@ function BuildingBlock({ position, color, initialVelocity, isLogo, onFallOut }: 
             ref={rigidBodyRef}
             type="dynamic"
             position={position}
+            rotation={rotation || [0, 0, 0]}
             mass={isLogo ? 3.0 : 1.5}
             friction={0.9}
             restitution={isLogo ? 0.3 : 0.05}
@@ -421,7 +436,7 @@ export default function UbicaBalance() {
         }
     }, [gameOver]);
 
-    const handleDrop = useCallback((x: number, z: number, y: number, vx: number, vz: number, isLogo: boolean) => {
+    const handleDrop = useCallback((x: number, z: number, y: number, vx: number, vz: number, isLogo: boolean, rx: number = 0, ry: number = 0, rz: number = 0) => {
         if (gameOver || isSpawning) return;
 
         setIsSpawning(true);
@@ -459,6 +474,7 @@ export default function UbicaBalance() {
         const newBlock: BlockData = {
             id: `block-${Date.now()}`,
             position: [x, y, z],
+            rotation: [rx, ry, rz],
             initialVelocity: [vx, 0, vz],
             color: nextColor,
             isLogo: isLogo,
@@ -728,6 +744,7 @@ export default function UbicaBalance() {
                             key={block.id}
                             id={block.id}
                             position={block.position}
+                            rotation={block.rotation}
                             color={block.color}
                             initialVelocity={block.initialVelocity || [0, 0, 0]}
                             isLogo={block.isLogo || false}
