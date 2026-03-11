@@ -63,8 +63,8 @@ export const AIHistoryPanel: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <div className="flex justify-center items-center h-64 bg-white dark:bg-dark-paper rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary dark:border-primary/80"></div>
             </div>
         );
     }
@@ -126,7 +126,7 @@ export const AIHistoryPanel: React.FC = () => {
                                     <ChatBubbleLeftRightIcon className="w-6 h-6 text-gray-400 group-hover:text-primary transition-colors" />
                                 </div>
                                 <div>
-                                    <h3 className="text-base font-semibold text-gray-900 dark:text-white group-hover:text-primary transition-colors line-clamp-1">
+                                    <h3 className="text-base font-semibold text-gray-900 dark:text-white group-hover:text-primary dark:group-hover:text-primary-light transition-colors line-clamp-1">
                                         {conv.title}
                                     </h3>
                                     <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500 dark:text-gray-400">
@@ -151,7 +151,7 @@ export const AIHistoryPanel: React.FC = () => {
                                         e.stopPropagation();
                                         handleOpenConversation(conv.id);
                                     }}
-                                    className="px-4 py-2 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg transition-colors font-medium text-sm flex items-center space-x-2 whitespace-nowrap"
+                                    className="px-4 py-2 bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-light hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white rounded-lg transition-colors font-medium text-sm flex items-center space-x-2 whitespace-nowrap"
                                 >
                                     <span>Continuar</span>
                                     <ChevronRightIcon className="w-4 h-4" />
