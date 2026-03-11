@@ -63,14 +63,14 @@ export const AIHistoryPanel: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-64 bg-white dark:bg-dark-paper rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800">
+            <div className="flex justify-center items-center h-64 bg-white dark:bg-gray-900 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary dark:border-primary/80"></div>
             </div>
         );
     }
 
     return (
-        <div className="bg-white dark:bg-dark-paper rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 focus:outline-none p-6 md:p-8">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 focus:outline-none p-6 md:p-8">
             <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center space-x-3">
                     <div className="p-2 bg-primary/10 rounded-lg">
@@ -93,9 +93,9 @@ export const AIHistoryPanel: React.FC = () => {
             )}
 
             {conversations.length === 0 && !error ? (
-                <div className="text-center py-16 bg-gray-50 dark:bg-dark-bg rounded-2xl border border-dashed border-gray-200 dark:border-gray-800">
-                    <ChatBubbleLeftRightIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                <div className="text-center py-16 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
+                    <ChatBubbleLeftRightIcon className="w-12 h-12 text-gray-300 dark:text-gray-500 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                         Aún no tienes conversaciones
                     </h3>
                     <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-6">
@@ -117,7 +117,7 @@ export const AIHistoryPanel: React.FC = () => {
                             transition={{ delay: idx * 0.1 }}
                             key={conv.id}
                             onClick={() => handleOpenConversation(conv.id)}
-                            className="group flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 bg-white dark:bg-dark-paper border border-gray-100 dark:border-gray-800 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:border-primary/30 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] hover:-translate-y-1 transition-all cursor-pointer relative overflow-hidden"
+                            className="group flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:border-primary/30 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] hover:-translate-y-1 transition-all cursor-pointer relative overflow-hidden"
                         >
                             <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary transform scale-y-0 group-hover:scale-y-100 transition-transform origin-bottom"></div>
                             
