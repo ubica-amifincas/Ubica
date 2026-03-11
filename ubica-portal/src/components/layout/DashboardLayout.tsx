@@ -202,7 +202,7 @@ export default function DashboardLayout() {
             </motion.div>
 
             <motion.div
-              className="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 md:hidden"
+              className="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 md:hidden flex flex-col"
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
