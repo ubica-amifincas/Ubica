@@ -1357,11 +1357,12 @@ async def get_ai_conversations(current_user: models.User = Depends(get_current_u
     # Return limited metadata to the UI 
     results = []
     for c in conversations:
+        msgs = json.loads(c.messages) if isinstance(c.messages, str) else (c.messages or [])
         results.append({
             "id": c.id,
             "title": c.title,
             "updated_at": c.updated_at.isoformat(),
-            "message_count": len(c.messages)
+            "message_count": len(msgs)
         })
     return results
 
@@ -1376,7 +1377,7 @@ async def get_ai_conversation_details(conversation_id: int, current_user: models
         "id": conversation.id,
         "title": conversation.title,
         "updated_at": conversation.updated_at.isoformat(),
-        "messages": conversation.messages
+        "messages": json.loads(conversation.messages) if isinstance(conversation.messages, str) else conversation.messages
     }
 
 # --- User Features Endpoints ---

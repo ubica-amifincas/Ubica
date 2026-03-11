@@ -83,7 +83,7 @@ export const AIHistoryPanel: React.FC = () => {
             </div>
 
             <p className="text-gray-600 dark:text-gray-400 mb-8">
-                Aquí puedes retomar cualquiera de tus últimas 5 consultas con el asistente de AMI Fincas.
+                Aquí puedes retomar cualquiera de tus últimas 5 consultas con el asistente de Ubica.
             </p>
 
             {error && (
