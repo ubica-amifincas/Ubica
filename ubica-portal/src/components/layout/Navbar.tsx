@@ -160,20 +160,20 @@ export default function Navbar() {
   const navPosition = isAmiFincasPage ? 'fixed w-full' : isHomePage ? 'relative' : 'sticky';
 
   return (
-    <nav className={`${navPosition} top-0 z-50 border-b border-gray-200 bg-gradient-to-r from-white via-white to-emerald-50 dark:border-gray-700 dark:bg-gradient-to-r dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 shadow-sm transition-all duration-300 ease-in-out`} style={isAmiFincasPage && navHidden ? { transform: 'translateY(-100%)' } : undefined}>
+    <nav className={`${navPosition} top-0 z-50 border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 shadow-sm transition-all duration-300 ease-in-out`} style={isAmiFincasPage && navHidden ? { transform: 'translateY(-100%)' } : undefined}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-20 items-center justify-between">
+        <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-4">
-              <img src="/logo_ubica.png" alt="Ubica" className="h-10 md:h-12 w-auto object-contain" />
-              <span className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 bg-clip-text text-transparent">Ubica</span>
+            <Link to="/" className="flex items-center space-x-3">
+              <img src="/logo_ubica.png" alt="Ubica" className="h-8 md:h-10 w-auto object-contain" />
+              <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 bg-clip-text text-transparent">Ubica</span>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-4">
+            <div className="ml-6 lg:ml-8 flex items-center space-x-2 lg:space-x-4">
               {navigation.map((item) => (
                 item.external ? (
                   <a
