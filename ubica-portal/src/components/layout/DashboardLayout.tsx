@@ -62,10 +62,25 @@ export default function DashboardLayout() {
   ];
 
   const isActive = (href: string) => {
-    if (href === '/dashboard' || href === '/investor') {
-      return location.pathname === href;
+    const currentPath = location.pathname + location.search;
+    
+    // Explicit match including query parameters (like ?view=ia_history)
+    if (currentPath === href) {
+        return true;
     }
-    return location.pathname.startsWith(href);
+
+    // Exact paths without query string
+    if (href === '/dashboard') {
+      return location.pathname === '/dashboard' && (!location.search || location.search === '?view=dashboard');
+    }
+    
+    // For other paths that are pure paths (like '/dashboard/investments' or '/investor')
+    if (!href.includes('?')) {
+        if (href === '/investor') return location.pathname === href;
+        return location.pathname.startsWith(href);
+    }
+
+    return false;
   };
 
   const handleLogout = () => {
