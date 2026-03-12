@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { XMarkIcon, PaperAirplaneIcon, MinusIcon, ArrowsPointingOutIcon } from '@heroicons/react/24/outline';
 import ReactMarkdown from 'react-markdown';
 import appService from '../../services';
@@ -41,6 +41,7 @@ export default function AIChatModal() {
     const inputRef = useRef<HTMLInputElement>(null);
     const { isAuthenticated } = useAuth();
     const [hasReachedLimit, setHasReachedLimit] = useState(false);
+    const dragControls = useDragControls();
     const constraintsRef = useRef<HTMLDivElement>(null);
 
     // Resize and Fullscreen state
@@ -56,6 +57,11 @@ export default function AIChatModal() {
     const startResizing = (e: React.PointerEvent) => {
         e.preventDefault();
         e.stopPropagation();
+        try {
+            (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+        } catch (err) {
+            console.warn("Failed to set pointer capture", err);
+        }
         setIsResizing(true);
     };
 
@@ -262,16 +268,16 @@ export default function AIChatModal() {
                             key="chat-window"
                             ref={windowRef}
                             drag={!isFullScreen && !isResizing}
+                            dragControls={dragControls}
+                            dragListener={false}
                             dragMomentum={false}
-                            dragConstraints={constraintsRef}
                             dragElastic={0.05}
-                            initial={{ opacity: 0, scale: 0.9, y: 40 }}
+                            initial={{ opacity: 0, scale: 0.9, x: 0, y: 20 }}
                             animate={{ 
                                 opacity: 1, 
                                 scale: 1, 
-                                // Reset x and y to 0 when in fullscreen to fix the displacement bug
                                 x: isFullScreen ? 0 : undefined,
-                                y: isFullScreen ? 0 : undefined, // Allow drag persistence when NOT fullscreen
+                                y: isFullScreen ? 0 : 0, // Force 0 on animate to settle position, drag will override
                                 width: isFullScreen ? '95vw' : (window.innerWidth < 640 ? '100vw' : dimensions.width),
                                 height: isFullScreen ? '92vh' : (window.innerWidth < 640 ? '100vh' : dimensions.height),
                                 // Centering logic for fullscreen
@@ -308,6 +314,7 @@ export default function AIChatModal() {
                             <div
                                 className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800 cursor-grab active:cursor-grabbing select-none"
                                 style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(6,182,212,0.08) 50%, rgba(16,185,129,0.08) 100%)' }}
+                                onPointerDown={(e) => dragControls.start(e)}
                             >
                                 <div className="flex items-center gap-3">
                                     {/* Animated sparkle icon */}
