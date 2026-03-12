@@ -1053,14 +1053,37 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
             if precio_maximo > 0:
                 statement = statement.where(models.Property.price <= precio_maximo)
             if tipo:
-                # Robust type mapping
+                # Robust semantic mapping Level 3
                 tipo_lower = tipo.lower()
-                if "piso" in tipo_lower or "apartamento" in tipo_lower:
-                    statement = statement.where(or_(models.Property.type.ilike("%apartment%"), models.Property.type.ilike("%piso%"), models.Property.type.ilike("%apartamento%")))
-                elif "casa" in tipo_lower or "chalet" in tipo_lower or "villa" in tipo_lower:
-                    statement = statement.where(or_(models.Property.type.ilike("%villa%"), models.Property.type.ilike("%casa%"), models.Property.type.ilike("%chalet%")))
+                # PISOS: Includes apartments, studios, penthouses, flats
+                if any(x in tipo_lower for x in ["piso", "apartamento", "estudio", "atico", "ático", "loft"]):
+                    tipo_filter = or_(
+                        models.Property.type.ilike("%apartment%"), 
+                        models.Property.type.ilike("%piso%"), 
+                        models.Property.type.ilike("%apartamento%"),
+                        models.Property.type.ilike("%studio%"),
+                        models.Property.type.ilike("%penthouse%"),
+                        models.Property.type.ilike("%atico%"),
+                        models.Property.title.ilike("%piso%"),
+                        models.Property.title.ilike("%apartamento%"),
+                        models.Property.title.ilike("%estudio%")
+                    )
+                    statement = statement.where(tipo_filter)
+                # CASAS: Includes houses, villas, chalets, duplex, townhouse
+                elif any(x in tipo_lower for x in ["casa", "chalet", "villa", "duplex", "dúplex", "adosado"]):
+                    tipo_filter = or_(
+                        models.Property.type.ilike("%villa%"), 
+                        models.Property.type.ilike("%casa%"), 
+                        models.Property.type.ilike("%chalet%"),
+                        models.Property.type.ilike("%duplex%"),
+                        models.Property.type.ilike("%house%"),
+                        models.Property.title.ilike("%casa%"),
+                        models.Property.title.ilike("%chalet%"),
+                        models.Property.title.ilike("%villa%")
+                    )
+                    statement = statement.where(tipo_filter)
                 else:
-                    statement = statement.where(models.Property.type.ilike(f"%{tipo}%"))
+                    statement = statement.where(or_(models.Property.type.ilike(f"%{tipo}%"), models.Property.title.ilike(f"%{tipo}%")))
             if estado:
                 statement = statement.where(models.Property.status.ilike(f"%{estado}%"))
             statement = statement.limit(15)

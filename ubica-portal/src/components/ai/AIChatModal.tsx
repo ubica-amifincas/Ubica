@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence, useDragControls } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { XMarkIcon, PaperAirplaneIcon, MinusIcon, ArrowsPointingOutIcon } from '@heroicons/react/24/outline';
 import ReactMarkdown from 'react-markdown';
 import appService from '../../services';
@@ -41,7 +41,6 @@ export default function AIChatModal() {
     const inputRef = useRef<HTMLInputElement>(null);
     const { isAuthenticated } = useAuth();
     const [hasReachedLimit, setHasReachedLimit] = useState(false);
-    const dragControls = useDragControls();
     const constraintsRef = useRef<HTMLDivElement>(null);
 
     // Resize and Fullscreen state
@@ -263,8 +262,6 @@ export default function AIChatModal() {
                             key="chat-window"
                             ref={windowRef}
                             drag={!isFullScreen && !isResizing}
-                            dragControls={dragControls}
-                            dragListener={false}
                             dragMomentum={false}
                             dragConstraints={constraintsRef}
                             dragElastic={0.05}
@@ -283,7 +280,6 @@ export default function AIChatModal() {
                                 right: isFullScreen ? 'auto' : (window.innerWidth < 640 ? '0' : '1.5rem'),
                                 bottom: isFullScreen ? 'auto' : (window.innerWidth < 640 ? '0' : '1.5rem'),
                             }}
-                            layout
                             exit={{ opacity: 0, scale: 0.9, y: 40 }}
                             transition={{ type: 'spring', stiffness: 350, damping: 30 }}
                             className={`fixed flex flex-col bg-white dark:bg-gray-900 shadow-2xl border-gray-200 dark:border-gray-700 overflow-hidden 
@@ -312,7 +308,6 @@ export default function AIChatModal() {
                             <div
                                 className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800 cursor-grab active:cursor-grabbing select-none"
                                 style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(6,182,212,0.08) 50%, rgba(16,185,129,0.08) 100%)' }}
-                                onPointerDown={(e) => dragControls.start(e)}
                             >
                                 <div className="flex items-center gap-3">
                                     {/* Animated sparkle icon */}
