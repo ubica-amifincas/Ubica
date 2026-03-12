@@ -451,7 +451,7 @@ export default function AIChatModal() {
                                                                 a: ({ node, ...props }) => {
                                                                     const isInternal = props.href?.startsWith('/');
                                                                     if (isInternal) {
-                                                                        return <Link to={props.href!} onClick={closeChat} className="inline-flex items-center gap-1 px-3 py-1 mt-1 bg-violet-600 text-white rounded-md font-semibold text-xs hover:bg-violet-700 transition-all shadow-md active:scale-95">{props.children} →</Link>;
+                                                                        return <Link to={props.href!} onClick={minimizeChat} className="inline-flex items-center gap-1 px-3 py-1 mt-1 bg-violet-600 text-white rounded-md font-semibold text-xs hover:bg-violet-700 transition-all shadow-md active:scale-95">{props.children} →</Link>;
                                                                     }
                                                                     return <a {...props} target="_blank" rel="noopener noreferrer" className="text-violet-600 dark:text-violet-400 font-semibold hover:underline" />;
                                                                 }
