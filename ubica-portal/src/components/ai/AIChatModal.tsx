@@ -272,19 +272,24 @@ export default function AIChatModal() {
                             animate={{ 
                                 opacity: 1, 
                                 scale: 1, 
-                                y: 0,
                                 // Reset x and y to 0 when in fullscreen to fix the displacement bug
                                 x: isFullScreen ? 0 : undefined,
+                                y: isFullScreen ? 0 : undefined, // Allow drag persistence when NOT fullscreen
                                 width: isFullScreen ? '95vw' : (window.innerWidth < 640 ? '100vw' : dimensions.width),
                                 height: isFullScreen ? '92vh' : (window.innerWidth < 640 ? '100vh' : dimensions.height),
+                                // Centering logic for fullscreen
+                                left: isFullScreen ? '2.5vw' : undefined,
+                                top: isFullScreen ? '4vh' : undefined,
+                                right: isFullScreen ? 'auto' : (window.innerWidth < 640 ? '0' : '1.5rem'),
+                                bottom: isFullScreen ? 'auto' : (window.innerWidth < 640 ? '0' : '1.5rem'),
                             }}
                             layout
                             exit={{ opacity: 0, scale: 0.9, y: 40 }}
                             transition={{ type: 'spring', stiffness: 350, damping: 30 }}
                             className={`fixed flex flex-col bg-white dark:bg-gray-900 shadow-2xl border-gray-200 dark:border-gray-700 overflow-hidden 
                                 ${isFullScreen 
-                                    ? 'inset-[2.5vw] bottom-[4vh] rounded-2xl z-[10000]' 
-                                    : 'bottom-6 right-6 sm:rounded-2xl border sm:z-[9999]'
+                                    ? 'rounded-2xl z-[10002]' 
+                                    : 'sm:rounded-2xl border sm:z-[9999]'
                                 } 
                                 ${window.innerWidth < 640 && !isFullScreen ? 'inset-0 border-t' : ''}
                                 ${isResizing ? 'select-none' : ''}`}

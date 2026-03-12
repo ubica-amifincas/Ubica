@@ -1053,7 +1053,14 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
             if precio_maximo > 0:
                 statement = statement.where(models.Property.price <= precio_maximo)
             if tipo:
-                statement = statement.where(models.Property.type.ilike(f"%{tipo}%"))
+                # Robust type mapping
+                tipo_lower = tipo.lower()
+                if "piso" in tipo_lower or "apartamento" in tipo_lower:
+                    statement = statement.where(or_(models.Property.type.ilike("%apartment%"), models.Property.type.ilike("%piso%"), models.Property.type.ilike("%apartamento%")))
+                elif "casa" in tipo_lower or "chalet" in tipo_lower or "villa" in tipo_lower:
+                    statement = statement.where(or_(models.Property.type.ilike("%villa%"), models.Property.type.ilike("%casa%"), models.Property.type.ilike("%chalet%")))
+                else:
+                    statement = statement.where(models.Property.type.ilike(f"%{tipo}%"))
             if estado:
                 statement = statement.where(models.Property.status.ilike(f"%{estado}%"))
             statement = statement.limit(15)
