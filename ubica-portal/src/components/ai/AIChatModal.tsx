@@ -278,16 +278,17 @@ export default function AIChatModal() {
                             animate={{ 
                                 opacity: 1, 
                                 scale: 1, 
-                                x: isFullScreen ? 0 : 0,
-                                y: isFullScreen ? 0 : 0, 
-                                // Force 0 on animate to settle position, drag will override
-                                width: isFullScreen ? '95vw' : (window.innerWidth < 640 ? '100vw' : dimensions.width),
-                                height: isFullScreen ? '92vh' : (window.innerWidth < 640 ? '100vh' : dimensions.height),
-                                // Centering logic for fullscreen
-                                left: isFullScreen ? '2.5vw' : undefined,
-                                top: isFullScreen ? '4vh' : undefined,
-                                right: isFullScreen ? 'auto' : (window.innerWidth < 640 ? '0' : '1.5rem'),
-                                bottom: isFullScreen ? 'auto' : (window.innerWidth < 640 ? '0' : '1.5rem'),
+                                x: (isFullScreen || window.innerWidth < 640) ? 0 : 0,
+                                y: (isFullScreen || window.innerWidth < 640) ? 0 : 0, 
+                                // Reset position to 0 strictly on mobile or fullscreen
+                                width: (isFullScreen || window.innerWidth < 640) ? '100vw' : dimensions.width,
+                                height: (isFullScreen || window.innerWidth < 640) ? '100vh' : dimensions.height,
+                                // Centering or covering logic
+                                left: (isFullScreen || window.innerWidth < 640) ? 0 : undefined,
+                                top: (isFullScreen || window.innerWidth < 640) ? 0 : undefined,
+                                right: (isFullScreen || window.innerWidth < 640) ? 'auto' : '1.5rem',
+                                bottom: (isFullScreen || window.innerWidth < 640) ? 'auto' : '1.5rem',
+                                borderRadius: (isFullScreen || window.innerWidth < 640) ? 0 : '1rem'
                             }}
                             exit={{ opacity: 0, scale: 0.95, y: 20 }}
                             transition={{ 
