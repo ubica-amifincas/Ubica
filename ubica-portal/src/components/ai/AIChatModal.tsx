@@ -267,17 +267,25 @@ export default function AIChatModal() {
 
                         {/* Draggable & Resizable Chat Window */}
                         <motion.div
-                            key={`chat-window-${isOpen}`}
+                            key="chat-window-content"
                             ref={windowRef}
                             drag={!isFullScreen && !isResizing}
                             dragControls={dragControls}
                             dragListener={false}
                             dragMomentum={false}
                             dragElastic={0.05}
-                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            initial={{ 
+                                opacity: 0, 
+                                scale: 0.8, 
+                                y: 80, 
+                                rotateX: 15,
+                                transformPerspective: 1200
+                            }}
                             animate={{ 
                                 opacity: 1, 
                                 scale: 1, 
+                                rotateX: 0,
+                                transformPerspective: 1200,
                                 x: (isFullScreen || window.innerWidth < 640) ? 0 : 0,
                                 y: (isFullScreen || window.innerWidth < 640) ? 0 : 0, 
                                 // Reset position to 0 strictly on mobile or fullscreen
@@ -290,11 +298,17 @@ export default function AIChatModal() {
                                 bottom: (isFullScreen || window.innerWidth < 640) ? 'auto' : '1.5rem',
                                 borderRadius: (isFullScreen || window.innerWidth < 640) ? 0 : '1rem'
                             }}
-                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            exit={{ 
+                                opacity: 0, 
+                                scale: 0.8, 
+                                y: 80, 
+                                rotateX: 15,
+                                transformPerspective: 1200
+                            }}
                             transition={{ 
                                 type: 'spring', 
-                                stiffness: 300, 
-                                damping: 30,
+                                stiffness: 400, 
+                                damping: 28,
                                 mass: 0.8
                             }}
                             className={`fixed flex flex-col bg-white dark:bg-gray-900 shadow-[0_20px_50px_rgba(139,92,246,0.15)] border-gray-200 dark:border-gray-700 overflow-hidden ring-1 ring-white/20
