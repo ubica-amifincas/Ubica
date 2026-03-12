@@ -342,7 +342,11 @@ export default function AIChatModal() {
                             <div
                                 className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800 cursor-grab active:cursor-grabbing select-none"
                                 style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(6,182,212,0.08) 50%, rgba(16,185,129,0.08) 100%)' }}
-                                onPointerDown={(e) => dragControls.start(e)}
+                                onPointerDown={(e) => {
+                                    if (!isFullScreen && window.innerWidth >= 640) {
+                                        dragControls.start(e);
+                                    }
+                                }}
                             >
                                 <div className="flex items-center gap-3">
                                     {/* Animated sparkle icon */}
