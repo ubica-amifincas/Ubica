@@ -262,7 +262,7 @@ export default function AIChatModal() {
                             animate={{ opacity: 1, backdropFilter: 'blur(4px)' }}
                             exit={{ opacity: 0, backdropFilter: 'blur(0px)' }}
                             onClick={minimizeChat}
-                            className="fixed inset-0 bg-black/30 z-[9998]"
+                            className="fixed inset-0 bg-black/40 z-[99998]"
                         />
 
                         {/* Draggable & Resizable Chat Window */}
@@ -298,11 +298,11 @@ export default function AIChatModal() {
                                 mass: 0.8
                             }}
                             className={`fixed flex flex-col bg-white dark:bg-gray-900 shadow-[0_20px_50px_rgba(139,92,246,0.15)] border-gray-200 dark:border-gray-700 overflow-hidden ring-1 ring-white/20
-                                ${isFullScreen 
-                                    ? 'rounded-2xl z-[10002]' 
-                                    : 'sm:rounded-2xl border sm:z-[9999]'
+                                ${isFullScreen || window.innerWidth < 640
+                                    ? 'rounded-0 z-[100000]' 
+                                    : 'sm:rounded-2xl border sm:z-[99999]'
                                 } 
-                                ${window.innerWidth < 640 && !isFullScreen ? 'inset-0 border-t' : ''}
+                                ${window.innerWidth < 640 ? 'inset-0' : ''}
                                 ${isResizing ? 'select-none' : ''}`}
                             style={{ 
                                 touchAction: 'none'
