@@ -97,9 +97,11 @@ export default function AIChatModal() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    // Focus input when modal opens
+    // Focus input when modal opens and reset state
     useEffect(() => {
         if (isOpen && !isMinimized) {
+            setDimensions({ width: 420, height: 600 });
+            setIsFullScreen(false);
             setTimeout(() => inputRef.current?.focus(), 300);
         }
     }, [isOpen, isMinimized]);
@@ -265,20 +267,19 @@ export default function AIChatModal() {
 
                         {/* Draggable & Resizable Chat Window */}
                         <motion.div
-                            key="chat-window"
+                            key={`chat-window-${isOpen}`}
                             ref={windowRef}
                             drag={!isFullScreen && !isResizing}
                             dragControls={dragControls}
                             dragListener={false}
                             dragMomentum={false}
                             dragElastic={0.05}
-                            initial={{ opacity: 0, scale: 0.8, x: 0, y: 100, rotateX: 10 }}
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
                             animate={{ 
                                 opacity: 1, 
                                 scale: 1, 
-                                x: isFullScreen ? 0 : undefined,
+                                x: isFullScreen ? 0 : 0,
                                 y: isFullScreen ? 0 : 0, 
-                                rotateX: 0,
                                 // Force 0 on animate to settle position, drag will override
                                 width: isFullScreen ? '95vw' : (window.innerWidth < 640 ? '100vw' : dimensions.width),
                                 height: isFullScreen ? '92vh' : (window.innerWidth < 640 ? '100vh' : dimensions.height),
@@ -288,11 +289,11 @@ export default function AIChatModal() {
                                 right: isFullScreen ? 'auto' : (window.innerWidth < 640 ? '0' : '1.5rem'),
                                 bottom: isFullScreen ? 'auto' : (window.innerWidth < 640 ? '0' : '1.5rem'),
                             }}
-                            exit={{ opacity: 0, scale: 0.8, y: 100, rotateX: 10 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
                             transition={{ 
                                 type: 'spring', 
-                                stiffness: 400, 
-                                damping: 28,
+                                stiffness: 300, 
+                                damping: 30,
                                 mass: 0.8
                             }}
                             className={`fixed flex flex-col bg-white dark:bg-gray-900 shadow-[0_20px_50px_rgba(139,92,246,0.15)] border-gray-200 dark:border-gray-700 overflow-hidden ring-1 ring-white/20
