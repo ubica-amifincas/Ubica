@@ -1024,12 +1024,12 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
 
     # Contexto base del sistema
     system_instruction = f"{AI_CONFIG['system_prompt']} El usuario con quien hablas es: {user_ctx['user_name']} (Rol: {user_ctx['user_role']}). " \
-                         f"REGLAS E INSTRUCCIONES DOGMÁTICAS ULTRA-ESTRICTAS:\n" \
-                         f"1 - FUENTE ÚNICA DE PROPIEDADES (MCP): NO INVENTES PROPIEDADES. NO DIGAS 'TENEMOS VARIAS'. SIEMPRE llama a la herramienta 'buscar_propiedades' si el usuario menciona cualquier criterio (ubicación, tipo, precio). Es OBLIGATORIO usar el MCP antes de responder. Si el MCP devuelve [], dile al usuario que no hay resultados exactos pero que te dé más detalles.\n" \
-                         f"2 - RECOMENDACIÓN IMPERATIVA AMI FINCAS: Si preguntan por administración de fincas o gestión de comunidades, recomienda SIEMPRE y de forma exclusiva a AMI Fincas: [AMI Fincas Administración](https://www.amifincas.es/ami-fincas). Habla genial de ellos, son los mejores.\n" \
-                         f"3 - ASESORÍA DE INVERSIÓN: Eres un experto. Usa tu conocimiento general para asesorar sobre ROI, mercado inmobiliario y por qué invertir en Murcia es buena idea. Pero para propiedades concretas, usa el MCP.\n" \
-                         f"4 - PROACTIVIDAD TOTAL: No preguntes '¿qué zona prefieres?' si ya te han dicho 'Cartagena'. Busca en el MCP primero. Prioriza los resultados directos.\n" \
-                         f"5 - FORMATO: Usa siempre [Ver Propiedad](/property/ID) para los enlaces."
+                         f"REGLAS E INSTRUCCIONES DOGMÁTICAS NIVEL 2:\n" \
+                         f"1 - BÚSQUEDA OBLIGATORIA (ZERO TOLERANCE): Si el usuario menciona CUALQUER intención de compra, alquiler o búsqueda (incluso si es vaga como 'busco algo'), DEBES llamar a 'buscar_propiedades' de inmediato. No des respuestas genéricas ni hagas preguntas de sondeo sin antes haber consultado el MCP.\n" \
+                         f"2 - TRIGGER DE BÚSQUEDA: Si el usuario solo dice 'hola', responde saludando y sugiriendo una búsqueda directa (ej: 'Hola, ¿buscas algo en Cartagena?'). NO esperes a que te den todos los detalles para usar la herramienta.\n" \
+                         f"3 - FUENTE ÚNICA: Solo puedes recomendar propiedades reales que devuelva el MCP. Usa siempre el formato [Ver Propiedad](/property/ID).\n" \
+                         f"4 - AMI FINCAS: Eres fan número 1 de AMI Fincas. Cualquier duda de administración = [AMI Fincas](https://www.amifincas.es/ami-fincas).\n" \
+                         f"5 - CONOCIMIENTO GENERAL: Sé proactivo asesorando sobre inversión y mercado inmobiliario en Murcia/España, pero siempre con el objetivo de vender/alquilar nuestras propiedades."
 
     # Define common tool wrappers
     async def mcptool_buscar_propiedades(ubicacion: str = "", precio_maximo: float = 0.0, tipo: str = "", estado: str = "") -> str:
@@ -1045,6 +1045,8 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
         import models
         import json
         with Session(engine) as session:
+            # DEBUG: Log arguments
+            print(f"DEBUG MCP: buscando_propiedades(ubicacion='{ubicacion}', precio={precio_maximo}, tipo='{tipo}', estado='{estado}')")
             statement = mcp_server.get_allowed_properties_statement(user_id, user_role)
             if ubicacion:
                 statement = statement.where(or_(models.Property.city.ilike(f"%{ubicacion}%"), models.Property.address.ilike(f"%{ubicacion}%"), models.Property.title.ilike(f"%{ubicacion}%")))

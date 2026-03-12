@@ -129,6 +129,15 @@ export default function AIChatModal() {
         }
     }, [activeConversationId, preloadedMessages]);
 
+    // Reset drag position when fullscreen toggles to avoid ghost offsets
+    useEffect(() => {
+        if (isFullScreen) {
+            // We can't easily reset drag position of x/y directly via props if it's 'drag',
+            // but we can force it via the animate prop of motion.div
+            // However, a simpler way is to ensure x and y are always 0 in the animate object when isFullScreen
+        }
+    }, [isFullScreen]);
+
     const sendMessage = async () => {
         const text = input.trim();
         if (!text || isLoading) return;
@@ -264,9 +273,12 @@ export default function AIChatModal() {
                                 opacity: 1, 
                                 scale: 1, 
                                 y: 0,
+                                // Reset x and y to 0 when in fullscreen to fix the displacement bug
+                                x: isFullScreen ? 0 : undefined,
                                 width: isFullScreen ? '95vw' : (window.innerWidth < 640 ? '100vw' : dimensions.width),
                                 height: isFullScreen ? '92vh' : (window.innerWidth < 640 ? '100vh' : dimensions.height),
                             }}
+                            layout
                             exit={{ opacity: 0, scale: 0.9, y: 40 }}
                             transition={{ type: 'spring', stiffness: 350, damping: 30 }}
                             className={`fixed flex flex-col bg-white dark:bg-gray-900 shadow-2xl border-gray-200 dark:border-gray-700 overflow-hidden 
