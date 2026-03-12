@@ -256,11 +256,11 @@ export default function AIChatModal() {
                         {/* Backdrop - click to minimize instead of close */}
                         <motion.div
                             key="backdrop"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
+                            initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+                            animate={{ opacity: 1, backdropFilter: 'blur(4px)' }}
+                            exit={{ opacity: 0, backdropFilter: 'blur(0px)' }}
                             onClick={minimizeChat}
-                            className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-[9998]"
+                            className="fixed inset-0 bg-black/30 z-[9998]"
                         />
 
                         {/* Draggable & Resizable Chat Window */}
@@ -272,12 +272,14 @@ export default function AIChatModal() {
                             dragListener={false}
                             dragMomentum={false}
                             dragElastic={0.05}
-                            initial={{ opacity: 0, scale: 0.9, x: 0, y: 20 }}
+                            initial={{ opacity: 0, scale: 0.8, x: 0, y: 100, rotateX: 10 }}
                             animate={{ 
                                 opacity: 1, 
                                 scale: 1, 
                                 x: isFullScreen ? 0 : undefined,
-                                y: isFullScreen ? 0 : 0, // Force 0 on animate to settle position, drag will override
+                                y: isFullScreen ? 0 : 0, 
+                                rotateX: 0,
+                                // Force 0 on animate to settle position, drag will override
                                 width: isFullScreen ? '95vw' : (window.innerWidth < 640 ? '100vw' : dimensions.width),
                                 height: isFullScreen ? '92vh' : (window.innerWidth < 640 ? '100vh' : dimensions.height),
                                 // Centering logic for fullscreen
@@ -286,9 +288,14 @@ export default function AIChatModal() {
                                 right: isFullScreen ? 'auto' : (window.innerWidth < 640 ? '0' : '1.5rem'),
                                 bottom: isFullScreen ? 'auto' : (window.innerWidth < 640 ? '0' : '1.5rem'),
                             }}
-                            exit={{ opacity: 0, scale: 0.9, y: 40 }}
-                            transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-                            className={`fixed flex flex-col bg-white dark:bg-gray-900 shadow-2xl border-gray-200 dark:border-gray-700 overflow-hidden 
+                            exit={{ opacity: 0, scale: 0.8, y: 100, rotateX: 10 }}
+                            transition={{ 
+                                type: 'spring', 
+                                stiffness: 400, 
+                                damping: 28,
+                                mass: 0.8
+                            }}
+                            className={`fixed flex flex-col bg-white dark:bg-gray-900 shadow-[0_20px_50px_rgba(139,92,246,0.15)] border-gray-200 dark:border-gray-700 overflow-hidden ring-1 ring-white/20
                                 ${isFullScreen 
                                     ? 'rounded-2xl z-[10002]' 
                                     : 'sm:rounded-2xl border sm:z-[9999]'
@@ -382,46 +389,57 @@ export default function AIChatModal() {
 
                             {/* Messages Area */}
                             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 text-left">
-                                {messages.map((message) => (
+                                {messages.map((message, index) => (
                                     <motion.div
                                         key={message.id}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ duration: 0.3 }}
+                                        initial={{ opacity: 0, x: message.role === 'user' ? 20 : -20, y: 10 }}
+                                        animate={{ opacity: 1, x: 0, y: 0 }}
+                                        transition={{ 
+                                            type: 'spring',
+                                            stiffness: 300,
+                                            damping: 25,
+                                            delay: 0.1
+                                        }}
                                         className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                                     >
-                                        <div
-                                            className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${message.role === 'user'
-                                                ? 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white rounded-br-md'
-                                                : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-md border border-gray-200 dark:border-gray-700'
+                                        <motion.div
+                                            whileHover={{ scale: 1.01 }}
+                                            className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed relative ${message.role === 'user'
+                                                ? 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white rounded-br-md shadow-md'
+                                                : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-md border border-gray-100 dark:border-gray-700 shadow-sm'
                                                 }`}
                                         >
-                                            {message.role === 'assistant' ? (
-                                                <div className="prose prose-sm dark:prose-invert max-w-none text-left prose-p:leading-relaxed prose-pre:bg-gray-200 dark:prose-pre:bg-gray-700 prose-pre:p-2 prose-pre:rounded">
-                                                    <ReactMarkdown
-                                                        components={{
-                                                            p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                                                            ul: ({ children }) => <ul className="list-disc ml-4 mb-2">{children}</ul>,
-                                                            ol: ({ children }) => <ol className="list-decimal ml-4 mb-2">{children}</ol>,
-                                                            li: ({ children }) => <li className="mb-1">{children}</li>,
-                                                            strong: ({ children }) => <strong className="font-bold text-violet-600 dark:text-violet-400">{children}</strong>,
-                                                            code: ({ children }) => <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded font-mono text-xs">{children}</code>,
-                                                            a: ({ node, ...props }) => {
-                                                                const isInternal = props.href?.startsWith('/');
-                                                                if (isInternal) {
-                                                                    return <Link to={props.href!} onClick={closeChat} className="inline-flex items-center gap-1 px-2 py-0.5 mt-1 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded-md font-semibold text-xs hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors">{props.children} →</Link>;
-                                                                }
-                                                                return <a {...props} target="_blank" rel="noopener noreferrer" className="text-violet-600 dark:text-violet-400 font-semibold hover:underline" />;
-                                                            }
-                                                        }}
-                                                    >
-                                                        {message.content}
-                                                    </ReactMarkdown>
-                                                </div>
-                                            ) : (
-                                                message.content
+                                            {message.role === 'assistant' && (
+                                                <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-violet-500/5 to-cyan-500/5 pointer-events-none" />
                                             )}
-                                        </div>
+                                            <div className="relative z-10">
+                                                {message.role === 'assistant' ? (
+                                                    <div className="prose prose-sm dark:prose-invert max-w-none text-left prose-p:leading-relaxed prose-pre:bg-gray-200 dark:prose-pre:bg-gray-700 prose-pre:p-2 prose-pre:rounded">
+                                                        <ReactMarkdown
+                                                            components={{
+                                                                p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                                                                ul: ({ children }) => <ul className="list-disc ml-4 mb-2">{children}</ul>,
+                                                                ol: ({ children }) => <ol className="list-decimal ml-4 mb-2">{children}</ol>,
+                                                                li: ({ children }) => <li className="mb-1">{children}</li>,
+                                                                strong: ({ children }) => <strong className="font-bold text-violet-600 dark:text-violet-400">{children}</strong>,
+                                                                code: ({ children }) => <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded font-mono text-xs">{children}</code>,
+                                                                a: ({ node, ...props }) => {
+                                                                    const isInternal = props.href?.startsWith('/');
+                                                                    if (isInternal) {
+                                                                        return <Link to={props.href!} onClick={closeChat} className="inline-flex items-center gap-1 px-3 py-1 mt-1 bg-violet-600 text-white rounded-md font-semibold text-xs hover:bg-violet-700 transition-all shadow-md active:scale-95">{props.children} →</Link>;
+                                                                    }
+                                                                    return <a {...props} target="_blank" rel="noopener noreferrer" className="text-violet-600 dark:text-violet-400 font-semibold hover:underline" />;
+                                                                }
+                                                            }}
+                                                        >
+                                                            {message.content}
+                                                        </ReactMarkdown>
+                                                    </div>
+                                                ) : (
+                                                    message.content
+                                                )}
+                                            </div>
+                                        </motion.div>
                                     </motion.div>
                                 ))}
 

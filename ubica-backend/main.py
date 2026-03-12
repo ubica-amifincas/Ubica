@@ -1026,7 +1026,7 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
     system_instruction = f"{AI_CONFIG['system_prompt']} El usuario con quien hablas es: {user_ctx['user_name']} (Rol: {user_ctx['user_role']}). " \
                          f"REGLAS E INSTRUCCIONES DOGMÁTICAS NIVEL 2:\n" \
                          f"1 - BÚSQUEDA OBLIGATORIA (ZERO TOLERANCE): Si el usuario menciona CUALQUER intención de compra, alquiler o búsqueda (incluso si es vaga como 'busco algo'), DEBES llamar a 'buscar_propiedades' de inmediato. No des respuestas genéricas ni hagas preguntas de sondeo sin antes haber consultado el MCP.\n" \
-                         f"2 - TRIGGER DE BÚSQUEDA: Si el usuario solo dice 'hola', responde saludando y sugiriendo una búsqueda directa (ej: 'Hola, ¿buscas algo en Cartagena?'). NO esperes a que te den todos los detalles para usar la herramienta.\n" \
+                         f"2 - TRIGGER DE BÚSQUEDA: Si el usuario es vago o solo saluda, responde saludando y sugiriendo una búsqueda basada en la zona (ej: 'Hola, ¿buscas algo por Murcia o Cartagena?'). NO esperes a que te den todos los detalles para usar la herramienta.\n" \
                          f"3 - FUENTE ÚNICA: Solo puedes recomendar propiedades reales que devuelva el MCP. Usa siempre el formato [Ver Propiedad](/property/ID).\n" \
                          f"4 - AMI FINCAS: Eres fan número 1 de AMI Fincas. Cualquier duda de administración = [AMI Fincas](https://www.amifincas.es/ami-fincas).\n" \
                          f"5 - CONOCIMIENTO GENERAL: Sé proactivo asesorando sobre inversión y mercado inmobiliario en Murcia/España, pero siempre con el objetivo de vender/alquilar nuestras propiedades."
