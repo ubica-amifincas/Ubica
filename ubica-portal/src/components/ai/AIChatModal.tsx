@@ -44,6 +44,49 @@ export default function AIChatModal() {
     const dragControls = useDragControls();
     const constraintsRef = useRef<HTMLDivElement>(null);
 
+    // Resize and Fullscreen state
+    const [dimensions, setDimensions] = useState({ width: 420, height: 600 });
+    const [isFullScreen, setIsFullScreen] = useState(false);
+    const [isResizing, setIsResizing] = useState(false);
+    const windowRef = useRef<HTMLDivElement>(null);
+
+    const toggleFullScreen = () => {
+        setIsFullScreen(!isFullScreen);
+    };
+
+    const startResizing = (e: React.PointerEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsResizing(true);
+    };
+
+    useEffect(() => {
+        if (!isResizing) return;
+
+        const handlePointerMove = (e: PointerEvent) => {
+            if (!windowRef.current) return;
+            const rect = windowRef.current.getBoundingClientRect();
+            
+            // We resize from top-left, but the window is anchored to bottom-right
+            // So we calculate the delta from the current right/bottom edges
+            const newWidth = Math.max(320, Math.min(window.innerWidth - 40, rect.right - e.clientX));
+            const newHeight = Math.max(400, Math.min(window.innerHeight - 40, rect.bottom - e.clientY));
+
+            setDimensions({ width: newWidth, height: newHeight });
+        };
+
+        const handlePointerUp = () => {
+            setIsResizing(false);
+        };
+
+        window.addEventListener('pointermove', handlePointerMove);
+        window.addEventListener('pointerup', handlePointerUp);
+        return () => {
+            window.removeEventListener('pointermove', handlePointerMove);
+            window.removeEventListener('pointerup', handlePointerUp);
+        };
+    }, [isResizing]);
+
     // Auto-scroll to bottom on new messages
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -206,20 +249,44 @@ export default function AIChatModal() {
                             className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-[9998]"
                         />
 
-                        {/* Draggable Chat Window */}
+                        {/* Draggable & Resizable Chat Window */}
                         <motion.div
                             key="chat-window"
-                            drag
+                            ref={windowRef}
+                            drag={!isFullScreen && !isResizing}
                             dragControls={dragControls}
                             dragMomentum={false}
                             dragConstraints={constraintsRef}
                             dragElastic={0.05}
                             initial={{ opacity: 0, scale: 0.9, y: 40 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            animate={{ 
+                                opacity: 1, 
+                                scale: 1, 
+                                y: 0,
+                                width: isFullScreen ? '95vw' : (window.innerWidth < 640 ? '100vw' : dimensions.width),
+                                height: isFullScreen ? '92vh' : (window.innerWidth < 640 ? '100vh' : dimensions.height),
+                                right: isFullScreen ? '2.5vw' : '1.5rem',
+                                bottom: isFullScreen ? '4vh' : '1.5rem',
+                            }}
                             exit={{ opacity: 0, scale: 0.9, y: 40 }}
                             transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-                            className="fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 sm:w-[420px] sm:h-[600px] z-[9999] flex flex-col bg-white dark:bg-gray-900 sm:rounded-2xl shadow-2xl border-t sm:border border-gray-200 dark:border-gray-700 overflow-hidden"
+                            className={`fixed z-[9999] flex flex-col bg-white dark:bg-gray-900 sm:rounded-2xl shadow-2xl border-t sm:border border-gray-200 dark:border-gray-700 overflow-hidden ${isResizing ? 'select-none' : ''}`}
+                            style={{ 
+                                inset: window.innerWidth < 640 ? '0' : 'auto',
+                                touchAction: 'none'
+                            }}
                         >
+                            {/* Resize Handle - Top Left */}
+                            {!isFullScreen && window.innerWidth >= 640 && (
+                                <div 
+                                    onPointerDown={startResizing}
+                                    className="absolute top-0 left-0 w-6 h-6 cursor-nwse-resize z-[10001] group flex items-center justify-center"
+                                    title="Arrastra para redimensionar"
+                                >
+                                    <div className="w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600 group-hover:bg-violet-400 transition-colors" />
+                                </div>
+                            )}
+
                             {/* Header - Drag handle */}
                             <div
                                 className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800 cursor-grab active:cursor-grabbing select-none"
@@ -267,10 +334,16 @@ export default function AIChatModal() {
                                     >
                                         <MinusIcon className="h-4 w-4" />
                                     </motion.button>
-                                    {/* Drag hint icon */}
-                                    <div className="p-2 text-gray-300 dark:text-gray-600 hidden sm:block" title="Arrastra para mover">
+                                    {/* Fullscreen/Maximize button */}
+                                    <motion.button
+                                        whileHover={{ scale: 1.1 }}
+                                        whileTap={{ scale: 0.9 }}
+                                        onClick={(e) => { e.stopPropagation(); toggleFullScreen(); }}
+                                        className={`p-2 rounded-lg transition-colors hidden sm:block ${isFullScreen ? 'text-violet-500 bg-violet-50 dark:bg-violet-900/20' : 'text-gray-400 hover:text-cyan-500 hover:bg-cyan-50 dark:hover:bg-cyan-900/20'}`}
+                                        title={isFullScreen ? "Salir de pantalla completa" : "Pantalla completa"}
+                                    >
                                         <ArrowsPointingOutIcon className="h-4 w-4" />
-                                    </div>
+                                    </motion.button>
                                     {/* Close button */}
                                     <motion.button
                                         whileHover={{ scale: 1.1 }}
