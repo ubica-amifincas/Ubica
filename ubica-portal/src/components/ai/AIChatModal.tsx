@@ -279,7 +279,10 @@ export default function AIChatModal() {
                                 scale: 0.8, 
                                 y: 80, 
                                 rotateX: 15,
-                                transformPerspective: 1200
+                                transformPerspective: 1200,
+                                transformOrigin: (isFullScreen || window.innerWidth < 640) ? 'center' : 'bottom right',
+                                right: (isFullScreen || window.innerWidth < 640) ? 0 : '1.5rem',
+                                bottom: (isFullScreen || window.innerWidth < 640) ? 0 : '1.5rem'
                             }}
                             animate={{ 
                                 opacity: 1, 
@@ -296,14 +299,16 @@ export default function AIChatModal() {
                                 top: (isFullScreen || window.innerWidth < 640) ? 0 : undefined,
                                 right: (isFullScreen || window.innerWidth < 640) ? 'auto' : '1.5rem',
                                 bottom: (isFullScreen || window.innerWidth < 640) ? 'auto' : '1.5rem',
-                                borderRadius: (isFullScreen || window.innerWidth < 640) ? 0 : '1rem'
+                                borderRadius: (isFullScreen || window.innerWidth < 640) ? 0 : '1rem',
+                                transformOrigin: (isFullScreen || window.innerWidth < 640) ? 'center' : 'bottom right'
                             }}
                             exit={{ 
                                 opacity: 0, 
                                 scale: 0.8, 
                                 y: 80, 
                                 rotateX: 15,
-                                transformPerspective: 1200
+                                transformPerspective: 1200,
+                                transformOrigin: (isFullScreen || window.innerWidth < 640) ? 'center' : 'bottom right'
                             }}
                             transition={{ 
                                 type: 'spring', 
