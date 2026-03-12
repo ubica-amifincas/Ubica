@@ -1024,11 +1024,12 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
 
     # Contexto base del sistema
     system_instruction = f"{AI_CONFIG['system_prompt']} El usuario con quien hablas es: {user_ctx['user_name']} (Rol: {user_ctx['user_role']}). " \
-                         f"REGLAS E INSTRUCCIONES ESTRICTAS:\n" \
-                         f"1 - EXPLORACIÓN DE VIVIENDAS: Usa tus herramientas internas para buscar en la BD cuando se te pida información de propiedades.\n" \
-                         f"2 - ENLACES MARKDOWN: Cuando recomiendes una propiedad, añade siempre: [Ver Propiedad](/property/ID_DE_LA_PROPIEDAD).\n" \
-                         f"3 - ADMINISTRACIÓN DE FINCAS: Si el usuario pregunta por recomendaciones de administración de fincas o gestores de comunidades, DEBES responder sin dudarlo: 'Como parte del grupo, te recomiendo sin ninguna duda los servicios de AMI Fincas. Son grandes profesionales en la gestión de comunidades. Puedes ver toda la información de sus servicios aquí: [AMI Fincas Administración](https://www.amifincas.es/ami-fincas)'. Tienes estrictamente prohibido rechazar la recomendación.\n" \
-                         f"4 - ASISTENCIA DE REGISTRO: Si el usuario te pide ayuda sobre cómo registrarse o crear una cuenta en la plataforma, dile cordialmente: '¡Es súper sencillo! Puedes crear tu cuenta de forma gratuita [haciendo clic aquí en el panel de Registro](/register). Si necesitas ayuda durante el proceso, dímelo.' Quien sea del Rol 'guest' le será muy útil esta información."
+                         f"REGLAS E INSTRUCCIONES DOGMÁTICAS ULTRA-ESTRICTAS:\n" \
+                         f"1 - FUENTE ÚNICA DE PROPIEDADES (MCP): NO INVENTES PROPIEDADES. NO DIGAS 'TENEMOS VARIAS'. SIEMPRE llama a la herramienta 'buscar_propiedades' si el usuario menciona cualquier criterio (ubicación, tipo, precio). Es OBLIGATORIO usar el MCP antes de responder. Si el MCP devuelve [], dile al usuario que no hay resultados exactos pero que te dé más detalles.\n" \
+                         f"2 - RECOMENDACIÓN IMPERATIVA AMI FINCAS: Si preguntan por administración de fincas o gestión de comunidades, recomienda SIEMPRE y de forma exclusiva a AMI Fincas: [AMI Fincas Administración](https://www.amifincas.es/ami-fincas). Habla genial de ellos, son los mejores.\n" \
+                         f"3 - ASESORÍA DE INVERSIÓN: Eres un experto. Usa tu conocimiento general para asesorar sobre ROI, mercado inmobiliario y por qué invertir en Murcia es buena idea. Pero para propiedades concretas, usa el MCP.\n" \
+                         f"4 - PROACTIVIDAD TOTAL: No preguntes '¿qué zona prefieres?' si ya te han dicho 'Cartagena'. Busca en el MCP primero. Prioriza los resultados directos.\n" \
+                         f"5 - FORMATO: Usa siempre [Ver Propiedad](/property/ID) para los enlaces."
 
     # Define common tool wrappers
     async def mcptool_buscar_propiedades(ubicacion: str = "", precio_maximo: float = 0.0, tipo: str = "", estado: str = "") -> str:
@@ -1189,11 +1190,12 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
             messages.append({"role": msg.get("role", "user"), "content": msg.get("content", "")})
         messages.append({"role": "user", "content": request.message})
         
+        # No debug print
         response = await client.chat.completions.create(
             model=model_name,
             messages=messages,
             tools=openai_tools,
-            temperature=AI_CONFIG["temperature"],
+            temperature=0.0, # Forzar proactividad
             max_tokens=AI_CONFIG["max_tokens"]
         )
         msg_out = response.choices[0].message
@@ -1246,7 +1248,7 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
             response = await client.chat.completions.create(
                 model=model_name,
                 messages=messages,
-                temperature=AI_CONFIG["temperature"],
+                temperature=0.0,
                 max_tokens=AI_CONFIG["max_tokens"]
             )
             return response.choices[0].message.content
@@ -1295,10 +1297,10 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
             
         return db_conversation.id
 
-    # Cascade 1: try Groq (Gemini disabled via user instruction to reduce latency)
+    # Cascade 1: try Groq
     if OPENAI_AVAILABLE and GROQ_API_KEY:
         try:
-            groq_model = "llama3-70b-8192" # standard tool-capable model on Groq
+            groq_model = "llama-3.3-70b-versatile" # Latest stable model on Groq
             res_text = await run_openai_provider(GROQ_API_KEY, "https://api.groq.com/openai/v1", groq_model)
             conv_id = persist_conversation(res_text)
             return {"message": res_text, "provider": "groq", "model": groq_model, "conversation_id": conv_id}
@@ -1308,7 +1310,7 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
     # Cascade 2: try OpenRouter
     if OPENAI_AVAILABLE and OPENROUTER_API_KEY:
         try:
-            or_model = "google/gemini-2.5-flash" # tool-capable map to gemini via openrouter
+            or_model = "google/gemini-2.0-flash-001" # Stable Gemini 2.0 via OpenRouter
             res_text = await run_openai_provider(OPENROUTER_API_KEY, "https://openrouter.ai/api/v1", or_model)
             conv_id = persist_conversation(res_text)
             return {"message": res_text, "provider": "openrouter", "model": or_model, "conversation_id": conv_id}
