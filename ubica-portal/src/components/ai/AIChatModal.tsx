@@ -255,6 +255,7 @@ export default function AIChatModal() {
                             ref={windowRef}
                             drag={!isFullScreen && !isResizing}
                             dragControls={dragControls}
+                            dragListener={false}
                             dragMomentum={false}
                             dragConstraints={constraintsRef}
                             dragElastic={0.05}
@@ -265,14 +266,17 @@ export default function AIChatModal() {
                                 y: 0,
                                 width: isFullScreen ? '95vw' : (window.innerWidth < 640 ? '100vw' : dimensions.width),
                                 height: isFullScreen ? '92vh' : (window.innerWidth < 640 ? '100vh' : dimensions.height),
-                                right: isFullScreen ? '2.5vw' : '1.5rem',
-                                bottom: isFullScreen ? '4vh' : '1.5rem',
                             }}
                             exit={{ opacity: 0, scale: 0.9, y: 40 }}
                             transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-                            className={`fixed z-[9999] flex flex-col bg-white dark:bg-gray-900 sm:rounded-2xl shadow-2xl border-t sm:border border-gray-200 dark:border-gray-700 overflow-hidden ${isResizing ? 'select-none' : ''}`}
+                            className={`fixed flex flex-col bg-white dark:bg-gray-900 shadow-2xl border-gray-200 dark:border-gray-700 overflow-hidden 
+                                ${isFullScreen 
+                                    ? 'inset-[2.5vw] bottom-[4vh] rounded-2xl z-[10000]' 
+                                    : 'bottom-6 right-6 sm:rounded-2xl border sm:z-[9999]'
+                                } 
+                                ${window.innerWidth < 640 && !isFullScreen ? 'inset-0 border-t' : ''}
+                                ${isResizing ? 'select-none' : ''}`}
                             style={{ 
-                                inset: window.innerWidth < 640 ? '0' : 'auto',
                                 touchAction: 'none'
                             }}
                         >
