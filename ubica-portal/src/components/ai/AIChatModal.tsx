@@ -281,34 +281,31 @@ export default function AIChatModal() {
                             dragListener={false}
                             dragMomentum={false}
                             dragElastic={0.05}
-                            initial={{ 
-                                opacity: 0, 
-                                scale: 0.8, 
-                                transformOrigin: (isFullScreen || window.innerWidth < 640) ? 'center' : 'bottom right'
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            transition={{ 
+                                type: 'spring', 
+                                stiffness: 350, 
+                                damping: 25,
+                                mass: 0.8
                             }}
-                            animate={{ 
-                                opacity: 1, 
-                                scale: 1, 
-                                // Drag modifies x and y, so we don't force them here unless resetting
+                            className={`fixed flex flex-col bg-white dark:bg-gray-900 shadow-[0_20px_50px_rgba(139,92,246,0.15)] border-gray-200 dark:border-gray-700 overflow-hidden ring-1 ring-white/20
+                                ${isFullScreen || window.innerWidth < 640
+                                    ? 'rounded-0 z-[100000]' 
+                                    : 'sm:rounded-2xl border sm:z-[99999]'
+                                } 
+                                ${window.innerWidth < 640 ? 'inset-0' : ''}
+                                ${isResizing ? 'select-none' : ''}`}
+                            style={{ 
+                                touchAction: 'none',
                                 width: (isFullScreen || window.innerWidth < 640) ? '100vw' : dimensions.width,
                                 height: (isFullScreen || window.innerWidth < 640) ? '100vh' : dimensions.height,
                                 left: (isFullScreen || window.innerWidth < 640) ? 0 : undefined,
                                 top: (isFullScreen || window.innerWidth < 640) ? 0 : undefined,
                                 right: (isFullScreen || window.innerWidth < 640) ? 0 : '1.5rem',
                                 bottom: (isFullScreen || window.innerWidth < 640) ? 0 : '1.5rem',
-                                borderRadius: (isFullScreen || window.innerWidth < 640) ? '0px' : '1rem',
                                 transformOrigin: (isFullScreen || window.innerWidth < 640) ? 'center' : 'bottom right'
-                            }}
-                            exit={{ 
-                                opacity: 0, 
-                                scale: 0.8, 
-                                transformOrigin: (isFullScreen || window.innerWidth < 640) ? 'center' : 'bottom right'
-                            }}
-                            transition={{ 
-                                type: 'spring', 
-                                stiffness: 300, 
-                                damping: 25,
-                                mass: 0.8
                             }}
                             className={`fixed flex flex-col bg-white dark:bg-gray-900 shadow-[0_20px_50px_rgba(139,92,246,0.15)] border-gray-200 dark:border-gray-700 overflow-hidden ring-1 ring-white/20
                                 ${isFullScreen || window.innerWidth < 640
