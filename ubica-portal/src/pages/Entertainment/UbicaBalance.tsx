@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Physics, RigidBody, CuboidCollider, CylinderCollider, useRapier, RapierRigidBody } from '@react-three/rapier';
-import { OrbitControls, PerspectiveCamera, Environment, Stars, Text, Float, ContactShadows, useHelper, Circle } from '@react-three/drei';
+import { OrbitControls, PerspectiveCamera, Environment, Stars, Text, Float, ContactShadows, Circle } from '@react-three/drei';
 import * as THREE from 'three';
 import { motion, AnimatePresence } from 'framer-motion';
 import {  
@@ -24,6 +24,10 @@ interface BlockData {
     rotation: [number, number, number];
     color: string;
     isLogo: boolean;
+}
+
+interface FallingBlockData extends BlockData {
+    vel: [number, number, number];
 }
 
 const COLORS = [
@@ -88,8 +92,9 @@ function ConstructionDrone({
     const blockRef = useRef<THREE.Group>(null);
     const shadowDotRef = useRef<THREE.Group>(null);
     const ropeLineRef = useRef<THREE.Line>(null);
-    const { scene } = useThree();
+    const { gl } = useThree();
     const rapier = useRapier();
+    const { world, rapier: R } = rapier;
     
     // Altura del dron
     const droneY = position[1];
@@ -182,8 +187,8 @@ function ConstructionDrone({
             const rayDir = new THREE.Vector3(0, -1, 0);
             
             // Usar Rapier para el Raycast
-            const ray = new rapier.Ray(rayStart, rayDir);
-            const hit = rapier.world.castRay(ray, 50, true);
+            const ray = new R.Ray(rayStart, rayDir);
+            const hit = world.castRay(ray, 50, true) as any;
             
             if (hit) {
                 const hitPoint = rayStart.clone().add(rayDir.multiplyScalar(hit.toi));
@@ -418,7 +423,7 @@ const UbicaBalance: React.FC = () => {
     const [score, setScore] = useState(0);
     const [highScore, setHighScore] = useState(0);
     const [stableBlocks, setStableBlocks] = useState<BlockData[]>([]);
-    const [fallingBlocks, setFallingBlocks] = useState<BlockData & { vel: [number, number, number] }[]>([]);
+    const [fallingBlocks, setFallingBlocks] = useState<FallingBlockData[]>([]);
     const [isHoldingBlock, setIsHoldingBlock] = useState(true);
     const [nextBlockColor, setNextBlockColor] = useState(COLORS[0]);
     const [isNextLogo, setIsNextLogo] = useState(false);
@@ -454,10 +459,10 @@ const UbicaBalance: React.FC = () => {
     const handleDrop = (vel: [number, number, number], pos: [number, number, number]) => {
         if (gameState !== 'PLAYING') return;
         
-        const newFallingBlock = {
+        const newFallingBlock: FallingBlockData = {
             id: Math.random().toString(36).substr(2, 9),
             position: pos,
-            rotation: [0, 0, 0] as [number, number, number],
+            rotation: [0, 0, 0],
             color: nextBlockColor,
             isLogo: isNextLogo,
             vel: vel
@@ -807,10 +812,14 @@ const UbicaBalance: React.FC = () => {
                     ))}
 
                     {/* Falling Blocks */}
-                    {fallingBlocks.map(block => (
+                    {fallingBlocks.map((block: FallingBlockData) => (
                         <BuildingBlock 
                             key={block.id} 
-                            {...block} 
+                            id={block.id}
+                            position={block.position}
+                            rotation={block.rotation}
+                            color={block.color}
+                            isLogo={block.isLogo}
                             initialVelocity={block.vel}
                             onFallOut={() => handleBlockFallOut(block.id)}
                         />
