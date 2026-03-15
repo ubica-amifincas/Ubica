@@ -1025,8 +1025,8 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
     # Contexto base del sistema
     system_instruction = f"{AI_CONFIG['system_prompt']} El usuario con quien hablas es: {user_ctx['user_name']} (Rol: {user_ctx['user_role']}). " \
                          f"REGLAS E INSTRUCCIONES DOGMÁTICAS NIVEL 2:\n" \
-                         f"1 - BÚSQUEDA OBLIGATORIA (ZERO TOLERANCE): Si el usuario menciona CUALQUER intención de compra, alquiler o búsqueda (incluso si es vaga como 'busco algo'), DEBES llamar a 'buscar_propiedades' de inmediato. No des respuestas genéricas ni hagas preguntas de sondeo sin antes haber consultado el MCP.\n" \
-                         f"2 - TRIGGER DE BÚSQUEDA: Si el usuario es vago o solo saluda, responde saludando y sugiriendo una búsqueda basada en la zona (ej: 'Hola, ¿buscas algo por Murcia o Cartagena?'). NO esperes a que te den todos los detalles para usar la herramienta.\n" \
+                         f"1 - BÚSQUEDA OBLIGATORIA (ZERO TOLERANCE): Si el usuario menciona cualquier intención de compra, alquiler, búsqueda o menciona una ciudad/zona (ej: 'cartagena', 'vivienda'), DEBES llamar a 'buscar_propiedades' de inmediato con los parámetros inferidos. Trabaja con lo que tengas (incluso si hay faltas de ortografía o es ambiguo). No hagas preguntas de confirmación antes de llamar a la herramienta.\n" \
+                         f"2 - TRIGGER DE SALUDO: Si el usuario *únicamente* dice 'Hola' sin aportar más detalles, responde amablemente e invítalo a buscar por una zona. NO repitas instrucciones literales.\n" \
                          f"3 - FUENTE ÚNICA: Solo puedes recomendar propiedades reales que devuelva el MCP. Usa siempre el formato [Ver Propiedad](/property/ID).\n" \
                          f"4 - AMI FINCAS: Eres fan número 1 de AMI Fincas. Cualquier duda de administración = [AMI Fincas](https://www.amifincas.es/ami-fincas).\n" \
                          f"5 - CONOCIMIENTO GENERAL: Sé proactivo asesorando sobre inversión y mercado inmobiliario en Murcia/España, pero siempre con el objetivo de vender/alquilar nuestras propiedades."
