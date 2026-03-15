@@ -35,6 +35,24 @@ const getNextRandomColor = () => {
     return BLOCK_COLORS[Math.floor(Math.random() * BLOCK_COLORS.length)];
 };
 
+// Componente para un segmento de la cuerda (Cilindro 3D delgado)
+function RopeSegment({ start, end }: { start: THREE.Vector3, end: THREE.Vector3 }) {
+    const midPoint = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+    const direction = new THREE.Vector3().subVectors(end, start);
+    const length = direction.length();
+    
+    // Low-poly thin cable
+    const up = new THREE.Vector3(0, 1, 0);
+    const quaternion = new THREE.Quaternion().setFromUnitVectors(up, direction.length() > 0.001 ? direction.clone().normalize() : up);
+
+    return (
+        <mesh position={midPoint} quaternion={quaternion}>
+            <cylinderGeometry args={[0.02, 0.02, length, 6]} />
+            <meshStandardMaterial color="#64748b" metalness={0.5} roughness={0.3} />
+        </mesh>
+    );
+}
+
 // --- 3D COMPONENTS ---
 
 // 1. Base Platform
@@ -61,6 +79,7 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, nextColor, currentScor
     const groupRef = useRef<THREE.Group>(null);
     const shadowDotRef = useRef<THREE.Mesh>(null);
     const ringRef = useRef<THREE.Mesh>(null);
+    const ropeSegmentsRef = useRef<THREE.Group>(null);
     const { rapier, world } = useRapier();
     
     // Rope Physics State
@@ -161,6 +180,27 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, nextColor, currentScor
             hookPos.current
         ]);
         const points = curve.getPoints(ropeSegments);
+
+        // Update rope segments directly via refs (performance)
+        if (ropeSegmentsRef.current) {
+            const meshes = ropeSegmentsRef.current.children as THREE.Mesh[];
+            for (let i = 0; i < ropeSegments; i++) {
+                const mesh = meshes[i];
+                if (mesh) {
+                    const p1 = points[i];
+                    const p2 = points[i+1];
+                    const mid = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
+                    const dir = new THREE.Vector3().subVectors(p2, p1);
+                    const len = dir.length();
+                    
+                    mesh.position.copy(mid);
+                    const up = new THREE.Vector3(0, 1, 0);
+                    mesh.quaternion.setFromUnitVectors(up, len > 0.001 ? dir.clone().normalize() : up);
+                    mesh.scale.set(1, len, 1);
+                }
+            }
+        }
+
         if (ropeLineRef.current) {
             ropeLineRef.current.geometry.setFromPoints(points);
         }
@@ -276,11 +316,17 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, nextColor, currentScor
                 </group>
             ))}
 
-            {/* NEW Dynamic Rope */}
-            <line ref={ropeLineRef as any}>
-                <bufferGeometry />
-                <lineBasicMaterial color="#64748b" linewidth={2} />
-            </line>
+            {/* NEW Optimized 3D Rope segments */}
+            <group ref={ropeSegmentsRef}>
+                {Array.from({ length: ropeSegments }).map((_, i) => (
+                    <mesh key={i}>
+                        <cylinderGeometry args={[0.02, 0.02, 1, 6]} />
+                        <meshStandardMaterial color="#64748b" metalness={0.5} roughness={0.3} />
+                    </mesh>
+                ))}
+            </group>
+
+            {/* Hidden line removed to fix SVG/Three confustion - using ropeSegmentsRef instead */}
             
             {/* Hook & Held Block Assembly */}
             <group ref={hookVisualRef}>
@@ -334,14 +380,29 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, nextColor, currentScor
          </group>
          
          {/* Prediction Shadow Dot (Floor Level) */}
-         <mesh ref={shadowDotRef} position={[0, targetY, 0]} rotation={[-Math.PI/2, 0, 0]}>
-             <circleGeometry args={[0.4, 32]} />
-             <meshBasicMaterial color={isSpawning ? "#ef4444" : "#10b981"} transparent opacity={0.5} depthWrite={false} blending={THREE.AdditiveBlending} />
-             <mesh position={[0, 0, 0.01]}>
-                 <circleGeometry args={[0.1, 16]} />
-                 <meshBasicMaterial color="#ffffff" transparent opacity={0.8} depthWrite={false} />
-             </mesh>
-         </mesh>
+          <mesh ref={shadowDotRef} position={[0, targetY, 0]} rotation={[-Math.PI/2, 0, 0]}>
+              <circleGeometry args={[0.4, 32]} />
+              <meshBasicMaterial 
+                color={isSpawning ? "#ef4444" : "#10b981"} 
+                transparent 
+                opacity={0.5} 
+                depthWrite={false} 
+                blending={THREE.AdditiveBlending}
+                polygonOffset
+                polygonOffsetFactor={-1}
+              />
+              <mesh position={[0, 0, 0.01]}>
+                  <circleGeometry args={[0.1, 16]} />
+                  <meshBasicMaterial 
+                    color="#ffffff" 
+                    transparent 
+                    opacity={0.8} 
+                    depthWrite={false}
+                    polygonOffset
+                    polygonOffsetFactor={-2}
+                  />
+              </mesh>
+          </mesh>
          </>
     );
 }
@@ -569,7 +630,7 @@ export default function UbicaBalance() {
             setScoreAnimation(true);
             setTimeout(() => setScoreAnimation(false), 200);
 
-            setHighestY(newArray.length * 1.0); // Rough height estimate
+            setHighestY(newArray.length * 0.6); // Adjusted for smoother height progression
             
             return newArray;
         });
