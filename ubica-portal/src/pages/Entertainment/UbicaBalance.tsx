@@ -51,11 +51,10 @@ function BasePlatform() {
 }
 
 // 2. Construction Drone (Replaces Crane)
-function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextColor, currentScore }: { 
+function ConstructionDrone({ onDrop, isSpawning, targetY, nextColor, currentScore }: { 
     onDrop: (x: number, z: number, y: number, vx: number, vz: number, isLogo: boolean, rx?: number, ry?: number, rz?: number) => void, 
     isSpawning: boolean, 
     targetY: number, 
-    difficultySpeed: number, 
     nextColor: string,
     currentScore: number 
 }) {
@@ -81,10 +80,12 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
         const t = state.clock.getElapsedTime();
         
         // --- GAMEPLAY BALANCE ---
-        // 1. Velocity: Very slow first 10 points, then ramp up
-        let effectiveSpeed = 0.6; // Base slower speed for beginners
+        // 1. Velocity: Very slow first 10 points, then ramp up GRADUALLY
+        let effectiveSpeed = 0.7; // Base slower speed for beginners
         if (currentScore >= 10) {
-            effectiveSpeed = 1.2 * difficultySpeed;
+            // Smooth linear ramp: 0.7 + 0.01 per point above 10
+            // At 100 points, effectiveSpeed will be 1.6
+            effectiveSpeed = 0.7 + Math.min(1.0, (currentScore - 10) * 0.01);
         }
         
         const x = Math.sin(t * effectiveSpeed) * 3.5;
@@ -194,7 +195,8 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
              
              const material = shadowDotRef.current.material as THREE.MeshBasicMaterial;
              material.opacity = isSpawning ? 0.8 : 0.4 + Math.sin(t * 8) * 0.2;
-             const scale = Math.max(0.5, 1.5 - (difficultySpeed * 0.3));
+             const dotRamp = currentScore < 10 ? 0 : Math.min(1, (currentScore - 10) * 0.015);
+             const scale = Math.max(0.5, 1.2 - (dotRamp * 0.7));
              shadowDotRef.current.scale.set(scale, scale, 1);
         }
     });
@@ -434,7 +436,6 @@ export default function UbicaBalance() {
     const [isSpawning, setIsSpawning] = useState(false);
     const [comboText, setComboText] = useState("");
     const [comboMultiplier, setComboMultiplier] = useState(1);
-    const [difficultySpeed, setDifficultySpeed] = useState(1);
     const [scoreAnimation, setScoreAnimation] = useState(false);
     const [nextColor, setNextColor] = useState(getNextRandomColor);
     const [leaderboard, setLeaderboard] = useState<any[]>([]);
@@ -445,15 +446,6 @@ export default function UbicaBalance() {
     const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(true);
     const [showMilestoneCelebration, setShowMilestoneCelebration] = useState(false);
     const [hasCelebrated100, setHasCelebrated100] = useState(false);
-
-    // DEBUG: Trigger celebration for testing
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setShowMilestoneCelebration(true);
-            setTimeout(() => setShowMilestoneCelebration(false), 5000);
-        }, 2000);
-        return () => clearTimeout(timer);
-    }, []);
 
     const fetchLeaderboard = useCallback(async () => {
         try {
@@ -579,9 +571,6 @@ export default function UbicaBalance() {
 
             setHighestY(newArray.length * 1.0); // Rough height estimate
             
-            // Increase diff
-            setDifficultySpeed(1 + (newArray.length * 0.05));
-
             return newArray;
         });
 
@@ -599,7 +588,6 @@ export default function UbicaBalance() {
         setIsSpawning(false);
         setComboMultiplier(1);
         setComboText("");
-        setDifficultySpeed(1);
         setNextColor(getNextRandomColor());
         setHasCelebrated100(false);
         setShowMilestoneCelebration(false);
@@ -938,7 +926,6 @@ export default function UbicaBalance() {
                             onDrop={handleDrop} 
                             isSpawning={isSpawning} 
                             targetY={highestY} 
-                            difficultySpeed={difficultySpeed} 
                             nextColor={nextColor} 
                             currentScore={score}
                         />
