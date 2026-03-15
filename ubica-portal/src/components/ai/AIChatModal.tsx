@@ -314,9 +314,6 @@ export default function AIChatModal() {
                                 } 
                                 ${window.innerWidth < 640 ? 'inset-0' : ''}
                                 ${isResizing ? 'select-none' : ''}`}
-                            style={{ 
-                                touchAction: 'none'
-                            }}
                         >
                              {/* Resize Handle - Top Left */}
                              {!isFullScreen && window.innerWidth >= 640 && (
