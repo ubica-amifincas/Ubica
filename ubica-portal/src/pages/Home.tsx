@@ -532,7 +532,7 @@ export default function Home() {
         }}
       >
         {/* Hero Section - Modern Search Box with Adaptive Background */}
-        {!isDrawingEnabled && (
+        {!isDrawingEnabled && viewMode !== 'map' && (
           <motion.div
             className="mx-auto max-w-7xl w-full"
             style={{ padding: heroPadding }}
