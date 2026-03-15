@@ -1329,17 +1329,7 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
             
         return db_conversation.id
 
-    # Cascade 1: try Groq
-    if OPENAI_AVAILABLE and GROQ_API_KEY:
-        try:
-            groq_model = "llama-3.3-70b-versatile" # Latest stable model on Groq
-            res_text = await run_openai_provider(GROQ_API_KEY, "https://api.groq.com/openai/v1", groq_model)
-            conv_id = persist_conversation(res_text)
-            return {"message": res_text, "provider": "groq", "model": groq_model, "conversation_id": conv_id}
-        except Exception as e:
-            print(f"Groq failed: {e}")
-
-    # Cascade 2: try OpenRouter
+    # Cascade 1: try OpenRouter
     if OPENAI_AVAILABLE and OPENROUTER_API_KEY:
         try:
             or_model = "google/gemini-2.0-flash-001" # Stable Gemini 2.0 via OpenRouter
@@ -1348,6 +1338,16 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
             return {"message": res_text, "provider": "openrouter", "model": or_model, "conversation_id": conv_id}
         except Exception as e:
             print(f"OpenRouter failed: {e}")
+
+    # Cascade 2: try Groq
+    if OPENAI_AVAILABLE and GROQ_API_KEY:
+        try:
+            groq_model = "llama-3.3-70b-versatile" # Latest stable model on Groq
+            res_text = await run_openai_provider(GROQ_API_KEY, "https://api.groq.com/openai/v1", groq_model)
+            conv_id = persist_conversation(res_text)
+            return {"message": res_text, "provider": "groq", "model": groq_model, "conversation_id": conv_id}
+        except Exception as e:
+            print(f"Groq failed: {e}")
 
     # Fallback si todo falla
     msg = request.message.lower()
