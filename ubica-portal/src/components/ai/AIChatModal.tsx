@@ -106,6 +106,13 @@ export default function AIChatModal() {
         }
     }, [isOpen, isMinimized]);
 
+    // Re-focus input after AI finishes responding
+    useEffect(() => {
+        if (!isLoading && isOpen && !isMinimized) {
+            setTimeout(() => inputRef.current?.focus(), 100);
+        }
+    }, [isLoading, isOpen, isMinimized]);
+
     // Pre-fill with search context if provided
     useEffect(() => {
         if (isOpen && searchContext && messages.length === 1 && !activeConversationId) {
@@ -277,22 +284,14 @@ export default function AIChatModal() {
                             initial={{ 
                                 opacity: 0, 
                                 scale: 0.8, 
-                                y: 80, 
-                                rotateX: 15,
-                                transformPerspective: 1200,
                                 transformOrigin: (isFullScreen || window.innerWidth < 640) ? 'center' : 'bottom right'
                             }}
                             animate={{ 
                                 opacity: 1, 
                                 scale: 1, 
-                                rotateX: 0,
-                                transformPerspective: 1200,
-                                x: (isFullScreen || window.innerWidth < 640) ? 0 : 0,
-                                y: (isFullScreen || window.innerWidth < 640) ? 0 : 0, 
-                                // Reset position to 0 strictly on mobile or fullscreen
+                                // Drag modifies x and y, so we don't force them here unless resetting
                                 width: (isFullScreen || window.innerWidth < 640) ? '100vw' : dimensions.width,
                                 height: (isFullScreen || window.innerWidth < 640) ? '100vh' : dimensions.height,
-                                // Centering or covering logic
                                 left: (isFullScreen || window.innerWidth < 640) ? 0 : undefined,
                                 top: (isFullScreen || window.innerWidth < 640) ? 0 : undefined,
                                 right: (isFullScreen || window.innerWidth < 640) ? 0 : '1.5rem',
@@ -302,14 +301,13 @@ export default function AIChatModal() {
                             }}
                             exit={{ 
                                 opacity: 0, 
-                                scale: 0.9, 
-                                y: 40, 
+                                scale: 0.8, 
                                 transformOrigin: (isFullScreen || window.innerWidth < 640) ? 'center' : 'bottom right'
                             }}
                             transition={{ 
                                 type: 'spring', 
-                                stiffness: 400, 
-                                damping: 28,
+                                stiffness: 300, 
+                                damping: 25,
                                 mass: 0.8
                             }}
                             className={`fixed flex flex-col bg-white dark:bg-gray-900 shadow-[0_20px_50px_rgba(139,92,246,0.15)] border-gray-200 dark:border-gray-700 overflow-hidden ring-1 ring-white/20
