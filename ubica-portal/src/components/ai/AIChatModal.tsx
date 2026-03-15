@@ -299,6 +299,8 @@ export default function AIChatModal() {
                                 ${isResizing ? 'select-none' : ''}`}
                             style={{ 
                                 touchAction: 'none',
+                                x: (isFullScreen || window.innerWidth < 640) ? 0 : undefined,
+                                y: (isFullScreen || window.innerWidth < 640) ? 0 : undefined,
                                 width: (isFullScreen || window.innerWidth < 640) ? '100vw' : dimensions.width,
                                 height: (isFullScreen || window.innerWidth < 640) ? '100vh' : dimensions.height,
                                 left: (isFullScreen || window.innerWidth < 640) ? 0 : undefined,
