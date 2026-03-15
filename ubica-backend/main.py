@@ -1055,8 +1055,11 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
             if tipo:
                 # Robust semantic mapping Level 3
                 tipo_lower = tipo.lower()
+                # GENERIC TERMS: Ignore and don't filter by type
+                if any(x in tipo_lower for x in ["vivienda", "propiedad", "inmueble"]):
+                    pass
                 # PISOS: Includes apartments, studios, penthouses, flats
-                if any(x in tipo_lower for x in ["piso", "apartamento", "estudio", "atico", "ático", "loft"]):
+                elif any(x in tipo_lower for x in ["piso", "apartamento", "estudio", "atico", "ático", "loft"]):
                     tipo_filter = or_(
                         models.Property.type.ilike("%apartment%"), 
                         models.Property.type.ilike("%piso%"), 
@@ -1118,7 +1121,7 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
                     "properties": {
                         "ubicacion": {"type": "string", "description": "Ciudad, barrio o dirección"},
                         "precio_maximo": {"type": "number", "description": "Precio máximo a buscar"},
-                        "tipo": {"type": "string", "description": "Tipo de propiedad (e.g. villa, apartamento)"},
+                        "tipo": {"type": "string", "description": "Tipo de propiedad específico (e.g. villa, apartamento, piso). Si el usuario usa términos genéricos como 'vivienda', 'propiedad' o 'inmueble', NO incluyas este parámetro."},
                         "estado": {"type": "string", "description": "Estado de la propiedad (e.g. alquiler, venta, for-rent, for-sale)"}
                     }
                 }
