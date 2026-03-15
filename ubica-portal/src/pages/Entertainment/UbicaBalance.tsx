@@ -51,20 +51,26 @@ function BasePlatform() {
 }
 
 // 2. Construction Drone (Replaces Crane)
-function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextColor }: { onDrop: (x: number, z: number, y: number, vx: number, vz: number, isLogo: boolean, rx?: number, ry?: number, rz?: number) => void, isSpawning: boolean, targetY: number, difficultySpeed: number, nextColor: string }) {
+function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextColor, currentScore }: { 
+    onDrop: (x: number, z: number, y: number, vx: number, vz: number, isLogo: boolean, rx?: number, ry?: number, rz?: number) => void, 
+    isSpawning: boolean, 
+    targetY: number, 
+    difficultySpeed: number, 
+    nextColor: string,
+    currentScore: number 
+}) {
     const groupRef = useRef<THREE.Group>(null);
     const shadowDotRef = useRef<THREE.Mesh>(null);
     const ringRef = useRef<THREE.Mesh>(null);
     const { rapier, world } = useRapier();
     
     // Rope Physics State
-    const dronePrevPos = useRef(new THREE.Vector3());
+    const dronePrevPos = useRef<THREE.Vector3 | null>(null);
     const droneVel = useRef(new THREE.Vector3());
     const ropeSegments = 8;
     const ropeLength = 2.5;
     const hookPos = useRef(new THREE.Vector3(0, -ropeLength, 0));
     const hookVel = useRef(new THREE.Vector3(0, 0, 0));
-    const ropePointsRef = useRef<THREE.Vector3[]>(Array.from({ length: ropeSegments + 1 }, () => new THREE.Vector3()));
     const ropeLineRef = useRef<THREE.Line>(null);
     const hookVisualRef = useRef<THREE.Group>(null);
     const heldBlockRef = useRef<THREE.Group>(null);
@@ -73,26 +79,42 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
         if (!groupRef.current) return;
 
         const t = state.clock.getElapsedTime();
-        const speed = 1.2 * difficultySpeed;
-        const x = Math.sin(t * speed) * 3.5;
-        const z = Math.cos(t * speed * 0.8) * 1.5;
+        
+        // --- GAMEPLAY BALANCE ---
+        // 1. Velocity: Very slow first 10 points, then ramp up
+        let effectiveSpeed = 0.6; // Base slower speed for beginners
+        if (currentScore >= 10) {
+            effectiveSpeed = 1.2 * difficultySpeed;
+        }
+        
+        const x = Math.sin(t * effectiveSpeed) * 3.5;
+        const z = Math.cos(t * effectiveSpeed * 0.8) * 1.5;
 
-        // Drone realistic tilt
-        const tiltX = Math.cos(t * speed) * 0.15;
-        const tiltZ = Math.sin(t * speed * 0.8) * -0.15;
+        // 2. Drone realistic tilt - Also scale with speed
+        const tiltIntensity = currentScore < 10 ? 0.05 : 0.15;
+        const tiltX = Math.cos(t * effectiveSpeed) * tiltIntensity;
+        const tiltZ = Math.sin(t * effectiveSpeed * 0.8) * -tiltIntensity;
 
         const dronePos = new THREE.Vector3(x, targetY + 6, z);
         
-        // Calculate velocity & acceleration before updating position
+        // --- POSITION TRACKING FIX ---
+        // Initialize on first frame to avoid infinite acceleration bug
+        if (!dronePrevPos.current) {
+            dronePrevPos.current = dronePos.clone();
+            return;
+        }
+
+        // Calculate velocity & acceleration
         const currentVel = dronePos.clone().sub(dronePrevPos.current).divideScalar(delta || 0.016);
-        // We use a simple derivative for acceleration
-        // In a real game we'd store prevVel, but this is enough for visual swing
         const droneAccel = currentVel.clone().sub(droneVel.current).divideScalar(delta || 0.016);
         droneVel.current.copy(currentVel);
         dronePrevPos.current.copy(dronePos);
 
         groupRef.current.position.copy(dronePos);
-        groupRef.current.rotation.set(tiltZ, t * 1.5, tiltX);
+        
+        // 3. Rotation Balance: No rotation until 50 points
+        const rotationSpeed = currentScore >= 50 ? 1.5 : 0;
+        groupRef.current.rotation.set(tiltZ, t * rotationSpeed, tiltX);
         
         // --- ROPE & HOOK PHYSICS (Local Space) ---
         const invQuat = groupRef.current.quaternion.clone().invert();
@@ -804,7 +826,14 @@ export default function UbicaBalance() {
                     <CameraRig targetY={highestY} offset={cameraOffset} />
 
                     {!gameOver && (
-                        <ConstructionDrone onDrop={handleDrop} isSpawning={isSpawning} targetY={highestY} difficultySpeed={difficultySpeed} nextColor={nextColor} />
+                        <ConstructionDrone 
+                            onDrop={handleDrop} 
+                            isSpawning={isSpawning} 
+                            targetY={highestY} 
+                            difficultySpeed={difficultySpeed} 
+                            nextColor={nextColor} 
+                            currentScore={score}
+                        />
                     )}
                 </Physics>
 
