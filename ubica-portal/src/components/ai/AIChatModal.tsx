@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence, useDragControls } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls, useMotionValue } from 'framer-motion';
 import { XMarkIcon, PaperAirplaneIcon, MinusIcon, ArrowsPointingOutIcon } from '@heroicons/react/24/outline';
 import ReactMarkdown from 'react-markdown';
 import appService from '../../services';
@@ -50,7 +50,16 @@ export default function AIChatModal() {
     const [isResizing, setIsResizing] = useState(false);
     const windowRef = useRef<HTMLDivElement>(null);
 
+    // Controlled motion values for drag position
+    const dragX = useMotionValue(0);
+    const dragY = useMotionValue(0);
+
     const toggleFullScreen = () => {
+        if (!isFullScreen) {
+            // Entering fullscreen: reset drag position
+            dragX.set(0);
+            dragY.set(0);
+        }
         setIsFullScreen(!isFullScreen);
     };
 
@@ -299,8 +308,8 @@ export default function AIChatModal() {
                                 ${isResizing ? 'select-none' : ''}`}
                             style={{ 
                                 touchAction: 'none',
-                                x: (isFullScreen || window.innerWidth < 640) ? 0 : undefined,
-                                y: (isFullScreen || window.innerWidth < 640) ? 0 : undefined,
+                                x: dragX,
+                                y: dragY,
                                 width: (isFullScreen || window.innerWidth < 640) ? '100vw' : dimensions.width,
                                 height: (isFullScreen || window.innerWidth < 640) ? '100vh' : dimensions.height,
                                 left: (isFullScreen || window.innerWidth < 640) ? 0 : undefined,
