@@ -443,6 +443,8 @@ export default function UbicaBalance() {
     const [isDarkMode, setIsDarkMode] = useState(true);
     const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0, z: 0 });
     const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(true);
+    const [showMilestoneCelebration, setShowMilestoneCelebration] = useState(false);
+    const [hasCelebrated100, setHasCelebrated100] = useState(false);
 
     const fetchLeaderboard = useCallback(async () => {
         try {
@@ -553,14 +555,24 @@ export default function UbicaBalance() {
         setBlocks(prev => {
             const newArray = [...prev, newBlock];
             
-            setScore(s => s + pts);
+            setScore(prevScore => {
+                const newScore = prevScore + pts;
+                // Check for 100 point milestone
+                if (newScore >= 100 && !hasCelebrated100) {
+                    setShowMilestoneCelebration(true);
+                    setHasCelebrated100(true);
+                    setTimeout(() => setShowMilestoneCelebration(false), 5000);
+                }
+                return newScore;
+            });
             setScoreAnimation(true);
             setTimeout(() => setScoreAnimation(false), 200);
-            
+
             setHighestY(newArray.length * 1.0); // Rough height estimate
             
             // Increase diff
             setDifficultySpeed(1 + (newArray.length * 0.05));
+
             return newArray;
         });
 
@@ -580,6 +592,8 @@ export default function UbicaBalance() {
         setComboText("");
         setDifficultySpeed(1);
         setNextColor(getNextRandomColor());
+        setHasCelebrated100(false);
+        setShowMilestoneCelebration(false);
         fetchLeaderboard(); // refresh stats
     };
 
@@ -784,6 +798,91 @@ export default function UbicaBalance() {
                                 </p>
                             )}
                         </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* CELEBRACIÓN 100 PUNTOS */}
+            <AnimatePresence>
+                {showMilestoneCelebration && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none overflow-hidden"
+                    >
+                        {/* Background particles / flare */}
+                        <motion.div 
+                            initial={{ scale: 0, rotate: 0 }}
+                            animate={{ scale: [0, 1.5, 1.2], rotate: 360 }}
+                            transition={{ duration: 1.5, ease: "easeOut" }}
+                            className="absolute w-[600px] h-[600px] bg-gradient-to-r from-emerald-500/20 via-teal-400/30 to-emerald-500/20 rounded-full blur-[100px]"
+                        />
+                        
+                        <div className="relative flex flex-col items-center">
+                            {/* Logo Animation */}
+                            <motion.div
+                                initial={{ scale: 0, y: 50, rotate: -10 }}
+                                animate={{ scale: 1, y: 0, rotate: 0 }}
+                                transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.2 }}
+                                className="relative mb-8"
+                            >
+                                <div className="absolute inset-0 bg-white/20 blur-2xl rounded-full scale-150 animate-pulse" />
+                                <img 
+                                    src="/logo_ubica.png" 
+                                    alt="Ubica Logo" 
+                                    className="w-48 h-auto relative drop-shadow-[0_0_30px_rgba(16,185,129,0.8)]" 
+                                />
+                            </motion.div>
+
+                            {/* Badge/Text */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.6 }}
+                                className="text-center"
+                            >
+                                <h1 className="text-5xl md:text-7xl font-black text-white italic tracking-tighter drop-shadow-2xl">
+                                    ¡100 PUNTOS!
+                                </h1>
+                                <motion.div
+                                    initial={{ scaleX: 0 }}
+                                    animate={{ scaleX: 1 }}
+                                    transition={{ delay: 1, duration: 0.8 }}
+                                    className="h-1 bg-gradient-to-r from-transparent via-emerald-400 to-transparent w-full mt-2"
+                                />
+                                <p className="text-emerald-400 font-black text-xl md:text-2xl mt-4 uppercase tracking-[0.3em] drop-shadow-lg">
+                                    Edificio Legendario
+                                </p>
+                            </motion.div>
+
+                            {/* Confetti particles emulated with motion */}
+                            {Array.from({ length: 20 }).map((_, i) => (
+                                <motion.div
+                                    key={i}
+                                    initial={{ 
+                                        x: 0, 
+                                        y: 0, 
+                                        scale: 0,
+                                        rotate: 0 
+                                    }}
+                                    animate={{ 
+                                        x: (Math.random() - 0.5) * 800, 
+                                        y: (Math.random() - 0.5) * 800, 
+                                        scale: [0, 1, 0],
+                                        rotate: Math.random() * 720
+                                    }}
+                                    transition={{ 
+                                        duration: 2 + Math.random() * 2, 
+                                        repeat: Infinity,
+                                        delay: Math.random() * 0.5
+                                    }}
+                                    className={`absolute w-4 h-4 rounded-sm ${
+                                        i % 3 === 0 ? 'bg-emerald-400' : i % 3 === 1 ? 'bg-teal-300' : 'bg-white'
+                                    } blur-[1px] opacity-60`}
+                                />
+                            ))}
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>
