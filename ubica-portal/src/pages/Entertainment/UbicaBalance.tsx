@@ -55,19 +55,24 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
     const groupRef = useRef<THREE.Group>(null);
     const shadowDotRef = useRef<THREE.Mesh>(null);
     const ringRef = useRef<THREE.Mesh>(null);
-    const hookGroupRef = useRef<THREE.Group>(null);
-    const heldBlockRef = useRef<THREE.Group>(null);
     const { rapier, world } = useRapier();
     
-    // Track previous position to calculate velocity for pendulum effect
-    const prevPos = useRef(new THREE.Vector3());
-    const velocity = useRef(new THREE.Vector3());
+    // Rope Physics State
+    const dronePrevPos = useRef(new THREE.Vector3());
+    const droneVel = useRef(new THREE.Vector3());
+    const ropeSegments = 8;
+    const ropeLength = 2.5;
+    const hookPos = useRef(new THREE.Vector3(0, -ropeLength, 0));
+    const hookVel = useRef(new THREE.Vector3(0, 0, 0));
+    const ropePointsRef = useRef<THREE.Vector3[]>(Array.from({ length: ropeSegments + 1 }, () => new THREE.Vector3()));
+    const ropeLineRef = useRef<THREE.Line>(null);
+    const hookVisualRef = useRef<THREE.Group>(null);
+    const heldBlockRef = useRef<THREE.Group>(null);
 
-    useFrame((state) => {
+    useFrame((state, delta) => {
         if (!groupRef.current) return;
 
         const t = state.clock.getElapsedTime();
-        // Speed up based on difficulty
         const speed = 1.2 * difficultySpeed;
         const x = Math.sin(t * speed) * 3.5;
         const z = Math.cos(t * speed * 0.8) * 1.5;
@@ -76,31 +81,75 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
         const tiltX = Math.cos(t * speed) * 0.15;
         const tiltZ = Math.sin(t * speed * 0.8) * -0.15;
 
-        const currentPos = new THREE.Vector3(x, targetY + 6, z);
-        groupRef.current.position.copy(currentPos);
+        const dronePos = new THREE.Vector3(x, targetY + 6, z);
+        
+        // Calculate velocity & acceleration before updating position
+        const currentVel = dronePos.clone().sub(dronePrevPos.current).divideScalar(delta || 0.016);
+        // We use a simple derivative for acceleration
+        // In a real game we'd store prevVel, but this is enough for visual swing
+        const droneAccel = currentVel.clone().sub(droneVel.current).divideScalar(delta || 0.016);
+        droneVel.current.copy(currentVel);
+        dronePrevPos.current.copy(dronePos);
+
+        groupRef.current.position.copy(dronePos);
         groupRef.current.rotation.set(tiltZ, t * 1.5, tiltX);
         
-        // Calculate velocity for hook swing and block momentum
-        velocity.current.subVectors(currentPos, prevPos.current);
-        // Normalize velocity conceptually to time delta (roughly 60fps -> * 60)
-        // for dropping physics
-        prevPos.current.copy(currentPos);
+        // --- ROPE & HOOK PHYSICS (Local Space) ---
+        const invQuat = groupRef.current.quaternion.clone().invert();
+        
+        // 1. Gravity in local space
+        const localGravity = new THREE.Vector3(0, -9.81, 0).applyQuaternion(invQuat);
+        
+        // 2. Inertial force (Drone acceleration "pushes" objects in opposite direction)
+        const inertialForce = droneAccel.clone().applyQuaternion(invQuat).multiplyScalar(-0.8);
 
-        if (hookGroupRef.current) {
-            // Pendulum effect based on drone velocity
-            // We counter-rotate the hook based on movement direction
-            const swingX = velocity.current.z * 10;
-            const swingZ = -velocity.current.x * 10;
-            
-            // Recoil effect when dropping
-            const recoil = isSpawning ? 0.4 : 0;
-            
-            // Smoothly interpolate current rotation to target rotation
-            hookGroupRef.current.rotation.x = THREE.MathUtils.lerp(hookGroupRef.current.rotation.x, swingX, 0.1);
-            hookGroupRef.current.rotation.z = THREE.MathUtils.lerp(hookGroupRef.current.rotation.z, swingZ, 0.1);
-            
-            // Add a crisp bounce on Y when dropping, simulating weight release
-            hookGroupRef.current.position.y = THREE.MathUtils.lerp(hookGroupRef.current.position.y, isSpawning ? 0.6 : 0, 0.3);
+        // 3. Hook Pendulum Simulation
+        const hookToDrone = new THREE.Vector3(0, 0, 0).sub(hookPos.current);
+        const distance = hookToDrone.length();
+        
+        // Spring-like constraint to keep hook at ropeLength
+        const stretch = distance - ropeLength;
+        const springForce = hookToDrone.normalize().multiplyScalar(stretch * 300); // Higher K for stiffness
+        
+        // Apply forces
+        const damping = 0.96;
+        hookVel.current.add(localGravity.multiplyScalar(delta));
+        hookVel.current.add(inertialForce.multiplyScalar(delta));
+        hookVel.current.add(springForce.multiplyScalar(delta));
+
+        hookVel.current.multiplyScalar(damping);
+        hookPos.current.add(hookVel.current.clone().multiplyScalar(delta));
+
+        // 4. Recoil on Drop (Impulse)
+        if (isSpawning) {
+            hookVel.current.y += 8 * delta; 
+        }
+
+        // 5. Update Rope Segments (Visuals)
+        // We create a CatmullRomCurve3 but for the rope visualization 
+        // we'll just use 3 points for a nice sag: Start, Mid (with sag), End
+        const midPoint = hookPos.current.clone().multiplyScalar(0.5);
+        // Add a bit of "inertia sag" to the midpoint
+        midPoint.add(hookVel.current.clone().multiplyScalar(-0.05));
+
+        const curve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(0, 0, 0),
+            midPoint,
+            hookPos.current
+        ]);
+        const points = curve.getPoints(ropeSegments);
+        if (ropeLineRef.current) {
+            ropeLineRef.current.geometry.setFromPoints(points);
+        }
+
+        // 6. Update Hook Visuals
+        if (hookVisualRef.current) {
+            hookVisualRef.current.position.copy(hookPos.current);
+            // Rotate hook to face the direction of the rope (local up is the vector to drone)
+            const up = new THREE.Vector3(0, 0, 0).sub(hookPos.current).normalize();
+            // We want the hook's Y axis to align with 'up'
+            const quat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), up);
+            hookVisualRef.current.quaternion.copy(quat);
         }
 
         if (ringRef.current) {
@@ -108,22 +157,21 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
              mat.emissiveIntensity = isSpawning ? 3 : 1 + Math.sin(t * 5) * 0.5;
         }
 
-        // Move the shadow prediction dot to stay right under the drone, but resting on the highest block
+        // 7. Shadow prediction dot
         if (shadowDotRef.current) {
-             const ray = new rapier.Ray(currentPos, { x: 0, y: -1, z: 0 });
+             const worldHookPos = hookPos.current.clone().applyMatrix4(groupRef.current.matrixWorld);
+             const ray = new rapier.Ray(worldHookPos, { x: 0, y: -1, z: 0 });
              const hit = world.castRay(ray, 50, true);
              
              if (hit && (hit as any).toi) {
                  const hitPoint = ray.pointAt((hit as any).toi);
                  shadowDotRef.current.position.set(hitPoint.x, hitPoint.y + 0.05, hitPoint.z);
              } else {
-                 shadowDotRef.current.position.set(currentPos.x, Math.max(0, targetY - 10), currentPos.z);
+                 shadowDotRef.current.position.set(worldHookPos.x, Math.max(0, targetY - 10), worldHookPos.z);
              }
              
              const material = shadowDotRef.current.material as THREE.MeshBasicMaterial;
              material.opacity = isSpawning ? 0.8 : 0.4 + Math.sin(t * 8) * 0.2;
-             
-             // Scale it down as difficulty increases to represent the challenge
              const scale = Math.max(0.5, 1.5 - (difficultySpeed * 0.3));
              shadowDotRef.current.scale.set(scale, scale, 1);
         }
@@ -142,12 +190,15 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
                 heldBlockRef.current.getWorldQuaternion(worldQuat);
                 const euler = new THREE.Euler().setFromQuaternion(worldQuat);
 
+                // Add hook velocity to drop velocity
+                const worldHookVel = hookVel.current.clone().applyQuaternion(groupRef.current.quaternion);
+
                 onDrop(
                     worldPos.x, 
                     worldPos.z, 
                     worldPos.y,
-                    velocity.current.x * 60 * 0.5,
-                    velocity.current.z * 60 * 0.5,
+                    worldHookVel.x * 2, // Combined velocity
+                    worldHookVel.z * 2, 
                     nextColor === 'LOGO',
                     euler.x,
                     euler.y,
@@ -174,32 +225,26 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
                 <Edges scale={1} threshold={15} color="#0f172a" />
             </mesh>
 
-            {/* Top dome */}
             <mesh position={[0, 0.2, 0]}>
                 <cylinderGeometry args={[0.4, 0.4, 0.2, 16]} />
                 <meshStandardMaterial color="#0f172a" metalness={0.9} roughness={0.1} />
             </mesh>
             
-            {/* Glowing Ring */}
             <mesh ref={ringRef} position={[0, -0.21, 0]} rotation={[Math.PI/2, 0, 0]}>
                 <torusGeometry args={[0.3, 0.05, 16, 32]} />
                 <meshStandardMaterial color={isSpawning ? "#ef4444" : "#10b981"} emissive={isSpawning ? "#ef4444" : "#10b981"} emissiveIntensity={3} toneMapped={false} />
             </mesh>
 
-            {/* Arms & Rotors */}
             {[[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([x, z], i) => (
                 <group key={i} position={[x * 0.8, 0, z * 0.8]}>
-                    {/* Arm connecting to body */}
                     <mesh castShadow position={[-x * 0.15, 0, -z * 0.15]} rotation={[0, Math.atan2(x, z), 0]}>
                         <boxGeometry args={[0.1, 0.1, 0.6]} />
                         <meshStandardMaterial color="#334155" metalness={0.6} roughness={0.4} />
                     </mesh>
-                    {/* Rotor Motor */}
                     <mesh castShadow position={[0, 0.1, 0]}>
                         <cylinderGeometry args={[0.15, 0.15, 0.2, 16]} />
                         <meshStandardMaterial color="#0f172a" metalness={0.8} roughness={0.2} />
                     </mesh>
-                    {/* Propeller */}
                     <mesh position={[0, 0.25, 0]}>
                         <cylinderGeometry args={[0.4, 0.4, 0.02, 16]} />
                         <meshStandardMaterial color="#cbd5e1" transparent opacity={0.6} metalness={0.5} roughness={0.2} />
@@ -207,33 +252,33 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
                 </group>
             ))}
 
-            {/* Animated Cable & Hook Assembly */}
-            <group ref={hookGroupRef}>
-                {/* Cable */}
-                <mesh position={[0, -1, 0]}>
-                    <cylinderGeometry args={[0.02, 0.02, 2, 8]} />
-                    <meshStandardMaterial color="#64748b" metalness={0.8} roughness={0.2} />
-                </mesh>
-                
+            {/* NEW Dynamic Rope */}
+            <line ref={ropeLineRef as any}>
+                <bufferGeometry />
+                <lineBasicMaterial color="#64748b" linewidth={2} />
+            </line>
+            
+            {/* Hook & Held Block Assembly */}
+            <group ref={hookVisualRef}>
                 {/* Claw Base */}
-                <mesh position={[0, -2, 0]}>
+                <mesh position={[0, 0, 0]}>
                     <boxGeometry args={[0.6, 0.1, 0.6]} />
                     <meshStandardMaterial color="#1e293b" metalness={0.8} roughness={0.2} />
                 </mesh>
                 
-                {/* Claw Arms (Animate opening when spawning, wider opening) */}
-                <mesh position={[0.3, -2.1, 0]} rotation={[0, 0, isSpawning ? -Math.PI/3 : -Math.PI/8]}>
+                {/* Claw Arms */}
+                <mesh position={[0.3, -0.1, 0]} rotation={[0, 0, isSpawning ? -Math.PI/3 : -Math.PI/8]}>
                     <boxGeometry args={[0.05, 0.4, 0.4]} />
                     <meshStandardMaterial color="#ef4444" metalness={0.5} roughness={0.5} />
                 </mesh>
-                <mesh position={[-0.3, -2.1, 0]} rotation={[0, 0, isSpawning ? Math.PI/3 : Math.PI/8]}>
+                <mesh position={[-0.3, -0.1, 0]} rotation={[0, 0, isSpawning ? Math.PI/3 : Math.PI/8]}>
                     <boxGeometry args={[0.05, 0.4, 0.4]} />
                     <meshStandardMaterial color="#ef4444" metalness={0.5} roughness={0.5} />
                 </mesh>
 
                 {/* Held Block Visually */}
                 {!isSpawning && (
-                     <group position={[0, -2.6, 0]} ref={heldBlockRef}>
+                     <group position={[0, -0.6, 0]} ref={heldBlockRef}>
                          {nextColor !== 'LOGO' ? (
                              <mesh castShadow receiveShadow>
                                 <boxGeometry args={[1.5, 1, 1.5]} />
@@ -261,14 +306,13 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
                          )}
                      </group>
                 )}
-             </group>
+            </group>
          </group>
          
          {/* Prediction Shadow Dot (Floor Level) */}
          <mesh ref={shadowDotRef} position={[0, targetY, 0]} rotation={[-Math.PI/2, 0, 0]}>
              <circleGeometry args={[0.4, 32]} />
              <meshBasicMaterial color={isSpawning ? "#ef4444" : "#10b981"} transparent opacity={0.5} depthWrite={false} blending={THREE.AdditiveBlending} />
-             {/* Inner precise dot */}
              <mesh position={[0, 0, 0.01]}>
                  <circleGeometry args={[0.1, 16]} />
                  <meshBasicMaterial color="#ffffff" transparent opacity={0.8} depthWrite={false} />
@@ -277,7 +321,7 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, difficultySpeed, nextC
          </>
     );
 }
-
+         
 // 3. Falling Blocks
 function BuildingBlock({ position, rotation, color, initialVelocity, isLogo, onFallOut }: { position: [number, number, number], rotation?: [number, number, number], color: string, isLogo: boolean, initialVelocity: [number, number, number], id: string, onFallOut: () => void }) {
     const rigidBodyRef = useRef<any>(null);
