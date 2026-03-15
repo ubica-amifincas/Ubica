@@ -1,336 +1,351 @@
-import React, { useState, useEffect, useRef, useMemo, Suspense, lazy } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Physics, RigidBody, CuboidCollider, CylinderCollider, useRapier, RapierRigidBody } from '@react-three/rapier';
-import { OrbitControls, PerspectiveCamera, Environment, Stars, Text, Float, ContactShadows, Circle } from '@react-three/drei';
-import * as THREE from 'three';
+import { Physics, RigidBody, useRapier } from '@react-three/rapier';
+import { Environment, ContactShadows, Edges, Circle } from '@react-three/drei';
+import { ChevronLeftIcon, LockClosedIcon, SunIcon, MoonIcon, ArrowUpIcon, ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon, ArrowsPointingInIcon } from '@heroicons/react/24/outline';
+import { Link } from 'react-router-dom';
+import { useAuth, useAuthenticatedFetch } from '../../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import {  
-    PlayIcon, 
-    ArrowPathIcon, 
-    TrophyIcon, 
-    ChevronLeftIcon,
-    InformationCircleIcon,
-    MoonIcon,
-    SunIcon,
-    EyeIcon,
-    EyeSlashIcon,
-    SparklesIcon
-} from '@heroicons/react/24/outline';
+import * as THREE from 'three';
 
-// --- Types & Constants ---
+// --- GAME LOGIC STATE ---
 interface BlockData {
     id: string;
     position: [number, number, number];
-    rotation: [number, number, number];
+    rotation?: [number, number, number];
     color: string;
-    isLogo: boolean;
+    type: 'base' | 'building';
+    initialVelocity?: [number, number, number];
+    isLogo?: boolean;
 }
 
-interface FallingBlockData extends BlockData {
-    vel: [number, number, number];
-}
-
-const COLORS = [
+// Brand Colors
+const BLOCK_COLORS = [
     '#3b82f6', // blue-500
-    '#06b6d4', // cyan-500
     '#10b981', // emerald-500
+    '#6366f1', // indigo-500
+    '#0ea5e9', // sky-500
     '#8b5cf6', // violet-500
-    '#f43f5e', // rose-500
     '#f59e0b', // amber-500
 ];
 
-// Componente para un segmento de la cuerda (Cilindro 3D)
-function RopeSegment({ start, end }: { start: THREE.Vector3, end: THREE.Vector3 }) {
-    const meshRef = useRef<THREE.Mesh>(null);
-    const midPoint = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
-    const direction = new THREE.Vector3().subVectors(end, start);
-    const length = direction.length();
-    
-    // El cilindro base está en el eje Y, lo orientamos hacia la dirección del segmento
-    const up = new THREE.Vector3(0, 1, 0);
-    const quaternion = new THREE.Quaternion().setFromUnitVectors(up, direction.length() > 0.001 ? direction.clone().normalize() : up);
+const getNextRandomColor = () => {
+    // 10% chance for a 'LOGO' block
+    if (Math.random() < 0.1) return 'LOGO';
+    return BLOCK_COLORS[Math.floor(Math.random() * BLOCK_COLORS.length)];
+};
 
+// --- 3D COMPONENTS ---
+
+// 1. Base Platform
+function BasePlatform() {
     return (
-        <mesh 
-            ref={meshRef} 
-            position={midPoint} 
-            quaternion={quaternion}
-        >
-            <cylinderGeometry args={[0.025, 0.025, length, 8]} />
-            <meshStandardMaterial 
-                color="#64748b" 
-                metalness={0.5} 
-                roughness={0.2} 
-                emissive="#1e293b"
-                emissiveIntensity={0.2}
-            />
-        </mesh>
+        <RigidBody type="fixed" friction={1} restitution={0.1} position={[0, -0.5, 0]}>
+            <mesh receiveShadow>
+                <boxGeometry args={[5, 1, 5]} />
+                <meshStandardMaterial color="#cbd5e1" />
+                <Edges scale={1} threshold={15} color="#64748b" />
+            </mesh>
+        </RigidBody>
     );
 }
 
-// --- Components ---
-
-// 1. Drone (Construction Drone)
-function ConstructionDrone({ 
-    position, 
-    onDrop, 
-    isHoldingBlock, 
-    heldBlockColor,
-    isLogoBlock,
-    score,
-    showPrediction
-}: { 
-    position: [number, number, number], 
-    onDrop: (vel: [number, number, number], pos: [number, number, number]) => void,
-    isHoldingBlock: boolean,
-    heldBlockColor: string,
-    isLogoBlock: boolean,
-    score: number,
-    showPrediction: boolean
+// 2. Construction Drone (Replaces Crane)
+function ConstructionDrone({ onDrop, isSpawning, targetY, nextColor, currentScore }: { 
+    onDrop: (x: number, z: number, y: number, vx: number, vz: number, isLogo: boolean, rx?: number, ry?: number, rz?: number) => void, 
+    isSpawning: boolean, 
+    targetY: number, 
+    nextColor: string,
+    currentScore: number 
 }) {
     const groupRef = useRef<THREE.Group>(null);
-    const blockRef = useRef<THREE.Group>(null);
-    const shadowDotRef = useRef<THREE.Group>(null);
-    const ropeLineRef = useRef<THREE.Line>(null);
-    const { gl } = useThree();
-    const rapier = useRapier();
-    const { world, rapier: R } = rapier;
+    const shadowDotRef = useRef<THREE.Mesh>(null);
+    const ringRef = useRef<THREE.Mesh>(null);
+    const { rapier, world } = useRapier();
     
-    // Altura del dron
-    const droneY = position[1];
-    
-    // Puntos para la cuerda (simulación simple de péndulo/atraso)
-    const [ropeSegments, setRopeSegments] = useState<THREE.Vector3[]>([]);
-    const dronePrevPos = useRef(new THREE.Vector3(...position));
-    const hookPos = useRef(new THREE.Vector3(position[0], position[1] - 4, position[2]));
+    // Rope Physics State
+    const dronePrevPos = useRef<THREE.Vector3 | null>(null);
+    const droneVel = useRef(new THREE.Vector3());
+    const ropeSegments = 8;
+    const ropeLength = 2.5;
+    const hookPos = useRef(new THREE.Vector3(0, -ropeLength, 0));
     const hookVel = useRef(new THREE.Vector3(0, 0, 0));
+    const ropeLineRef = useRef<THREE.Line>(null);
+    const hookVisualRef = useRef<THREE.Group>(null);
+    const heldBlockRef = useRef<THREE.Group>(null);
 
     useFrame((state, delta) => {
         if (!groupRef.current) return;
-        
+
         const t = state.clock.getElapsedTime();
         
-        // Movimiento suave del dron (más lento al inicio)
-        const speedMult = score < 10 ? 0.5 : Math.min(1.0, 0.5 + (score - 10) * 0.01);
-        const targetX = position[0] + Math.sin(t * 0.8 * speedMult) * 4;
-        const targetZ = position[2] + Math.cos(t * 0.5 * speedMult) * 2;
-        
-        groupRef.current.position.x = THREE.MathUtils.lerp(groupRef.current.position.x, targetX, 0.1);
-        groupRef.current.position.z = THREE.MathUtils.lerp(groupRef.current.position.z, targetZ, 0.1);
-        groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, droneY, 0.1);
-        
-        // Rotación de las hélices
-        groupRef.current.children.forEach(child => {
-            if (child.name === 'rotor') {
-                child.rotation.y += 0.5;
-            }
-        });
-
-        // Inclinación basada en movimiento
-        const tiltX = (groupRef.current.position.z - dronePrevPos.current.z) * 2;
-        const tiltZ = -(groupRef.current.position.x - dronePrevPos.current.x) * 2;
-        groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, tiltX, 0.1);
-        groupRef.current.rotation.z = THREE.MathUtils.lerp(groupRef.current.rotation.z, tiltZ, 0.1);
-        
-        // Simulación de la cuerda y gancho
-        const gravity = new THREE.Vector3(0, -9.8, 0);
-        const dronePos = groupRef.current.position.clone();
-        
-        // El gancho intenta colgar debajo del dron
-        const ropeLength = 4;
-        const toHook = new THREE.Vector3().subVectors(hookPos.current, dronePos);
-        
-        // Física básica de péndulo
-        hookVel.current.add(gravity.clone().multiplyScalar(delta));
-        hookPos.current.add(hookVel.current.clone().multiplyScalar(delta));
-        
-        // Mantener distancia de la cuerda
-        const currentDist = hookPos.current.distanceTo(dronePos);
-        if (currentDist > ropeLength) {
-            const correction = toHook.normalize().multiplyScalar(currentDist - ropeLength);
-            hookPos.current.sub(correction);
-            hookVel.current.sub(correction.multiplyScalar(0.5 / delta));
+        // --- GAMEPLAY BALANCE ---
+        // 1. Velocity: Very slow first 10 points, then ramp up GRADUALLY
+        let effectiveSpeed = 0.7; // Base slower speed for beginners
+        if (currentScore >= 10) {
+            // Smooth linear ramp: 0.7 + 0.01 per point above 10
+            // At 100 points, effectiveSpeed will be 1.6
+            effectiveSpeed = 0.7 + Math.min(1.0, (currentScore - 10) * 0.01);
         }
         
-        // Amortiguación
-        hookVel.current.multiplyScalar(0.98);
+        const x = Math.sin(t * effectiveSpeed) * 3.5;
+        const z = Math.cos(t * effectiveSpeed * 0.8) * 1.5;
+
+        // 2. Drone realistic tilt - Also scale with speed
+        const tiltIntensity = currentScore < 10 ? 0.05 : 0.15;
+        const tiltX = Math.cos(t * effectiveSpeed) * tiltIntensity;
+        const tiltZ = Math.sin(t * effectiveSpeed * 0.8) * -tiltIntensity;
+
+        const dronePos = new THREE.Vector3(x, targetY + 6, z);
         
-        // Actualizar segmentos de la cuerda para visualización (Catenaria simple)
-        const segments = 10;
-        const newRopePoints: THREE.Vector3[] = [];
+        // --- POSITION TRACKING FIX ---
+        // Initialize on first frame to avoid infinite acceleration bug
+        if (!dronePrevPos.current) {
+            dronePrevPos.current = dronePos.clone();
+            return;
+        }
+
+        // Calculate velocity & acceleration
+        const currentVel = dronePos.clone().sub(dronePrevPos.current).divideScalar(delta || 0.016);
+        const droneAccel = currentVel.clone().sub(droneVel.current).divideScalar(delta || 0.016);
+        droneVel.current.copy(currentVel);
+        dronePrevPos.current.copy(dronePos);
+
+        groupRef.current.position.copy(dronePos);
+        
+        // 3. Rotation Balance: No rotation until 50 points
+        const rotationSpeed = currentScore >= 50 ? 1.5 : 0;
+        groupRef.current.rotation.set(tiltZ, t * rotationSpeed, tiltX);
+        
+        // --- ROPE & HOOK PHYSICS (Local Space) ---
+        const invQuat = groupRef.current.quaternion.clone().invert();
+        
+        // 1. Gravity in local space
+        const localGravity = new THREE.Vector3(0, -9.81, 0).applyQuaternion(invQuat);
+        
+        // 2. Inertial force (Drone acceleration "pushes" objects in opposite direction)
+        const inertialForce = droneAccel.clone().applyQuaternion(invQuat).multiplyScalar(-0.8);
+
+        // 3. Hook Pendulum Simulation
+        const hookToDrone = new THREE.Vector3(0, 0, 0).sub(hookPos.current);
+        const distance = hookToDrone.length();
+        
+        // Spring-like constraint to keep hook at ropeLength
+        const stretch = distance - ropeLength;
+        const springForce = hookToDrone.normalize().multiplyScalar(stretch * 300); // Higher K for stiffness
+        
+        // Apply forces
+        const damping = 0.96;
+        hookVel.current.add(localGravity.multiplyScalar(delta));
+        hookVel.current.add(inertialForce.multiplyScalar(delta));
+        hookVel.current.add(springForce.multiplyScalar(delta));
+
+        hookVel.current.multiplyScalar(damping);
+        hookPos.current.add(hookVel.current.clone().multiplyScalar(delta));
+
+        // 4. Recoil on Drop (Impulse)
+        if (isSpawning) {
+            hookVel.current.y += 8 * delta; 
+        }
+
+        // 5. Update Rope Segments (Visuals)
+        // We create a CatmullRomCurve3 but for the rope visualization 
+        // we'll just use 3 points for a nice sag: Start, Mid (with sag), End
+        const midPoint = hookPos.current.clone().multiplyScalar(0.5);
+        // Add a bit of "inertia sag" to the midpoint
+        midPoint.add(hookVel.current.clone().multiplyScalar(-0.05));
+
         const curve = new THREE.CatmullRomCurve3([
-            dronePos,
-            new THREE.Vector3().addVectors(dronePos, hookPos.current).multiplyScalar(0.5).add(new THREE.Vector3(0, -0.2, 0)),
+            new THREE.Vector3(0, 0, 0),
+            midPoint,
             hookPos.current
         ]);
-        
-        for(let i=0; i<=segments; i++) {
-            newRopePoints.push(curve.getPoint(i/segments));
-        }
-        setRopeSegments(newRopePoints);
-
+        const points = curve.getPoints(ropeSegments);
         if (ropeLineRef.current) {
-            ropeLineRef.current.geometry.setFromPoints(newRopePoints);
-        }
-        
-        if (blockRef.current) {
-            blockRef.current.position.copy(hookPos.current);
-            // El bloque rota según el movimiento (solo después de 50 pts)
-            if (score >= 50) {
-                blockRef.current.rotation.y = t * 1.5;
-            }
+            ropeLineRef.current.geometry.setFromPoints(points);
         }
 
-        // --- Raycast para la predicción de caída ---
-        if (isHoldingBlock && showPrediction && shadowDotRef.current) {
-            const rayStart = hookPos.current.clone();
-            const rayDir = new THREE.Vector3(0, -1, 0);
-            
-            // Usar Rapier para el Raycast
-            const ray = new R.Ray(rayStart, rayDir);
-            const hit = world.castRay(ray, 50, true) as any;
-            
-            if (hit) {
-                const hitPoint = rayStart.clone().add(rayDir.multiplyScalar(hit.toi));
-                shadowDotRef.current.position.set(hitPoint.x, hitPoint.y + 0.05, hitPoint.z);
-                
-                // Alineación con la normal de la superficie (opcional, aquí plano)
-                shadowDotRef.current.lookAt(hitPoint.x, hitPoint.y + 1, hitPoint.z);
-                shadowDotRef.current.rotateX(-Math.PI / 2);
-                
-                shadowDotRef.current.visible = true;
-                
-                // Pulsar opacidad
-                const pulse = 0.4 + Math.sin(t * 8) * 0.2;
-                (shadowDotRef.current.children[0] as any).material.opacity = pulse;
-                
-                // Escalar según score (más pequeño conforme subes para más precisión)
-                const baseScale = score < 100 ? 1 : 0.8;
-                shadowDotRef.current.scale.setScalar(baseScale);
-            } else {
-                shadowDotRef.current.visible = false;
-            }
-        } else if (shadowDotRef.current) {
-            shadowDotRef.current.visible = false;
+        // 6. Update Hook Visuals
+        if (hookVisualRef.current) {
+            hookVisualRef.current.position.copy(hookPos.current);
+            // Rotate hook to face the direction of the rope (local up is the vector to drone)
+            const up = new THREE.Vector3(0, 0, 0).sub(hookPos.current).normalize();
+            // We want the hook's Y axis to align with 'up'
+            const quat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), up);
+            hookVisualRef.current.quaternion.copy(quat);
         }
-        
-        dronePrevPos.current.copy(groupRef.current.position);
+
+        if (ringRef.current) {
+             const mat = ringRef.current.material as THREE.MeshStandardMaterial;
+             mat.emissiveIntensity = isSpawning ? 3 : 1 + Math.sin(t * 5) * 0.5;
+        }
+
+        // 7. Shadow prediction dot
+        if (shadowDotRef.current) {
+             const worldHookPos = hookPos.current.clone().applyMatrix4(groupRef.current.matrixWorld);
+             const ray = new rapier.Ray(worldHookPos, { x: 0, y: -1, z: 0 });
+             const hit = world.castRay(ray, 50, true);
+             
+             if (hit && (hit as any).toi) {
+                 const hitPoint = ray.pointAt((hit as any).toi);
+                 shadowDotRef.current.position.set(hitPoint.x, hitPoint.y + 0.05, hitPoint.z);
+             } else {
+                 shadowDotRef.current.position.set(worldHookPos.x, Math.max(0, targetY - 10), worldHookPos.z);
+             }
+             
+             const material = shadowDotRef.current.material as THREE.MeshBasicMaterial;
+             material.opacity = isSpawning ? 0.8 : 0.4 + Math.sin(t * 8) * 0.2;
+             const dotRamp = currentScore < 10 ? 0 : Math.min(1, (currentScore - 10) * 0.015);
+             const scale = Math.max(0.5, 1.2 - (dotRamp * 0.7));
+             shadowDotRef.current.scale.set(scale, scale, 1);
+        }
     });
 
-    const handleDrop = () => {
-        if (isHoldingBlock) {
-            onDrop([hookVel.current.x, hookVel.current.y, hookVel.current.z], [hookPos.current.x, hookPos.current.y, hookPos.current.z]);
-        }
-    };
-
     useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.code === 'Space') handleDrop();
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isHoldingBlock]);
+        const handlePointerDown = (e: MouseEvent | TouchEvent) => {
+            if ((e.target as HTMLElement).tagName.toLowerCase() === 'button' || (e.target as HTMLElement).closest('button')) return;
+            if ((e.target as HTMLElement).tagName.toLowerCase() === 'a' || (e.target as HTMLElement).closest('a')) return;
 
-    // Lógica de si es bloque logo (rojo vs normal)
-    const isSpawning = isLogoBlock;
+            if (!isSpawning && groupRef.current && heldBlockRef.current) {
+                const worldPos = new THREE.Vector3();
+                heldBlockRef.current.getWorldPosition(worldPos);
+
+                const worldQuat = new THREE.Quaternion();
+                heldBlockRef.current.getWorldQuaternion(worldQuat);
+                const euler = new THREE.Euler().setFromQuaternion(worldQuat);
+
+                // Add hook velocity to drop velocity
+                const worldHookVel = hookVel.current.clone().applyQuaternion(groupRef.current.quaternion);
+
+                onDrop(
+                    worldPos.x, 
+                    worldPos.z, 
+                    worldPos.y,
+                    worldHookVel.x * 2, // Combined velocity
+                    worldHookVel.z * 2, 
+                    nextColor === 'LOGO',
+                    euler.x,
+                    euler.y,
+                    euler.z
+                );
+            }
+        };
+
+        window.addEventListener('pointerdown', handlePointerDown);
+        window.addEventListener('keydown', (e) => { if(e.code === 'Space') handlePointerDown(e as any) });
+        return () => {
+            window.removeEventListener('pointerdown', handlePointerDown);
+            window.removeEventListener('keydown', (e) => { if(e.code === 'Space') handlePointerDown(e as any) });
+        };
+    }, [onDrop, isSpawning, nextColor]);
 
     return (
         <>
-            {/* El Dron */}
-            <group ref={groupRef} onClick={handleDrop}>
-                {/* Cuerpo del Dron */}
-                <mesh castShadow>
-                    <boxGeometry args={[0.8, 0.2, 0.8]} />
+            <group ref={groupRef}>
+            {/* Main Body Core */}
+            <mesh castShadow position={[0, 0, 0]}>
+                <boxGeometry args={[1.2, 0.4, 1.2]} />
+                <meshStandardMaterial color="#1e293b" metalness={0.8} roughness={0.2} />
+                <Edges scale={1} threshold={15} color="#0f172a" />
+            </mesh>
+
+            <mesh position={[0, 0.2, 0]}>
+                <cylinderGeometry args={[0.4, 0.4, 0.2, 16]} />
+                <meshStandardMaterial color="#0f172a" metalness={0.9} roughness={0.1} />
+            </mesh>
+            
+            <mesh ref={ringRef} position={[0, -0.21, 0]} rotation={[Math.PI/2, 0, 0]}>
+                <torusGeometry args={[0.3, 0.05, 16, 32]} />
+                <meshStandardMaterial color={isSpawning ? "#ef4444" : "#10b981"} emissive={isSpawning ? "#ef4444" : "#10b981"} emissiveIntensity={3} toneMapped={false} />
+            </mesh>
+
+            {[[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([x, z], i) => (
+                <group key={i} position={[x * 0.8, 0, z * 0.8]}>
+                    <mesh castShadow position={[-x * 0.15, 0, -z * 0.15]} rotation={[0, Math.atan2(x, z), 0]}>
+                        <boxGeometry args={[0.1, 0.1, 0.6]} />
+                        <meshStandardMaterial color="#334155" metalness={0.6} roughness={0.4} />
+                    </mesh>
+                    <mesh castShadow position={[0, 0.1, 0]}>
+                        <cylinderGeometry args={[0.15, 0.15, 0.2, 16]} />
+                        <meshStandardMaterial color="#0f172a" metalness={0.8} roughness={0.2} />
+                    </mesh>
+                    <mesh position={[0, 0.25, 0]}>
+                        <cylinderGeometry args={[0.4, 0.4, 0.02, 16]} />
+                        <meshStandardMaterial color="#cbd5e1" transparent opacity={0.6} metalness={0.5} roughness={0.2} />
+                    </mesh>
+                </group>
+            ))}
+
+            {/* NEW Dynamic Rope */}
+            <line ref={ropeLineRef as any}>
+                <bufferGeometry />
+                <lineBasicMaterial color="#64748b" linewidth={2} />
+            </line>
+            
+            {/* Hook & Held Block Assembly */}
+            <group ref={hookVisualRef}>
+                {/* Claw Base */}
+                <mesh position={[0, 0, 0]}>
+                    <boxGeometry args={[0.6, 0.1, 0.6]} />
                     <meshStandardMaterial color="#1e293b" metalness={0.8} roughness={0.2} />
                 </mesh>
                 
-                {/* Motores y Hélices */}
-                {[[-0.4, -0.4], [0.4, -0.4], [-0.4, 0.4], [0.4, 0.4]].map(([x, z], i) => (
-                    <group key={i} position={[x, 0.1, z]}>
-                        <mesh castShadow>
-                            <cylinderGeometry args={[0.05, 0.05, 0.2, 8]} />
-                            <meshStandardMaterial color="#334155" />
-                        </mesh>
-                        <mesh name="rotor" position={[0, 0.1, 0]}>
-                            <boxGeometry args={[0.6, 0.02, 0.05]} />
-                            <meshStandardMaterial color="#64748b" />
-                        </mesh>
-                    </group>
-                ))}
+                {/* Claw Arms */}
+                <mesh position={[0.3, -0.1, 0]} rotation={[0, 0, isSpawning ? -Math.PI/3 : -Math.PI/8]}>
+                    <boxGeometry args={[0.05, 0.4, 0.4]} />
+                    <meshStandardMaterial color="#ef4444" metalness={0.5} roughness={0.5} />
+                </mesh>
+                <mesh position={[-0.3, -0.1, 0]} rotation={[0, 0, isSpawning ? Math.PI/3 : Math.PI/8]}>
+                    <boxGeometry args={[0.05, 0.4, 0.4]} />
+                    <meshStandardMaterial color="#ef4444" metalness={0.5} roughness={0.5} />
+                </mesh>
 
-                {/* Luces */}
-                <pointLight position={[0, -0.2, 0]} intensity={2} color="#3b82f6" distance={3} />
-            </group>
-
-            {/* Visualización de la cuerda 3D */}
-            {ropeSegments.length > 1 && ropeSegments.map((point, i) => (
-                i < ropeSegments.length - 1 && (
-                    <RopeSegment 
-                        key={i} 
-                        start={point} 
-                        end={ropeSegments[i+1]} 
-                    />
-                )
-            ))}
-
-            {/* Línea invisible (mantenida por retrocompatibilidad/referencia) */}
-            <line ref={ropeLineRef as any}>
-                <bufferGeometry />
-                <lineBasicMaterial color="#64748b" transparent opacity={0} />
-            </line>
-
-            {/* El bloque que sostiene el dron */}
-            <group ref={blockRef} visible={isHoldingBlock}>
-                {isLogoBlock ? (
-                    <mesh castShadow>
-                        <boxGeometry args={[1.2, 0.6, 0.4]} />
-                        <meshStandardMaterial color="#ef4444" metalness={0.5} roughness={0.2} emissive="#ef4444" emissiveIntensity={0.5} />
-                        <Text
-                            position={[0, 0, 0.21]}
-                            fontSize={0.2}
-                            color="white"
-                            anchorX="center"
-                            anchorY="middle"
-                        >
-                            UBICA
-                        </Text>
-                    </mesh>
-                ) : (
-                    <mesh castShadow>
-                        <boxGeometry args={[1, 1, 1]} />
-                        <meshStandardMaterial color={heldBlockColor} metalness={0.2} roughness={0.8} />
-                    </mesh>
+                {/* Held Block Visually */}
+                {!isSpawning && (
+                     <group position={[0, -0.6, 0]} ref={heldBlockRef}>
+                         {nextColor !== 'LOGO' ? (
+                             <mesh castShadow receiveShadow>
+                                <boxGeometry args={[1.5, 1, 1.5]} />
+                                <meshStandardMaterial color={nextColor} roughness={0.7} metalness={0.2} />
+                                <Edges scale={1} threshold={15} color="#0f172a" />
+                                <mesh position={[0, 0, 0.751]}>
+                                    <planeGeometry args={[1.2, 0.6]} />
+                                    <meshBasicMaterial color="#ffffff" opacity={0.2} transparent />
+                                </mesh>
+                                <mesh position={[0, 0, -0.751]} rotation={[0, Math.PI, 0]}>
+                                    <planeGeometry args={[1.2, 0.6]} />
+                                    <meshBasicMaterial color="#ffffff" opacity={0.2} transparent />
+                                </mesh>
+                            </mesh>
+                         ) : (
+                             <mesh castShadow receiveShadow>
+                                <boxGeometry args={[1.6, 1.2, 1.6]} />
+                                <meshStandardMaterial color="#ffffff" roughness={0.4} metalness={0.6} />
+                                <Edges scale={1} threshold={15} color="#10b981" />
+                                <mesh position={[0, 0, 0.801]}>
+                                    <boxGeometry args={[0.5, 0.5, 0.05]} />
+                                    <meshStandardMaterial color="#10b981" emissive="#10b981" emissiveIntensity={0.5} />
+                                </mesh>
+                             </mesh>
+                         )}
+                     </group>
                 )}
             </group>
-
-            {/* Shadow Dot de predicción Premium (Glow Effect) */}
-            <group ref={shadowDotRef}>
-                <Circle args={[0.5, 32]}>
-                    <meshBasicMaterial 
-                        color={isSpawning ? "#ef4444" : "#10b981"} 
-                        transparent 
-                        opacity={0.4} 
-                        depthWrite={false} 
-                        blending={THREE.AdditiveBlending}
-                        polygonOffset
-                        polygonOffsetFactor={-4}
-                    />
-                </Circle>
-                <Circle args={[0.08, 16]} position={[0, 0, 0.01]}>
-                    <meshBasicMaterial 
-                        color="#ffffff" 
-                        transparent 
-                        opacity={0.8} 
-                        depthWrite={false}
-                        polygonOffset
-                        polygonOffsetFactor={-5}
-                    />
-                </Circle>
-            </group>
+         </group>
+         
+         {/* Prediction Shadow Dot (Floor Level) */}
+         <mesh ref={shadowDotRef} position={[0, targetY, 0]} rotation={[-Math.PI/2, 0, 0]}>
+             <circleGeometry args={[0.4, 32]} />
+             <meshBasicMaterial color={isSpawning ? "#ef4444" : "#10b981"} transparent opacity={0.5} depthWrite={false} blending={THREE.AdditiveBlending} />
+             <mesh position={[0, 0, 0.01]}>
+                 <circleGeometry args={[0.1, 16]} />
+                 <meshBasicMaterial color="#ffffff" transparent opacity={0.8} depthWrite={false} />
+             </mesh>
+         </mesh>
          </>
     );
 }
-
+         
 // 3. Falling Blocks
 function BuildingBlock({ position, rotation, color, initialVelocity, isLogo, onFallOut }: { position: [number, number, number], rotation?: [number, number, number], color: string, isLogo: boolean, initialVelocity: [number, number, number], id: string, onFallOut: () => void }) {
     const rigidBodyRef = useRef<any>(null);
@@ -338,531 +353,588 @@ function BuildingBlock({ position, rotation, color, initialVelocity, isLogo, onF
     useFrame(() => {
         if (!rigidBodyRef.current) return;
         const currentPos = rigidBodyRef.current.translation();
-        if (currentPos.y < -10 || Math.abs(currentPos.x) > 20 || Math.abs(currentPos.z) > 20) {
+        if (currentPos.y < -5) {
             onFallOut();
         }
     });
 
     return (
-        <RigidBody 
+        <RigidBody
             ref={rigidBodyRef}
-            position={position} 
-            rotation={rotation}
+            type="dynamic"
+            position={position}
+            rotation={rotation || [0, 0, 0]}
+            mass={isLogo ? 3.0 : 1.5}
+            friction={0.9}
+            restitution={isLogo ? 0.3 : 0.05}
+            linearDamping={0.5}
+            angularDamping={0.5}
             linearVelocity={initialVelocity}
-            colliders={false}
-            mass={isLogo ? 2 : 1}
+            canSleep={false}
         >
             {isLogo ? (
-                <>
-                    <CuboidCollider args={[0.6, 0.3, 0.2]} />
-                    <mesh castShadow receiveShadow>
-                        <boxGeometry args={[1.2, 0.6, 0.4]} />
-                        <meshStandardMaterial color="#ef4444" metalness={0.5} roughness={0.2} emissive="#ef4444" emissiveIntensity={0.2} />
-                        <Text
-                            position={[0, 0, 0.21]}
-                            fontSize={0.2}
-                            color="white"
-                            anchorX="center"
-                            anchorY="middle"
-                        >
-                            UBICA
-                        </Text>
+                <mesh castShadow receiveShadow>
+                    <boxGeometry args={[1.6, 1.2, 1.6]} />
+                    <meshStandardMaterial color="#ffffff" roughness={0.4} metalness={0.6} />
+                    <Edges scale={1} threshold={15} color="#10b981" />
+                    <mesh position={[0, 0, 0.801]}>
+                        <boxGeometry args={[0.5, 0.5, 0.05]} />
+                        <meshStandardMaterial color="#10b981" emissive="#10b981" emissiveIntensity={0.5} />
                     </mesh>
-                </>
+                 </mesh>
             ) : (
-                <>
-                    <CuboidCollider args={[0.5, 0.5, 0.5]} />
-                    <mesh castShadow receiveShadow>
-                        <boxGeometry args={[1, 1, 1]} />
-                        <meshStandardMaterial color={color} />
+                <mesh castShadow receiveShadow>
+                    <boxGeometry args={[1.5, 1, 1.5]} />
+                    <meshStandardMaterial color={color} roughness={0.7} metalness={0.2} />
+                    <Edges scale={1} threshold={15} color="#0f172a" />
+
+                    <mesh position={[0, 0, 0.751]}>
+                        <planeGeometry args={[1.2, 0.6]} />
+                        <meshBasicMaterial color="#ffffff" opacity={0.2} transparent />
                     </mesh>
-                </>
+                    <mesh position={[0, 0, -0.751]} rotation={[0, Math.PI, 0]}>
+                        <planeGeometry args={[1.2, 0.6]} />
+                        <meshBasicMaterial color="#ffffff" opacity={0.2} transparent />
+                    </mesh>
+                </mesh>
             )}
         </RigidBody>
     );
 }
 
-// 4. Stable Blocks (The tower)
-function StableBlock({ position, rotation, color, isLogo }: BlockData) {
-    return (
-        <RigidBody type="dynamic" position={position} rotation={rotation} colliders={false} mass={isLogo ? 2 : 1}>
-            {isLogo ? (
-                <>
-                    <CuboidCollider args={[0.6, 0.3, 0.2]} />
-                    <mesh castShadow receiveShadow>
-                        <boxGeometry args={[1.2, 0.6, 0.4]} />
-                        <meshStandardMaterial color="#ef4444" metalness={0.5} roughness={0.2} />
-                        <Text
-                            position={[0, 0, 0.21]}
-                            fontSize={0.2}
-                            color="white"
-                            anchorX="center"
-                            anchorY="middle"
-                        >
-                            UBICA
-                        </Text>
-                    </mesh>
-                </>
-            ) : (
-                <>
-                    <CuboidCollider args={[0.5, 0.5, 0.5]} />
-                    <mesh castShadow receiveShadow>
-                        <boxGeometry args={[1, 1, 1]} />
-                        <meshStandardMaterial color={color} />
-                    </mesh>
-                </>
-            )}
-        </RigidBody>
-    );
+// 4. Dynamic Camera
+function CameraRig({ targetY, offset }: { targetY: number, offset: { x: number, y: number, z: number } }) {
+    const { camera } = useThree();
+
+    useFrame(() => {
+        // Move camera higher and pull back more to see the drone
+        const desiredY = Math.max(10, targetY + 8) + offset.y;
+        const desiredZ = Math.max(16, targetY + 12) + offset.z;
+        const desiredX = offset.x;
+
+        camera.position.lerp(new THREE.Vector3(desiredX, desiredY, desiredZ), 0.05);
+        // Look between the origin and the highest drone height
+        camera.lookAt(desiredX * 0.5, targetY * 0.7, 0); 
+    });
+
+    return null;
 }
 
-// --- Main Component ---
-const UbicaBalance: React.FC = () => {
-    // Game State
-    const [gameState, setGameState] = useState<'START' | 'PLAYING' | 'GAMEOVER'>('START');
-    const [score, setScore] = useState(0);
-    const [highScore, setHighScore] = useState(0);
-    const [stableBlocks, setStableBlocks] = useState<BlockData[]>([]);
-    const [fallingBlocks, setFallingBlocks] = useState<FallingBlockData[]>([]);
-    const [isHoldingBlock, setIsHoldingBlock] = useState(true);
-    const [nextBlockColor, setNextBlockColor] = useState(COLORS[0]);
-    const [isNextLogo, setIsNextLogo] = useState(false);
+// --- MAIN UX COMPONENT ---
+export default function UbicaBalance() {
+    const { user } = useAuth();
+    const appService = useAuthenticatedFetch(); // To make API calls for Leaderboard
+
+    const [blocks, setBlocks] = useState<BlockData[]>([]);
     const [highestY, setHighestY] = useState(0);
-    const [darkMode, setDarkMode] = useState(true);
-    const [showPrediction, setShowPrediction] = useState(true);
-    const [isMuted, setIsMuted] = useState(false);
-    const [showCelebration, setShowCelebration] = useState(false);
+    const [gameOver, setGameOver] = useState(false);
+    const [score, setScore] = useState(0);
+    const [bestScore, setBestScore] = useState(() => {
+        return parseInt(localStorage.getItem('ubica_balance_best') || '0');
+    });
+
+    const [isSpawning, setIsSpawning] = useState(false);
+    const [comboText, setComboText] = useState("");
+    const [comboMultiplier, setComboMultiplier] = useState(1);
+    const [scoreAnimation, setScoreAnimation] = useState(false);
+    const [nextColor, setNextColor] = useState(getNextRandomColor);
+    const [leaderboard, setLeaderboard] = useState<any[]>([]);
     
-    // Physics constants
-    const floorY = 0;
-    
-    // Almacenar el historial de alturas para evitar saltos de cámara
-    const cameraTargetY = useRef(5);
+    // Phase 3 states
+    const [isDarkMode, setIsDarkMode] = useState(true);
+    const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0, z: 0 });
+    const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(true);
+    const [showMilestoneCelebration, setShowMilestoneCelebration] = useState(false);
+    const [hasCelebrated100, setHasCelebrated100] = useState(false);
 
-    // Audio effects (placeholder logic)
-    const playSound = (type: 'drop' | 'land' | 'fail' | 'celebrate') => {
-        if (isMuted) return;
-        // console.log(`Playing ${type} sound`);
-    };
-
-    const startGame = () => {
-        setGameState('PLAYING');
-        setScore(0);
-        setStableBlocks([]);
-        setFallingBlocks([]);
-        setIsHoldingBlock(true);
-        setHighestY(0);
-        cameraTargetY.current = 5;
-        setShowCelebration(false);
-    };
-
-    const handleDrop = (vel: [number, number, number], pos: [number, number, number]) => {
-        if (gameState !== 'PLAYING') return;
-        
-        const newFallingBlock: FallingBlockData = {
-            id: Math.random().toString(36).substr(2, 9),
-            position: pos,
-            rotation: [0, 0, 0],
-            color: nextBlockColor,
-            isLogo: isNextLogo,
-            vel: vel
-        };
-        
-        setFallingBlocks(prev => [...prev, newFallingBlock]);
-        setIsHoldingBlock(false);
-        playSound('drop');
-        
-        // Preparar el siguiente bloque después de un retraso
-        setTimeout(() => {
-            setNextBlockColor(COLORS[Math.floor(Math.random() * COLORS.length)]);
-            // 15% de probabilidad de ser un bloque LOGO
-            setIsNextLogo(Math.random() < 0.15);
-            setIsHoldingBlock(true);
-        }, 1000);
-    };
-
-    const handleBlockFallOut = (id: string, wasStable: boolean = false) => {
-        if (wasStable) {
-            setGameState('GAMEOVER');
-            playSound('fail');
-        } else {
-            setFallingBlocks(prev => prev.filter(b => b.id !== id));
-        }
-    };
-
-    // Sensor de bloques estables (usamos Rapier para detectar colisiones con el suelo o entre bloques)
-    // En este prototipo simplificamos: si un bloque cae y su velocidad es casi 0 y está por encima de highestY, es el nuevo tope.
-    // Usamos un intervalo para chequear bloques en reposo
-    useEffect(() => {
-        if (gameState !== 'PLAYING') return;
-        
-        const interval = setInterval(() => {
-            // Lógica para estabilizar bloques (realmente esto se manejaría mejor con eventos de colisión de Rapier)
-            // Por ahora, para el demo, convertimos falling a stable si están cerca de otros bloques
-        }, 500);
-        
-        return () => clearInterval(interval);
-    }, [gameState]);
-
-    // Lógica para detectar el fin del juego (si el bloque base se cae)
-    // En una implementación real, usaríamos sensores de colisión.
-
-    // Actualizar score y altura
-    const addPoint = (isLogo: boolean) => {
-        const points = isLogo ? 5 : 1;
-        setScore(prev => {
-            const newScore = prev + points;
-            if (newScore >= 100 && prev < 100) {
-                setShowCelebration(true);
-                playSound('celebrate');
-            }
-            return newScore;
-        });
-        
-        setStableBlocks(prev => {
-            const newArray = [...prev, {
-                id: Math.random().toString(),
-                position: [0, highestY + 1, 0],
-                rotation: [0, 0, 0],
-                color: nextBlockColor,
-                isLogo: isNextLogo
-            } as BlockData];
+    const fetchLeaderboard = useCallback(async () => {
+        try {
+            // Re-using the known appService api pattern or default fetch
+            const token = localStorage.getItem('access_token');
+            const apiUrl = import.meta.env.VITE_API_URL || (window.location.hostname.includes('amifincas.es') || window.location.hostname.includes('vercel.app') ? 'https://ubica-backend.onrender.com/api' : 'http://localhost:8000/api');
             
-            // Suavizar la progresión de altura
-            setHighestY(newArray.length * 0.6);
+            const res = await fetch(`${apiUrl}/games/balance/leaderboard`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setLeaderboard(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch leaderboard", error);
+        } finally {
+            setIsLoadingLeaderboard(false);
+        }
+    }, []);
+
+    // Fetch on mount
+    useEffect(() => {
+        if (user) {
+            fetchLeaderboard();
+        }
+    }, [user, fetchLeaderboard]);
+
+    // Save score when game over
+    useEffect(() => {
+        if (gameOver && score > 0 && user) {
+            const saveScore = async () => {
+                try {
+                    const token = localStorage.getItem('access_token');
+                    const apiUrl = import.meta.env.VITE_API_URL || (window.location.hostname.includes('amifincas.es') || window.location.hostname.includes('vercel.app') ? 'https://ubica-backend.onrender.com/api' : 'http://localhost:8000/api');
+                    
+                    const res = await fetch(`${apiUrl}/games/score`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}` 
+                        },
+                        body: JSON.stringify({ game_name: 'balance', score: score })
+                    });
+                    
+                    if (res.ok) {
+                        fetchLeaderboard();
+                    }
+                } catch (e) {
+                    console.error("Error saving score", e);
+                }
+            };
+            saveScore();
+        }
+    }, [gameOver, score, user, fetchLeaderboard]);
+
+    const handleFallOut = useCallback(() => {
+        if (!gameOver) {
+            setGameOver(true);
+        }
+    }, [gameOver]);
+
+    const handleDrop = useCallback((x: number, z: number, y: number, vx: number, vz: number, isLogo: boolean, rx: number = 0, ry: number = 0, rz: number = 0) => {
+        if (gameOver || isSpawning) return;
+
+        setIsSpawning(true);
+
+        // Combo Logic based on drop precision to origin (0,0)
+        // If it's a LOGO block, extra points!
+        const dist = Math.hypot(x, z);
+        let pts = 1;
+        let txt = "";
+
+        if (dist < 0.3) {
+            pts = 3 * comboMultiplier;
+            txt = `¡PERFECTO! +${pts}`;
+            setComboMultiplier(prev => Math.min(prev + 1, 5));
+        } else if (dist < 0.8) {
+            pts = 2 * comboMultiplier;
+            txt = `¡GENIAL! +${pts}`;
+            setComboMultiplier(1);
+        } else {
+            pts = 1;
+            txt = "";
+            setComboMultiplier(1);
+        }
+        
+        if (isLogo) {
+             pts *= 2;
+             txt = txt ? `UBICA! +${pts}` : `UBICA! +${pts}`;
+        }
+
+        if (txt) {
+            setComboText(txt);
+            setTimeout(() => setComboText(""), 1200);
+        }
+
+        const newBlock: BlockData = {
+            id: `block-${Date.now()}`,
+            position: [x, y, z],
+            rotation: [rx, ry, rz],
+            initialVelocity: [vx, 0, vz],
+            color: nextColor,
+            isLogo: isLogo,
+            type: 'building'
+        };
+
+        setBlocks(prev => {
+            const newArray = [...prev, newBlock];
+            
+            setScore(prevScore => {
+                const newScore = prevScore + pts;
+                // Check for 100 point milestone
+                if (newScore >= 100 && !hasCelebrated100) {
+                    setShowMilestoneCelebration(true);
+                    setHasCelebrated100(true);
+                    setTimeout(() => setShowMilestoneCelebration(false), 5000);
+                }
+                return newScore;
+            });
+            setScoreAnimation(true);
+            setTimeout(() => setScoreAnimation(false), 200);
+
+            setHighestY(newArray.length * 1.0); // Rough height estimate
+            
             return newArray;
         });
+
+        setTimeout(() => {
+            setIsSpawning(false);
+            setNextColor(getNextRandomColor());
+        }, 800);
+    }, [gameOver, isSpawning, comboMultiplier, nextColor]);
+
+    const restartGame = () => {
+        setBlocks([]);
+        setHighestY(0);
+        setScore(0);
+        setGameOver(false);
+        setIsSpawning(false);
+        setComboMultiplier(1);
+        setComboText("");
+        setNextColor(getNextRandomColor());
+        setHasCelebrated100(false);
+        setShowMilestoneCelebration(false);
+        fetchLeaderboard(); // refresh stats
     };
 
+    const adjustCamera = (axis: 'x' | 'y' | 'z', amount: number) => {
+        setCameraOffset(prev => ({ ...prev, [axis]: prev[axis] + amount }));
+    };
+
+    const resetCamera = () => {
+        setCameraOffset({ x: 0, y: 0, z: 0 });
+    };
+
+    if (!user) {
+        return (
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pt-20 flex flex-col items-center justify-center p-4 transition-colors">
+                <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 max-w-md w-full text-center shadow-2xl border border-slate-100 dark:border-slate-700 transition-colors">
+                    <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <LockClosedIcon className="w-10 h-10 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-4">La Torre Fincas (Beta 3D)</h2>
+                    <p className="text-slate-600 dark:text-slate-300 mb-8 leading-relaxed">
+                        "Ubica Balance" es una experiencia 3D. Solo disponible para agentes registrados debido al guardado del ranking.
+                    </p>
+                    <Link
+                        to="/register"
+                        className="block w-full bg-emerald-600 text-white font-bold py-3 rounded-xl hover:bg-emerald-700 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                    >
+                        Únete gratis
+                    </Link>
+                    <Link
+                        to="/entretenimiento"
+                        className="block w-full mt-4 text-emerald-600 dark:text-emerald-400 font-bold hover:underline"
+                    >
+                        Volver al menú de juegos
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className={`relative w-full h-[calc(100vh-64px)] overflow-hidden font-sans transition-colors duration-500 ${darkMode ? 'bg-slate-950' : 'bg-slate-50'}`}>
-            
-            {/* UI Overlay */}
-            <div className="absolute inset-0 pointer-events-none z-10 p-6 flex flex-col justify-between">
-                {/* Top Bar */}
-                <div className="flex justify-between items-start pointer-events-auto">
-                    <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-3">
-                            <h1 className={`text-2xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                                UBICA <span className="text-blue-500">BALANCE</span>
-                            </h1>
-                            <div className="px-2 py-1 rounded bg-blue-500/10 border border-blue-500/20 text-blue-500 text-xs font-mono">
-                                V2.0 PRO
-                            </div>
-                        </div>
-                        <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Construye la torre más alta sin que caiga</p>
-                    </div>
+        <div className={`w-full h-screen relative transition-colors duration-700 overflow-hidden font-sans select-none touch-none ${
+            isDarkMode ? 'bg-slate-900 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-950' : 'bg-slate-50 bg-gradient-to-b from-sky-50 via-slate-100 to-slate-200'
+        }`}>
 
-                    <div className="flex items-center gap-2">
-                        <button 
-                            onClick={() => setShowPrediction(!showPrediction)}
-                            className={`p-2 rounded-xl border transition-all ${
-                                darkMode 
-                                ? 'bg-slate-900/50 border-white/10 text-white hover:bg-slate-800' 
-                                : 'bg-white border-slate-200 text-slate-900 hover:bg-slate-50'
-                            }`}
-                            title="Alternar Guía de Caída"
-                        >
-                            {showPrediction ? <EyeIcon className="w-5 h-5" /> : <EyeSlashIcon className="w-5 h-5" />}
-                        </button>
-                        <button 
-                            onClick={() => setDarkMode(!darkMode)}
-                            className={`p-2 rounded-xl border transition-all ${
-                                darkMode 
-                                ? 'bg-slate-900/50 border-white/10 text-white hover:bg-slate-800' 
-                                : 'bg-white border-slate-200 text-slate-900 hover:bg-slate-50'
-                            }`}
-                        >
-                            {darkMode ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
-                        </button>
-                    </div>
-                </div>
-
-                {/* Score Center */}
-                <div className="flex flex-col items-center">
-                    <AnimatePresence mode="wait">
-                        <motion.div 
-                            key={score}
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            className="flex flex-col items-center"
-                        >
-                            <span className={`text-7xl font-black tabular-nums transition-colors ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                                {score}
-                            </span>
-                            <span className="text-blue-500 text-sm font-bold tracking-widest uppercase">PUNTOS</span>
-                        </motion.div>
-                    </AnimatePresence>
-                </div>
-
-                {/* Bottom Controls */}
-                <div className="flex justify-between items-end">
-                    <div className={`p-4 rounded-2xl border backdrop-blur-md pointer-events-auto ${
-                        darkMode 
-                        ? 'bg-slate-900/30 border-white/5' 
-                        : 'bg-white/50 border-slate-200'
+            {/* HUD & UI - Rediseñado y responsivo */}
+            <div className="absolute top-0 left-0 w-full p-4 md:p-6 flex flex-wrap gap-4 justify-between items-start z-10 pointer-events-none">
+                <div className="flex gap-4 items-center">
+                    <Link to="/entretenimiento" className={`flex items-center font-bold backdrop-blur-md px-4 py-2 rounded-full pointer-events-auto transition-all border ${
+                        isDarkMode ? 'text-white/80 hover:text-white bg-white/10 hover:bg-white/20 border-white/10' : 'text-slate-700 hover:text-slate-900 bg-black/5 hover:bg-black/10 border-black/10 shadow-sm'
                     }`}>
-                        <div className="flex items-center gap-4">
-                            <div className="flex flex-col">
-                                <span className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Siguiente Bloque</span>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <div 
-                                        className={`w-10 h-6 rounded border ${isNextLogo ? 'animate-pulse' : ''}`}
-                                        style={{ backgroundColor: isNextLogo ? '#ef4444' : nextBlockColor, borderColor: 'rgba(0,0,0,0.1)' }}
-                                    >
-                                        {isNextLogo && <div className="w-full h-full flex items-center justify-center text-[6px] text-white font-bold">LOGO</div>}
-                                    </div>
-                                    <span className={`text-xs font-medium ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                                        {isNextLogo ? 'Ubica Logo (Special)' : 'Bloque Estándar'}
-                                    </span>
-                                </div>
-                            </div>
-                            <div className="w-px h-8 bg-slate-500/20 mx-2" />
-                            <div className="flex flex-col">
-                                <span className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Récord Personal</span>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <TrophyIcon className="w-4 h-4 text-amber-500" />
-                                    <span className={`text-sm font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{highScore}</span>
-                                </div>
-                            </div>
-                        </div>
+                        <ChevronLeftIcon className="w-5 h-5 mr-1" />
+                        Salir
+                    </Link>
+                    
+                    <button 
+                        onClick={() => setIsDarkMode(!isDarkMode)}
+                        className={`p-2 rounded-full pointer-events-auto transition-all border backdrop-blur-md ${
+                            isDarkMode ? 'text-amber-300 bg-white/10 hover:bg-white/20 border-white/10' : 'text-slate-700 bg-black/5 hover:bg-black/10 border-black/10 shadow-sm'
+                        }`}
+                        title={isDarkMode ? "Cambiar a Día" : "Cambiar a Noche"}
+                    >
+                        {isDarkMode ? <SunIcon className="w-6 h-6" /> : <MoonIcon className="w-6 h-6" />}
+                    </button>
+                </div>
+                
+                <div className="flex gap-2 sm:gap-4 ml-auto">
+                    <div className={`backdrop-blur-md rounded-2xl px-4 py-2 sm:px-6 sm:py-3 text-center pointer-events-auto border shadow-xl hidden sm:block ${
+                        isDarkMode ? 'bg-white/5 border-white/10 text-white' : 'bg-white/80 border-slate-200 text-slate-800'
+                    }`}>
+                        <h3 className={`text-[8px] sm:text-[10px] font-black uppercase tracking-widest mb-1 ${isDarkMode ? 'text-white/60' : 'text-slate-500'}`}>Récord Mundial</h3>
+                        <p className="text-xl sm:text-2xl font-black font-mono leading-none">{bestScore} <span className="text-xs font-medium">pts</span></p>
                     </div>
-
-                    <div className="flex flex-col items-end gap-3 pointer-events-auto">
-                        <div className={`px-4 py-2 rounded-full border text-xs font-bold transition-all flex items-center gap-2 ${
-                            darkMode ? 'bg-slate-900/50 border-white/10 text-slate-400' : 'bg-white border-slate-200 text-slate-500'
-                        }`}>
-                            <InformationCircleIcon className="w-4 h-4" />
-                            Presiona <span className="px-1.5 py-0.5 rounded bg-blue-500 text-white uppercase text-[10px]">Espacio</span> para soltar
-                        </div>
-                    </div>
+                    
+                    <motion.div 
+                        animate={scoreAnimation ? { scale: [1, 1.2, 1] } : { scale: 1 }}
+                        transition={{ duration: 0.2 }}
+                        className="bg-gradient-to-br from-emerald-500/90 to-teal-600/90 backdrop-blur-md rounded-2xl px-5 py-2 sm:px-6 sm:py-3 text-center pointer-events-auto shadow-[0_0_20px_rgba(16,185,129,0.3)] border border-emerald-400/50 min-w-[100px]"
+                    >
+                        <h3 className="text-emerald-50 text-[9px] sm:text-[10px] font-black uppercase tracking-widest mb-1">Tu Torre</h3>
+                        <p className="text-white text-2xl sm:text-3xl font-black font-mono leading-none">{score}</p>
+                    </motion.div>
                 </div>
             </div>
 
-            {/* Game States Screens */}
+            {/* LEFT SIDE - Leaderboard */}
+            <div className="absolute top-24 left-4 sm:left-6 z-20 pointer-events-auto w-48 sm:w-64">
+                 <div className={`backdrop-blur-lg rounded-2xl p-4 border shadow-2xl transition-colors ${
+                     isDarkMode ? 'bg-slate-900/60 border-slate-700/50' : 'bg-white/80 border-slate-200'
+                 }`}>
+                     <h3 className="text-emerald-400 font-black text-[10px] sm:text-xs uppercase tracking-widest mb-3 flex items-center">
+                         <span className="mr-2">🏆</span> Top 10 Oficial
+                     </h3>
+                     <div className="space-y-2">
+                         {isLoadingLeaderboard ? (
+                             <div className="text-slate-500 text-xs italic">Cargando...</div>
+                         ) : leaderboard.length === 0 ? (
+                             <div className="text-slate-500 text-xs italic">Sé el primero en jugar</div>
+                         ) : (
+                             leaderboard.map((lb, idx) => (
+                                 <div key={lb.id} className="flex justify-between items-center text-xs sm:text-sm">
+                                     <div className="flex items-center gap-2 overflow-hidden">
+                                         <span className={`font-bold ${idx === 0 ? 'text-amber-400' : idx === 1 ? 'text-slate-300' : idx === 2 ? 'text-orange-400' : 'text-slate-500'}`}>
+                                            {idx + 1}.
+                                         </span>
+                                         <span className={`truncate font-semibold w-24 sm:w-32 ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`} title={lb.user_name}>
+                                            {lb.user_name}
+                                         </span>
+                                     </div>
+                                     <span className={`font-bold tabular-nums pl-1 ${isDarkMode ? 'text-emerald-300' : 'text-emerald-600'}`}>
+                                         {lb.score}
+                                     </span>
+                                 </div>
+                             ))
+                         )}
+                     </div>
+                 </div>
+            </div>
+
+            {/* Texto Flotante de Combos */}
             <AnimatePresence>
-                {gameState === 'START' && (
+                {comboText && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.5, y: 20 }}
+                        animate={{ opacity: 1, scale: 1.2, y: -20 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                        className={`absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none font-black text-4xl sm:text-5xl md:text-6xl drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] whitespace-nowrap text-center
+                        ${comboText.includes('PERFECTO') ? 'text-amber-400' : 'text-emerald-400'}`}
+                    >
+                        {comboText}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Camera Controls Overlay */}
+            <div className="absolute bottom-6 left-6 z-20 pointer-events-auto hidden md:flex flex-col items-center gap-1 opacity-60 hover:opacity-100 transition-opacity">
+                <div className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${isDarkMode ? 'text-white/50' : 'text-slate-500'}`}>Cámara</div>
+                <button onClick={() => adjustCamera('y', 2)} className={`p-2 rounded-t-lg backdrop-blur-sm border ${isDarkMode ? 'bg-white/10 hover:bg-white/20 border-white/10 text-white' : 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-800'}`}>
+                    <ArrowUpIcon className="w-5 h-5" />
+                </button>
+                <div className="flex gap-1">
+                    <button onClick={() => adjustCamera('x', -2)} className={`p-2 rounded-l-lg backdrop-blur-sm border ${isDarkMode ? 'bg-white/10 hover:bg-white/20 border-white/10 text-white' : 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-800'}`}>
+                        <ArrowLeftIcon className="w-5 h-5" />
+                    </button>
+                    <button onClick={resetCamera} className={`p-2 backdrop-blur-sm border ${isDarkMode ? 'bg-white/10 hover:bg-white/20 border-white/10 text-emerald-400' : 'bg-black/5 hover:bg-black/10 border-black/10 text-emerald-600'}`} title="Centrar">
+                        <ArrowsPointingInIcon className="w-5 h-5" />
+                    </button>
+                    <button onClick={() => adjustCamera('x', 2)} className={`p-2 rounded-r-lg backdrop-blur-sm border ${isDarkMode ? 'bg-white/10 hover:bg-white/20 border-white/10 text-white' : 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-800'}`}>
+                        <ArrowRightIcon className="w-5 h-5" />
+                    </button>
+                </div>
+                <button onClick={() => adjustCamera('y', -2)} className={`p-2 rounded-b-lg backdrop-blur-sm border ${isDarkMode ? 'bg-white/10 hover:bg-white/20 border-white/10 text-white' : 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-800'}`}>
+                    <ArrowDownIcon className="w-5 h-5" />
+                </button>
+            </div>
+
+            {/* Instrucciones Centradas */}
+            {blocks.length === 0 && !gameOver && (
+                <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center z-10 pointer-events-none opacity-80 animate-pulse w-[90%] md:w-auto">
+                    <h2 className={`text-4xl md:text-6xl font-black drop-shadow-2xl tracking-tight mb-4 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Ubica Balance</h2>
+                    <p className={`text-sm sm:text-lg font-medium drop-shadow-md px-6 py-3 rounded-full inline-block backdrop-blur-sm border ${isDarkMode ? 'text-white/90 bg-black/40 border-white/10' : 'text-slate-800 bg-white/60 border-black/10'}`}>
+                        Toca la pantalla para soltar. ¡Cerca del centro da más puntos!
+                    </p>
+                </div>
+            )}
+
+            {/* Pantalla Final Premium */}
+            <AnimatePresence>
+                {gameOver && (
                     <motion.div 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 z-20 flex items-center justify-center p-6 bg-slate-950/40 backdrop-blur-sm"
+                        className={`absolute inset-0 backdrop-blur-xl flex flex-col items-center justify-center z-30 ${isDarkMode ? 'bg-[#0f172a]/80' : 'bg-slate-200/80'}`}
                     >
                         <motion.div 
-                            initial={{ y: 20, scale: 0.9 }}
-                            animate={{ y: 0, scale: 1 }}
-                            className="bg-slate-900 border border-white/10 p-10 rounded-[32px] shadow-2xl max-w-md w-full text-center flex flex-col items-center"
+                            initial={{ scale: 0.8, y: 50 }}
+                            animate={{ scale: 1, y: 0 }}
+                            transition={{ type: "spring", bounce: 0.5 }}
+                            className={`p-8 sm:p-10 rounded-[2rem] shadow-[0_0_50px_rgba(0,0,0,0.5)] max-w-sm w-[90%] text-center border relative overflow-hidden ${isDarkMode ? 'bg-white/10 border-white/20' : 'bg-white border-slate-200'}`}
                         >
-                            <div className="w-20 h-20 rounded-3xl bg-blue-500 flex items-center justify-center mb-6 shadow-lg shadow-blue-500/20">
-                                <SparklesIcon className="w-10 h-10 text-white" />
-                            </div>
-                            <h2 className="text-3xl font-black text-white mb-2 tracking-tight">UBICA BALANCE</h2>
-                            <p className="text-slate-400 mb-8 text-sm leading-relaxed">
-                                Pon a prueba tu precisión. Apila bloques y construye el rascacielos definitivo usando el dron de construcción.
-                            </p>
+                            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-500 to-rose-500" />
                             
-                            <div className="grid grid-cols-2 gap-4 w-full mb-8">
-                                <div className="bg-slate-800/50 p-4 rounded-2xl border border-white/5">
-                                    <div className="text-blue-500 font-bold mb-1">Dron</div>
-                                    <div className="text-xs text-slate-500">Usa la inercia</div>
-                                </div>
-                                <div className="bg-slate-800/50 p-4 rounded-2xl border border-white/5">
-                                    <div className="text-rose-500 font-bold mb-1">Logo</div>
-                                    <div className="text-xs text-slate-500">X5 Puntos</div>
-                                </div>
+                            <h2 className={`text-3xl sm:text-4xl font-black mb-2 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>¡Derrumbe!</h2>
+                            <p className={`font-medium mb-8 text-sm sm:text-base ${isDarkMode ? 'text-white/60' : 'text-slate-500'}`}>Tu torre colapsó. La estructura no soportó la presión.</p>
+
+                            <div className={`rounded-2xl p-6 mb-8 border ${isDarkMode ? 'bg-black/30 border-white/5' : 'bg-slate-100 border-slate-200'}`}>
+                                <span className={`block text-xs font-black uppercase tracking-widest mb-2 ${isDarkMode ? 'text-white/50' : 'text-slate-400'}`}>Puntuación Final</span>
+                                <span className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">{score}</span>
                             </div>
 
-                            <button 
-                                onClick={startGame}
-                                className="group relative w-full py-4 bg-white text-slate-950 font-black rounded-2xl overflow-hidden active:scale-95 transition-all shadow-xl shadow-white/10"
+                            <button
+                                onClick={restartGame}
+                                className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black text-lg py-4 rounded-xl shadow-[0_10px_20px_rgba(16,185,129,0.3)] hover:shadow-[0_15px_30px_rgba(16,185,129,0.4)] hover:scale-105 transition-all outline-none border border-emerald-400/50"
                             >
-                                <span className="relative z-10 flex items-center justify-center gap-2">
-                                    COMENZAR JUEGO <PlayIcon className="w-5 h-5 fill-current" />
-                                </span>
-                                <div className="absolute inset-0 bg-blue-500 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                                Reconstruir
                             </button>
+                            
+                            {score > bestScore && (
+                                <p className="text-amber-400 font-bold text-sm flex items-center justify-center mt-4 animate-pulse">
+                                    ¡NUEVO RÉCORD MUNDIAL!
+                                </p>
+                            )}
                         </motion.div>
                     </motion.div>
                 )}
+            </AnimatePresence>
 
-                {gameState === 'GAMEOVER' && (
-                    <motion.div 
+            {/* CELEBRACIÓN 100 PUNTOS */}
+            <AnimatePresence>
+                {showMilestoneCelebration && (
+                    <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="absolute inset-0 z-20 flex items-center justify-center p-6 bg-rose-950/40 backdrop-blur-md"
-                    >
-                        <motion.div 
-                            initial={{ scale: 0.9, rotate: -2 }}
-                            animate={{ scale: 1, rotate: 0 }}
-                            className="bg-slate-950 border border-rose-500/30 p-10 rounded-[40px] shadow-2xl max-w-sm w-full text-center"
-                        >
-                            <div className="w-16 h-16 rounded-full bg-rose-500/20 flex items-center justify-center mb-6 mx-auto">
-                                <ArrowPathIcon className="w-8 h-8 text-rose-500" />
-                            </div>
-                            <h2 className="text-4xl font-black text-white mb-1">¡UPS!</h2>
-                            <p className="text-rose-300/60 font-medium mb-8 uppercase tracking-widest text-xs">La torre colapsó</p>
-                            
-                            <div className="bg-slate-900 rounded-2xl p-6 mb-8 border border-white/5">
-                                <div className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Puntuación Final</div>
-                                <div className="text-5xl font-black text-white mb-4 tabular-nums">{score}</div>
-                                <div className="flex justify-between items-center text-xs pt-4 border-t border-white/5">
-                                    <span className="text-slate-500 font-bold uppercase">Record Actual</span>
-                                    <span className="text-amber-500 font-black">{highScore}</span>
-                                </div>
-                            </div>
-
-                            <button 
-                                onClick={startGame}
-                                className="w-full py-4 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-2xl transition-all shadow-lg shadow-rose-600/20 flex items-center justify-center gap-3"
-                            >
-                                REINTENTAR <ArrowPathIcon className="w-5 h-5" />
-                            </button>
-                        </motion.div>
-                    </motion.div>
-                )}
-                
-                {showCelebration && (
-                    <motion.div 
-                        initial={{ opacity: 0, scale: 0.5 }}
-                        animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none"
+                        className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none overflow-hidden"
                     >
-                        <div className="relative">
-                            <motion.div 
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
-                                className="absolute inset-0 bg-blue-500/20 blur-[100px] rounded-full scale-[2]"
-                            />
-                            <div className="bg-white/10 backdrop-blur-xl p-12 rounded-[50px] border border-white/20 shadow-2xl flex flex-col items-center">
-                                <SparklesIcon className="w-16 h-16 text-blue-400 mb-4 animate-bounce" />
-                                <h3 className="text-white text-5xl font-black tracking-tighter text-center">¡100 PUNTOS!</h3>
-                                <div className="mt-6 flex gap-2">
-                                    <div className="w-12 h-6 bg-blue-500 rounded-full" />
-                                    <div className="w-12 h-6 bg-amber-500 rounded-full" />
-                                    <div className="w-12 h-6 bg-rose-500 rounded-full" />
-                                </div>
-                                <p className="text-white font-bold mt-6 tracking-widest text-xs uppercase opacity-70">Desbloqueaste el modo Pro</p>
-                            </div>
+                        {/* Background particles / flare */}
+                        <motion.div 
+                            initial={{ scale: 0, rotate: 0 }}
+                            animate={{ scale: [0, 1.5, 1.2], rotate: 360 }}
+                            transition={{ duration: 1.5, ease: "easeOut" }}
+                            className="absolute w-[600px] h-[600px] bg-gradient-to-r from-emerald-500/20 via-teal-400/30 to-emerald-500/20 rounded-full blur-[100px]"
+                        />
+                        
+                        <div className="relative flex flex-col items-center">
+                            {/* Logo Animation */}
+                            <motion.div
+                                initial={{ scale: 0, y: 50, rotate: -10 }}
+                                animate={{ scale: 1, y: 0, rotate: 0 }}
+                                transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.2 }}
+                                className="relative mb-8"
+                            >
+                                <div className="absolute inset-0 bg-white/20 blur-2xl rounded-full scale-150 animate-pulse" />
+                                <img 
+                                    src="/logo_ubica.png" 
+                                    alt="Ubica Logo" 
+                                    className="w-48 h-auto relative drop-shadow-[0_0_30px_rgba(16,185,129,0.8)]" 
+                                />
+                            </motion.div>
+
+                            {/* Badge/Text */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.6 }}
+                                className="text-center"
+                            >
+                                <h1 className="text-5xl md:text-7xl font-black text-white italic tracking-tighter drop-shadow-2xl">
+                                    ¡100 PUNTOS!
+                                </h1>
+                                <motion.div
+                                    initial={{ scaleX: 0 }}
+                                    animate={{ scaleX: 1 }}
+                                    transition={{ delay: 1, duration: 0.8 }}
+                                    className="h-1 bg-gradient-to-r from-transparent via-emerald-400 to-transparent w-full mt-2"
+                                />
+                                <p className="text-emerald-400 font-black text-xl md:text-2xl mt-4 uppercase tracking-[0.3em] drop-shadow-lg">
+                                    Edificio Legendario
+                                </p>
+                            </motion.div>
+
+                            {/* Confetti particles emulated with motion */}
+                            {Array.from({ length: 20 }).map((_, i) => (
+                                <motion.div
+                                    key={i}
+                                    initial={{ 
+                                        x: 0, 
+                                        y: 0, 
+                                        scale: 0,
+                                        rotate: 0 
+                                    }}
+                                    animate={{ 
+                                        x: (Math.random() - 0.5) * 800, 
+                                        y: (Math.random() - 0.5) * 800, 
+                                        scale: [0, 1, 0],
+                                        rotate: Math.random() * 720
+                                    }}
+                                    transition={{ 
+                                        duration: 2 + Math.random() * 2, 
+                                        repeat: Infinity,
+                                        delay: Math.random() * 0.5
+                                    }}
+                                    className={`absolute w-4 h-4 rounded-sm ${
+                                        i % 3 === 0 ? 'bg-emerald-400' : i % 3 === 1 ? 'bg-teal-300' : 'bg-white'
+                                    } blur-[1px] opacity-60`}
+                                />
+                            ))}
                         </div>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* 3D Canvas */}
-            <Canvas shadows gl={{ antialias: true, logarithmicDepthBuffer: true }}>
-                <PerspectiveCamera 
-                    makeDefault 
-                    position={[15, highestY + 8, 15]} 
-                    fov={45} 
-                />
-                <OrbitControls 
-                    target={[0, highestY, 0]} 
-                    enabled={gameState !== 'PLAYING'} 
-                    minDistance={10}
-                    maxDistance={50}
-                />
-                
-                {/* Environment */}
-                <Suspense fallback={null}>
-                    <Environment preset={darkMode ? "night" : "city"} />
-                    <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
-                </Suspense>
+            {/* 3D RENDER ENGINE */}
+            <Canvas shadows dpr={[1, 2]} camera={{ position: [0, 8, 12], fov: 50 }}>
+                {/* Entorno y Luces Atmosféricas */}
+                {isDarkMode ? (
+                    <>
+                        <ambientLight intensity={0.4} />
+                        <directionalLight position={[10, 20, 10]} castShadow intensity={1.5} color="#fef08a" shadow-mapSize={[1024, 1024]} shadow-bias={-0.0001} />
+                        <pointLight position={[0, -5, 0]} intensity={2} color="#38bdf8" />
+                        <hemisphereLight intensity={0.3} color="#ffffff" groundColor="#0f172a" />
+                    </>
+                ) : (
+                    <>
+                        <ambientLight intensity={0.8} />
+                        <directionalLight position={[5, 15, 5]} castShadow intensity={2.5} color="#ffffff" shadow-mapSize={[1024, 1024]} shadow-bias={-0.0001} />
+                        <pointLight position={[0, -5, 0]} intensity={1} color="#f0f9ff" />
+                        <hemisphereLight intensity={0.6} color="#sky-200" groundColor="#slate-300" />
+                    </>
+                )}
 
-                {/* Lights */}
-                <ambientLight intensity={darkMode ? 0.2 : 0.5} />
-                <directionalLight 
-                    position={[10, 20, 10]} 
-                    intensity={darkMode ? 0.8 : 1.2} 
-                    castShadow 
-                    shadow-mapSize={[2048, 2048]}
-                >
-                    <orthographicCamera attach="shadow-camera" args={[-15, 15, 15, -15, 0.1, 50]} />
-                </directionalLight>
-                <spotLight position={[0, 15, 0]} intensity={darkMode ? 1 : 2} color="#3b82f6" angle={0.6} penumbra={1} castShadow />
+                <Physics gravity={[0, -9.81, 0]}>
+                    <BasePlatform />
 
-                {/* Physics World */}
-                <Physics gravity={[0, -9.8, 0]}>
-                    {/* The Floor / Platform */}
-                    <RigidBody type="fixed" position={[0, floorY, 0]} colliders="cuboid">
-                        <mesh receiveShadow>
-                            <cylinderGeometry args={[4, 4, 1, 32]} />
-                            <meshStandardMaterial 
-                                color={darkMode ? "#0f172a" : "#f1f5f9"} 
-                                metalness={0.8} 
-                                roughness={0.2} 
-                            />
-                        </mesh>
-                        {/* Pedestal Top */}
-                        <mesh position={[0, 0.51, 0]} receiveShadow>
-                            <cylinderGeometry args={[3.8, 3.8, 0.05, 32]} />
-                            <meshStandardMaterial color={darkMode ? "#1e293b" : "#e2e8f0"} />
-                        </mesh>
-                    </RigidBody>
-
-                    {/* Helipad marking */}
-                    <mesh position={[0, floorY + 0.57, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                        <ringGeometry args={[3.2, 3.3, 32]} />
-                        <meshBasicMaterial color="#3b82f6" transparent opacity={0.5} />
-                    </mesh>
-
-                    {/* Stable Blocks */}
-                    {stableBlocks.map(block => (
-                        <StableBlock key={block.id} {...block} />
-                    ))}
-
-                    {/* Falling Blocks */}
-                    {fallingBlocks.map((block: FallingBlockData) => (
-                        <BuildingBlock 
-                            key={block.id} 
+                    {blocks.map((block) => (
+                        <BuildingBlock
+                            key={block.id}
                             id={block.id}
                             position={block.position}
                             rotation={block.rotation}
                             color={block.color}
-                            isLogo={block.isLogo}
-                            initialVelocity={block.vel}
-                            onFallOut={() => handleBlockFallOut(block.id)}
+                            initialVelocity={block.initialVelocity || [0, 0, 0]}
+                            isLogo={block.isLogo || false}
+                            onFallOut={handleFallOut}
                         />
                     ))}
 
-                    {/* Static decorative grids */}
-                    {darkMode && (
-                        <gridHelper args={[100, 50, "#1e293b", "#0f172a"]} position={[0, -0.1, 0]} />
-                    )}
+                    <CameraRig targetY={highestY} offset={cameraOffset} />
 
-                    {/* Drone y Garra (Solo si estamos jugando) */}
-                    {gameState === 'PLAYING' && (
+                    {!gameOver && (
                         <ConstructionDrone 
-                            position={[0, highestY + 8, 0]} 
-                            onDrop={handleDrop}
-                            isHoldingBlock={isHoldingBlock}
-                            heldBlockColor={nextBlockColor}
-                            isLogoBlock={isNextLogo}
-                            score={score}
-                            showPrediction={showPrediction}
+                            onDrop={handleDrop} 
+                            isSpawning={isSpawning} 
+                            targetY={highestY} 
+                            nextColor={nextColor} 
+                            currentScore={score}
                         />
                     )}
                 </Physics>
 
-                {/* Global Shadows */}
-                <ContactShadows 
-                    position={[0, floorY + 0.5, 0]} 
-                    opacity={0.4} 
-                    scale={20} 
-                    blur={2} 
-                    far={4.5} 
-                />
+                <ContactShadows position={[0, -0.49, 0]} opacity={0.5} scale={20} blur={2.5} far={10} color="#000000" />
             </Canvas>
-
-            {/* Hint for mobile */}
-            <div className="lg:hidden absolute bottom-24 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-none">
-                <div className="w-12 h-12 rounded-full border-2 border-dashed border-white/20 flex items-center justify-center">
-                    <div className="w-2 h-2 bg-white rounded-full animate-ping" />
-                </div>
-                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Toca el dron para soltar</span>
-            </div>
         </div>
     );
-};
+}
 
-export default UbicaBalance;
