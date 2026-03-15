@@ -446,6 +446,15 @@ export default function UbicaBalance() {
     const [showMilestoneCelebration, setShowMilestoneCelebration] = useState(false);
     const [hasCelebrated100, setHasCelebrated100] = useState(false);
 
+    // DEBUG: Trigger celebration for testing
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setShowMilestoneCelebration(true);
+            setTimeout(() => setShowMilestoneCelebration(false), 5000);
+        }, 2000);
+        return () => clearTimeout(timer);
+    }, []);
+
     const fetchLeaderboard = useCallback(async () => {
         try {
             // Re-using the known appService api pattern or default fetch
