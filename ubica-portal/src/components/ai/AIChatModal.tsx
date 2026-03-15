@@ -302,12 +302,8 @@ export default function AIChatModal() {
                             }}
                             exit={{ 
                                 opacity: 0, 
-                                scale: 0.8, 
-                                y: 80, 
-                                rotateX: 15,
-                                transformPerspective: 1200,
-                                right: (isFullScreen || window.innerWidth < 640) ? 0 : '1.5rem',
-                                bottom: (isFullScreen || window.innerWidth < 640) ? 0 : '1.5rem',
+                                scale: 0.9, 
+                                y: 40, 
                                 transformOrigin: (isFullScreen || window.innerWidth < 640) ? 'center' : 'bottom right'
                             }}
                             transition={{ 
