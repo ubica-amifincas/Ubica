@@ -307,13 +307,6 @@ export default function AIChatModal() {
                                 bottom: (isFullScreen || window.innerWidth < 640) ? 0 : '1.5rem',
                                 transformOrigin: (isFullScreen || window.innerWidth < 640) ? 'center' : 'bottom right'
                             }}
-                            className={`fixed flex flex-col bg-white dark:bg-gray-900 shadow-[0_20px_50px_rgba(139,92,246,0.15)] border-gray-200 dark:border-gray-700 overflow-hidden ring-1 ring-white/20
-                                ${isFullScreen || window.innerWidth < 640
-                                    ? 'rounded-0 z-[100000]' 
-                                    : 'sm:rounded-2xl border sm:z-[99999]'
-                                } 
-                                ${window.innerWidth < 640 ? 'inset-0' : ''}
-                                ${isResizing ? 'select-none' : ''}`}
                         >
                              {/* Resize Handle - Top Left */}
                              {!isFullScreen && window.innerWidth >= 640 && (
