@@ -49,19 +49,9 @@ SECRET_KEY = "ubica-enterprise-secret-key-2024"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 1440
 
-# Configuración Email SMTP (Gmail por defecto)
-mail_conf = ConnectionConfig(
-    MAIL_USERNAME = os.getenv("MAIL_USERNAME", "verify.ubica@gmail.com"),
-    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD", "lerb wdpr lkbb yvzv"),
-    MAIL_FROM = os.getenv("MAIL_FROM", "verify.ubica@gmail.com"),
-    MAIL_PORT = 465, # Cambiado de 587 a 465 para SSL (más probable que funcione en Render)
-    MAIL_SERVER = "smtp.gmail.com",
-    MAIL_FROM_NAME="Ubica Support",
-    MAIL_STARTTLS = False, # STARTTLS es para 587
-    MAIL_SSL_TLS = True,   # SSL es para 465
-    USE_CREDENTIALS = True,
-    VALIDATE_CERTS = True
-)
+# Configuración de Resend (API en lugar de SMTP)
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "re_VAQbSFme_Dxv6Wd6TFqbiaUmjdHx3BR1y")
+RESEND_SENDER = "onboarding@resend.dev" # Cambiar a no-reply@amifincas.es tras verificar dominio
 
 # Inicializar FastAPI
 app = FastAPI(
@@ -499,17 +489,26 @@ async def get_email_logs():
 
 @app.get("/api/test-email")
 async def test_email_endpoint(email: str = "mierdaspencho@gmail.com"):
-    """Endpoint simplificado para testear el envío de mail en producción"""
-    message = MessageSchema(
-        subject="Prueba de conexión SMTP (Port 465)",
-        recipients=[email],
-        body="Si recibes esto, la configuración de puerto 465 funciona.",
-        subtype=MessageType.plain
-    )
-    fm = FastMail(mail_conf)
+    """Endpoint simplificado para testear el envío de mail vía Resend"""
+    import aiohttp
     try:
-        await fm.send_message(message)
-        return {"status": "success", "message": f"Correo enviado a {email}"}
+        async with aiohttp.ClientSession() as session:
+            payload = {
+                "from": f"Ubica <{RESEND_SENDER}>",
+                "to": [email],
+                "subject": "Prueba Resend (Ubica)",
+                "html": "<p>Si recibes esto, la integración con <strong>Resend</strong> funciona correctamente desde Render.</p>"
+            }
+            headers = {
+                "Authorization": f"Bearer {RESEND_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            async with session.post("https://api.resend.com/emails", json=payload, headers=headers) as resp:
+                result = await resp.json()
+                if resp.status in [200, 201]:
+                    return {"status": "success", "message": f"Correo enviado vía Resend a {email}", "id": result.get("id")}
+                else:
+                    return {"status": "error", "message": f"Error API Resend: {result}"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
