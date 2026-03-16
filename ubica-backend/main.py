@@ -439,13 +439,19 @@ async def register(user_data: UserCreate, background_tasks: BackgroundTasks, ses
     )
 
     async def send_verification_email(msg: MessageSchema):
+        debug_log = os.path.join(UPLOAD_DIR, "email_debug.log")
         fm = FastMail(mail_conf)
         try:
             await fm.send_message(msg)
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] Correo de verificación enviado exitosamente a {user_data.email}")
+            log_msg = f"[{datetime.now().strftime('%H:%M:%S')}] SUCCESS: Correo enviado a {user_data.email}\n"
+            print(log_msg)
+            with open(debug_log, "a") as f:
+                f.write(log_msg)
         except Exception as e:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] ERROR al enviar correo a {user_data.email}: {str(e)}")
-            # Aquí podríamos implementar un sistema de reintentos o marcar el usuario para revisión
+            error_msg = f"[{datetime.now().strftime('%H:%M:%S')}] ERROR: al enviar correo a {user_data.email}: {str(e)}\n"
+            print(error_msg)
+            with open(debug_log, "a") as f:
+                f.write(error_msg)
     
     # Añadir a tareas en segundo plano
     background_tasks.add_task(send_verification_email, message)
