@@ -4,7 +4,7 @@ Ubica Enterprise Backend - Servidor de desarrollo FastAPI
 Simula la funcionalidad completa enterprise con datos JSON
 """
 
-from fastapi import FastAPI, HTTPException, Depends, status, UploadFile, File, Request
+from fastapi import FastAPI, HTTPException, Depends, status, UploadFile, File, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.staticfiles import StaticFiles
@@ -385,31 +385,8 @@ def get_user_or_none(credentials: Optional[HTTPAuthorizationCredentials] = Depen
 
 
 # Endpoints de Autenticación
-@app.post("/api/auth/login", response_model=Token)
-async def login(login_data: LoginRequest, session: Session = Depends(get_session)):
-    user = session.exec(select(models.User).where(models.User.email == login_data.email)).first()
-    if not user or not verify_password(login_data.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Email o contraseña incorrectos"
-        )
-    
-    if not user.is_verified:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Por favor verifica tu correo electrónico para iniciar sesión"
-        )
-    
-    access_token = create_access_token(data={"sub": str(user.id)})
-    return Token(
-        access_token=access_token,
-        token_type="bearer",
-        expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        user=user
-    )
-
 @app.post("/api/auth/register", response_model=Dict[str, Any])
-async def register(user_data: UserCreate, session: Session = Depends(get_session)):
+async def register(user_data: UserCreate, background_tasks: BackgroundTasks, session: Session = Depends(get_session)):
     existing_user = session.exec(select(models.User).where(models.User.email == user_data.email)).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="El email ya está registrado")
@@ -431,7 +408,10 @@ async def register(user_data: UserCreate, session: Session = Depends(get_session
     
     # Generar token de verificación
     verify_token = create_access_token(data={"sub": str(new_id), "type": "verify"})
-    verification_link = f"http://localhost:5173/verify?token={verify_token}"
+    
+    # URL base para el link de verificación (prioriza variable de entorno)
+    base_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    verification_link = f"{base_url}/verify?token={verify_token}"
     
     # Preparar el correo con FastMail
     html_content = f"""
@@ -458,12 +438,17 @@ async def register(user_data: UserCreate, session: Session = Depends(get_session
         subtype=MessageType.html
     )
 
-    fm = FastMail(mail_conf)
-    try:
-        await fm.send_message(message)
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] Correo de verificación enviado exitosamente a {user_data.email}")
-    except Exception as e:
-        pass
+    async def send_verification_email(msg: MessageSchema):
+        fm = FastMail(mail_conf)
+        try:
+            await fm.send_message(msg)
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] Correo de verificación enviado exitosamente a {user_data.email}")
+        except Exception as e:
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] ERROR al enviar correo a {user_data.email}: {str(e)}")
+            # Aquí podríamos implementar un sistema de reintentos o marcar el usuario para revisión
+    
+    # Añadir a tareas en segundo plano
+    background_tasks.add_task(send_verification_email, message)
     
     return {
         "message": "Usuario registrado exitosamente. Por favor revisa tu correo electrónico para verificar tu cuenta.",
