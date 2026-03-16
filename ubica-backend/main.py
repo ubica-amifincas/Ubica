@@ -50,16 +50,15 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 1440
 
 # Configuración Email SMTP (Gmail por defecto)
-# Reemplaza estas credenciales o usa variables de entorno en producción
 mail_conf = ConnectionConfig(
     MAIL_USERNAME = os.getenv("MAIL_USERNAME", "verify.ubica@gmail.com"),
     MAIL_PASSWORD = os.getenv("MAIL_PASSWORD", "lerb wdpr lkbb yvzv"),
     MAIL_FROM = os.getenv("MAIL_FROM", "verify.ubica@gmail.com"),
-    MAIL_PORT = 587,
+    MAIL_PORT = 465, # Cambiado de 587 a 465 para SSL (más probable que funcione en Render)
     MAIL_SERVER = "smtp.gmail.com",
     MAIL_FROM_NAME="Ubica Support",
-    MAIL_STARTTLS = True,
-    MAIL_SSL_TLS = False,
+    MAIL_STARTTLS = False, # STARTTLS es para 587
+    MAIL_SSL_TLS = True,   # SSL es para 465
     USE_CREDENTIALS = True,
     VALIDATE_CERTS = True
 )
@@ -489,6 +488,7 @@ async def register(user_data: UserCreate, background_tasks: BackgroundTasks, ses
     }
 
 @app.get("/api/debug/email-logs")
+@app.get("/api/debug/email_logs") # Soporta ambos formatos
 async def get_email_logs():
     log_path = os.path.join(UPLOAD_DIR, "email_debug.log")
     if os.path.exists(log_path):
@@ -496,6 +496,22 @@ async def get_email_logs():
             content = f.read()
             return {"logs": content}
     return {"message": "No hay logs disponibles", "path": log_path}
+
+@app.get("/api/test-email")
+async def test_email_endpoint(email: str = "mierdaspencho@gmail.com"):
+    """Endpoint simplificado para testear el envío de mail en producción"""
+    message = MessageSchema(
+        subject="Prueba de conexión SMTP (Port 465)",
+        recipients=[email],
+        body="Si recibes esto, la configuración de puerto 465 funciona.",
+        subtype=MessageType.plain
+    )
+    fm = FastMail(mail_conf)
+    try:
+        await fm.send_message(message)
+        return {"status": "success", "message": f"Correo enviado a {email}"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 @app.get("/api/auth/verify-email")
 async def verify_email(token: str, session: Session = Depends(get_session)):
