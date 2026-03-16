@@ -513,6 +513,34 @@ async def test_email_endpoint(email: str = "mierdaspencho@gmail.com"):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+@app.get("/api/debug/network-test")
+async def network_test():
+    import socket
+    results = {}
+    targets = [
+        ("smtp.gmail.com", 587),
+        ("smtp.gmail.com", 465),
+        ("8.8.8.8", 53),
+        ("google.com", 80)
+    ]
+    
+    for host, port in targets:
+        try:
+            # Test DNS
+            ip = socket.gethostbyname(host)
+            results[f"{host}_dns"] = ip
+            
+            # Test Connectivity
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(5)
+            s.connect((host, port))
+            s.close()
+            results[f"{host}:{port}"] = "CONNECTED"
+        except Exception as e:
+            results[f"{host}:{port}"] = f"FAILED: {str(e)}"
+            
+    return results
+
 @app.get("/api/auth/verify-email")
 async def verify_email(token: str, session: Session = Depends(get_session)):
     try:
