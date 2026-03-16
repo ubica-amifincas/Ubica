@@ -513,6 +513,22 @@ async def test_email_endpoint(email: str = "mierdaspencho@gmail.com"):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+@app.get("/api/net")
+async def quick_net_test():
+    import socket
+    target = "smtp.gmail.com"
+    results = {}
+    for port in [587, 465, 25]:
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(3)
+            s.connect((target, port))
+            s.close()
+            results[str(port)] = "OPEN"
+        except Exception as e:
+            results[str(port)] = f"CLOSED: {str(e)}"
+    return results
+
 @app.get("/api/debug/network-test")
 async def network_test():
     import socket
