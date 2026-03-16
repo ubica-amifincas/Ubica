@@ -385,6 +385,29 @@ def get_user_or_none(credentials: Optional[HTTPAuthorizationCredentials] = Depen
 
 
 # Endpoints de Autenticación
+@app.post("/api/auth/login", response_model=Token)
+async def login(login_data: LoginRequest, session: Session = Depends(get_session)):
+    user = session.exec(select(models.User).where(models.User.email == login_data.email)).first()
+    if not user or not verify_password(login_data.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Email o contraseña incorrectos"
+        )
+    
+    if not user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Por favor verifica tu correo electrónico para iniciar sesión"
+        )
+    
+    access_token = create_access_token(data={"sub": str(user.id)})
+    return Token(
+        access_token=access_token,
+        token_type="bearer",
+        expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        user=user
+    )
+
 @app.post("/api/auth/register", response_model=Dict[str, Any])
 async def register(user_data: UserCreate, background_tasks: BackgroundTasks, session: Session = Depends(get_session)):
     existing_user = session.exec(select(models.User).where(models.User.email == user_data.email)).first()
@@ -438,28 +461,41 @@ async def register(user_data: UserCreate, background_tasks: BackgroundTasks, ses
         subtype=MessageType.html
     )
 
-    async def send_verification_email(msg: MessageSchema):
+    async def send_verification_email(msg: MessageSchema, email_to: str):
         debug_log = os.path.join(UPLOAD_DIR, "email_debug.log")
         fm = FastMail(mail_conf)
         try:
             await fm.send_message(msg)
-            log_msg = f"[{datetime.now().strftime('%H:%M:%S')}] SUCCESS: Correo enviado a {user_data.email}\n"
+            log_msg = f"[{datetime.now().strftime('%H:%M:%S')}] SUCCESS: Correo enviado a {email_to}\n"
             print(log_msg)
-            with open(debug_log, "a") as f:
-                f.write(log_msg)
+            try:
+                with open(debug_log, "a") as f:
+                    f.write(log_msg)
+            except: pass
         except Exception as e:
-            error_msg = f"[{datetime.now().strftime('%H:%M:%S')}] ERROR: al enviar correo a {user_data.email}: {str(e)}\n"
+            error_msg = f"[{datetime.now().strftime('%H:%M:%S')}] ERROR: al enviar correo a {email_to}: {str(e)}\n"
             print(error_msg)
-            with open(debug_log, "a") as f:
-                f.write(error_msg)
+            try:
+                with open(debug_log, "a") as f:
+                    f.write(error_msg)
+            except: pass
     
     # Añadir a tareas en segundo plano
-    background_tasks.add_task(send_verification_email, message)
+    background_tasks.add_task(send_verification_email, message, user_data.email)
     
     return {
         "message": "Usuario registrado exitosamente. Por favor revisa tu correo electrónico para verificar tu cuenta.",
         "user_id": new_id
     }
+
+@app.get("/api/debug/email-logs")
+async def get_email_logs():
+    log_path = os.path.join(UPLOAD_DIR, "email_debug.log")
+    if os.path.exists(log_path):
+        with open(log_path, "r") as f:
+            content = f.read()
+            return {"logs": content}
+    return {"message": "No hay logs disponibles", "path": log_path}
 
 @app.get("/api/auth/verify-email")
 async def verify_email(token: str, session: Session = Depends(get_session)):
