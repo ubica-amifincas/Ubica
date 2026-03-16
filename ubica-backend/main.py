@@ -425,21 +425,80 @@ async def register(user_data: UserCreate, background_tasks: BackgroundTasks, ses
     base_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
     verification_link = f"{base_url}/verify?token={verify_token}"
     
-    # Preparar el correo con FastMail
+    # Preparar el correo con diseño premium
+    logo_url = "https://ubica.amifincas.es/logo_ubica.png"
     html_content = f"""
-    <html>
-      <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-        <h2 style="color: #4a9d78;">¡Bienvenido a Ubica Enterprise!</h2>
-        <p>Hola {user_data.full_name or 'Usuario'},</p>
-        <p>Gracias por crear tu cuenta. Para activar tu perfil y poder iniciar sesión, por favor verifica tu dirección de correo electrónico haciendo clic en el siguiente enlace:</p>
-        <p style="text-align: center; margin: 30px 0;">
-          <a href="{verification_link}" style="background-color: #4a9d78; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Verificar mi cuenta</a>
-        </p>
-        <p>O copia y pega este enlace en tu navegador:</p>
-        <p><a href="{verification_link}" style="color: #4a9d78;">{verification_link}</a></p>
-        <p>Si no has solicitado este registro, puedes ignorar este correo.</p>
-        <p>Atentamente,<br>El equipo de Ubica Fincas</p>
-      </body>
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+            body {{ font-family: 'Inter', Arial, sans-serif; -webkit-font-smoothing: antialiased; }}
+        </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f4f7f5; color: #333;">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f7f5; padding: 20px 0;">
+            <tr>
+                <td align="center">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+                        <!-- Header -->
+                        <tr>
+                            <td style="padding: 40px 0; text-align: center; background: linear-gradient(135deg, #4a9d78 0%, #3a8d68 100%);">
+                                <img src="{logo_url}" alt="Ubica" style="height: 60px; width: auto; margin-bottom: 20px;">
+                                <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.02em;">¡Bienvenido a Ubica!</h1>
+                            </td>
+                        </tr>
+                        
+                        <!-- Body -->
+                        <tr>
+                            <td style="padding: 40px 40px 30px 40px;">
+                                <h2 style="color: #4a9d78; margin-top: 0; font-size: 20px; font-weight: 700;">Hola {user_data.full_name or 'Usuario'},</h2>
+                                <p style="font-size: 16px; line-height: 1.6; color: #555; margin-bottom: 25px;">
+                                    Gracias por unirte a <strong>Ubica Enterprise</strong>. Estamos muy emocionados de tenerte con nosotros para transformar tu experiencia inmobiliaria.
+                                </p>
+                                <p style="font-size: 16px; line-height: 1.6; color: #555; margin-bottom: 30px;">
+                                    Para activar tu cuenta y comenzar a explorar todas las herramientas, por favor verifica tu dirección de correo electrónico haciendo clic en el siguiente botón:
+                                </p>
+                                
+                                <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                    <tr>
+                                        <td align="center">
+                                            <a href="{verification_link}" style="display: inline-block; padding: 18px 36px; background-color: #4a9d78; color: #ffffff; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 12px rgba(74, 157, 120, 0.3);">
+                                                Verificar mi cuenta ahora
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </table>
+                                
+                                <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #eee;">
+                                    <p style="font-size: 13px; color: #999; margin-bottom: 10px;">
+                                        ¿El botón no funciona? No te preocupes, puedes copiar y pegar este enlace en tu navegador:
+                                    </p>
+                                    <p style="font-size: 13px; color: #4a9d78;">
+                                        <a href="{verification_link}" style="color: #4a9d78; text-decoration: none; word-break: break-all;">{verification_link}</a>
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Footer -->
+                        <tr>
+                            <td style="padding: 30px; background-color: #fafafa; text-align: center;">
+                                <p style="font-size: 12px; color: #bbb; line-height: 1.5; margin: 0;">
+                                    Este es un mensaje automático, por favor no respondas directamente.<br>
+                                    &copy; 2024 Ubica Enterprise. Al servicio de la excelencia inmobiliaria.<br>
+                                    <span style="color: #ddd;">•</span><br>
+                                    Si no has solicitado este registro, puedes ignorar este mensaje con seguridad.
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
     </html>
     """
     
@@ -489,15 +548,46 @@ async def get_email_logs():
 
 @app.get("/api/test-email")
 async def test_email_endpoint(email: str = "mierdaspencho@gmail.com"):
-    """Endpoint simplificado para testear el envío de mail vía Resend"""
+    """Endpoint simplificado para testear el envío de mail con diseño premium vía Resend"""
     import aiohttp
+    logo_url = "https://ubica.amifincas.es/logo_ubica.png"
     try:
         async with aiohttp.ClientSession() as session:
             payload = {
                 "from": f"Ubica <{RESEND_SENDER}>",
                 "to": [email],
-                "subject": "Prueba Resend (Ubica)",
-                "html": "<p>Si recibes esto, la integración con <strong>Resend</strong> funciona correctamente desde Render.</p>"
+                "subject": "Prueba de Diseño Premium (Ubica)",
+                "html": f"""
+                <!DOCTYPE html>
+                <html lang="es">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                </head>
+                <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f7f5; color: #333;">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                        <tr>
+                            <td style="padding: 30px; text-align: center; background-color: #4a9d78;">
+                                <img src="{logo_url}" alt="Ubica" style="height: 50px;">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 40px 30px;">
+                                <h1 style="color: #4a9d78; font-size: 24px; margin-top: 0;">Prueba de Diseño Exitosa</h1>
+                                <p style="font-size: 16px; line-height: 1.6; color: #555;">
+                                    Si estás leyendo esto con un diseño elegante, el logo de Ubica y fondo claro, significa que la integración del nuevo diseño premium ha sido un éxito.
+                                </p>
+                                <div style="margin-top: 30px; text-align: center;">
+                                    <div style="display: inline-block; padding: 12px 24px; background-color: #4a9d78; color: white; border-radius: 8px; font-weight: bold;">
+                                        Diseño Activo
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+                </html>
+                """
             }
             headers = {
                 "Authorization": f"Bearer {RESEND_API_KEY}",
@@ -506,7 +596,7 @@ async def test_email_endpoint(email: str = "mierdaspencho@gmail.com"):
             async with session.post("https://api.resend.com/emails", json=payload, headers=headers) as resp:
                 result = await resp.json()
                 if resp.status in [200, 201]:
-                    return {"status": "success", "message": f"Correo enviado vía Resend a {email}", "id": result.get("id")}
+                    return {"status": "success", "message": f"Correo premium enviado a {email}", "id": result.get("id")}
                 else:
                     return {"status": "error", "message": f"Error API Resend: {result}"}
     except Exception as e:
