@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Physics, RigidBody, useRapier } from '@react-three/rapier';
 import { Environment, ContactShadows, Edges, Circle, OrbitControls, Sky, Trail } from '@react-three/drei';
-import { EffectComposer, SSAO, DepthOfField, Bloom } from '@react-three/postprocessing';
 import { ChevronLeftIcon, LockClosedIcon, SunIcon, MoonIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 import { useAuth, useAuthenticatedFetch } from '../../contexts/AuthContext';
@@ -76,7 +75,7 @@ class GameFeelStore {
 function RopeSegment({ start, end }: { start: THREE.Vector3, end: THREE.Vector3 }) {
     const midPoint = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
     const direction = new THREE.Vector3().subVectors(end, start);
-    const length = direction.length();
+    const segLength = direction.length();
     
     // Low-poly thin cable
     const up = new THREE.Vector3(0, 1, 0);
@@ -84,7 +83,7 @@ function RopeSegment({ start, end }: { start: THREE.Vector3, end: THREE.Vector3 
 
     return (
         <mesh position={midPoint} quaternion={quaternion}>
-            <cylinderGeometry args={[0.02, 0.02, length, 6]} />
+            <cylinderGeometry args={[0.02, 0.02, segLength, 6]} />
             <meshStandardMaterial color="#64748b" metalness={0.5} roughness={0.3} />
         </mesh>
     );
@@ -1111,18 +1110,13 @@ export default function UbicaBalance() {
                     )}
                 </Physics>
 
-                <ContactShadows position={[0, -0.49, 0]} opacity={0.5} scale={20} blur={2.5} far={10} color="#000000" />
+                <ContactShadows position={[0, -0.49, 0]} opacity={0.6} scale={20} blur={2.0} far={10} color="#000000" />
                 
                 {/* Ground Plane for better grounding */}
                 <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.51, 0]} receiveShadow>
-                    <circleGeometry args={[20, 32]} />
-                    <meshStandardMaterial color={isDarkMode ? "#0f172a" : "#f8fafc"} transparent opacity={0.4} roughness={0.8} metalness={0.1} />
+                    <circleGeometry args={[20, 64]} />
+                    <meshStandardMaterial color={isDarkMode ? "#020617" : "#f1f5f9"} transparent opacity={0.8} roughness={0.5} metalness={0.2} />
                 </mesh>
-
-                <EffectComposer multisampling={0}>
-                    <Bloom luminanceThreshold={1} mipmapBlur intensity={1.0} />
-                    <DepthOfField focusDistance={0.02} focalLength={0.15} bokehScale={2} />
-                </EffectComposer> 
             </Canvas>
         </div>
     );
