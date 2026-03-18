@@ -230,18 +230,19 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, nextColor, currentScor
             const meshes = ropeSegmentsRef.current.children as THREE.Mesh[];
             for (let i = 0; i < ropeSegments; i++) {
                 const mesh = meshes[i];
-                if (mesh) {
-                    const p1 = points[i];
-                    const p2 = points[i+1];
-                    const mid = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
-                    const dir = new THREE.Vector3().subVectors(p2, p1);
-                    const len = dir.length();
-                    
-                    mesh.position.copy(mid);
-                    const up = new THREE.Vector3(0, 1, 0);
-                    mesh.quaternion.setFromUnitVectors(up, len > 0.001 ? dir.clone().normalize() : up);
-                    mesh.scale.set(1, len, 1);
-                }
+                    if (mesh) {
+                        const p1 = points[i];
+                        const p2 = points[i+1];
+                        if (!p1 || !p2) continue;
+                        const mid = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
+                        const dir = new THREE.Vector3().subVectors(p2, p1);
+                        const len = dir.length();
+                        
+                        mesh.position.copy(mid);
+                        const up = new THREE.Vector3(0, 1, 0);
+                        mesh.quaternion.setFromUnitVectors(up, len > 0.001 ? dir.clone().normalize() : up);
+                        mesh.scale.set(1, len, 1);
+                    }
             }
         }
 
@@ -261,7 +262,7 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, nextColor, currentScor
 
         if (ringRef.current) {
              const mat = ringRef.current.material as THREE.MeshStandardMaterial;
-             mat.emissiveIntensity = isSpawning ? 3 : 1 + Math.sin(t * 5) * 0.5;
+             if (mat) mat.emissiveIntensity = isSpawning ? 3 : 1 + Math.sin(t * 5) * 0.5;
         }
 
         // 7. Shadow prediction dot
@@ -872,7 +873,7 @@ export default function UbicaBalance() {
                          ) : (leaderboard?.length || 0) === 0 ? (
                              <div className="text-slate-500 text-xs italic">Sé el primero en jugar</div>
                          ) : (
-                             leaderboard?.map((lb: any, idx) => (
+                             leaderboard?.filter(Boolean).map((lb: any, idx: number) => (
                                  <div key={lb.id} className="flex justify-between items-center text-xs sm:text-sm">
                                      <div className="flex items-center gap-2 overflow-hidden">
                                          <span className={`font-bold ${idx === 0 ? 'text-amber-400' : idx === 1 ? 'text-slate-300' : idx === 2 ? 'text-orange-400' : 'text-slate-500'}`}>
@@ -1064,7 +1065,7 @@ export default function UbicaBalance() {
                         <ambientLight intensity={0.8} />
                         <directionalLight position={[5, 15, 5]} castShadow intensity={2.5} color="#ffffff" shadow-mapSize={[1024, 1024]} shadow-bias={-0.0001} />
                         <pointLight position={[0, -5, 0]} intensity={1} color="#f0f9ff" />
-                        <hemisphereLight intensity={0.6} color="#sky-200" groundColor="#slate-300" />
+                        <hemisphereLight intensity={0.6} color="#bae6fd" groundColor="#cbd5e1" />
                         <Sky sunPosition={[5, 15, 5]} turbidity={0.5} rayleigh={0.5} mieCoefficient={0.025} mieDirectionalG={0.8} />
                         <Environment preset="city" />
                     </>
@@ -1073,7 +1074,7 @@ export default function UbicaBalance() {
                 <Physics gravity={[0, -9.81, 0]}>
                     <BasePlatform />
 
-                    {blocks.map((block) => (
+                    {blocks?.filter(Boolean).map((block: any) => (
                         <BuildingBlock
                             key={block.id}
                             id={block.id}
