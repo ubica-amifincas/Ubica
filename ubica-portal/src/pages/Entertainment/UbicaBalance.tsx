@@ -32,7 +32,9 @@ const BLOCK_COLORS = [
 
 const getNextRandomColor = () => {
     if (Math.random() < 0.1) return 'LOGO';
-    return BLOCK_COLORS[Math.floor(Math.random() * BLOCK_COLORS.length)];
+    const colors = BLOCK_COLORS || [];
+    if (colors.length === 0) return '#3b82f6';
+    return colors[Math.floor(Math.random() * colors.length)];
 };
 
 const getNextBlockType = (): 'normal' | 'ice' | 'metal' | 'bouncy' => {
@@ -129,7 +131,7 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, nextColor, currentScor
     const heldBlockRef = useRef<THREE.Group>(null);
 
     useFrame((state, delta) => {
-        if (!groupRef.current) return;
+        if (!groupRef.current || !rapier || !world) return;
 
         const t = state.clock.getElapsedTime();
         
@@ -1107,7 +1109,7 @@ export default function UbicaBalance() {
                 <EffectComposer multisampling={4}>
                     <SSAO radius={0.4} intensity={50} luminanceInfluence={0.5} />
                     <Bloom luminanceThreshold={1} mipmapBlur intensity={1.5} />
-                    <DepthOfField focusDistance={0.02} focalLength={0.15} bokehScale={2} height={480} />
+                    <DepthOfField focusDistance={0.02} focalLength={0.15} bokehScale={2} />
                 </EffectComposer>
             </Canvas>
         </div>
