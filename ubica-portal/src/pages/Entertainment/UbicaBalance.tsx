@@ -625,7 +625,14 @@ export default function UbicaBalance() {
     const [leaderboard, setLeaderboard] = useState<any[]>([]);
     
     // Phase 3 states
-    const [isDarkMode, setIsDarkMode] = useState(true);
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        const saved = localStorage.getItem('ubica_balance_dark_mode');
+        return saved === null ? true : saved === 'true';
+    });
+    
+    useEffect(() => {
+        localStorage.setItem('ubica_balance_dark_mode', isDarkMode.toString());
+    }, [isDarkMode]);
     const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0, z: 0 });
     const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(true);
     const [showMilestoneCelebration, setShowMilestoneCelebration] = useState(false);
