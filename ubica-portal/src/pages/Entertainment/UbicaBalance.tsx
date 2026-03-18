@@ -482,7 +482,7 @@ function ImpactParticles() {
 }
 
 // 3. Falling Blocks
-function BuildingBlock({ position, rotation, color, initialVelocity, isLogo, blockType, onFallOut }: { position: [number, number, number], rotation?: [number, number, number], color: string, isLogo: boolean, blockType: 'normal' | 'ice' | 'metal' | 'bouncy', initialVelocity: [number, number, number], id: string, onFallOut: () => void }) {
+function BuildingBlock({ position, rotation, color, initialVelocity, isLogo, blockType, id, onFallOut }: { position: [number, number, number], rotation?: [number, number, number], color: string, isLogo: boolean, blockType: 'normal' | 'ice' | 'metal' | 'bouncy', initialVelocity: [number, number, number], id: string, onFallOut: () => void }) {
     const rigidBodyRef = useRef<any>(null);
 
     const physicsProps = useMemo(() => {
@@ -639,10 +639,11 @@ export default function UbicaBalance() {
             });
             if (res.ok) {
                 const data = await res.json();
-                setLeaderboard(data);
+                setLeaderboard(Array.isArray(data) ? data : []);
             }
         } catch (error) {
             console.error("Failed to fetch leaderboard", error);
+            setLeaderboard([]);
         } finally {
             setIsLoadingLeaderboard(false);
         }
@@ -868,10 +869,10 @@ export default function UbicaBalance() {
                      <div className="space-y-2">
                          {isLoadingLeaderboard ? (
                              <div className="text-slate-500 text-xs italic">Cargando...</div>
-                         ) : leaderboard.length === 0 ? (
+                         ) : (leaderboard?.length || 0) === 0 ? (
                              <div className="text-slate-500 text-xs italic">Sé el primero en jugar</div>
                          ) : (
-                             leaderboard.map((lb, idx) => (
+                             leaderboard?.map((lb: any, idx) => (
                                  <div key={lb.id} className="flex justify-between items-center text-xs sm:text-sm">
                                      <div className="flex items-center gap-2 overflow-hidden">
                                          <span className={`font-bold ${idx === 0 ? 'text-amber-400' : idx === 1 ? 'text-slate-300' : idx === 2 ? 'text-orange-400' : 'text-slate-500'}`}>
@@ -910,7 +911,7 @@ export default function UbicaBalance() {
             {/* Camera Controls Overlay Removed for Drag to Orbit */}
 
             {/* Instrucciones Centradas */}
-            {blocks.length === 0 && !gameOver && (
+            {(blocks?.length || 0) === 0 && !gameOver && (
                 <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center z-10 pointer-events-none opacity-80 animate-pulse w-[90%] md:w-auto">
                     <h2 className={`text-4xl md:text-6xl font-black drop-shadow-2xl tracking-tight mb-4 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Ubica Balance</h2>
                     <p className={`text-sm sm:text-lg font-medium drop-shadow-md px-6 py-3 rounded-full inline-block backdrop-blur-sm border ${isDarkMode ? 'text-white/90 bg-black/40 border-white/10' : 'text-slate-800 bg-white/60 border-black/10'}`}>
