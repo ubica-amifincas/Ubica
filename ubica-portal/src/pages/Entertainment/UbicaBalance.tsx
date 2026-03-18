@@ -1055,19 +1055,19 @@ export default function UbicaBalance() {
                 {/* Entorno y Luces Atmosféricas */}
                 {isDarkMode ? (
                     <>
-                        <ambientLight intensity={0.4} />
-                        <directionalLight position={[10, 20, 10]} castShadow intensity={1.5} color="#fef08a" shadow-mapSize={[1024, 1024]} shadow-bias={-0.0001} />
+                        <ambientLight intensity={0.2} />
+                        <directionalLight position={[10, 20, 10]} castShadow intensity={0.5} color="#cbd5e1" shadow-mapSize={[512, 512]} shadow-bias={-0.0001} />
                         <pointLight position={[0, -5, 0]} intensity={2} color="#38bdf8" />
-                        <hemisphereLight intensity={0.3} color="#ffffff" groundColor="#0f172a" />
-                        <Sky sunPosition={[10, 20, 10]} turbidity={10} rayleigh={0.5} mieCoefficient={0.005} mieDirectionalG={0.7} />
+                        <hemisphereLight intensity={0.1} color="#ffffff" groundColor="#000000" />
+                        <Sky sunPosition={[-10, -5, -10]} turbidity={10} rayleigh={0.5} mieCoefficient={0.005} mieDirectionalG={0.7} />
                         <Environment preset="night" />
                     </>
                 ) : (
                     <>
-                        <ambientLight intensity={0.8} />
-                        <directionalLight position={[5, 15, 5]} castShadow intensity={2.5} color="#ffffff" shadow-mapSize={[1024, 1024]} shadow-bias={-0.0001} />
+                        <ambientLight intensity={0.5} />
+                        <directionalLight position={[5, 15, 5]} castShadow intensity={1.5} color="#ffffff" shadow-mapSize={[512, 512]} shadow-bias={-0.0001} />
                         <pointLight position={[0, -5, 0]} intensity={1} color="#f0f9ff" />
-                        <hemisphereLight intensity={0.6} color="#bae6fd" groundColor="#cbd5e1" />
+                        <hemisphereLight intensity={0.4} color="#bae6fd" groundColor="#cbd5e1" />
                         <Sky sunPosition={[5, 15, 5]} turbidity={0.5} rayleigh={0.5} mieCoefficient={0.025} mieDirectionalG={0.8} />
                         <Environment preset="city" />
                     </>
@@ -1106,13 +1106,16 @@ export default function UbicaBalance() {
 
                 <ContactShadows position={[0, -0.49, 0]} opacity={0.5} scale={20} blur={2.5} far={10} color="#000000" />
                 
-                {/* 
-                <EffectComposer multisampling={4}>
-                    <SSAO radius={0.4} intensity={50} luminanceInfluence={0.5} />
-                    <Bloom luminanceThreshold={1} mipmapBlur intensity={1.5} />
+                {/* Ground Plane for better grounding */}
+                <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.51, 0]} receiveShadow>
+                    <circleGeometry args={[20, 32]} />
+                    <meshStandardMaterial color={isDarkMode ? "#0f172a" : "#f8fafc"} transparent opacity={0.4} roughness={0.8} metalness={0.1} />
+                </mesh>
+
+                <EffectComposer multisampling={0}>
+                    <Bloom luminanceThreshold={1} mipmapBlur intensity={1.0} />
                     <DepthOfField focusDistance={0.02} focalLength={0.15} bokehScale={2} />
                 </EffectComposer> 
-                */}
             </Canvas>
         </div>
     );
