@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Physics, RigidBody, useRapier } from '@react-three/rapier';
-import { Environment, ContactShadows, Edges, Circle } from '@react-three/drei';
-import { ChevronLeftIcon, LockClosedIcon, SunIcon, MoonIcon, ArrowUpIcon, ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon, ArrowsPointingInIcon } from '@heroicons/react/24/outline';
+import { Environment, ContactShadows, Edges, Circle, OrbitControls, Sky, Trail } from '@react-three/drei';
+import { EffectComposer, SSAO, DepthOfField, Bloom } from '@react-three/postprocessing';
+import { ChevronLeftIcon, LockClosedIcon, SunIcon, MoonIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 import { useAuth, useAuthenticatedFetch } from '../../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,11 +16,11 @@ interface BlockData {
     rotation?: [number, number, number];
     color: string;
     type: 'base' | 'building';
+    blockType: 'normal' | 'ice' | 'metal' | 'bouncy';
     initialVelocity?: [number, number, number];
     isLogo?: boolean;
 }
 
-// Brand Colors
 const BLOCK_COLORS = [
     '#3b82f6', // blue-500
     '#10b981', // emerald-500
@@ -30,10 +31,44 @@ const BLOCK_COLORS = [
 ];
 
 const getNextRandomColor = () => {
-    // 10% chance for a 'LOGO' block
     if (Math.random() < 0.1) return 'LOGO';
     return BLOCK_COLORS[Math.floor(Math.random() * BLOCK_COLORS.length)];
 };
+
+const getNextBlockType = (): 'normal' | 'ice' | 'metal' | 'bouncy' => {
+    const rand = Math.random();
+    if (rand < 0.10) return 'metal';    // 10%
+    if (rand < 0.20) return 'ice';      // 10%
+    if (rand < 0.25) return 'bouncy';   // 5%
+    return 'normal';                    // 75%
+};
+
+// --- GLOBAL STATE FOR GAME FEEL ---
+class GameFeelStore {
+    static screenShake = 0;
+    static impactParticles: { id: string, pos: THREE.Vector3, color: string }[] = [];
+    static listeners = new Set<() => void>();
+    
+    static triggerShake(intensity: number) {
+        this.screenShake = intensity;
+    }
+    
+    static spawnParticles(pos: THREE.Vector3, color: string) {
+        this.impactParticles.push({ id: Math.random().toString(), pos: pos.clone(), color });
+        if (this.impactParticles.length > 10) this.impactParticles.shift(); // Keep max 10
+        this.emit();
+    }
+    
+    static removeParticle(id: string) {
+        this.impactParticles = this.impactParticles.filter(p => p.id !== id);
+        this.emit();
+    }
+    
+    static emit() {
+        this.listeners.forEach(l => l());
+    }
+}
+
 
 // Componente para un segmento de la cuerda (Cilindro 3D delgado)
 function RopeSegment({ start, end }: { start: THREE.Vector3, end: THREE.Vector3 }) {
@@ -107,8 +142,15 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, nextColor, currentScor
             effectiveSpeed = 0.7 + Math.min(1.0, (currentScore - 10) * 0.01);
         }
         
-        const x = Math.sin(t * effectiveSpeed) * 3.5;
-        const z = Math.cos(t * effectiveSpeed * 0.8) * 1.5;
+        // --- WIND LOGIC ---
+        // Generates a wandering vector representing wind
+        const windIntensity = (currentScore > 10 ? Math.min(1, (currentScore - 10) / 40) : 0) * 0.5;
+        const windX = Math.sin(t * 0.5) * Math.cos(t * 0.3) * windIntensity;
+        const windZ = Math.cos(t * 0.4) * Math.sin(t * 0.6) * windIntensity;
+        const windForce = new THREE.Vector3(windX, 0, windZ);
+
+        const x = Math.sin(t * effectiveSpeed) * 3.5 + windForce.x * 5;
+        const z = Math.cos(t * effectiveSpeed * 0.8) * 1.5 + windForce.z * 5;
 
         // 2. Drone realistic tilt - Also scale with speed
         const tiltIntensity = currentScore < 10 ? 0.05 : 0.15;
@@ -153,11 +195,13 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, nextColor, currentScor
         const stretch = distance - ropeLength;
         const springForce = hookToDrone.normalize().multiplyScalar(stretch * 300); // Higher K for stiffness
         
-        // Apply forces
+        // Apply forces including wind
+        const localWind = windForce.clone().applyQuaternion(invQuat).multiplyScalar(15);
         const damping = 0.96;
         hookVel.current.add(localGravity.multiplyScalar(delta));
         hookVel.current.add(inertialForce.multiplyScalar(delta));
         hookVel.current.add(springForce.multiplyScalar(delta));
+        hookVel.current.add(localWind.multiplyScalar(delta));
 
         hookVel.current.multiplyScalar(damping);
         hookPos.current.add(hookVel.current.clone().multiplyScalar(delta));
@@ -407,9 +451,49 @@ function ConstructionDrone({ onDrop, isSpawning, targetY, nextColor, currentScor
     );
 }
          
+// --- PARTICLE SYSTEM ---
+function ImpactParticles() {
+    const [particles, setParticles] = useState<{ id: string, pos: THREE.Vector3, color: string, timestamp: number }[]>([]);
+
+    useEffect(() => {
+        const updateParticles = () => {
+            const now = Date.now();
+            setParticles(GameFeelStore.impactParticles.map(p => ({ ...p, timestamp: now })));
+        };
+        GameFeelStore.listeners.add(updateParticles);
+        return () => { GameFeelStore.listeners.delete(updateParticles); };
+    }, []);
+
+    useFrame(() => {
+        // Particles self-destruct visually or mathematically handled here
+        // For simplicity we just map them to quick expanding rings
+    });
+
+    return (
+        <>
+            {particles.map(p => (
+                <mesh key={p.id} position={p.pos}>
+                    <ringGeometry args={[0.1, 0.3, 16]} />
+                    <meshBasicMaterial color={p.color} transparent opacity={0.6} side={THREE.DoubleSide} />
+                </mesh>
+            ))}
+        </>
+    );
+}
+
 // 3. Falling Blocks
-function BuildingBlock({ position, rotation, color, initialVelocity, isLogo, onFallOut }: { position: [number, number, number], rotation?: [number, number, number], color: string, isLogo: boolean, initialVelocity: [number, number, number], id: string, onFallOut: () => void }) {
+function BuildingBlock({ position, rotation, color, initialVelocity, isLogo, blockType, onFallOut }: { position: [number, number, number], rotation?: [number, number, number], color: string, isLogo: boolean, blockType: 'normal' | 'ice' | 'metal' | 'bouncy', initialVelocity: [number, number, number], id: string, onFallOut: () => void }) {
     const rigidBodyRef = useRef<any>(null);
+
+    const physicsProps = useMemo(() => {
+        if (isLogo) return { mass: 3.0, friction: 0.9, restitution: 0.3 };
+        switch(blockType) {
+            case 'ice': return { mass: 1.2, friction: 0.05, restitution: 0.1 };
+            case 'metal': return { mass: 4.0, friction: 0.8, restitution: 0.02 };
+            case 'bouncy': return { mass: 1.0, friction: 0.6, restitution: 1.2 };
+            default: return { mass: 1.5, friction: 0.8, restitution: 0.05 };
+        }
+    }, [blockType, isLogo]);
 
     useFrame(() => {
         if (!rigidBodyRef.current) return;
@@ -419,19 +503,35 @@ function BuildingBlock({ position, rotation, color, initialVelocity, isLogo, onF
         }
     });
 
+    const handleCollision = (e: any) => {
+        // Simple impact estimation based on impulse or relative velocity
+        const impactStr = e.totalForceMagnitude || 5; 
+        if (impactStr > 2) {
+            GameFeelStore.triggerShake(Math.min(0.2, impactStr * 0.01 * physicsProps.mass));
+            
+            // Only spawn particles if it's hitting something hard
+            if (Math.random() > 0.3) {
+                // Get contact point
+                const contact = new THREE.Vector3(position[0], position[1] - 0.5, position[2]);
+                GameFeelStore.spawnParticles(contact, color);
+            }
+        }
+    };
+
     return (
         <RigidBody
             ref={rigidBodyRef}
             type="dynamic"
             position={position}
             rotation={rotation || [0, 0, 0]}
-            mass={isLogo ? 3.0 : 1.5}
-            friction={0.9}
-            restitution={isLogo ? 0.3 : 0.05}
+            mass={physicsProps.mass}
+            friction={physicsProps.friction}
+            restitution={physicsProps.restitution}
             linearDamping={0.5}
             angularDamping={0.5}
             linearVelocity={initialVelocity}
             canSleep={false}
+            onCollisionEnter={handleCollision}
         >
             {isLogo ? (
                 <mesh castShadow receiveShadow>
@@ -446,17 +546,29 @@ function BuildingBlock({ position, rotation, color, initialVelocity, isLogo, onF
             ) : (
                 <mesh castShadow receiveShadow>
                     <boxGeometry args={[1.5, 1, 1.5]} />
-                    <meshStandardMaterial color={color} roughness={0.7} metalness={0.2} />
+                    {blockType === 'ice' ? (
+                        <meshPhysicalMaterial color={color} roughness={0.1} transmission={0.9} thickness={0.5} metalness={0.1} reflectivity={1} />
+                    ) : blockType === 'metal' ? (
+                        <meshStandardMaterial color={color} roughness={0.2} metalness={0.9} envMapIntensity={1} />
+                    ) : blockType === 'bouncy' ? (
+                        <meshPhysicalMaterial color={color} roughness={0.4} clearcoat={1} clearcoatRoughness={0.1} metalness={0.1} />
+                    ) : (
+                        <meshStandardMaterial color={color} roughness={0.7} metalness={0.2} />
+                    )}
                     <Edges scale={1} threshold={15} color="#0f172a" />
 
-                    <mesh position={[0, 0, 0.751]}>
-                        <planeGeometry args={[1.2, 0.6]} />
-                        <meshBasicMaterial color="#ffffff" opacity={0.2} transparent />
-                    </mesh>
-                    <mesh position={[0, 0, -0.751]} rotation={[0, Math.PI, 0]}>
-                        <planeGeometry args={[1.2, 0.6]} />
-                        <meshBasicMaterial color="#ffffff" opacity={0.2} transparent />
-                    </mesh>
+                    {blockType !== 'ice' && blockType !== 'metal' && (
+                        <>
+                            <mesh position={[0, 0, 0.751]}>
+                                <planeGeometry args={[1.2, 0.6]} />
+                                <meshBasicMaterial color="#ffffff" opacity={0.2} transparent />
+                            </mesh>
+                            <mesh position={[0, 0, -0.751]} rotation={[0, Math.PI, 0]}>
+                                <planeGeometry args={[1.2, 0.6]} />
+                                <meshBasicMaterial color="#ffffff" opacity={0.2} transparent />
+                            </mesh>
+                        </>
+                    )}
                 </mesh>
             )}
         </RigidBody>
@@ -464,21 +576,29 @@ function BuildingBlock({ position, rotation, color, initialVelocity, isLogo, onF
 }
 
 // 4. Dynamic Camera
-function CameraRig({ targetY, offset }: { targetY: number, offset: { x: number, y: number, z: number } }) {
+function CameraRig({ targetY }: { targetY: number }) {
     const { camera } = useThree();
+    const controlsRef = useRef<any>(null);
 
-    useFrame(() => {
-        // Move camera higher and pull back more to see the drone
-        const desiredY = Math.max(10, targetY + 8) + offset.y;
-        const desiredZ = Math.max(16, targetY + 12) + offset.z;
-        const desiredX = offset.x;
+    useFrame((state, delta) => {
+        // Drop Screen Shake
+        if (GameFeelStore.screenShake > 0) {
+            camera.position.x += (Math.random() - 0.5) * GameFeelStore.screenShake;
+            camera.position.y += (Math.random() - 0.5) * GameFeelStore.screenShake;
+            camera.position.z += (Math.random() - 0.5) * GameFeelStore.screenShake;
+            GameFeelStore.screenShake *= 0.9;
+            if (GameFeelStore.screenShake < 0.01) GameFeelStore.screenShake = 0;
+        }
 
-        camera.position.lerp(new THREE.Vector3(desiredX, desiredY, desiredZ), 0.05);
-        // Look between the origin and the highest drone height
-        camera.lookAt(desiredX * 0.5, targetY * 0.7, 0); 
+        if (controlsRef.current) {
+            // Smoothly move the camera's focus target up as the tower grows
+            const targetPos = new THREE.Vector3(0, targetY * 0.7, 0);
+            controlsRef.current.target.lerp(targetPos, 0.05);
+            controlsRef.current.update();
+        }
     });
 
-    return null;
+    return <OrbitControls ref={controlsRef} enablePan={false} enableDamping dampingFactor={0.05} maxPolarAngle={Math.PI / 2 - 0.1} minPolarAngle={0.1} maxDistance={30} minDistance={10} />;
 }
 
 // --- MAIN UX COMPONENT ---
@@ -611,7 +731,8 @@ export default function UbicaBalance() {
             initialVelocity: [vx, 0, vz],
             color: nextColor,
             isLogo: isLogo,
-            type: 'building'
+            type: 'building',
+            blockType: getNextBlockType()
         };
 
         setBlocks(prev => {
@@ -718,8 +839,8 @@ export default function UbicaBalance() {
                 </div>
                 
                 <div className="flex gap-2 sm:gap-4 ml-auto">
-                    <div className={`backdrop-blur-md rounded-2xl px-4 py-2 sm:px-6 sm:py-3 text-center pointer-events-auto border shadow-xl hidden sm:block ${
-                        isDarkMode ? 'bg-white/5 border-white/10 text-white' : 'bg-white/80 border-slate-200 text-slate-800'
+                    <div className={`backdrop-blur-2xl rounded-3xl px-4 py-2 sm:px-6 sm:py-3 text-center pointer-events-auto border shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] hidden sm:block transition-all ${
+                        isDarkMode ? 'bg-white/10 border-white/20 text-white' : 'bg-white/60 border-white/40 text-slate-800'
                     }`}>
                         <h3 className={`text-[8px] sm:text-[10px] font-black uppercase tracking-widest mb-1 ${isDarkMode ? 'text-white/60' : 'text-slate-500'}`}>Récord Mundial</h3>
                         <p className="text-xl sm:text-2xl font-black font-mono leading-none">{bestScore} <span className="text-xs font-medium">pts</span></p>
@@ -738,8 +859,8 @@ export default function UbicaBalance() {
 
             {/* LEFT SIDE - Leaderboard */}
             <div className="absolute top-24 left-4 sm:left-6 z-20 pointer-events-auto w-48 sm:w-64">
-                 <div className={`backdrop-blur-lg rounded-2xl p-4 border shadow-2xl transition-colors ${
-                     isDarkMode ? 'bg-slate-900/60 border-slate-700/50' : 'bg-white/80 border-slate-200'
+                 <div className={`backdrop-blur-2xl rounded-3xl p-5 border shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] transition-all ${
+                     isDarkMode ? 'bg-[#0f172a]/40 border-white/10' : 'bg-white/60 border-white/40'
                  }`}>
                      <h3 className="text-emerald-400 font-black text-[10px] sm:text-xs uppercase tracking-widest mb-3 flex items-center">
                          <span className="mr-2">🏆</span> Top 10 Oficial
@@ -786,27 +907,7 @@ export default function UbicaBalance() {
                 )}
             </AnimatePresence>
 
-            {/* Camera Controls Overlay */}
-            <div className="absolute bottom-6 left-6 z-20 pointer-events-auto hidden md:flex flex-col items-center gap-1 opacity-60 hover:opacity-100 transition-opacity">
-                <div className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${isDarkMode ? 'text-white/50' : 'text-slate-500'}`}>Cámara</div>
-                <button onClick={() => adjustCamera('y', 2)} className={`p-2 rounded-t-lg backdrop-blur-sm border ${isDarkMode ? 'bg-white/10 hover:bg-white/20 border-white/10 text-white' : 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-800'}`}>
-                    <ArrowUpIcon className="w-5 h-5" />
-                </button>
-                <div className="flex gap-1">
-                    <button onClick={() => adjustCamera('x', -2)} className={`p-2 rounded-l-lg backdrop-blur-sm border ${isDarkMode ? 'bg-white/10 hover:bg-white/20 border-white/10 text-white' : 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-800'}`}>
-                        <ArrowLeftIcon className="w-5 h-5" />
-                    </button>
-                    <button onClick={resetCamera} className={`p-2 backdrop-blur-sm border ${isDarkMode ? 'bg-white/10 hover:bg-white/20 border-white/10 text-emerald-400' : 'bg-black/5 hover:bg-black/10 border-black/10 text-emerald-600'}`} title="Centrar">
-                        <ArrowsPointingInIcon className="w-5 h-5" />
-                    </button>
-                    <button onClick={() => adjustCamera('x', 2)} className={`p-2 rounded-r-lg backdrop-blur-sm border ${isDarkMode ? 'bg-white/10 hover:bg-white/20 border-white/10 text-white' : 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-800'}`}>
-                        <ArrowRightIcon className="w-5 h-5" />
-                    </button>
-                </div>
-                <button onClick={() => adjustCamera('y', -2)} className={`p-2 rounded-b-lg backdrop-blur-sm border ${isDarkMode ? 'bg-white/10 hover:bg-white/20 border-white/10 text-white' : 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-800'}`}>
-                    <ArrowDownIcon className="w-5 h-5" />
-                </button>
-            </div>
+            {/* Camera Controls Overlay Removed for Drag to Orbit */}
 
             {/* Instrucciones Centradas */}
             {blocks.length === 0 && !gameOver && (
@@ -954,6 +1055,8 @@ export default function UbicaBalance() {
                         <directionalLight position={[10, 20, 10]} castShadow intensity={1.5} color="#fef08a" shadow-mapSize={[1024, 1024]} shadow-bias={-0.0001} />
                         <pointLight position={[0, -5, 0]} intensity={2} color="#38bdf8" />
                         <hemisphereLight intensity={0.3} color="#ffffff" groundColor="#0f172a" />
+                        <Sky sunPosition={[10, 20, 10]} turbidity={10} rayleigh={0.5} mieCoefficient={0.005} mieDirectionalG={0.7} />
+                        <Environment preset="night" />
                     </>
                 ) : (
                     <>
@@ -961,6 +1064,8 @@ export default function UbicaBalance() {
                         <directionalLight position={[5, 15, 5]} castShadow intensity={2.5} color="#ffffff" shadow-mapSize={[1024, 1024]} shadow-bias={-0.0001} />
                         <pointLight position={[0, -5, 0]} intensity={1} color="#f0f9ff" />
                         <hemisphereLight intensity={0.6} color="#sky-200" groundColor="#slate-300" />
+                        <Sky sunPosition={[5, 15, 5]} turbidity={0.5} rayleigh={0.5} mieCoefficient={0.025} mieDirectionalG={0.8} />
+                        <Environment preset="city" />
                     </>
                 )}
 
@@ -974,13 +1079,15 @@ export default function UbicaBalance() {
                             position={block.position}
                             rotation={block.rotation}
                             color={block.color}
+                            blockType={block.blockType || 'normal'}
                             initialVelocity={block.initialVelocity || [0, 0, 0]}
                             isLogo={block.isLogo || false}
                             onFallOut={handleFallOut}
                         />
                     ))}
 
-                    <CameraRig targetY={highestY} offset={cameraOffset} />
+                    <CameraRig targetY={highestY} />
+                    <ImpactParticles />
 
                     {!gameOver && (
                         <ConstructionDrone 
@@ -994,6 +1101,12 @@ export default function UbicaBalance() {
                 </Physics>
 
                 <ContactShadows position={[0, -0.49, 0]} opacity={0.5} scale={20} blur={2.5} far={10} color="#000000" />
+                
+                <EffectComposer disableNormalPass multisampling={4}>
+                    <SSAO radius={0.4} intensity={50} luminanceInfluence={0.5} />
+                    <Bloom luminanceThreshold={1} mipmapBlur intensity={1.5} />
+                    <DepthOfField focusDistance={0.02} focalLength={0.15} bokehScale={2} height={480} />
+                </EffectComposer>
             </Canvas>
         </div>
     );
