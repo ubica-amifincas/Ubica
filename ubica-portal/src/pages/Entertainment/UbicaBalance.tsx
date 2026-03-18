@@ -1106,11 +1106,13 @@ export default function UbicaBalance() {
 
                 <ContactShadows position={[0, -0.49, 0]} opacity={0.5} scale={20} blur={2.5} far={10} color="#000000" />
                 
+                {/* 
                 <EffectComposer multisampling={4}>
                     <SSAO radius={0.4} intensity={50} luminanceInfluence={0.5} />
                     <Bloom luminanceThreshold={1} mipmapBlur intensity={1.5} />
                     <DepthOfField focusDistance={0.02} focalLength={0.15} bokehScale={2} />
-                </EffectComposer>
+                </EffectComposer> 
+                */}
             </Canvas>
         </div>
     );
