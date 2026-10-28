@@ -4,15 +4,8 @@ logging.disable(logging.CRITICAL)
 from sqlalchemy import text
 from sqlmodel import Session, create_engine
 
-# Connect directly to Supabase Cloud
-DB_USER = "postgres.iklqjuiodvmeynbcimwq"
-DB_PASS = "3Ki^e48^P1K2%%&0"
-DB_HOST = "aws-1-eu-north-1.pooler.supabase.com"
-DB_PORT = "6543"
-DB_NAME = "postgres"
-CLOUD_DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-
-engine = create_engine(CLOUD_DATABASE_URL)
+# La conexión sale de DATABASE_URL (.env), nunca de credenciales en el código.
+from database import engine
 
 with Session(engine) as session:
     # Step 1: Update ALL existing properties to have 2 images

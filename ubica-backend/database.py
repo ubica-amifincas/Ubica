@@ -11,7 +11,13 @@ if not DATABASE_URL:
     # Fallback or error if not set
     DATABASE_URL = "postgresql://postgres:password@localhost:5432/postgres"
 
-engine = create_engine(DATABASE_URL, echo=True)
+# SQLAlchemy 2.1 usa psycopg (v3) por defecto para "postgresql://"; el proyecto instala psycopg2
+for prefix in ("postgres://", "postgresql://"):
+    if DATABASE_URL.startswith(prefix):
+        DATABASE_URL = "postgresql+psycopg2://" + DATABASE_URL[len(prefix):]
+        break
+
+engine = create_engine(DATABASE_URL, echo=os.getenv("SQL_ECHO") == "1")
 
 def create_db_and_tables():
     from . import models # Ensure models are loaded

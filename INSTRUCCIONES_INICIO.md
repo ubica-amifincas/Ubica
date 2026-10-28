@@ -37,15 +37,9 @@ npx vite
 
 ---
 
-## Usuarios de Prueba
+## Usuarios
 
-Puedes usar las siguientes credenciales para probar las diferentes funcionalidades:
-
-| Rol | Email | Contraseña |
-| :--- | :--- | :--- |
-| **Admin** | `admin@amifincas.es` | `admin123` |
-| **Inmobiliaria** | `inmobiliaria1@amifincas.es` | `realtor123` |
-| **Inversor** | `inversor1@amifincas.es` | `investor123` |
+No hay credenciales de prueba publicadas: los usuarios están en Supabase (ver README).
 
 ## Solución de Problemas
 

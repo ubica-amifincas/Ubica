@@ -4,19 +4,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Cloud connection parameters (Transaction Pooler)
-params = {
-    "host": "aws-1-eu-north-1.pooler.supabase.com",
-    "user": "postgres.iklqjuiodvmeynbcimwq",
-    "password": "3Ki^e48^P1K2%%&0",
-    "dbname": "postgres",
-    "port": 6543
-}
+# La conexión sale de DATABASE_URL (.env), nunca de credenciales en el código.
+DATABASE_URL = os.environ["DATABASE_URL"].replace("postgresql+psycopg2://", "postgresql://")
 
 print(f"Testing connection to Supabase...")
 
 try:
-    conn = psycopg2.connect(**params)
+    conn = psycopg2.connect(DATABASE_URL)
     print("Connection successful!")
     cur = conn.cursor()
     cur.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";')

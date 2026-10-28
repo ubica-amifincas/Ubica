@@ -7,21 +7,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Cloud Connection (Transaction Pooler for Supabase)
-# We use the password provided by the user: 3Ki^e48^P1K2%%&0
-# Host: aws-1-eu-north-1.pooler.supabase.com
-# User: postgres.iklqjuiodvmeynbcimwq
-# Note: psycopg2/SQLModel might need percent-encoding for the password if used in a URL string, 
-# but SQLModel's create_engine handles it if passed correctly.
-DB_USER = "postgres.iklqjuiodvmeynbcimwq"
-DB_PASS = "3Ki^e48^P1K2%%&0"
-DB_HOST = "aws-1-eu-north-1.pooler.supabase.com"
-DB_PORT = "6543"
-DB_NAME = "postgres"
-
-CLOUD_DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-
-engine = create_engine(CLOUD_DATABASE_URL, echo=True)
+# La conexión sale de DATABASE_URL (.env), nunca de credenciales en el código.
+from database import engine
 
 # Directorio de datos JSON local
 DB_DIR = os.path.join(os.path.dirname(__file__), "data")

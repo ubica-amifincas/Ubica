@@ -52,3 +52,9 @@ Thumbs.db
 _agents/
 _agent/
 C:/Users/Pencho/.gemini/antigravity/brain/
+.venv/
+*.log
+ubica-backend/data/users.json
+ubica-backend/data/messages.json
+ubica-backend/data/favorites.json
+ubica-backend/data/searches.json

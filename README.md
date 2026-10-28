@@ -1,6 +1,6 @@
 # Ubica v2 — Plataforma Inmobiliaria Enterprise
 
-Portal inmobiliario con frontend React (Vite) y backend FastAPI. El backend usa datos en memoria (sin base de datos externa).
+Portal inmobiliario con frontend React (Vite, desplegado en Vercel) y backend FastAPI (desplegado en Render) sobre PostgreSQL en Supabase.
 
 ---
 
@@ -80,29 +80,33 @@ El frontend estará disponible en: `http://localhost:5173`
 
 ## Variables de entorno
 
-El frontend usa el archivo `ubica-portal/.env.local`:
+**Backend** (`ubica-backend/.env`, ver `.env.example`; en producción se configuran en Render):
+
+| Variable | Descripción |
+|----------|-------------|
+| `DATABASE_URL` | Cadena de conexión de Supabase (Transaction Pooler, puerto 6543) |
+| `JWT_SECRET_KEY` | Secreto para firmar los tokens. **Obligatoria en Render**; en local se genera una temporal |
+| `RESEND_API_KEY` | API key de Resend para los correos. Vacía en local = no se envían correos |
+| `FRONTEND_URL` | URL pública del frontend (enlaces de verificación) |
+| `GEMINI_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY` | Proveedores del chat de IA |
+
+**Frontend** (`ubica-portal/.env.local`):
 
 ```env
-VITE_API_BASE_URL=http://localhost:8000/api
-VITE_USE_MOCK_API=false
+VITE_API_URL=http://localhost:8000/api
 ```
 
-No se necesita configuración adicional para desarrollo local.
+Nunca subas credenciales al repositorio: los `.env` están en `.gitignore`.
 
 ---
 
-## Usuarios de prueba
+## Usuarios
 
-| Rol        | Email                          | Contraseña   |
-|------------|-------------------------------|--------------|
-| Admin      | admin@amifincas.es            | admin123     |
-| Realtor    | inmobiliaria1@amifincas.es    | realtor123   |
-| Investor   | inversor1@amifincas.es        | investor123  |
+Los usuarios viven en la base de datos de Supabase. No hay credenciales de prueba publicadas: créalos desde el panel de administración.
 
 ---
 
 ## Notas importantes
 
-- El backend almacena datos **en memoria**. Al reiniciar se pierden las propiedades creadas durante la sesión (las propiedades base se recargan desde `ubica-portal/public/propertiesMurcia.json`).
-- CORS está configurado para aceptar cualquier origen (`*`), apto solo para desarrollo.
+- En local el backend usa la base de datos indicada en `DATABASE_URL`: si apunta a producción, los cambios se ven en la web real.
 - En **Windows**, si PowerShell bloquea la ejecución de scripts (`UnauthorizedAccess`), ejecutar los comandos con `cmd /c "..."` como se indica arriba.

@@ -45,13 +45,20 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 # Configuración JWT
-SECRET_KEY = "ubica-enterprise-secret-key-2024"
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+if not SECRET_KEY:
+    if os.getenv("RENDER"):
+        raise RuntimeError("Falta la variable de entorno JWT_SECRET_KEY")
+    # En local se genera una al arrancar: las sesiones caducan al reiniciar el backend
+    import secrets
+    SECRET_KEY = secrets.token_urlsafe(48)
+    print("WARNING: JWT_SECRET_KEY no definida, usando una clave temporal.")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 1440
 
 # Configuración de Resend (API en lugar de SMTP)
-RESEND_API_KEY = os.getenv("RESEND_API_KEY", "re_VAQbSFme_Dxv6Wd6TFqbiaUmjdHx3BR1y")
-RESEND_SENDER = "onboarding@resend.dev" # Cambiar a no-reply@amifincas.es tras verificar dominio
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+RESEND_SENDER = os.getenv("RESEND_SENDER", "onboarding@resend.dev") # Cambiar a no-reply@amifincas.es tras verificar dominio
 
 # Inicializar FastAPI
 app = FastAPI(
@@ -279,11 +286,20 @@ load_ai_usage()
 
 # Utilidades
 def hash_password(password: str) -> str:
-    import hashlib
-    return hashlib.sha256(password.encode()).hexdigest()
+    import bcrypt
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+def is_legacy_hash(hashed_password: str) -> bool:
+    # Hashes antiguos: SHA-256 sin sal (64 caracteres hex)
+    return not hashed_password.startswith("$2")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return hash_password(plain_password) == hashed_password
+    import bcrypt
+    import hmac
+    if is_legacy_hash(hashed_password):
+        legacy = hashlib.sha256(plain_password.encode()).hexdigest()
+        return hmac.compare_digest(legacy, hashed_password)
+    return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
 
 def create_access_token(data: dict):
     from datetime import datetime, timedelta
@@ -294,9 +310,11 @@ def create_access_token(data: dict):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), session: Session = Depends(get_session)):
+def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security), session: Session = Depends(get_session)):
     import jwt
     from fastapi import HTTPException
+    if credentials is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
     try:
         payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
         user_id_str: str = payload.get("sub")
@@ -382,7 +400,14 @@ async def login(login_data: LoginRequest, session: Session = Depends(get_session
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email o contraseña incorrectos"
         )
-    
+
+    # Migración transparente: al entrar con un hash SHA-256 antiguo se guarda en bcrypt
+    if is_legacy_hash(user.hashed_password):
+        user.hashed_password = hash_password(login_data.password)
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+
     if not user.is_verified:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -394,7 +419,7 @@ async def login(login_data: LoginRequest, session: Session = Depends(get_session
         access_token=access_token,
         token_type="bearer",
         expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        user=user
+        user=User.model_validate(user, from_attributes=True)
     )
 
 @app.post("/api/auth/register", response_model=Dict[str, Any])
@@ -502,149 +527,33 @@ async def register(user_data: UserCreate, background_tasks: BackgroundTasks, ses
     </html>
     """
     
-    message = MessageSchema(
-        subject="Verifica tu cuenta en Ubica Enterprise",
-        recipients=[user_data.email],
-        body=html_content,
-        subtype=MessageType.html
-    )
-
-    async def send_verification_email(msg: MessageSchema, email_to: str):
-        debug_log = os.path.join(UPLOAD_DIR, "email_debug.log")
-        fm = FastMail(mail_conf)
-        try:
-            await fm.send_message(msg)
-            log_msg = f"[{datetime.now().strftime('%H:%M:%S')}] SUCCESS: Correo enviado a {email_to}\n"
-            print(log_msg)
-            try:
-                with open(debug_log, "a") as f:
-                    f.write(log_msg)
-            except: pass
-        except Exception as e:
-            error_msg = f"[{datetime.now().strftime('%H:%M:%S')}] ERROR: al enviar correo a {email_to}: {str(e)}\n"
-            print(error_msg)
-            try:
-                with open(debug_log, "a") as f:
-                    f.write(error_msg)
-            except: pass
-    
     # Añadir a tareas en segundo plano
-    background_tasks.add_task(send_verification_email, message, user_data.email)
+    background_tasks.add_task(send_email_resend, user_data.email, "Verifica tu cuenta en Ubica Enterprise", html_content)
     
     return {
         "message": "Usuario registrado exitosamente. Por favor revisa tu correo electrónico para verificar tu cuenta.",
         "user_id": new_id
     }
 
-@app.get("/api/debug/email-logs")
-@app.get("/api/debug/email_logs") # Soporta ambos formatos
-async def get_email_logs():
-    log_path = os.path.join(UPLOAD_DIR, "email_debug.log")
-    if os.path.exists(log_path):
-        with open(log_path, "r") as f:
-            content = f.read()
-            return {"logs": content}
-    return {"message": "No hay logs disponibles", "path": log_path}
-
-@app.get("/api/test-email")
-async def test_email_endpoint(email: str = "mierdaspencho@gmail.com"):
-    """Endpoint simplificado para testear el envío de mail con diseño premium vía Resend"""
-    import aiohttp
-    logo_url = "https://ubica.amifincas.es/logo_ubica.png"
+async def send_email_resend(email_to: str, subject: str, html: str) -> Dict[str, Any]:
+    """Envía un correo vía la API de Resend. Sin RESEND_API_KEY (p. ej. en local) solo lo registra."""
+    if not RESEND_API_KEY:
+        print(f"[email] RESEND_API_KEY no definida; no se envía '{subject}' a {email_to}")
+        return {"status": "skipped"}
     try:
-        async with aiohttp.ClientSession() as session:
-            payload = {
-                "from": f"Ubica <{RESEND_SENDER}>",
-                "to": [email],
-                "subject": "Prueba de Diseño Premium (Ubica)",
-                "html": f"""
-                <!DOCTYPE html>
-                <html lang="es">
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                </head>
-                <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f7f5; color: #333;">
-                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                        <tr>
-                            <td style="padding: 30px; text-align: center; background-color: #4a9d78;">
-                                <img src="{logo_url}" alt="Ubica" style="height: 50px;">
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 40px 30px;">
-                                <h1 style="color: #4a9d78; font-size: 24px; margin-top: 0;">Prueba de Diseño Exitosa</h1>
-                                <p style="font-size: 16px; line-height: 1.6; color: #555;">
-                                    Si estás leyendo esto con un diseño elegante, el logo de Ubica y fondo claro, significa que la integración del nuevo diseño premium ha sido un éxito.
-                                </p>
-                                <div style="margin-top: 30px; text-align: center;">
-                                    <div style="display: inline-block; padding: 12px 24px; background-color: #4a9d78; color: white; border-radius: 8px; font-weight: bold;">
-                                        Diseño Activo
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
-                </body>
-                </html>
-                """
-            }
-            headers = {
-                "Authorization": f"Bearer {RESEND_API_KEY}",
-                "Content-Type": "application/json"
-            }
-            async with session.post("https://api.resend.com/emails", json=payload, headers=headers) as resp:
+        async with aiohttp.ClientSession() as http:
+            payload = {"from": f"Ubica <{RESEND_SENDER}>", "to": [email_to], "subject": subject, "html": html}
+            headers = {"Authorization": f"Bearer {RESEND_API_KEY}", "Content-Type": "application/json"}
+            async with http.post("https://api.resend.com/emails", json=payload, headers=headers) as resp:
                 result = await resp.json()
                 if resp.status in [200, 201]:
-                    return {"status": "success", "message": f"Correo premium enviado a {email}", "id": result.get("id")}
-                else:
-                    return {"status": "error", "message": f"Error API Resend: {result}"}
+                    print(f"[email] Enviado '{subject}' a {email_to}")
+                    return {"status": "success", "id": result.get("id")}
+                print(f"[email] Error de Resend al enviar a {email_to}: {result}")
+                return {"status": "error", "message": f"Error API Resend: {result}"}
     except Exception as e:
+        print(f"[email] Error al enviar a {email_to}: {e}")
         return {"status": "error", "message": str(e)}
-
-@app.get("/api/net")
-async def quick_net_test():
-    import socket
-    target = "smtp.gmail.com"
-    results = {}
-    for port in [587, 465, 25]:
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(3)
-            s.connect((target, port))
-            s.close()
-            results[str(port)] = "OPEN"
-        except Exception as e:
-            results[str(port)] = f"CLOSED: {str(e)}"
-    return results
-
-@app.get("/api/debug/network-test")
-async def network_test():
-    import socket
-    results = {}
-    targets = [
-        ("smtp.gmail.com", 587),
-        ("smtp.gmail.com", 465),
-        ("8.8.8.8", 53),
-        ("google.com", 80)
-    ]
-    
-    for host, port in targets:
-        try:
-            # Test DNS
-            ip = socket.gethostbyname(host)
-            results[f"{host}_dns"] = ip
-            
-            # Test Connectivity
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(5)
-            s.connect((host, port))
-            s.close()
-            results[f"{host}:{port}"] = "CONNECTED"
-        except Exception as e:
-            results[f"{host}:{port}"] = f"FAILED: {str(e)}"
-            
-    return results
 
 @app.get("/api/auth/verify-email")
 async def verify_email(token: str, session: Session = Depends(get_session)):
@@ -679,13 +588,15 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
     return current_user
 
 @app.post("/api/upload-images")
-async def upload_images(files: List[UploadFile] = File(...)):
+async def upload_images(files: List[UploadFile] = File(...), current_user: models.User = Depends(get_current_user)):
     uploaded_urls = []
     base_url = "http://localhost:8000/uploads" # Idealmente esto vendría de una variable de entorno
-    
+
     for file in files:
         # Generar nombre único
-        ext = os.path.splitext(file.filename)[1]
+        ext = os.path.splitext(file.filename)[1].lower()
+        if ext not in {".jpg", ".jpeg", ".png", ".webp", ".gif"}:
+            raise HTTPException(status_code=400, detail=f"Tipo de archivo no permitido: {ext or 'sin extensión'}")
         unique_filename = f"{uuid.uuid4()}{ext}"
         file_path = os.path.join(UPLOAD_DIR, unique_filename)
         
@@ -746,11 +657,11 @@ async def get_admin_dashboard(current_user: models.User = Depends(require_role([
         market_growth=5.2
     )
 
-@app.get("/api/admin/users", response_model=List[models.User])
+@app.get("/api/admin/users", response_model=List[User])
 async def get_all_users(current_user: models.User = Depends(require_role(["admin"])), session: Session = Depends(get_session)):
     return session.exec(select(models.User)).all()
 
-@app.post("/api/admin/users", response_model=models.User)
+@app.post("/api/admin/users", response_model=User)
 async def create_user(user_data: dict, current_user: models.User = Depends(require_role(["admin"])), session: Session = Depends(get_session)):
     # Verify email doesn't exist
     existing_user = session.exec(select(models.User).where(models.User.email == user_data.get('email'))).first()
@@ -774,7 +685,7 @@ async def create_user(user_data: dict, current_user: models.User = Depends(requi
     session.refresh(new_user)
     return new_user
 
-@app.put("/api/admin/users/{user_id}", response_model=models.User)
+@app.put("/api/admin/users/{user_id}", response_model=User)
 async def update_user(user_id: int, user_data: dict, current_user: models.User = Depends(require_role(["admin"])), session: Session = Depends(get_session)):
     u = session.get(models.User, user_id)
     if u is None:
