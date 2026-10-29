@@ -113,7 +113,7 @@ El frontend estará disponible en: `http://localhost:5173`
 | `FRONTEND_URL` | URL pública del frontend (enlaces de verificación) |
 | `GEMINI_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY` | Proveedores del chat de IA |
 | `OPENROUTER_MODEL`, `GROQ_MODEL` | Modelo de cada proveedor (opcional). Cámbialos aquí si un proveedor retira el modelo |
-| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_STORAGE_BUCKET` | Imágenes en Supabase Storage (bucket público, por defecto `property-images`). Sin ellas se guardan en el disco, que en Render se borra en cada despliegue |
+| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_STORAGE_BUCKET` | Imágenes en Supabase Storage (bucket público, por defecto `property-images`). La clave es la *secret key* (`sb_secret_...`) de Settings → API Keys, o la antigua `service_role`. Sin ellas se guardan en el disco, que en Render se borra en cada despliegue |
 | `BACKEND_PUBLIC_URL` | URL pública del backend para las imágenes en disco (opcional; en Render se usa `RENDER_EXTERNAL_URL`) |
 
 **Frontend** (`ubica-portal/.env.local`):

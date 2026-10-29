@@ -20,7 +20,10 @@ def _looks_like_image(data: bytes) -> bool:
 
 async def _store_in_supabase(name: str, data: bytes, content_type: str) -> str:
     url = f"{SUPABASE_URL}/storage/v1/object/{SUPABASE_STORAGE_BUCKET}/{name}"
-    headers = {"Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}", "Content-Type": content_type}
+    # Las claves nuevas (sb_secret_...) no son JWT y solo van en "apikey"; la antigua service_role (JWT) va también como Bearer
+    headers = {"apikey": SUPABASE_SERVICE_ROLE_KEY, "Content-Type": content_type}
+    if SUPABASE_SERVICE_ROLE_KEY.startswith("eyJ"):
+        headers["Authorization"] = f"Bearer {SUPABASE_SERVICE_ROLE_KEY}"
     async with aiohttp.ClientSession() as http:
         async with http.post(url, data=data, headers=headers) as resp:
             if resp.status >= 300:

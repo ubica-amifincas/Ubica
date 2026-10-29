@@ -273,3 +273,38 @@ def test_ai_config_admin_only(client, make_user):
     assert client.get("/api/ai/config", headers=auth(make_user())).status_code == 403
     r = client.get("/api/ai/config", headers=auth(make_user(email="a@example.com", role="admin")))
     assert r.status_code == 200 and r.json()["has_api_key"] is False
+
+
+def test_upload_to_supabase_storage(client, make_user, monkeypatch):
+    import routers.uploads as uploads
+    calls = []
+
+    class FakeResponse:
+        status = 200
+        async def __aenter__(self):
+            return self
+        async def __aexit__(self, *exc):
+            return False
+        async def text(self):
+            return ""
+
+    class FakeSession:
+        async def __aenter__(self):
+            return self
+        async def __aexit__(self, *exc):
+            return False
+        def post(self, url, data, headers):
+            calls.append((url, headers, len(data)))
+            return FakeResponse()
+
+    monkeypatch.setattr(uploads, "SUPABASE_URL", "https://proyecto.supabase.co")
+    monkeypatch.setattr(uploads, "SUPABASE_SERVICE_ROLE_KEY", "sb_secret_prueba")
+    monkeypatch.setattr(uploads.aiohttp, "ClientSession", FakeSession)
+    r = client.post("/api/upload-images", files={"files": ("a.png", b"\x89PNG\r\n\x1a\n" + b"\x00" * 16, "image/png")}, headers=auth(make_user()))
+    assert r.status_code == 200
+    url = r.json()["urls"][0]
+    assert url.startswith("https://proyecto.supabase.co/storage/v1/object/public/property-images/") and url.endswith(".png")
+    [(post_url, headers, size)] = calls
+    assert post_url.startswith("https://proyecto.supabase.co/storage/v1/object/property-images/")
+    assert headers["apikey"] == "sb_secret_prueba" and "Authorization" not in headers
+    assert headers["Content-Type"] == "image/png" and size == 24
