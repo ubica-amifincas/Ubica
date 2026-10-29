@@ -1,10 +1,6 @@
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeftIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import LegalLayout, { H2 } from '../components/legal/LegalLayout';
 
 export default function Terms() {
-    const navigate = useNavigate();
-
     const sections = [
         {
             title: '1. Objeto y Aceptación',
@@ -44,61 +40,18 @@ export default function Terms() {
         },
         {
             title: '10. Contacto',
-            content: 'Para cualquier consulta sobre estos Términos de Servicio, puede contactar con nosotros en: AMI Fincas — C. Ángeles, 41, 30007 Murcia — info@amifincas.es — +34 609 00 88 64.',
+            content: 'Para cualquier consulta sobre estos Términos de Servicio, puede contactar con nosotros en: AMI Fincas — C. Ángeles, 41, 30007 Murcia — info@amifincas.es — 676 62 69 33.',
         },
     ];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-            {/* Hero */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="relative overflow-hidden bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-500 py-16"
-            >
-                <div className="page-container text-center">
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.2 }}
-                        className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6"
-                    >
-                        <DocumentTextIcon className="h-5 w-5 text-white" />
-                        <span className="text-white text-sm font-medium">Última actualización: Febrero 2026</span>
-                    </motion.div>
-                    <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Términos de Servicio</h1>
-                    <p className="text-lg text-white/90 max-w-2xl mx-auto">Condiciones de uso de la plataforma Ubica by AMI Fincas</p>
-                </div>
-            </motion.div>
-
-            {/* Content */}
-            <div className="page-container py-12">
-                <div className="max-w-4xl mx-auto">
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-medium mb-8 transition-colors"
-                    >
-                        <ArrowLeftIcon className="h-4 w-4" />
-                        Volver
-                    </button>
-
-                    <div className="space-y-6">
-                        {sections.map((section, i) => (
-                            <motion.div
-                                key={section.title}
-                                initial={{ opacity: 0, y: 15 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.3 + i * 0.05 }}
-                                className="bg-white dark:bg-gray-800 rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 dark:border-gray-700"
-                            >
-                                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{section.title}</h2>
-                                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{section.content}</p>
-                            </motion.div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        </div>
+        <LegalLayout title="Términos de servicio" updated="febrero de 2026">
+            {sections.map(section => (
+                <section key={section.title}>
+                    <H2>{section.title}</H2>
+                    <p className="mt-2">{section.content}</p>
+                </section>
+            ))}
+        </LegalLayout>
     );
 }

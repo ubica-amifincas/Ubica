@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
+import { propertyPath } from '../seo/pages';
+import { setPageHead } from '../hooks/useDocumentTitle';
+import { UBICA_ORIGIN } from '../utils/site';
 import {
   ArrowLeftIcon,
   MapPinIcon,
@@ -75,8 +78,11 @@ const statusChipClass = (status: string) => {
 const specGridCols: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3', 4: 'grid-cols-4' };
 
 export default function PropertyDetail() {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams<{ id?: string; slug?: string }>();
+  // /inmueble/123-piso-en-murcia o la antigua /property/123
+  const id = params.id ?? params.slug?.match(/^\d+/)?.[0];
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useLanguage();
 
   const [property, setProperty] = useState<Property | null>(null);
@@ -136,7 +142,13 @@ export default function PropertyDetail() {
       try {
         const foundProperty = await appService.getProperty(Number(id));
         setProperty(foundProperty);
-        if (foundProperty?.title) document.title = `${foundProperty.title} | Ubica`;
+        if (foundProperty) {
+          // Una sola dirección por inmueble: la legible (la misma que usa Google)
+          const canonical = propertyPath(foundProperty);
+          if (location.pathname !== canonical) navigate(`${canonical}${location.search}${location.hash}`, { replace: true });
+          const summary = (foundProperty.description || '').replace(/\s+/g, ' ').trim().slice(0, 155);
+          setPageHead(`${foundProperty.title} | Ubica`, summary || foundProperty.title, `${UBICA_ORIGIN}${canonical}`);
+        }
 
         // Filter valid images
         const imgs = foundProperty.images?.filter((img: string) => img && typeof img === 'string' && img.trim() !== '') || [];
@@ -199,7 +211,8 @@ export default function PropertyDetail() {
   };
 
   const handleViewDetails = (propertyId: number) => {
-    navigate(`/property/${propertyId}`);
+    const target = similarProperties.find(p => p.id === propertyId);
+    navigate(target ? propertyPath(target) : `/inmueble/${propertyId}`);
   };
 
   const toggleFavorite = async () => {

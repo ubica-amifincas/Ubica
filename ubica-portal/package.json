@@ -7,7 +7,8 @@
     "dev": "pnpm install && vite",
     "build": "pnpm install && tsc -b && vite build",
     "lint": "pnpm install && eslint .",
-    "preview": "pnpm install && vite preview"
+    "preview": "pnpm install && vite preview",
+    "test:middleware": "node scripts/test-middleware.mjs"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "5.2.6",

@@ -1,26 +1,104 @@
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, ListBulletIcon } from '@heroicons/react/24/outline';
+import { isAmiSite } from '../../utils/site';
+import { slugify } from '../../seo/pages';
 
-/** Maqueta común de los textos legales (redactados por AgenciaDatos para MAYNSASER 2014, S.L.). */
-export default function LegalLayout({ title, children }: { title: string; children: ReactNode }) {
+/**
+ * Maqueta común de los textos legales (redactados por AgenciaDatos para MAYNSASER 2014, S.L.), con la
+ * imagen de la web en la que se ven: verde Ubica en ubica.amifincas.es y los colores de AMI en amifincas.es.
+ * El índice se arma solo con los apartados (H2) del texto.
+ */
+export default function LegalLayout({ title, updated, children }: { title: string; updated?: string; children: ReactNode }) {
+  const articleRef = useRef<HTMLElement>(null);
+  const [sections, setSections] = useState<{ id: string; label: string }[]>([]);
+
+  useEffect(() => {
+    const headings = Array.from(articleRef.current?.querySelectorAll('h2') ?? []);
+    setSections(headings.map((h, i) => {
+      h.id ||= `${slugify(h.textContent || '') || 'apartado'}-${i + 1}`;
+      return { id: h.id, label: (h.textContent || '').trim() };
+    }));
+  }, [children]);
+
+  const ami = isAmiSite;
+  const accentText = ami ? 'text-[#23707f] dark:text-[#8fd0c3]' : 'text-emerald-700 dark:text-emerald-400';
+
+  const toc = sections.length > 2 && (
+    <nav aria-label="Índice" className="text-sm">
+      <p className="mb-3 flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
+        <ListBulletIcon className="h-4 w-4" aria-hidden="true" /> Índice
+      </p>
+      <ol className="space-y-2 border-l border-gray-200 pl-4 dark:border-gray-700">
+        {sections.map(s => (
+          <li key={s.id}>
+            <a href={`#${s.id}`} className={`block text-gray-600 hover:underline dark:text-gray-400 ${ami ? 'hover:text-[#23707f] dark:hover:text-[#8fd0c3]' : 'hover:text-emerald-700 dark:hover:text-emerald-400'}`}>
+              {s.label}
+            </a>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="page-container py-10 sm:py-14">
-        <div className="max-w-3xl">
-          <Link to="/" className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-emerald-700 dark:hover:text-emerald-400">
+    <div className={`min-h-screen ${ami ? 'bg-slate-50 dark:bg-[#0f172a]' : 'bg-gray-50 dark:bg-gray-900'}`}>
+      {/* Cabecera con el estilo de la portada de cada web */}
+      {ami ? (
+        <header className="relative overflow-hidden">
+          <div className="pointer-events-none absolute -right-40 -top-40 h-[420px] w-[420px] rounded-full bg-[#A2D18D]/20 blur-3xl" aria-hidden="true" />
+          <div className="page-container relative pb-6 pt-10 sm:pt-14">
+            <Link to="/" className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-[#23707f] dark:text-slate-400 dark:hover:text-[#8fd0c3]">
+              <ArrowLeftIcon className="h-4 w-4" /> Volver al inicio
+            </Link>
+            <p className="mt-8 text-sm font-black uppercase tracking-[0.3em] text-[#23707f] dark:text-[#8fd0c3]">AMI Fincas</p>
+            <h1 className="mt-2 font-display text-4xl font-black leading-tight sm:text-5xl">
+              <span className="bg-gradient-to-r from-[#5fa64a] to-[#2D8A9D] bg-clip-text text-transparent">{title}</span>
+            </h1>
+            <Owner updated={updated} />
+          </div>
+        </header>
+      ) : (
+        <header className="page-container pt-8">
+          <Link to="/" className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-emerald-700 dark:text-gray-400 dark:hover:text-emerald-400">
             <ArrowLeftIcon className="h-4 w-4" /> Volver al inicio
           </Link>
-          <header className="mt-6 mb-8">
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">{title}</h1>
-            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">MAYNSASER 2014, S.L. · Avda. Casillas de Coria, 4 · 30007 Murcia (Murcia) · España</p>
-          </header>
-          <article className="rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6 sm:p-10 text-gray-700 dark:text-gray-300 leading-relaxed space-y-4 text-[15px]">
-            {children}
-          </article>
+          <div className="mt-6 rounded-3xl bg-emerald-600 px-6 py-8 shadow-xl sm:px-10 sm:py-10">
+            <h1 className="font-display text-3xl font-bold text-white sm:text-4xl">{title}</h1>
+            <Owner updated={updated} light />
+          </div>
+        </header>
+      )}
+
+      <div className="page-container py-8 sm:py-10">
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_15rem] lg:gap-10">
+          <div className="min-w-0 max-w-3xl">
+            {/* Móvil: índice plegable encima del texto */}
+            {toc && (
+              <details className="mb-6 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 lg:hidden">
+                <summary className={`cursor-pointer font-semibold ${accentText}`}>Ver índice</summary>
+                <div className="mt-4">{toc}</div>
+              </details>
+            )}
+            <article ref={articleRef}
+              className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 text-[15px] leading-relaxed text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 sm:p-10 [&_h2]:scroll-mt-24">
+              {children}
+            </article>
+          </div>
+          {toc && <aside className="hidden lg:block"><div className="sticky top-24">{toc}</div></aside>}
         </div>
       </div>
     </div>
+  );
+}
+
+function Owner({ updated, light = false }: { updated?: string; light?: boolean }) {
+  const tone = light ? 'text-white/85' : 'text-slate-500 dark:text-slate-400';
+  return (
+    <p className={`mt-3 text-sm ${tone}`}>
+      MAYNSASER 2014, S.L. · Avda. Casillas de Coria, 4 · 30007 Murcia (Murcia) · España
+      {updated && <span className="block sm:inline"><span className="hidden sm:inline"> · </span>Última actualización: {updated}</span>}
+    </p>
   );
 }
 
@@ -37,7 +115,7 @@ export const List = ({ children }: { children: ReactNode }) => (
 );
 
 export const ExtLink = ({ href }: { href: string }) => (
-  <a href={href} target="_blank" rel="noopener noreferrer" className="text-emerald-700 dark:text-emerald-400 underline break-all">{href}</a>
+  <a href={href} target="_blank" rel="noopener noreferrer" className={`underline break-all ${isAmiSite ? 'text-[#23707f] dark:text-[#8fd0c3]' : 'text-emerald-700 dark:text-emerald-400'}`}>{href}</a>
 );
 
 export function Table({ head, rows }: { head: string[]; rows: ReactNode[][] }) {

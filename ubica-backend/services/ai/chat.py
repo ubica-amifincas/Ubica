@@ -79,7 +79,8 @@ def sanitize_links(text: str, user_id: Optional[int], user_role: str) -> str:
     def fix(match: re.Match) -> str:
         # La web ya añade "→" a los enlaces internos; se quita el que ponga el modelo para no duplicarlo
         label, path = match.group(1).rstrip(" →"), match.group(2)
-        prop = re.fullmatch(r"/property/(\d+)(#[\w-]+)?", path)
+        # /property/123 (la que escribe el modelo) o la dirección pública /inmueble/123-piso-en-murcia
+        prop = re.fullmatch(r"/(?:property|inmueble)/(\d+)(?:-[a-z0-9-]*)?(#[\w-]+)?", path)
         if prop:
             return f"[{label}]({path})" if visible(int(prop.group(1))) else label
         if path == "/" or path.startswith(INTERNAL_LINK_PREFIXES):

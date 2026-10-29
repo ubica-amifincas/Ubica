@@ -102,6 +102,8 @@ function AppRoutes() {
             <Route path="/" element={<MainLayout />}>
               <Route index element={isAmiSite ? <AmiFincas /> : <Home />} />
               <Route path="ami-fincas" element={<AmiFincas />} />
+              {/* Dirección pública de la ficha; /property/:id es la antigua y se corrige al cargar */}
+              <Route path="inmueble/:slug" element={<PropertyDetail />} />
               <Route path="property/:id" element={<PropertyDetail />} />
               <Route path="about" element={<About />} />
               <Route path="contact" element={<Contact />} />

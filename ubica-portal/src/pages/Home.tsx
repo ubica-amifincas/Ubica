@@ -31,6 +31,7 @@ import type { Property, PropertyFilters } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { PROPERTY_TYPES, normalizeType } from '../utils/propertyStatus';
 import { useAIChat } from '../contexts/AIChatContext';
+import { propertyPath } from '../seo/pages';
 
 // Custom marker icon for properties with price
 const createPriceMarker = (price: number, isSelected: boolean = false) => {
@@ -420,7 +421,8 @@ export default function Home() {
   };
 
   const handleViewDetails = (propertyId: number) => {
-    navigate(`/property/${propertyId}`);
+    const target = properties.find(p => p.id === propertyId);
+    navigate(target ? propertyPath(target) : `/inmueble/${propertyId}`);
   };
 
   const handleMarkerClick = (property: Property) => {

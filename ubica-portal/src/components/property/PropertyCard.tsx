@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { propertyPath } from '../../seo/pages';
 import { motion } from 'framer-motion';
 import {
   MapPinIcon,
@@ -230,7 +232,9 @@ export function PropertyCard({
           )}
         </div>
         <h3 className="font-sans text-sm md:text-base font-semibold text-gray-900 dark:text-white line-clamp-1">
-          {property.title}
+          <Link to={propertyPath(property)} onClick={(e) => e.stopPropagation()} tabIndex={-1} className="text-inherit no-underline">
+            {property.title}
+          </Link>
         </h3>
         {property.location?.trim() && (
           <div className="flex items-center text-xs md:text-sm text-gray-500 dark:text-gray-400">
