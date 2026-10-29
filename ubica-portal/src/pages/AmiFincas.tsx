@@ -25,8 +25,8 @@ const INTRO_KEY = 'ami-intro-seen';
 const FOUNDED = 2014;
 
 // Datos de contacto (los mismos que la ficha de Google Maps de cada sede)
-const MAIN_PHONE = '609 00 88 64';
-const WHATSAPP_NUMBER = '34609008864';
+const MAIN_PHONE = '676 62 69 33';
+const WHATSAPP_NUMBER = '34676626933';
 const EMAIL = 'info@amifincas.es';
 
 /** La animación de entrada solo la primera vez en la sesión y sin "reducir movimiento". */
