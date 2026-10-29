@@ -9,6 +9,9 @@ import models
 from database import engine
 from services.properties import get_allowed_properties_statement
 
+# El modelo suele pedir el estado en español; en la base de datos se guarda en inglés
+ESTADO_ALIASES = {"venta": "for-sale", "vend": "for-sale", "compra": "for-sale", "alquil": "for-rent", "renta": "for-rent", "reserv": "reserved", "disponible": "available"}
+
 async def buscar_propiedades(user_id: Optional[int], user_role: str, ubicacion: str = "", precio_maximo: float = 0.0, tipo: str = "", estado: str = "") -> str:
     """Busca propiedades en la base de datos aplicando filtros."""
     with Session(engine) as session:
@@ -55,6 +58,7 @@ async def buscar_propiedades(user_id: Optional[int], user_role: str, ubicacion: 
             else:
                 statement = statement.where(or_(models.Property.type.ilike(f"%{tipo}%"), models.Property.title.ilike(f"%{tipo}%")))
         if estado:
+            estado = next((v for k, v in ESTADO_ALIASES.items() if k in estado.lower()), estado)
             statement = statement.where(models.Property.status.ilike(f"%{estado}%"))
         statement = statement.limit(15)
         properties = session.exec(statement).all()

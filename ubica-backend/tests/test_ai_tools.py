@@ -25,6 +25,16 @@ def test_buscar_propiedades_respeta_visibilidad(make_user, make_property):
     assert {p["titulo"] for p in mine} == {"Piso público", "Piso privado"}
 
 
+def test_buscar_propiedades_estado_en_espanol(make_property):
+    make_property(title="Villa en venta", type="villa", status="for-sale")
+    make_property(title="Villa en alquiler", type="villa", status="for-rent")
+    venta = json.loads(run(tools.execute_tool("buscar_propiedades", {"tipo": "villa", "estado": "venta"}, None, "guest")))
+    assert [p["titulo"] for p in venta] == ["Villa en venta"]
+    alquiler = json.loads(run(tools.execute_tool("buscar_propiedades", {"estado": "en alquiler"}, None, "guest")))
+    assert [p["titulo"] for p in alquiler] == ["Villa en alquiler"]
+    assert len(json.loads(run(tools.execute_tool("buscar_propiedades", {"estado": "for-sale"}, None, "guest")))) == 1
+
+
 def test_herramientas_sin_registro_y_desconocidas():
     assert json.loads(run(tools.execute_tool("mis_favoritos", {}, None, "guest")))["requiere_registro"] is True
     assert json.loads(run(tools.execute_tool("estadisticas_cartera", {}, 1, "user")))["requiere_rol"] is True
