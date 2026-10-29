@@ -9,7 +9,8 @@ import models
 from database import get_session
 from schemas import AIChatRequest
 from security import get_current_user, get_user_or_none, require_role
-from services.ai.chat import AI_CONFIG, OPENAI_AVAILABLE, PROVIDERS, build_system_instruction, fallback_answer, persist_conversation, run_openai_provider
+from services.ai.chat import (AI_CONFIG, OPENAI_AVAILABLE, PROVIDERS, build_system_instruction, check_providers, fallback_answer,
+                             persist_conversation, run_openai_provider)
 from services.ai.usage import check_ai_usage
 from services.ratelimit import get_client_ip
 
@@ -64,13 +65,15 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
     }
 
 @router.get("/api/ai/config")
-async def get_ai_config(current_user: models.User = Depends(require_role(["admin"]))):
-    """Ver la configuracion actual de la IA (solo admin)"""
+async def get_ai_config(check: bool = False, current_user: models.User = Depends(require_role(["admin"]))):
+    """Configuración de la IA (solo admin). Con ?check=true pregunta a cada proveedor si responde."""
+    providers = await check_providers() if check else [
+        {"provider": name, "model": model, "configured": bool(key)} for name, key, _, model in PROVIDERS
+    ]
     return {
         "enabled": AI_CONFIG["enabled"],
-        "provider": AI_CONFIG["provider"],
-        "model": AI_CONFIG["model"] or "placeholder",
-        "has_api_key": bool(AI_CONFIG["api_key"]),
+        "providers": providers,
+        "has_api_key": any(bool(key) for _, key, _, _ in PROVIDERS),
         "max_tokens": AI_CONFIG["max_tokens"],
         "temperature": AI_CONFIG["temperature"],
     }

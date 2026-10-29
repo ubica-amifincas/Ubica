@@ -57,7 +57,7 @@ def test_chat_con_proveedor_y_tool_calling(client, make_user, make_property, mon
             return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(tool_calls=None, content=text))])
 
     class FakeClient:
-        def __init__(self, api_key, base_url):
+        def __init__(self, api_key, base_url, **kwargs):
             self.chat = SimpleNamespace(completions=FakeCompletions())
 
     import openai
@@ -71,6 +71,61 @@ def test_chat_con_proveedor_y_tool_calling(client, make_user, make_property, mon
     assert body["provider"] == "groq" and f"/property/{prop.id}" in body["message"]
     assert body["conversation_id"] is not None
     assert calls[0]["tools"] and "Invitado" not in calls[0]["messages"][0]["content"]
+
+
+def fake_openai(monkeypatch, replies):
+    """Cliente falso por proveedor: replies[clave] es el texto, None (respuesta vacía) o una excepción."""
+    used = []
+
+    class FakeClient:
+        def __init__(self, api_key, base_url, **kwargs):
+            assert kwargs.get("timeout"), "cada proveedor debe tener límite de tiempo"
+
+            async def create(**_):
+                used.append(api_key)
+                reply = replies[api_key]
+                if isinstance(reply, Exception):
+                    raise reply
+                return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(tool_calls=None, content=reply))])
+
+            self.chat = SimpleNamespace(completions=SimpleNamespace(create=create))
+
+    import openai
+    import routers.ai
+    monkeypatch.setattr(openai, "AsyncOpenAI", FakeClient)
+    providers = [("openrouter", "k-or", "https://or.invalid", "m-or"), ("groq", "k-groq", "https://groq.invalid", "m-groq")]
+    monkeypatch.setattr(chat, "PROVIDERS", providers)
+    monkeypatch.setattr(routers.ai, "PROVIDERS", providers)
+    return used
+
+
+def test_chat_pasa_a_groq_si_openrouter_falla(client, monkeypatch):
+    used = fake_openai(monkeypatch, {"k-or": TimeoutError("sin respuesta"), "k-groq": "Hola, soy Ubica"})
+    body = client.post("/api/ai/chat", json={"message": "hola"}).json()
+    assert body["provider"] == "groq" and body["model"] == "m-groq" and body["message"] == "Hola, soy Ubica"
+    assert used == ["k-or", "k-groq"]
+
+
+def test_chat_respuesta_vacia_no_se_muestra(client, monkeypatch):
+    fake_openai(monkeypatch, {"k-or": "   ", "k-groq": None})
+    body = client.post("/api/ai/chat", json={"message": "busco un piso"}).json()
+    assert body["provider"] == "mock" and body["message"].strip()
+
+
+def test_chat_usa_openrouter_si_responde(client, monkeypatch):
+    used = fake_openai(monkeypatch, {"k-or": "Respuesta OpenRouter", "k-groq": "no"})
+    assert client.post("/api/ai/chat", json={"message": "hola"}).json()["provider"] == "openrouter"
+    assert used == ["k-or"]
+
+
+def test_config_comprueba_proveedores(client, make_user, monkeypatch):
+    fake_openai(monkeypatch, {"k-or": RuntimeError("401 clave no válida"), "k-groq": "OK"})
+    admin = auth(make_user(email="a@example.com", role="admin"))
+    plain = client.get("/api/ai/config", headers=admin).json()
+    assert [p["provider"] for p in plain["providers"]] == ["openrouter", "groq"] and plain["has_api_key"] is True
+    checked = {p["provider"]: p for p in client.get("/api/ai/config?check=true", headers=admin).json()["providers"]}
+    assert checked["groq"]["ok"] is True and checked["openrouter"]["ok"] is False
+    assert "401" in checked["openrouter"]["error"]
 
 
 def test_herramientas_de_mercado_ignoran_borradores(make_property):

@@ -1,13 +1,15 @@
 """Chat de IA: prompt de sistema, llamada a proveedores compatibles con OpenAI y guardado de conversaciones."""
+import asyncio
 import importlib.util
 import json
+import time
 from datetime import datetime
 from typing import Dict, List, Optional
 
 from sqlmodel import Session, select
 
 import models
-from config import GEMINI_API_KEY, GROQ_API_KEY, GROQ_MODEL, OPENROUTER_API_KEY, OPENROUTER_MODEL
+from config import GROQ_API_KEY, GROQ_MODEL, OPENROUTER_API_KEY, OPENROUTER_MODEL
 from services.ai.tools import OPENAI_TOOLS, execute_tool
 
 OPENAI_AVAILABLE = importlib.util.find_spec("openai") is not None
@@ -17,13 +19,15 @@ if not OPENAI_AVAILABLE:
 # ─── AI Chat Configuration ───────────────────────────────────────────
 AI_CONFIG = {
     "enabled": True,
-    "provider": "gemini",
-    "api_key": GEMINI_API_KEY or "",
-    "model": "gemini-2.0-flash",
     "system_prompt": "Eres el Agente Virtual Oficial de la Inmobiliaria Ubica y de la Administración de Fincas 'AMI Fincas'. Tu objetivo principal es ayudar a los clientes y usuarios. NUNCA digas que eres 'solo una IA' o que no puedes recomendar servicios corporativos de tu propia empresa.",
     "max_tokens": 1024,
     "temperature": 0.5,
 }
+
+# Si un proveedor no contesta en este tiempo se pasa al siguiente (sin límite, el cliente esperaría minutos)
+PROVIDER_TIMEOUT_SECONDS = 30
+# Rondas de herramientas por pregunta (p. ej. buscar y después comparar)
+MAX_TOOL_ROUNDS = 3
 
 # Proveedores en cascada: se prueba cada uno en orden hasta que uno responde
 PROVIDERS = [
@@ -51,24 +55,29 @@ def build_system_instruction(user_name: str, user_role: str) -> str:
 
 async def run_openai_provider(api_key: str, base_url: str, model_name: str, system_instruction: str,
                               history: List[Dict[str, str]], message: str, user_id: Optional[int], user_role: str) -> str:
+    """Responde con un proveedor compatible con OpenAI. Lanza una excepción si no hay respuesta útil,
+    para que el chat pase al siguiente proveedor en vez de mostrar un mensaje vacío."""
     import openai
-    client = openai.AsyncOpenAI(api_key=api_key, base_url=base_url)
+    client = openai.AsyncOpenAI(api_key=api_key, base_url=base_url, timeout=PROVIDER_TIMEOUT_SECONDS, max_retries=1)
     messages = [{"role": "system", "content": system_instruction}]
-
-    # Build history
     messages.extend(history)
     messages.append({"role": "user", "content": message})
 
-    response = await client.chat.completions.create(
-        model=model_name,
-        messages=messages,
-        tools=OPENAI_TOOLS,
-        temperature=0.0, # Forzar proactividad
-        max_tokens=AI_CONFIG["max_tokens"]
-    )
-    msg_out = response.choices[0].message
+    for _ in range(MAX_TOOL_ROUNDS + 1):
+        response = await client.chat.completions.create(
+            model=model_name,
+            messages=messages,
+            tools=OPENAI_TOOLS,
+            temperature=0.0,  # Forzar proactividad
+            max_tokens=AI_CONFIG["max_tokens"]
+        )
+        msg_out = response.choices[0].message
+        if not msg_out.tool_calls:
+            text = (msg_out.content or "").strip()
+            if not text:
+                raise RuntimeError(f"{model_name} devolvió una respuesta vacía")
+            return text
 
-    if msg_out.tool_calls:
         messages.append(msg_out)
         for tool_call in msg_out.tool_calls:
             func_name = tool_call.function.name
@@ -83,16 +92,40 @@ async def run_openai_provider(api_key: str, base_url: str, model_name: str, syst
                 "name": func_name,
                 "content": result
             })
+    raise RuntimeError(f"{model_name} no terminó tras {MAX_TOOL_ROUNDS} rondas de herramientas")
 
-        # Second call with tool results
+
+async def check_provider(name: str, api_key: str, base_url: str, model_name: str) -> dict:
+    """Pregunta mínima a un proveedor para saber si responde (clave válida, modelo existente, sin caída)."""
+    result = {"provider": name, "model": model_name, "configured": bool(api_key)}
+    if not (OPENAI_AVAILABLE and api_key):
+        return {**result, "ok": False, "error": "sin clave configurada"}
+    import openai
+    started = time.monotonic()
+    try:
+        client = openai.AsyncOpenAI(api_key=api_key, base_url=base_url, timeout=20, max_retries=0)
         response = await client.chat.completions.create(
             model=model_name,
-            messages=messages,
+            messages=[{"role": "user", "content": "Responde solo con la palabra OK."}],
+            max_tokens=200,
             temperature=0.0,
-            max_tokens=AI_CONFIG["max_tokens"]
         )
-        return response.choices[0].message.content
-    return msg_out.content
+        text = (response.choices[0].message.content or "").strip()
+        ok = bool(text)
+        return {**result, "ok": ok, "seconds": round(time.monotonic() - started, 2), **({} if ok else {"error": "respuesta vacía"})}
+    except Exception as e:  # noqa: BLE001 - se informa del fallo, no se propaga
+        return {**result, "ok": False, "seconds": round(time.monotonic() - started, 2), "error": f"{type(e).__name__}: {str(e)[:200]}"}
+
+
+async def check_providers() -> list:
+    return list(await asyncio.gather(*(check_provider(*p) for p in PROVIDERS)))
+
+
+async def log_provider_status() -> None:
+    """Al arrancar, deja en el log si cada proveedor responde (se ve en los registros de Render)."""
+    for r in await check_providers():
+        state = "OK" if r["ok"] else f"FALLA ({r.get('error')})"
+        print(f"[IA] {r['provider']} · {r['model']}: {state}" + (f" en {r['seconds']} s" if 'seconds' in r else ""))
 
 def persist_conversation(session: Session, user: Optional[models.User], conversation: Optional[models.AIConversation],
                          history: List[Dict[str, str]], message: str, final_message: str) -> Optional[int]:

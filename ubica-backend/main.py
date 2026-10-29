@@ -15,6 +15,7 @@ from fastapi.staticfiles import StaticFiles
 
 from config import CORS_ORIGIN_REGEX, CORS_ORIGINS, UPLOAD_DIR
 from routers import admin, ai, auth, contact, games, health, investor, properties, realtor, uploads, user
+from services.ai.chat import log_provider_status
 from services.ai.usage import load_ai_usage
 
 # Inicializar FastAPI
@@ -59,6 +60,9 @@ async def render_keep_alive():
 async def startup_event():
     # Solo en background
     asyncio.create_task(render_keep_alive())
+    # Comprueba que OpenRouter y Groq responden y lo deja en el log (en Render)
+    if os.getenv("RENDER"):
+        asyncio.create_task(log_provider_status())
 
 # Configurar directorio de uploads
 os.makedirs(UPLOAD_DIR, exist_ok=True)
