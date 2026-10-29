@@ -32,16 +32,6 @@ const resources = {
       "header.searchButton": "Buscar",
 
       // Home hero
-      "home.hero_kicker": "Inmobiliaria de AMI Fincas",
-      "home.hero_title": "Encuentra casa en la Región de Murcia",
-      "home.hero_subtitle": "Busca por municipio o pregunta a nuestro asistente en lenguaje natural.",
-      "home.quick_filters": "Filtros rápidos",
-      "home.chip_for_sale": "En venta",
-      "home.chip_for_rent": "En alquiler",
-      "home.facts_published_one": "{{count}} inmueble publicado",
-      "home.facts_published_other": "{{count}} inmuebles publicados",
-      "home.facts_avg_price": "Precio medio de venta",
-      "home.facts_managed": "Gestionado por AMI Fincas",
 
       // Property types
       "property.villa": "Villa",
@@ -710,16 +700,6 @@ const resources = {
       "header.searchButton": "Search",
 
       // Home hero
-      "home.hero_kicker": "AMI Fincas real estate",
-      "home.hero_title": "Find a home in the Region of Murcia",
-      "home.hero_subtitle": "Search by town or ask our assistant in plain language.",
-      "home.quick_filters": "Quick filters",
-      "home.chip_for_sale": "For sale",
-      "home.chip_for_rent": "For rent",
-      "home.facts_published_one": "{{count}} listing published",
-      "home.facts_published_other": "{{count}} listings published",
-      "home.facts_avg_price": "Average sale price",
-      "home.facts_managed": "Managed by AMI Fincas",
 
       // Property types
       "property.villa": "Villa",
