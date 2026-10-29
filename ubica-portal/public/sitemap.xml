@@ -41,6 +41,11 @@
     <priority>0.3</priority>
   </url>
   <url>
+    <loc>https://ubica.amifincas.es/aviso-legal</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
     <loc>https://ubica.amifincas.es/politica-cookies</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>

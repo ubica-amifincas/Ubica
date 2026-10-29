@@ -6,6 +6,7 @@ import {
   EnvelopeIcon
 } from '@heroicons/react/24/outline';
 import { useLanguage } from '../../hooks/useLanguage';
+import { useCookieConsent } from '../../contexts/CookieConsentContext';
 
 // Instagram Icon
 const InstagramIcon = () => (
@@ -16,6 +17,7 @@ const InstagramIcon = () => (
 
 export default function Footer() {
   const { t } = useLanguage();
+  const { openSettings } = useCookieConsent();
 
   const footerLinks = {
     company: [
@@ -181,12 +183,18 @@ export default function Footer() {
                 <Link to="/contact" className="text-sm font-medium text-gray-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors">
                   {t('footer.contact')}
                 </Link>
+                <Link to="/aviso-legal" className="text-sm font-medium text-gray-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors">
+                  {t('footer.legal')}
+                </Link>
                 <Link to="/privacy" className="text-sm font-medium text-gray-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors">
                   {t('footer.privacy')}
                 </Link>
                 <Link to="/politica-cookies" className="text-sm font-medium text-gray-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors">
                   {t('footer.cookies')}
                 </Link>
+                <button type="button" onClick={openSettings} className="text-sm font-medium text-gray-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors">
+                  {t('footer.cookie_settings')}
+                </button>
               </div>
               <p className="text-sm text-gray-400 dark:text-gray-500">
                 {t('footer.rights')}

@@ -15,6 +15,7 @@ import {
   SparklesIcon
 } from '@heroicons/react/24/outline';
 import { useLanguage } from '../hooks/useLanguage';
+import ConsentMap from '../components/common/ConsentMap';
 
 const AMIGreen = '#A2D18D';
 const AMITeal = '#2D8A9D';
@@ -206,24 +207,6 @@ export default function AmiFincas() {
     }
   ];
 
-  const MapIframe = ({ src }: { src: string }) => {
-    const [mapLoaded, setMapLoaded] = useState(false);
-    return (
-      <>
-        {!mapLoaded && (
-          <div className="absolute inset-0 bg-slate-200 dark:bg-slate-800 animate-pulse flex items-center justify-center -z-0">
-            <span className="text-slate-400 font-medium">Cargando mapa...</span>
-          </div>
-        )}
-        <iframe
-          src={src}
-          onLoad={() => setMapLoaded(true)}
-          className={`w-full h-full border-0 absolute z-10 grayscale dark:invert filter opacity-50 contrast-125 group-hover:opacity-80 group-hover:grayscale-0 dark:group-hover:invert-0 transition-all duration-700 ${mapLoaded ? 'visible' : 'invisible'}`}
-          loading="lazy"
-        />
-      </>
-    );
-  };
 
   return (
     <>
@@ -541,7 +524,7 @@ export default function AmiFincas() {
                   className="group relative bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-[3rem] overflow-hidden hover:border-emerald-500/50 transition-all duration-500 shadow-xl dark:shadow-2xl"
                 >
                   <div className="h-64 md:h-80 relative overflow-hidden bg-slate-100 dark:bg-slate-800">
-                    <MapIframe src={office.mapUrl} />
+                    <ConsentMap src={office.mapUrl} address={office.address} title={`Mapa de la oficina de ${office.city}`} />
                     <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-[#0a0f1c] via-transparent to-transparent pointer-events-none z-20" />
                   </div>
 

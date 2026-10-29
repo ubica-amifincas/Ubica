@@ -14,9 +14,9 @@ import DashboardLayout from './components/layout/DashboardLayout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import RouteFallback from './components/common/RouteFallback';
 
-// Aviso de almacenamiento (sin cookies de analítica ni marketing)
-import { StorageNotice } from './components/cookies/CookieConsentBanner';
-import { useStorageNotice } from './hooks/useCookieConsent';
+// Consentimiento de cookies (banner y panel de configuración de AgenciaDatos)
+import CookieConsent from './components/cookies/CookieConsentBanner';
+import { CookieConsentProvider } from './contexts/CookieConsentContext';
 
 // Quick wins
 import ScrollToTop from './components/common/ScrollToTop';
@@ -33,6 +33,7 @@ const Contact = lazy(() => import('./pages/Contact'));
 const Terms = lazy(() => import('./pages/Terms'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const PoliticaCookies = lazy(() => import('./pages/PoliticaCookies'));
+const AvisoLegal = lazy(() => import('./pages/AvisoLegal'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Entretenimiento
@@ -65,7 +66,6 @@ const InvestorDashboard = lazy(() => import('./pages/Investor/InvestorDashboard'
 
 function AppRoutes() {
   useDocumentTitle();
-  const { showNotice, dismiss } = useStorageNotice();
   const location = useLocation();
   const isAmiFincasDomain = window.location.hostname === 'amifincas.es' || window.location.hostname === 'www.amifincas.es';
 
@@ -92,6 +92,7 @@ function AppRoutes() {
               <Route path="terms" element={<Terms />} />
               <Route path="privacy" element={<Privacy />} />
               <Route path="politica-cookies" element={<PoliticaCookies />} />
+              <Route path="aviso-legal" element={<AvisoLegal />} />
 
               {/* Entertainment Routes */}
               <Route path="entretenimiento" element={<EntertainmentHub />} />
@@ -171,8 +172,8 @@ function AppRoutes() {
           </Routes>
         </Suspense>
 
-        {/* Aviso informativo de almacenamiento */}
-        {showNotice && <StorageNotice onDismiss={dismiss} />}
+        {/* Banner y panel de cookies */}
+        <CookieConsent />
 
         {/* PWA Install Prompt */}
         <PWAInstallPrompt />
@@ -190,9 +191,11 @@ function App() {
       <NotificationProvider>
         <AuthProvider>
           <AIChatProvider>
-            <Router>
-              <AppRoutes />
-            </Router>
+            <CookieConsentProvider>
+              <Router>
+                <AppRoutes />
+              </Router>
+            </CookieConsentProvider>
           </AIChatProvider>
         </AuthProvider>
       </NotificationProvider>

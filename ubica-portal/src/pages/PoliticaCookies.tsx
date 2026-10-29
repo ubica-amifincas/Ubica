@@ -1,179 +1,199 @@
-import { motion } from 'framer-motion';
-import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeftIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
+import LegalLayout, { H2, H3, List, ExtLink, Table } from '../components/legal/LegalLayout';
+import { useCookieConsent } from '../contexts/CookieConsentContext';
 
-const cardClass = 'bg-white dark:bg-gray-800 rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 dark:border-gray-700';
-const cellClass = 'px-4 py-3 text-gray-600 dark:text-gray-400 align-top';
-const keyClass = `${cellClass} font-mono text-xs whitespace-nowrap`;
+const C = ({ children }: { children: string }) => <strong className="whitespace-nowrap">{children}</strong>;
 
-const LOCAL_STORAGE_ITEMS: { key: string; purpose: string; when: string }[] = [
-  { key: 'access_token', purpose: 'Token de tu sesión para identificarte ante el servidor de Ubica.', when: 'Al iniciar sesión. Se borra al cerrar sesión o si caduca.' },
-  { key: 'user', purpose: 'Datos básicos de tu cuenta (nombre, email, rol) para mostrar tu área privada.', when: 'Al iniciar sesión. Se borra al cerrar sesión.' },
-  { key: 'ubica-theme', purpose: 'Recuerda si prefieres el tema claro u oscuro.', when: 'Al cambiar el tema.' },
-  { key: 'ubica-language / i18nextLng', purpose: 'Recuerda el idioma de la interfaz.', when: 'Al cargar la web o cambiar el idioma.' },
-  { key: 'ubica-storage-notice', purpose: 'Recuerda que ya has leído este aviso para no volver a mostrarlo.', when: 'Al pulsar «Entendido».' },
-  { key: 'pwa-install-dismissed', purpose: 'Recuerda que has descartado la sugerencia de instalar la aplicación.', when: 'Al cerrar esa sugerencia.' },
-  { key: 'ubica_wealth_assets / ubica_wealth_liabilities', purpose: 'Activos y pasivos que introduces en la herramienta de patrimonio. Solo se guardan en tu navegador.', when: 'Al usar la sección Patrimonio.' },
-  { key: 'ubica_balance_best / ubica_balance_dark_mode', purpose: 'Tu mejor puntuación y el modo visual del juego Ubica Balance.', when: 'Al jugar.' },
-];
-
-const THIRD_PARTIES: { provider: string; purpose: string; where: string }[] = [
-  { provider: 'Google Fonts (fonts.googleapis.com, fonts.gstatic.com)', purpose: 'Descarga de la tipografía Inter.', where: 'Todas las páginas' },
-  { provider: 'unpkg.com', purpose: 'Hoja de estilos e iconos de los marcadores del mapa (Leaflet).', where: 'Páginas con mapa' },
-  { provider: 'OpenStreetMap (tile.openstreetmap.org)', purpose: 'Imágenes (teselas) del mapa.', where: 'Inicio, ficha de inmueble, alta de inmuebles' },
-  { provider: 'Google Maps (mapa incrustado)', purpose: 'Mapa con la ubicación de la oficina. Google puede establecer sus propias cookies al cargarlo.', where: 'Contacto y AMI Fincas' },
-  { provider: 'via.placeholder.com', purpose: 'Imagen genérica cuando un inmueble no tiene foto.', where: 'Listados de inmuebles' },
-];
+const GOOGLE_TOOLS = 'Descargar ciertas herramientas de Google y guardar ciertas preferencias, por ejemplo, el número de resultados de la búsqueda por hoja o la activación del filtro SafeSearch. Ajusta los anuncios que aparecen en la búsqueda de Google.';
+const ADS_DELIVERY = 'Utilizada para la entrega de anuncios más relevantes, segmentación publicitaria y mantenimiento de la seguridad de la sesión de anuncios';
+const ADS_GOOGLE = 'Cookie publicitaria de Google Ads';
+const STATS = 'Estas cookies se utilizan para recopilar estadísticas del sitio web y rastrear las tasas de conversión y la personalización de anuncios de Google';
 
 export default function PoliticaCookies() {
-  const navigate = useNavigate();
+  const { openSettings } = useCookieConsent();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-      {/* Hero */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="relative overflow-hidden bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 py-16"
-      >
-        <div className="container mx-auto px-4 text-center">
-          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
-            <ShieldCheckIcon className="h-5 w-5 text-white" />
-            <span className="text-white text-sm font-medium">RGPD · LSSI</span>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Política de Cookies</h1>
-          <p className="text-lg text-white/90 max-w-2xl mx-auto">Qué guardamos en tu navegador y por qué</p>
-        </div>
-      </motion.div>
+    <LegalLayout title="Política de cookies">
+      <H2>INFORMACIÓN SOBRE COOKIES</H2>
+      <p>
+        Conforme con la Ley 34/2002, de 11 de julio, de servicios de la sociedad de la información y de comercio electrónico
+        (LSSI), en relación con el Reglamento (UE) 2016/679 del Parlamento Europeo y del Consejo, de 27 de abril de 2016,
+        General de Protección de Datos (RGPD) y la Ley Orgánica 3/2018, de 5 de diciembre, de Protección de Datos y Garantía
+        de los Derechos Digitales (LOPDGDD), es obligado obtener el consentimiento expreso del usuario de todas las páginas
+        web que usan cookies prescindibles, antes de que este navegue por ellas.
+      </p>
 
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-4xl mx-auto">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-medium mb-8 transition-colors"
-          >
-            <ArrowLeftIcon className="h-4 w-4" />
-            Volver
-          </button>
+      <H2>¿QUÉ SON LAS COOKIES?</H2>
+      <p>
+        Las <em>cookies</em> y otras tecnologías similares tales como local shared objects, flash <em>cookies</em> o píxeles, son herramientas
+        empleadas por los servidores Web para almacenar y recuperar información acerca de sus visitantes, así como para
+        ofrecer un correcto funcionamiento del sitio.
+      </p>
+      <p>
+        Mediante el uso de estos dispositivos se permite al servidor Web recordar algunos datos concernientes al usuario,
+        como sus preferencias para la visualización de las páginas de ese servidor, nombre y contraseña, productos que más le
+        interesan, etc.
+      </p>
 
-          <div className="space-y-6">
-            <section className={cardClass}>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">1. Resumen</h2>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                Ubica <strong>no utiliza cookies analíticas, publicitarias ni de seguimiento</strong>, ni herramientas como Google Analytics.
-                Solo guardamos en tu navegador la información técnica imprescindible para que la web funcione (tu sesión) y las
-                preferencias que tú eliges (tema e idioma). Por eso no te pedimos consentimiento: estos elementos están exentos según
-                el artículo 22.2 de la LSSI, y solo te informamos de ellos.
-              </p>
-            </section>
+      <H2><em>COOKIES</em> AFECTADAS POR LA NORMATIVA Y COOKIES EXCEPTUADAS</H2>
+      <p>
+        Según la directiva de la UE, las <em>cookies</em> que requieren el consentimiento informado por parte del usuario son las <em>cookies</em>{' '}
+        de analítica y las de publicidad y afiliación, quedando exceptuadas las de carácter técnico y las necesarias para el
+        funcionamiento del sitio web o la prestación de servicios expresamente solicitados por el usuario.
+      </p>
 
-            <section className={cardClass}>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">2. Almacenamiento local de tu navegador</h2>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
-                En lugar de cookies, usamos el <em>localStorage</em> del navegador. Estos datos no se envían a terceros y permanecen en
-                tu dispositivo hasta que se borran (al cerrar sesión, desde la propia web o desde la configuración del navegador).
-              </p>
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr className="bg-emerald-50 dark:bg-emerald-900/20">
-                      <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Clave</th>
-                      <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Finalidad</th>
-                      <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Cuándo se guarda</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                    {LOCAL_STORAGE_ITEMS.map(item => (
-                      <tr key={item.key}>
-                        <td className={keyClass}>{item.key}</td>
-                        <td className={cellClass}>{item.purpose}</td>
-                        <td className={cellClass}>{item.when}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
-                Si instalas Ubica como aplicación, el navegador también guarda una copia de los archivos de la web (caché del
-                <em> service worker</em>) para que cargue más rápido. No contiene datos personales.
-              </p>
-            </section>
+      <H2>TIPOS DE COOKIES</H2>
+      <H3>SEGÚN LA FINALIDAD</H3>
+      <List>
+        <li><strong><em>Cookies</em> técnicas y funcionales</strong>: son aquellas que permiten al usuario la navegación a través de una página web,
+          plataforma o aplicación y la utilización de las diferentes opciones o servicios que en ella existan.</li>
+        <li><strong><em>Cookies</em> analíticas</strong>: son aquellas que permiten al responsable de las mismas el seguimiento y análisis del
+          comportamiento de los usuarios de los sitios web a los que están vinculadas. La información recogida mediante
+          este tipo de <em>cookies</em> se utiliza en la medición de la actividad de los sitios web, aplicación o plataforma y para la
+          elaboración de perfiles de navegación de los usuarios de dichos sitios, aplicaciones y plataformas, con el fin de
+          introducir mejoras en función del análisis de los datos de uso que hacen los usuarios del servicio.</li>
+        <li><strong><em>Cookies</em> publicitarias:</strong> son aquellas que permiten la gestión, de la forma más eficaz posible, de los espacios
+          publicitarios que, en su caso, el editor haya incluido en una página web, aplicación o plataforma desde la que
+          presta el servicio solicitado en base a criterios como el contenido editado o la frecuencia en la que se muestran
+          los anuncios.</li>
+        <li><strong><em>Cookies</em> de publicidad comportamental</strong>: recogen información sobre las preferencias y elecciones personales del
+          usuario (<em>retargeting</em>) para permitir la gestión, de la forma más eficaz posible, de los espacios publicitarios que,
+          en su caso, el editor haya incluido en una página web, aplicación o plataforma desde la que presta el servicio
+          solicitado.</li>
+        <li><strong><em>Cookies</em> sociales</strong>: son establecidas por las plataformas de redes sociales en los servicios para permitirle
+          compartir contenido con sus amigos y redes. Las plataformas de medios sociales tienen la capacidad de rastrear
+          su actividad en línea fuera de los Servicios. Esto puede afectar al contenido y los mensajes que ve en otros
+          servicios que visita.</li>
+        <li><strong><em>Cookies</em> de afiliados</strong>: permiten hacer un seguimiento de las visitas procedentes de otras webs, con las que el
+          sitio web establece un contrato de afiliación (empresas de afiliación).</li>
+        <li><strong><em>Cookies</em> de seguridad</strong>: almacenan información cifrada para evitar que los datos guardados en ellas sean
+          vulnerables a ataques maliciosos de terceros.</li>
+      </List>
 
-            <section className={cardClass}>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">3. Servicios de terceros</h2>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
-                Para mostrar algunos contenidos, tu navegador descarga recursos de estos proveedores. Al hacerlo, el proveedor recibe
-                datos técnicos de la conexión (como tu dirección IP), según sus propias políticas de privacidad.
-              </p>
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr className="bg-blue-50 dark:bg-blue-900/20">
-                      <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Proveedor</th>
-                      <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Para qué</th>
-                      <th className="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Dónde</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                    {THIRD_PARTIES.map(tp => (
-                      <tr key={tp.provider}>
-                        <td className={`${cellClass} font-medium`}>{tp.provider}</td>
-                        <td className={cellClass}>{tp.purpose}</td>
-                        <td className={cellClass}>{tp.where}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+      <H3>SEGÚN LA PROPIEDAD</H3>
+      <List>
+        <li><strong><em>Cookies</em> propias</strong>: son aquellas que se envían al equipo terminal del usuario desde un equipo o dominio
+          gestionado por el propio editor y desde el que se presta el servicio solicitado por el usuario.</li>
+        <li><strong><em>Cookies</em> de terceros:</strong> son aquellas que se envían al equipo terminal del usuario desde un equipo o dominio que
+          no es gestionado por el editor, sino por otra entidad que trata los datos obtenidos través de las cookies.</li>
+      </List>
 
-            <section className={cardClass}>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">4. Cómo borrar estos datos</h2>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
-                Al cerrar sesión se eliminan el token y los datos de tu cuenta. Puedes borrar todo lo demás desde la configuración de
-                tu navegador («Borrar datos de navegación» o «Datos de sitios»):
-              </p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <a href="https://support.google.com/chrome/answer/95647" target="_blank" rel="noopener noreferrer" className="text-center px-3 py-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors font-medium">Chrome</a>
-                <a href="https://support.mozilla.org/es/kb/cookies-informacion-que-los-sitios-web-guardan-en-" target="_blank" rel="noopener noreferrer" className="text-center px-3 py-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors font-medium">Firefox</a>
-                <a href="https://support.microsoft.com/es-es/windows/eliminar-y-administrar-cookies-168dab11-0753-043d-7c16-ede5947fc64d" target="_blank" rel="noopener noreferrer" className="text-center px-3 py-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors font-medium">Edge</a>
-                <a href="https://support.apple.com/es-es/guide/safari/sfri11471/mac" target="_blank" rel="noopener noreferrer" className="text-center px-3 py-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors font-medium">Safari</a>
-              </div>
-            </section>
+      <H3>SEGÚN EL PLAZO DE CONSERVACIÓN</H3>
+      <List>
+        <li><strong><em>Cookies</em> de sesión:</strong> son un tipo de <em>cookies</em> diseñadas para recabar y almacenar datos mientras el usuario accede
+          a una página web.</li>
+        <li><strong><em>Cookies</em> persistentes:</strong> son un tipo de cookies en el que los datos siguen almacenados en el terminal y pueden
+          ser accedidos y tratados durante un período definido por el responsable de la <em>cookie</em>, y que puede ir de unos
+          minutos a varios años.</li>
+      </List>
 
-            <section className={cardClass}>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">5. Cambios en esta política</h2>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                Si en el futuro incorporamos cookies que requieran tu consentimiento (por ejemplo, de analítica), actualizaremos esta
-                página y te lo pediremos antes de activarlas.
-              </p>
-            </section>
+      <H2>TRATAMIENTO DE DATOS PERSONALES</H2>
+      <p>
+        MAYNSASER 2014. S.L es el <strong>Responsable del tratamiento</strong> de los datos personales del <strong>Interesado</strong> y le informa de que
+        estos datos serán tratados de conformidad con lo dispuesto en el Reglamento (UE) 2016/679, de 27 de abril de 2016
+        (RGPD), por lo que se le facilita la siguiente información del tratamiento:
+      </p>
+      <p><strong>Fines del tratamiento:</strong> según se especifica en el apartado de <em>cookies</em> que se utilizan en este sitio web.</p>
+      <p><strong>Legitimación del tratamiento</strong>: salvo en los casos en los que resulte necesario para la navegación por la web, por
+        consentimiento del interesado (art. 6.1.a RGPD).</p>
+      <p><strong>Criterios de conservación de los datos</strong>: según se especifica en el apartado de <em>cookies</em> utilizadas en la web.</p>
+      <p><strong>Comunicación de los datos</strong>: no se comunicarán los datos a terceros, excepto en cookies propiedad de terceros o por
+        obligación legal.</p>
+      <p><strong>Derechos que asisten al Interesado</strong>:</p>
+      <p>
+        - Derecho a retirar el consentimiento en cualquier momento.<br />
+        - Derecho de acceso, rectificación, portabilidad y supresión de sus datos, y de limitación u oposición a su tratamiento.<br />
+        - Derecho a presentar una reclamación ante la Autoridad de control (<ExtLink href="https://www.aepd.es" />) si considera que el tratamiento no
+        se ajusta a la normativa vigente.
+      </p>
+      <p><strong>Datos de contacto para ejercer sus derechos:</strong></p>
+      <p>MAYNSASER 2014. S.L. AVDA. CASILLAS DE CORIA, 4 - 30007 MURCIA (Murcia)</p>
 
-            <section className={cardClass}>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">6. Contacto</h2>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-3">
-                Si tienes cualquier pregunta sobre esta política, puedes escribirnos:
-              </p>
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                <p><strong className="text-gray-900 dark:text-white">Dirección:</strong> C. Ángeles, 41, 30007 Murcia</p>
-                <p><strong className="text-gray-900 dark:text-white">Email:</strong> info@amifincas.es</p>
-                <p>
-                  <strong className="text-gray-900 dark:text-white">Formulario:</strong>{' '}
-                  <Link to="/contact" className="text-emerald-600 dark:text-emerald-400 hover:underline">página de contacto</Link>
-                </p>
-              </div>
-            </section>
-          </div>
+      <H2>COOKIES UTILIZADAS EN ESTE SITIO WEB</H2>
+      <H3>COOKIES CONTROLADAS POR EL EDITOR</H3>
+      <H3>Técnicas y funcionales</H3>
+      <Table
+        head={['Propiedad', 'Cookie', 'Finalidad', 'Plazo']}
+        rows={[
+          ['google.com', <C>AEC</C>, 'Cookie necesaria para la utilización de las opciones y servicios del sitio web', 'en 6 meses'],
+          ['Google', <C>SEARCH_SAMESITE</C>, 'SameSite evita que el navegador envíe esta cookie junto con las solicitudes entre sitios. El objetivo principal es mitigar el riesgo de fuga de información de origen cruzado. También proporciona cierta protección contra ataques de falsificación de solicitudes entre sitios.', 'en 5 meses'],
+          ['google.com', <C>SOCS</C>, 'Cookie necesaria para la utilización de las opciones y servicios del sitio web', 'en 12 meses'],
+        ]}
+      />
+      <H3>Publicitarias</H3>
+      <Table
+        head={['Propiedad', 'Cookie', 'Finalidad', 'Plazo']}
+        rows={[
+          ['google.com', <C>__Secure-1PAPISID</C>, ADS_DELIVERY, 'en un año'],
+          ['google.com', <C>__Secure-1PSID</C>, ADS_GOOGLE, 'en un año'],
+          ['google.com', <C>__Secure-1PSIDCC</C>, ADS_GOOGLE, 'en un año'],
+          ['google.com', <C>__Secure-1PSIDTS</C>, ADS_GOOGLE, 'en un año'],
+          ['Google', <C>__Secure-3PAPISID</C>, 'Estas cookies se utilizan para entregar anuncios más relevantes para usted y sus intereses.', 'en un año'],
+          ['google.com', <C>__Secure-3PSIDCC</C>, ADS_DELIVERY, 'en un año'],
+          ['google.com', <C>__Secure-3PSIDTS</C>, ADS_DELIVERY, 'en un año'],
+          ['google.com', <C>__Secure-BUCKET</C>, ADS_GOOGLE, 'en 2 meses'],
+          ['google.com', <C>__Secure-STRP</C>, ADS_GOOGLE, 'Sesión'],
+          ['Google', <C>APISID</C>, GOOGLE_TOOLS, 'en un año'],
+          ['Google', <C>DV</C>, STATS, 'Sesión'],
+          ['Google', <C>HSID</C>, GOOGLE_TOOLS, 'en un año'],
+          ['Google', <C>NID</C>, STATS, 'en 7 meses'],
+          ['Google', <C>OTZ</C>, 'Análisis agregado de los visitantes del sitio', 'en un mes'],
+          ['Google', <C>SAPISID</C>, GOOGLE_TOOLS, 'en un año'],
+          ['Google', <C>SID</C>, GOOGLE_TOOLS, 'en un año'],
+          ['Google', <C>SIDCC</C>, GOOGLE_TOOLS, 'en un año'],
+          ['Google', <C>SSID</C>, 'Descarga ciertas herramientas de Google y guarda ciertas preferencias, por ejemplo, el número de resultados de búsqueda por página o la activación del filtro SafeSearch. Ajusta los anuncios que aparecen en la Búsqueda de Google.', 'en un año'],
+        ]}
+      />
 
-          <div className="flex items-center justify-between mt-8">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Última actualización: Octubre 2026</p>
-            <Link to="/privacy" className="text-sm text-emerald-600 hover:text-emerald-700 font-medium">
-              Ver Política de Privacidad →
-            </Link>
-          </div>
-        </div>
-      </div>
-    </div>
+      <H2>COOKIES DE TERCEROS</H2>
+      <p>
+        Los servicios de terceros son ajenos al control del editor. Los proveedores pueden modificar en todo momento sus
+        condiciones de servicio, finalidad y utilización de las cookies, etc.
+      </p>
+      <p><strong>Proveedores externos de este sitio web:</strong></p>
+      <Table
+        head={['Editor', 'Política de privacidad']}
+        rows={[
+          ['Google', <ExtLink href="https://privacy.google.com/take-control.html" />],
+          ['Google', <ExtLink href="https://safety.google/privacy/privacy-controls/" />],
+          ['google.com', ''],
+          ['google.com', <ExtLink href="https://safety.google/privacy/privacy-controls/" />],
+        ]}
+      />
+
+      <H2>PANEL DE CONFIGURACIÓN DE COOKIES</H2>
+      <p>
+        Desde este panel podrá configurar las cookies que el sitio web puede instalar en su navegador, excepto las cookies
+        técnicas o funcionales que son necesarias para la navegación y la utilización de las diferentes opciones o servicios que
+        se ofrecen.
+      </p>
+      <p>
+        <button type="button" onClick={openSettings} className="font-semibold text-emerald-700 dark:text-emerald-400 underline">
+          Panel de cookies
+        </button>
+      </p>
+
+      <H2>CÓMO GESTIONAR LAS COOKIES DESDE EL NAVEGADOR</H2>
+      <Table
+        head={['', '']}
+        rows={[
+          [<strong>Eliminar las cookies del dispositivo</strong>, 'Las cookies que ya están en un dispositivo se pueden eliminar borrando el historial del navegador, con lo que se suprimen las cookies de todos los sitios web visitados. Sin embargo, también se puede perder parte de la información guardada (por ejemplo, los datos de inicio de sesión o las preferencias de sitio web).'],
+          [<strong>Gestionar las cookies específicas del sitio</strong>, 'Para tener un control más preciso de las cookies específicas de cada sitio, los usuarios pueden ajustar su configuración de privacidad y cookies en el navegador.'],
+          [<strong>Bloquear las cookies</strong>, 'Aunque la mayoría de los navegadores modernos se pueden configurar para evitar que se instalen cookies en los dispositivos, eso puede obligar al ajuste manual de determinadas preferencias cada vez que se visite un sitio o página. Además, algunos servicios y características pueden no funcionar correctamente (por ejemplo, los inicios de sesión con perfil).'],
+        ]}
+      />
+
+      <H2>CÓMO ELIMINAR LAS COOKIES DE LOS NAVEGADORES MÁS COMUNES</H2>
+      <Table
+        head={['Navegador', 'Enlace']}
+        rows={[
+          [<strong>Chrome</strong>, <ExtLink href="http://support.google.com/chrome/answer/95647?hl=es" />],
+          [<strong>Edge</strong>, <ExtLink href="https://support.microsoft.com/es-es/microsoft-edge/eliminar-las-cookies-en-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09" />],
+          [<strong>Explorer</strong>, <ExtLink href="https://support.microsoft.com/es-es/help/278835/how-to-delete-cookie-files-in-internet-explorer" />],
+          [<strong>Firefox</strong>, <ExtLink href="https://www.mozilla.org/es-ES/privacy/websites/#cookies" />],
+          [<strong>Safari</strong>, <ExtLink href="https://support.apple.com/es-es/guide/safari/sfri11471/mac" />],
+          [<strong>Opera</strong>, <ExtLink href="https://help.opera.com/en/latest/security-and-privacy/#clearBrowsingData" />],
+        ]}
+      />
+    </LegalLayout>
   );
 }

@@ -7,7 +7,9 @@ import {
     ClockIcon,
     PaperAirplaneIcon,
 } from '@heroicons/react/24/outline';
+import { Link } from 'react-router-dom';
 import { useLanguage } from '../hooks/useLanguage';
+import ConsentMap from '../components/common/ConsentMap';
 import apiService from '../services/apiService';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -168,15 +170,10 @@ export default function Contact() {
 
                         {/* Map Preview */}
                         <div className="mt-12 rounded-3xl overflow-hidden h-64 shadow-lg border border-gray-200 dark:border-gray-700">
-                            <iframe
+                            <ConsentMap
                                 title={t('contact.map_title')}
+                                address="C. Ángeles, 41, 30007 Murcia"
                                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3144.381335759714!2d-1.101783423455648!3d37.99166667193155!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd6382024b33b28b%3A0x64c8d56b05786ed0!2sC.%20%C3%81ngeles%2C%2041%2C%2030007%20Murcia!5e0!3m2!1ses!2ses!4v1708980000000!5m2!1ses!2ses"
-                                width="100%"
-                                height="100%"
-                                style={{ border: 0 }}
-                                allowFullScreen
-                                loading="lazy"
-                                referrerPolicy="no-referrer-when-downgrade"
                             />
                         </div>
                     </div>
@@ -193,7 +190,7 @@ export default function Contact() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label htmlFor="contact-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            {t('contact.form.name')}
+                                            {t('contact.form.name')} <span aria-hidden="true">*</span>
                                         </label>
                                         <input
                                             id="contact-name"
@@ -212,7 +209,7 @@ export default function Contact() {
                                     </div>
                                     <div>
                                         <label htmlFor="contact-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            {t('contact.form.email')}
+                                            {t('contact.form.email')} <span aria-hidden="true">*</span>
                                         </label>
                                         <input
                                             id="contact-email"
@@ -267,7 +264,7 @@ export default function Contact() {
                                 </div>
                                 <div>
                                     <label htmlFor="contact-message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        {t('contact.form.message')}
+                                        {t('contact.form.message')} <span aria-hidden="true">*</span>
                                     </label>
                                     <textarea
                                         id="contact-message"
@@ -300,6 +297,14 @@ export default function Contact() {
                                         </>
                                     )}
                                 </button>
+                                <div className="rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/30 p-4 text-sm text-gray-700 dark:text-gray-300">
+                                    <p className="font-semibold text-gray-900 dark:text-white">Protección de datos personales</p>
+                                    <p className="mt-1">
+                                        Utilizaremos sus datos para responder consultas y realizar análisis estadísticos. Para más información sobre el
+                                        tratamiento y sus derechos, consulte la{' '}
+                                        <Link to="/privacy" className="font-medium text-emerald-700 dark:text-emerald-400 underline">política de privacidad</Link>
+                                    </p>
+                                </div>
                                 {formStatus === 'success' && (
                                     <motion.p
                                         role="status"

@@ -30,6 +30,7 @@ const ROUTE_TITLES: Record<string, string> = {
     '/privacy': 'Privacidad | Ubica',
     '/terms': 'Términos | Ubica',
     '/politica-cookies': 'Política de Cookies | Ubica',
+    '/aviso-legal': 'Aviso Legal | Ubica',
     '/about': 'Sobre Nosotros | Ubica',
     '/contact': 'Contacto | Ubica',
     '/entretenimiento': 'Entretenimiento | Ubica',
