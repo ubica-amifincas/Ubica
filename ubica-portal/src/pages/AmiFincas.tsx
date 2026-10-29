@@ -20,7 +20,6 @@ import {
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../hooks/useLanguage';
-import ConsentMap from '../components/common/ConsentMap';
 import { apiService } from '../services/apiService';
 import { ubicaHref } from '../utils/site';
 
@@ -234,7 +233,8 @@ export default function AmiFincas() {
       phones: ['676 62 69 33', '609 00 88 64'],
       schedule: t('ami.offices.schedule.murcia'),
       directions: 'https://maps.google.com/?cid=4566582778045489499',
-      mapUrl: 'https://www.google.com/maps?q=AMI+Fincas,+Calle+%C3%81ngeles+41,+30007+Murcia&output=embed',
+      photo: '/ami-fincas/sede-murcia.webp',
+      photoAlt: t('ami.offices.photoMurcia'),
     },
     {
       city: t('ami.offices.sanpedro'),
@@ -243,6 +243,7 @@ export default function AmiFincas() {
       schedule: t('ami.offices.schedule.sanpedro'),
       directions: 'https://maps.google.com/?cid=16413795408017082990',
       photo: '/ami-fincas/sede-san-pedro.webp',
+      photoAlt: t('ami.offices.photo'),
     },
   ];
 
@@ -441,12 +442,8 @@ export default function AmiFincas() {
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
               {offices.map(office => (
                 <article key={office.city} className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-white/5">
-                  <div className="relative h-60 bg-slate-100 dark:bg-slate-800 md:h-72">
-                    {office.photo ? (
-                      <img src={office.photo} alt={t('ami.offices.photo')} width={1200} height={900} loading="lazy" className="h-full w-full object-cover" />
-                    ) : (
-                      <ConsentMap src={office.mapUrl!} address={office.address} title={`Mapa de la oficina de ${office.city}`} />
-                    )}
+                  <div className="h-60 bg-slate-100 dark:bg-slate-800 md:h-72">
+                    <img src={office.photo} alt={office.photoAlt} loading="lazy" className="h-full w-full object-cover" />
                   </div>
                   <div className="space-y-4 p-6 md:p-8">
                     <h3 className="text-2xl font-black">{office.city}</h3>
