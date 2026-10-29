@@ -172,6 +172,7 @@ MATRIX = {
     ("POST",   "/api/ai/chat"):                             (200, 200, 200, 200, 200),
     ("GET",    "/api/ai/config"):                           (401, 403, 403, 403, 200),
     ("GET",    "/api/ai/conversations"):                    (401, 200, 200, 200, 200),
+    ("POST",   "/api/ai/listing-draft"):                    (401, 200, 200, 200, 200),
     ("GET",    "/api/ai/conversations/{conversation_id}"):  (401, 200, 200, 200, 200),
     ("GET",    "/api/ping"):                                (200, 200, 200, 200, 200),
     ("GET",    "/health"):                                  (200, 200, 200, 200, 200),
@@ -674,6 +675,14 @@ def _(w):
     return "GET", "/api/ai/config", {}, None
 
 
+@case("POST", "/api/ai/listing-draft")
+def _(w):
+    def check(w, r, allowed):
+        if allowed:
+            assert r.json()["bedrooms"] == 3 and r.json()["price"] == 185000
+    return "POST", "/api/ai/listing-draft", {"json": {"text": "Vendo piso 3 habitaciones 185.000 €"}}, check
+
+
 @case("GET", "/api/ai/conversations")
 def _(w):
     conv = add(w.db, models.AIConversation(user_id=w.me, title="Mía", messages=[{"role": "user", "content": "x"}]))
@@ -714,7 +723,7 @@ def client_get_me(token):
 
 def test_matrix_covers_every_openapi_route():
     routes = {(m.upper(), p) for p, ops in app.openapi()["paths"].items() for m in ops}
-    assert len(routes) == 53
+    assert len(routes) == 54
     assert set(MATRIX) == routes
     assert set(CASES) == routes
 

@@ -44,6 +44,7 @@ const UbicaBalance = lazy(() => import('./pages/Entertainment/UbicaBalance')); /
 
 // Autenticación
 const AuthPage = lazy(() => import('./pages/AuthPage'));
+const QuickListing = lazy(() => import('./pages/QuickListing'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
@@ -138,6 +139,13 @@ function AppRoutes() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/confirm-email-change" element={<ConfirmEmailChange />} />
+
+            {/* Subir un inmueble desde el móvil: pantalla completa, sin el menú del panel */}
+            <Route path="/publicar" element={
+              <ProtectedRoute>
+                <QuickListing />
+              </ProtectedRoute>
+            } />
 
             {/* Protected Dashboard Routes */}
             <Route path="/dashboard" element={

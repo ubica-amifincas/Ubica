@@ -7,10 +7,11 @@ from sqlmodel import Session, select
 
 import models
 from database import get_session
-from schemas import AIChatRequest
+from schemas import AIChatRequest, ListingDraftRequest
 from security import get_current_user, get_user_or_none, require_role
 from services.ai.chat import (AI_CONFIG, OPENAI_AVAILABLE, PROVIDERS, build_system_instruction, check_providers, fallback_answer,
                              persist_conversation, run_openai_provider)
+from services.ai.listing import draft_from_message
 from services.ai.usage import check_ai_usage
 from services.ratelimit import get_client_ip
 
@@ -63,6 +64,13 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
         "model": "placeholder",
         "conversation_id": conv_id
     }
+
+@router.post("/api/ai/listing-draft")
+async def listing_draft(request: ListingDraftRequest, request_obj: Request, current_user: models.User = Depends(get_current_user)):
+    """Rellena un anuncio a partir del mensaje del vendedor. Cuenta para el límite diario de consultas de IA."""
+    if not check_ai_usage(user_id=current_user.id, ip=get_client_ip(request_obj), role=current_user.role):
+        raise HTTPException(status_code=429, detail="Has alcanzado el límite de consultas de IA de hoy. Puedes rellenar los datos a mano.")
+    return await draft_from_message(request.text)
 
 @router.get("/api/ai/config")
 async def get_ai_config(check: bool = False, current_user: models.User = Depends(require_role(["admin"]))):

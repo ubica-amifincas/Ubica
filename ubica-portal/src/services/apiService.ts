@@ -36,6 +36,23 @@ export interface LoginRequest {
   password: string;
 }
 
+/** Datos de un anuncio sacados del mensaje del vendedor (null = no aparece en el mensaje). */
+export interface ListingDraft {
+  operation: 'sale' | 'rent' | null;
+  type: string | null;
+  price: number | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  area: number | null;
+  city: string | null;
+  address: string | null;
+  features: string[];
+  title: string | null;
+  description: string | null;
+  /** "ai" si lo ha leído la IA; "basic" si no había IA y solo se sacaron los números */
+  source: 'ai' | 'basic';
+}
+
 /** Correo de Google sin cuenta: falta elegir el tipo de cuenta y aceptar las condiciones. */
 export interface GoogleSignupRequired {
   needs_signup: true;
@@ -455,6 +472,16 @@ class ApiService {
     });
     const data = await this.handleResponse<any[]>(response);
     return data.map(p => this.mapProperty(p));
+  }
+
+  /** Rellena un anuncio a partir del mensaje del vendedor (cuenta para el límite diario de IA). */
+  async draftListing(text: string): Promise<ListingDraft> {
+    const response = await fetch(`${API_BASE_URL}/ai/listing-draft`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ text }),
+    });
+    return this.handleResponse<ListingDraft>(response);
   }
 
   async createUserProperty(propertyData: any): Promise<Property> {

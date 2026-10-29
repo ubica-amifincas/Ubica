@@ -1069,7 +1069,7 @@ export default function Home() {
               </AnimatePresence>
 
               <div className="flex gap-4">
-              <div className="map-wrapper min-w-0 flex-1" style={{ height: 'calc(100vh - 280px)', minHeight: '500px' }}>
+              <div className="map-wrapper isolate min-w-0 flex-1" style={{ height: 'calc(100vh - 280px)', minHeight: '500px' }}>
                 <style>
                   {`
                   .map-fullscreen-container:fullscreen {

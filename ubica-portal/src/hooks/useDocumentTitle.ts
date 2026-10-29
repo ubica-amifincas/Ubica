@@ -22,6 +22,7 @@ const ROUTE_TITLES: Record<string, string> = {
     '/forgot-password': 'Recuperar contraseña | Ubica',
     '/reset-password': 'Nueva contraseña | Ubica',
     '/confirm-email-change': 'Confirmar cambio de correo | Ubica',
+    '/publicar': 'Subir inmueble | Ubica',
     '/dashboard': 'Mi panel | Ubica',
     '/dashboard/properties': 'Mis propiedades | Ubica',
     '/dashboard/sales': 'Ventas | Ubica',

@@ -155,6 +155,10 @@ class GameScoreRequest(BaseModel):
 MAX_CHAT_HISTORY = 20
 MAX_CHAT_CONTENT = 4000
 
+class ListingDraftRequest(BaseModel):
+    # Mensaje del vendedor (p. ej. copiado de WhatsApp)
+    text: str = Field(min_length=3, max_length=4000)
+
 class AIChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=2000)
     history: List[Dict[str, Any]] = Field(default_factory=list, max_length=500)

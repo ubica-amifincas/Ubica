@@ -22,6 +22,7 @@ import {
   LightBulbIcon,
   ChevronDownIcon,
   ChatBubbleLeftRightIcon,
+  CameraIcon,
 } from '@heroicons/react/24/outline';
 import RouteFallback from '../common/RouteFallback';
 import { ThemeToggle } from '../common/ThemeToggle';
@@ -53,6 +54,7 @@ function buildNavigation(role: string | undefined, t: TFn): NavGroup[] {
   const aiHistory: NavItem = { label: t('panel.nav.aiHistory', 'Historial IA'), href: '/dashboard?view=ia_history', icon: SparklesIcon };
   const wealth: NavItem = { label: t('panel.nav.wealth', 'Patrimonio'), href: '/dashboard/wealth', icon: WalletIcon };
   const myProperties: NavItem = { label: t('panel.nav.myProperties', 'Mis propiedades'), href: '/dashboard/properties', icon: BuildingOfficeIcon };
+  const quickListing: NavItem = { label: t('panel.nav.quickListing', 'Subir inmueble'), href: '/publicar', icon: CameraIcon };
   const sales: NavItem = { label: t('panel.nav.sales', 'Ventas'), href: '/dashboard/sales', icon: BanknotesIcon };
   const rentals: NavItem = { label: t('panel.nav.rentals', 'Alquileres'), href: '/dashboard/rentals', icon: KeyIcon };
   const investments: NavItem = { label: t('panel.nav.investments', 'Inversiones'), href: '/dashboard/investments', icon: ArrowTrendingUpIcon };
@@ -76,6 +78,7 @@ function buildNavigation(role: string | undefined, t: TFn): NavGroup[] {
         {
           label: t('panel.group.realtor', 'Inmobiliaria'),
           items: [
+            quickListing,
             { label: t('panel.nav.overview', 'Resumen'), href: '/realtor', icon: PresentationChartLineIcon, exact: true },
             { label: t('panel.nav.portfolioRealtor', 'Cartera de inmuebles'), href: '/realtor/propiedades', icon: HomeIcon },
             { label: t('panel.nav.rentals', 'Alquileres'), href: '/realtor/alquileres', icon: KeyIcon },
@@ -96,7 +99,7 @@ function buildNavigation(role: string | undefined, t: TFn): NavGroup[] {
             { label: t('panel.nav.wealth', 'Patrimonio'), href: '/investor/patrimonio', icon: WalletIcon },
           ],
         },
-        { label: mine, items: [myProperties, sales, rentals, messages, aiHistory] },
+        { label: mine, items: [quickListing, myProperties, sales, rentals, messages, aiHistory] },
       ];
     default:
       return [
@@ -104,6 +107,7 @@ function buildNavigation(role: string | undefined, t: TFn): NavGroup[] {
           label: mine,
           items: [
             { label: t('panel.nav.overview', 'Resumen'), href: '/dashboard', icon: ChartBarIcon, exact: true },
+            quickListing,
             myProperties,
             wealth,
             messages,
