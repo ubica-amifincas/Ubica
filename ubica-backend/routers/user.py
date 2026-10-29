@@ -141,27 +141,49 @@ async def get_conversations(current_user: models.User = Depends(get_current_user
             threads[key]["unread_count"] += 1
     return list(threads.values())
 
+MAX_MESSAGE_LENGTH = 5000
+
+def _message_content(msg_data: dict) -> str:
+    content = str(msg_data.get("content") or "").strip()
+    if not content:
+        raise HTTPException(status_code=400, detail="El mensaje está vacío")
+    if len(content) > MAX_MESSAGE_LENGTH:
+        raise HTTPException(status_code=400, detail="El mensaje es demasiado largo")
+    return content
+
 @router.post("/api/user/messages")
 async def add_message(msg_data: dict, current_user: models.User = Depends(get_current_user), session: Session = Depends(get_session)):
-    # Determinar receiver_id: el owner de la propiedad
-    receiver_id = msg_data.get("receiver_id")
-    property_title = None
+    content = _message_content(msg_data)
+    prop = None
     prop_id = msg_data.get("property_id")
     if prop_id:
         prop = session.get(models.Property, prop_id)
-        if prop:
-            property_title = prop.title
-            if not receiver_id:
-                receiver_id = prop.owner_id
-    
+        if not prop:
+            raise HTTPException(status_code=404, detail="Propiedad no encontrada")
+
+    # Por defecto el mensaje va al propietario del anuncio
+    receiver_id = msg_data.get("receiver_id") or (prop.owner_id if prop else None)
+    if not receiver_id or not session.get(models.User, receiver_id):
+        raise HTTPException(status_code=400, detail="Destinatario no válido")
+
+    # Solo se puede escribir al propietario o agente del anuncio, o a quien ya nos escribió antes
+    allowed = current_user.role == "admin" or (prop is not None and receiver_id in (prop.owner_id, prop.realtor_id))
+    if not allowed:
+        allowed = session.exec(select(models.Message).where(
+            models.Message.user_id == receiver_id,
+            models.Message.receiver_id == current_user.id,
+        )).first() is not None
+    if not allowed:
+        raise HTTPException(status_code=403, detail="No puedes enviar mensajes a este usuario")
+
     new_msg = models.Message(
         user_id=current_user.id,
         receiver_id=receiver_id,
-        property_id=prop_id,
-        realtor_id=msg_data.get("realtor_id"),
+        property_id=prop.id if prop else None,
+        realtor_id=prop.realtor_id if prop else None,
         sender_name=current_user.full_name or current_user.email,
-        property_title=property_title,
-        content=msg_data.get("content", ""),
+        property_title=prop.title if prop else None,
+        content=content,
         status="pending"
     )
     session.add(new_msg)
@@ -171,9 +193,10 @@ async def add_message(msg_data: dict, current_user: models.User = Depends(get_cu
 
 @router.post("/api/user/messages/{message_id}/reply")
 async def reply_message(message_id: int, msg_data: dict, current_user: models.User = Depends(get_current_user), session: Session = Depends(get_session)):
-    # Buscar el mensaje original
+    content = _message_content(msg_data)
     original = session.get(models.Message, message_id)
-    if not original:
+    # Solo el destinatario puede responder (404 también si no es suyo, para no revelar ids)
+    if not original or original.receiver_id != current_user.id:
         raise HTTPException(status_code=404, detail="Mensaje no encontrado")
     
     new_msg = models.Message(
@@ -183,7 +206,7 @@ async def reply_message(message_id: int, msg_data: dict, current_user: models.Us
         realtor_id=original.realtor_id,
         sender_name=current_user.full_name or current_user.email,
         property_title=original.property_title,
-        content=msg_data.get("content", ""),
+        content=content,
         status="pending"
     )
     # Marcar el mensaje original como respondido

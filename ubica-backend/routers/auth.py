@@ -10,7 +10,7 @@ import models
 from config import ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM, FRONTEND_URL, SECRET_KEY
 from database import get_session
 from schemas import LoginRequest, Token, User, UserCreate
-from security import create_access_token, get_current_user, hash_password, is_legacy_hash, verify_password
+from security import create_access_token, create_session_token, get_current_user, hash_password, is_legacy_hash, verify_password
 from services.email import send_email_resend, verification_email_html
 
 router = APIRouter()
@@ -33,13 +33,19 @@ async def login(login_data: LoginRequest, session: Session = Depends(get_session
         session.commit()
         session.refresh(user)
 
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Esta cuenta está desactivada"
+        )
+
     if not user.is_verified:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Por favor verifica tu correo electrónico para iniciar sesión"
         )
-    
-    access_token = create_access_token(data={"sub": str(user.id)})
+
+    access_token = create_session_token(user)
     return Token(
         access_token=access_token,
         token_type="bearer",

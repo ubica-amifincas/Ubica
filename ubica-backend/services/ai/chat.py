@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 from sqlmodel import Session, select
 
 import models
-from config import GEMINI_API_KEY, GROQ_API_KEY, OPENROUTER_API_KEY
+from config import GEMINI_API_KEY, GROQ_API_KEY, GROQ_MODEL, OPENROUTER_API_KEY, OPENROUTER_MODEL
 from services.ai.tools import OPENAI_TOOLS, execute_tool
 
 OPENAI_AVAILABLE = importlib.util.find_spec("openai") is not None
@@ -27,8 +27,8 @@ AI_CONFIG = {
 
 # Proveedores en cascada: se prueba cada uno en orden hasta que uno responde
 PROVIDERS = [
-    ("openrouter", OPENROUTER_API_KEY, "https://openrouter.ai/api/v1", "google/gemini-2.0-flash-001"),
-    ("groq", GROQ_API_KEY, "https://api.groq.com/openai/v1", "llama-3.3-70b-versatile"),
+    ("openrouter", OPENROUTER_API_KEY, "https://openrouter.ai/api/v1", OPENROUTER_MODEL),
+    ("groq", GROQ_API_KEY, "https://api.groq.com/openai/v1", GROQ_MODEL),
 ]
 
 def build_system_instruction(user_name: str, user_role: str) -> str:
@@ -56,8 +56,7 @@ async def run_openai_provider(api_key: str, base_url: str, model_name: str, syst
     messages = [{"role": "system", "content": system_instruction}]
 
     # Build history
-    for msg in history:
-        messages.append({"role": msg.get("role", "user"), "content": msg.get("content", "")})
+    messages.extend(history)
     messages.append({"role": "user", "content": message})
 
     response = await client.chat.completions.create(

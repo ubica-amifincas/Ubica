@@ -112,6 +112,7 @@ El frontend estará disponible en: `http://localhost:5173`
 | `RESEND_API_KEY` | API key de Resend para los correos. Vacía en local = no se envían correos |
 | `FRONTEND_URL` | URL pública del frontend (enlaces de verificación) |
 | `GEMINI_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY` | Proveedores del chat de IA |
+| `OPENROUTER_MODEL`, `GROQ_MODEL` | Modelo de cada proveedor (opcional). Cámbialos aquí si un proveedor retira el modelo |
 
 **Frontend** (`ubica-portal/.env.local`):
 

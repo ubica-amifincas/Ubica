@@ -2,7 +2,7 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 class UserBase(BaseModel):
     email: EmailStr
@@ -53,7 +53,18 @@ class GameScoreRequest(BaseModel):
     game_name: str
     score: int
 
+MAX_CHAT_HISTORY = 20
+MAX_CHAT_CONTENT = 4000
+
 class AIChatRequest(BaseModel):
-    message: str
-    history: Optional[List[Dict[str, str]]] = []
+    message: str = Field(min_length=1, max_length=2000)
+    history: List[Dict[str, Any]] = Field(default_factory=list, max_length=500)
     conversation_id: Optional[int] = None
+
+    @field_validator("history")
+    @classmethod
+    def clean_history(cls, history: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+        # Solo turnos de usuario y asistente, recortados: el cliente no puede colar mensajes de sistema
+        turns = [{"role": m["role"], "content": str(m.get("content", ""))[:MAX_CHAT_CONTENT]}
+                 for m in history if m.get("role") in ("user", "assistant")]
+        return turns[-MAX_CHAT_HISTORY:]

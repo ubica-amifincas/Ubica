@@ -10,6 +10,7 @@ ai_usage_db = {}
 
 def load_ai_usage():
     global ai_usage_db
+    ai_usage_db = {}
     if os.path.exists(AI_USAGE_FILE):
         try:
             with open(AI_USAGE_FILE, "r", encoding="utf-8") as f:
@@ -32,8 +33,8 @@ def check_ai_usage(user_id: Optional[int] = None, ip: str = "unknown", role: str
         ai_usage_db[today] = {"users": {}, "ips": {}}
         save_ai_usage()
     
-    # Roles profesionales tienen barra libre por ahora
-    if role in ["admin", "realtor", "investor"]:
+    # Solo los administradores no tienen límite: cualquiera puede registrarse como realtor o investor
+    if role == "admin":
         return True
         
     limit = 30 if user_id else 15
