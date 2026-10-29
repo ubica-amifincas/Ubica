@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, type MutableRefObject } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Popup, useMap, Polygon, ZoomControl } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents, Polygon, ZoomControl } from 'react-leaflet';
 import { motion, AnimatePresence } from 'framer-motion';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -59,22 +59,113 @@ const hasRealCoordinates = (p: Property) => {
   return raw.latitude != null && raw.longitude != null;
 };
 
-/** Encuadra los inmuebles visibles al abrir el mapa y al cambiar los resultados; se reajusta en pantalla completa. */
-function MapController({ points, fitKey, isFullscreen }: { points: [number, number][]; fitKey: string; isFullscreen: boolean }) {
+/** Minúsculas y sin tildes: "Águilas" y "aguilas" son la misma ubicación. */
+const plain = (s: string | null | undefined) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+
+type LatLng = { lat: number; lng: number };
+/** Rectángulo del mapa: [[sur, oeste], [norte, este]] */
+type Bounds = [[number, number], [number, number]];
+
+const MAX_PRICE = 1000000;
+const DEFAULT_FILTERS: PropertyFilters = { type: '', location: '', minPrice: 0, maxPrice: MAX_PRICE, bedrooms: 0, status: '', searchTerm: '' };
+
+const BASE_LOCATIONS = [
+  ['murcia', 'location.murcia'], ['cartagena', 'location.cartagena'], ['lorca', 'location.lorca'], ['molina', 'location.molina'],
+  ['torre', 'location.torre'], ['aguilas', 'location.aguilas'], ['cieza', 'location.cieza'], ['yecla', 'location.yecla'],
+  ['jumilla', 'location.jumilla'], ['san javier', 'location.sanjavier'], ['mazarron', 'location.mazarron'], ['mar menor', 'location.marmenor'],
+] as const;
+
+// La búsqueda vive en la URL para poder compartirla, guardarla en marcadores o recargar sin perderla.
+// La zona dibujada va como "lat,lng;lat,lng;..." y el rectángulo del mapa como "sur,oeste,norte,este" (5 decimales ≈ 1 m).
+const SEARCH_KEYS = ['type', 'location', 'status', 'bedrooms', 'minPrice', 'maxPrice', 'q', 'searchTerm', 'view', 'area', 'bbox'];
+const encodeArea = (area: LatLng[]) => area.map(p => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`).join(';');
+const decodeArea = (value: string | null): LatLng[] | null => {
+  const points = (value || '').split(';').map(pair => pair.split(',').map(Number))
+    .filter(n => n.length === 2 && n.every(Number.isFinite)).map(([lat, lng]) => ({ lat, lng }));
+  return points.length >= 3 ? points : null;
+};
+const encodeBounds = (b: Bounds) => [b[0][0], b[0][1], b[1][0], b[1][1]].map(n => n.toFixed(5)).join(',');
+const decodeBounds = (value: string | null): Bounds | null => {
+  const n = (value || '').split(',').map(Number);
+  return n.length === 4 && n.every(Number.isFinite) ? [[n[0], n[1]], [n[2], n[3]]] : null;
+};
+const inBounds = (p: LatLng, b: Bounds) => p.lat >= b[0][0] && p.lat <= b[1][0] && p.lng >= b[0][1] && p.lng <= b[1][1];
+
+function readSearchFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const num = (key: string, fallback: number) => {
+    const value = parseInt(params.get(key) ?? '', 10);
+    return Number.isFinite(value) ? value : fallback;
+  };
+  const filters: PropertyFilters = {
+    ...DEFAULT_FILTERS,
+    type: params.get('type') ?? '',
+    location: params.get('location') ?? '',
+    status: params.get('status') ?? '',
+    bedrooms: num('bedrooms', 0),
+    minPrice: num('minPrice', 0),
+    maxPrice: num('maxPrice', MAX_PRICE),
+  };
+  return {
+    filters,
+    // Las búsquedas guardadas antiguas usan "searchTerm"
+    searchTerm: params.get('q') ?? params.get('searchTerm') ?? '',
+    view: (params.get('view') === 'map' ? 'map' : 'grid') as 'grid' | 'map',
+    area: decodeArea(params.get('area')),
+    bounds: decodeBounds(params.get('bbox')),
+  };
+}
+
+/**
+ * Encuadra los resultados al abrir el mapa y al cambiar (o la zona buscada, si la hay); se reajusta si cambia su tamaño.
+ * Al moverlo él mismo olvida cualquier toque previo, para que no cuente como movimiento del usuario.
+ */
+function MapController({ points, bounds, fitKey, sizeKey, userMoveRef }: {
+  points: [number, number][]; bounds: Bounds | null; fitKey: string; sizeKey: string; userMoveRef: MutableRefObject<boolean>;
+}) {
   const map = useMap();
 
+  const autoMove = (move: () => void) => {
+    userMoveRef.current = false;
+    move();
+  };
+
   useEffect(() => {
-    if (points.length === 0) return;
-    if (points.length === 1) map.setView(points[0], 14);
-    else map.fitBounds(L.latLngBounds(points), { padding: [48, 48], maxZoom: 14 });
+    if (bounds) autoMove(() => map.fitBounds(bounds));
+    else if (points.length === 1) autoMove(() => map.setView(points[0], 14));
+    else if (points.length > 1) autoMove(() => map.fitBounds(L.latLngBounds(points), { padding: [48, 48], maxZoom: 14 }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fitKey, map]);
 
   useEffect(() => {
-    const timer = setTimeout(() => map.invalidateSize(), 100);
+    const timer = setTimeout(() => autoMove(() => map.invalidateSize()), 100);
     return () => clearTimeout(timer);
-  }, [isFullscreen, map]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sizeKey, map]);
 
+  return null;
+}
+
+/**
+ * Avisa cuando el usuario arrastra o hace zoom. Un movimiento cuenta como suyo si empieza con un toque, clic, rueda
+ * o tecla sobre el mapa; los encuadres automáticos (que pueden lanzar varios "moveend") no muestran el botón.
+ */
+function MapMoveWatcher({ userMoveRef, onUserMove }: { userMoveRef: MutableRefObject<boolean>; onUserMove: (b: Bounds) => void }) {
+  const map = useMapEvents({
+    moveend(e) {
+      if (!userMoveRef.current) return;
+      userMoveRef.current = false;
+      const b = e.target.getBounds();
+      onUserMove([[b.getSouth(), b.getWest()], [b.getNorth(), b.getEast()]]);
+    },
+  });
+  useEffect(() => {
+    const container = map.getContainer();
+    const mark = () => { userMoveRef.current = true; };
+    const events = ['pointerdown', 'wheel', 'keydown'] as const;
+    events.forEach(name => container.addEventListener(name, mark, { passive: true }));
+    return () => events.forEach(name => container.removeEventListener(name, mark));
+  }, [map, userMoveRef]);
   return null;
 }
 
@@ -83,14 +174,21 @@ export default function Home() {
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
-  const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
+  const [initialSearch] = useState(readSearchFromUrl);
+  const [showFilters, setShowFilters] = useState(() =>
+    Object.entries(initialSearch.filters).some(([key, value]) => value !== DEFAULT_FILTERS[key as keyof PropertyFilters]));
+  const [viewMode, setViewMode] = useState<'grid' | 'map'>(initialSearch.view);
   const [viewLayout, setViewLayout] = useState<'grid' | 'list'>(() => window.innerWidth < 768 ? 'list' : 'grid');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(initialSearch.searchTerm);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [drawnArea, setDrawnArea] = useState<any>(null);
+  const [drawnArea, setDrawnArea] = useState<LatLng[] | null>(initialSearch.area);
   const [isDrawingEnabled, setIsDrawingEnabled] = useState(false);
-  const [hasDrawnArea, setHasDrawnArea] = useState(false);
+  const [hasDrawnArea, setHasDrawnArea] = useState(!!initialSearch.area);
+  // "Buscar en esta zona": rectángulo aplicado como filtro y el último encuadre que movió el usuario
+  const [boundsFilter, setBoundsFilter] = useState<Bounds | null>(initialSearch.bounds);
+  const [pendingBounds, setPendingBounds] = useState<Bounds | null>(null);
+  const [hoveredId, setHoveredId] = useState<number | null>(null);
+  const userMoveRef = useRef(false);
   const [showMapToast, setShowMapToast] = useState(false);
   const [drawPoints, setDrawPoints] = useState(0);
   const drawRef = useRef<DrawControlHandle>(null);
@@ -148,49 +246,43 @@ export default function Home() {
     }
   };
 
-  const [filters, setFilters] = useState<PropertyFilters>({
-    type: '',
-    location: '',
-    minPrice: 0,
-    maxPrice: 1000000,
-    bedrooms: 0,
-    status: '',
-    searchTerm: ''
-  });
+  const [filters, setFilters] = useState<PropertyFilters>(initialSearch.filters);
 
   const isSearchActive = !!searchTerm ||
-    Object.values(filters).some(f => f !== '' && f !== 0 && f !== 1000000);
+    Object.values(filters).some(f => f !== '' && f !== 0 && f !== MAX_PRICE);
+  const hasZone = hasDrawnArea || !!boundsFilter;
 
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [, setSearchParams] = useSearchParams();
 
-  // Initialize filters from URL search params
+  // Refleja la búsqueda en la URL (sin crear una entrada de historial por cada cambio)
   useEffect(() => {
-    const newFilters: Partial<PropertyFilters> = {};
-    let hasParams = false;
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      SEARCH_KEYS.forEach(key => next.delete(key));
+      if (filters.type) next.set('type', filters.type);
+      if (filters.location) next.set('location', filters.location);
+      if (filters.status) next.set('status', filters.status);
+      if (filters.bedrooms > 0) next.set('bedrooms', String(filters.bedrooms));
+      if (filters.minPrice > 0) next.set('minPrice', String(filters.minPrice));
+      if (filters.maxPrice < MAX_PRICE) next.set('maxPrice', String(filters.maxPrice));
+      if (searchTerm) next.set('q', searchTerm);
+      if (viewMode === 'map') next.set('view', 'map');
+      if (hasDrawnArea && drawnArea) next.set('area', encodeArea(drawnArea));
+      if (boundsFilter) next.set('bbox', encodeBounds(boundsFilter));
+      return next;
+    }, { replace: true });
+  }, [filters, searchTerm, viewMode, hasDrawnArea, drawnArea, boundsFilter, setSearchParams]);
 
-    searchParams.forEach((value, key) => {
-      if (key in filters) {
-        hasParams = true;
-        if (key === 'minPrice' || key === 'maxPrice' || key === 'bedrooms') {
-          (newFilters as any)[key] = parseInt(value) || 0;
-        } else {
-          (newFilters as any)[key] = value;
-        }
-      } else if (key === 'searchTerm') {
-        setSearchTerm(value);
-        hasParams = true;
-      } else if (key === 'view' && value === 'map') {
-        // Enlace "Ver en el mapa" del asistente de IA
-        setViewMode('map');
-      }
-    });
-
-    if (hasParams) {
-      setFilters(prev => ({ ...prev, ...newFilters }));
-      setShowFilters(true); // Open filters if params were passed
+  // Ubicaciones del desplegable: las de siempre más la que venga en la URL (p. ej. "Murcia" desde el asistente)
+  const locationOptions = useMemo(() => {
+    const options: { value: string; label: string }[] = BASE_LOCATIONS.map(([value, key]) => ({ value, label: t(key) }));
+    if (filters.location && !options.some(o => plain(o.value) === plain(filters.location))) {
+      options.push({ value: filters.location, label: filters.location });
     }
-  }, []); // Run once on mount
+    return options;
+  }, [filters.location, t]);
+  const selectedLocation = locationOptions.find(o => plain(o.value) === plain(filters.location))?.value ?? '';
 
   // Center map on Murcia
   const murciaCenter: [number, number] = [37.9922, -1.1307];
@@ -241,7 +333,8 @@ export default function Home() {
     }
 
     if (filters.location) {
-      filtered = filtered.filter(p => p.location.toLowerCase().includes(filters.location.toLowerCase()));
+      const location = plain(filters.location);
+      filtered = filtered.filter(p => plain(p.location).includes(location));
     }
 
     if (filters.status) {
@@ -261,28 +354,32 @@ export default function Home() {
     }
 
     if (searchTerm) {
-      filtered = filtered.filter(p =>
-        p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.description.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      const term = plain(searchTerm);
+      filtered = filtered.filter(p => plain(p.title).includes(term) || plain(p.location).includes(term) || plain(p.description).includes(term));
     }
 
-    if (hasDrawnArea && drawnArea && Array.isArray(drawnArea)) {
-      // Un inmueble sin coordenadas no está "dentro" de ninguna zona
+    // Un inmueble sin coordenadas no está "dentro" de ninguna zona
+    if (hasDrawnArea && drawnArea) {
       filtered = filtered.filter(p => hasRealCoordinates(p) && isPointInPolygon(p.coordinates.lat, p.coordinates.lng, drawnArea));
+    }
+    if (boundsFilter) {
+      filtered = filtered.filter(p => hasRealCoordinates(p) && inBounds(p.coordinates, boundsFilter));
     }
 
     setFilteredProperties(filtered);
-  }, [filters, properties, searchTerm, hasDrawnArea, drawnArea]);
+  }, [filters, properties, searchTerm, hasDrawnArea, drawnArea, boundsFilter]);
 
   const mappableProperties = useMemo(() => filteredProperties.filter(hasRealCoordinates), [filteredProperties]);
+  const unmappedCount = filteredProperties.length - mappableProperties.length;
+  const showResultsList = viewMode === 'map' && !isFullscreen && filteredProperties.length > 0;
   const mapPoints = useMemo<[number, number][]>(
     () => mappableProperties.map(p => [p.coordinates.lat, p.coordinates.lng]),
     [mappableProperties],
   );
-  // Se reencuadra al abrir el mapa y cuando cambian los resultados (no mientras se dibuja)
-  const mapFitKey = `${viewMode}|${mappableProperties.map(p => p.id).join(',')}`;
+  // Se reencuadra al abrir el mapa y cuando cambian los resultados; con "Buscar en esta zona" se queda en la zona
+  const mapFitKey = boundsFilter
+    ? `${viewMode}|bbox:${encodeBounds(boundsFilter)}`
+    : `${viewMode}|${mappableProperties.map(p => p.id).join(',')}`;
 
   const handleFilterChange = (key: keyof PropertyFilters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -325,19 +422,24 @@ export default function Home() {
 
   const handleMarkerClick = (property: Property) => {
     setSelectedProperty(property);
+    // Lleva la ficha de la lista lateral a la vista
+    document.getElementById(`map-result-${property.id}`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   };
 
   const resetFilters = () => {
-    setFilters({
-      type: '',
-      location: '',
-      minPrice: 0,
-      maxPrice: 1000000,
-      bedrooms: 0,
-      status: '',
-      searchTerm: ''
-    });
+    setFilters(DEFAULT_FILTERS);
     setSearchTerm('');
+  };
+
+  const searchThisArea = () => {
+    if (!pendingBounds) return;
+    setBoundsFilter(pendingBounds);
+    setPendingBounds(null);
+  };
+
+  const resetAll = () => {
+    resetFilters();
+    clearDrawnArea();
   };
 
 
@@ -367,10 +469,13 @@ export default function Home() {
 
   // Handle drawn area
   // Al cerrar la zona se sale del modo dibujo: la zona queda en el mapa y filtra los resultados
-  const handleDrawCreated = (data: { type: string, coordinates: { lat: number, lng: number }[] }) => {
+  const handleDrawCreated = (data: { type: string, coordinates: LatLng[] }) => {
     setDrawnArea(data.coordinates);
     setHasDrawnArea(true);
     setIsDrawingEnabled(false);
+    // La zona dibujada sustituye a la de "Buscar en esta zona"
+    setBoundsFilter(null);
+    setPendingBounds(null);
   };
 
   const toggleDrawingMode = () => {
@@ -458,10 +563,13 @@ export default function Home() {
     };
   }, [viewMode]);
 
+  // Quita cualquier zona: la dibujada y la de "Buscar en esta zona"
   const clearDrawnArea = () => {
     setHasDrawnArea(false);
     setDrawnArea(null);
     setIsDrawingEnabled(false);
+    setBoundsFilter(null);
+    setPendingBounds(null);
   };
 
 
@@ -589,7 +697,7 @@ export default function Home() {
                   </motion.button>
 
                   {/* Tutorial Highlight Animation for "Draw Area" */}
-                  {!hasDrawnArea && !isDrawingEnabled && (
+                  {!hasZone && !isDrawingEnabled && (
                     <motion.div
                       initial={false}
                       animate={{ opacity: 1, scale: 1 }}
@@ -603,24 +711,25 @@ export default function Home() {
                     />
                   )}
                   {/* Ping effect for "Draw Area" */}
-                  {!hasDrawnArea && !isDrawingEnabled && (
+                  {!hasZone && !isDrawingEnabled && (
                     <span className="absolute -top-1 -right-1 flex h-3 w-3 z-20">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
                     </span>
                   )}
 
-                  {hasDrawnArea && (
+                  {hasZone && (
                     <motion.button
                       initial={false}
                       animate={{ opacity: 1, scale: 1 }}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={clearDrawnArea}
+                      aria-label={t('map.clearZone')}
                       className="flex items-center gap-1.5 sm:gap-2 bg-red-500 text-white px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow-sm border border-red-600 hover:bg-red-600 transition-all z-10 relative"
                     >
                       <TrashIcon className="h-4 w-4" />
-                      <span className="hidden sm:inline">{t('map.clearArea')}</span>
+                      <span className="hidden sm:inline">{t('map.clearZone')}</span>
                     </motion.button>
                   )}
                 </div>
@@ -629,13 +738,13 @@ export default function Home() {
               {/* En móvil, con la barra llena, basta el número; el texto completo queda para lectores de pantalla */}
               <div className="min-w-0 truncate text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                 <span className={viewMode === 'map' ? 'hidden sm:inline' : undefined}>
-                  {hasDrawnArea
+                  {hasZone
                     ? t('view.propertiesInArea', { count: filteredProperties.length })
                     : t('view.properties', { count: filteredProperties.length })}
                 </span>
                 {viewMode === 'map' && (
                   <span className="rounded-full bg-gray-100 px-2 py-0.5 font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-200 sm:hidden"
-                    aria-label={hasDrawnArea ? t('view.propertiesInArea', { count: filteredProperties.length }) : t('view.properties', { count: filteredProperties.length })}>
+                    aria-label={hasZone ? t('view.propertiesInArea', { count: filteredProperties.length }) : t('view.properties', { count: filteredProperties.length })}>
                     {filteredProperties.length}
                   </span>
                 )}
@@ -723,23 +832,12 @@ export default function Home() {
                   {t('filters.location')}
                 </label>
                 <select
-                  value={filters.location}
+                  value={selectedLocation}
                   onChange={(e) => handleFilterChange('location', e.target.value)}
                   className="w-full px-3 py-2.5 bg-white dark:bg-gray-700 border border-emerald-200 dark:border-gray-600 rounded-xl text-sm text-gray-700 dark:text-white shadow-sm focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all appearance-none cursor-pointer hover:border-emerald-300"
                 >
                   <option value="">{t('filters.allLocations')}</option>
-                  <option value="murcia">{t('location.murcia')}</option>
-                  <option value="cartagena">{t('location.cartagena')}</option>
-                  <option value="lorca">{t('location.lorca')}</option>
-                  <option value="molina">{t('location.molina')}</option>
-                  <option value="torre">{t('location.torre')}</option>
-                  <option value="aguilas">{t('location.aguilas')}</option>
-                  <option value="cieza">{t('location.cieza')}</option>
-                  <option value="yecla">{t('location.yecla')}</option>
-                  <option value="jumilla">{t('location.jumilla')}</option>
-                  <option value="san javier">{t('location.sanjavier')}</option>
-                  <option value="mazarron">{t('location.mazarron')}</option>
-                  <option value="mar menor">{t('location.marmenor')}</option>
+                  {locationOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
 
@@ -823,8 +921,8 @@ export default function Home() {
                 {/* Range Slider */}
                 <div className="px-3 pb-2 mt-4 sm:mt-0">
                   <Slider
-                    value={[filters.minPrice, Math.min(filters.maxPrice, 1000000)]}
-                    max={1000000}
+                    value={[filters.minPrice, Math.min(filters.maxPrice, MAX_PRICE)]}
+                    max={MAX_PRICE}
                     step={10000}
                     onValueChange={(val) => {
                       handleFilterChange('minPrice', val[0]);
@@ -967,7 +1065,8 @@ export default function Home() {
                 )}
               </AnimatePresence>
 
-              <div className="map-wrapper" style={{ height: 'calc(100vh - 280px)', minHeight: '500px' }}>
+              <div className="flex gap-4">
+              <div className="map-wrapper min-w-0 flex-1" style={{ height: 'calc(100vh - 280px)', minHeight: '500px' }}>
                 <style>
                   {`
                   .map-fullscreen-container:fullscreen {
@@ -1040,6 +1139,49 @@ export default function Home() {
 
 
 
+                {/* Tras mover el mapa: filtra por lo que se ve */}
+                {pendingBounds && !isDrawingEnabled && !hasDrawnArea && (
+                  <div className="pointer-events-none absolute inset-x-0 top-3 z-[1000] flex justify-center px-14">
+                    <button type="button" onClick={searchThisArea}
+                      className="pointer-events-auto flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-800 shadow-lg hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700">
+                      <MagnifyingGlassIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                      {t('map.searchHere')}
+                    </button>
+                  </div>
+                )}
+
+                {/* Sin resultados: se explica en lugar de mostrar un mapa vacío */}
+                {filteredProperties.length === 0 && !isDrawingEnabled && (
+                  <div className="pointer-events-none absolute inset-0 z-[999] flex items-center justify-center p-4">
+                    <div role="status" className="pointer-events-auto max-w-sm rounded-2xl border border-gray-200 bg-white/95 p-5 text-center shadow-xl backdrop-blur dark:border-gray-700 dark:bg-gray-800/95">
+                      <MapIcon className="mx-auto mb-2 h-8 w-8 text-gray-400" aria-hidden="true" />
+                      <p className="font-semibold text-gray-900 dark:text-white">
+                        {properties.length === 0 ? t('map.noListings.title') : t('map.noResults.title')}
+                      </p>
+                      <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                        {properties.length === 0 ? t('map.noListings.desc') : t('map.noResults.desc')}
+                      </p>
+                      {properties.length > 0 && (isSearchActive || hasZone) && (
+                        <button type="button" onClick={resetAll}
+                          className="mt-3 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+                          {t('common.clearFilters')}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Resultados que no se pueden situar: se avisa para que no parezca que faltan */}
+                {unmappedCount > 0 && !isDrawingEnabled && (
+                  <div className="absolute bottom-6 left-3 z-[1000] flex max-w-[calc(100%-1.5rem)] items-center gap-2 rounded-full border border-gray-200 bg-white/95 py-1.5 pl-3 pr-1.5 text-xs text-gray-700 shadow-md backdrop-blur dark:border-gray-700 dark:bg-gray-800/95 dark:text-gray-200">
+                    <span className="truncate">{t('map.unmapped', { count: unmappedCount })}</span>
+                    <button type="button" onClick={() => { setViewMode('grid'); setViewLayout('list'); }}
+                      className="flex-shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 font-semibold text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/40 dark:text-emerald-300 lg:hidden">
+                      {t('map.seeInList')}
+                    </button>
+                  </div>
+                )}
+
                 {/* Barra de dibujo: indica qué hacer y cabe en un móvil */}
                 {isDrawingEnabled && (
                   <div className="absolute inset-x-0 bottom-4 z-[1000] flex justify-center px-3 pointer-events-none">
@@ -1095,7 +1237,8 @@ export default function Home() {
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   />
-                  <MapController points={mapPoints} fitKey={mapFitKey} isFullscreen={isFullscreen} />
+                  <MapController points={mapPoints} bounds={boundsFilter} fitKey={mapFitKey} sizeKey={`${isFullscreen}|${showResultsList}`} userMoveRef={userMoveRef} />
+                  <MapMoveWatcher userMoveRef={userMoveRef} onUserMove={setPendingBounds} />
 
                   <DrawControl
                     ref={drawRef}
@@ -1118,7 +1261,8 @@ export default function Home() {
                       key={`${property.id}-${isDrawingEnabled ? 'draw' : 'view'}`}
                       interactive={!isDrawingEnabled}
                       position={[property.coordinates.lat, property.coordinates.lng]}
-                      icon={createPriceMarker(property.price, selectedProperty?.id === property.id)}
+                      icon={createPriceMarker(property.price, selectedProperty?.id === property.id || hoveredId === property.id)}
+                      zIndexOffset={hoveredId === property.id ? 1000 : 0}
                       eventHandlers={{
                         click: () => handleMarkerClick(property),
                       }}
@@ -1148,6 +1292,52 @@ export default function Home() {
                     </Marker>
                   ))}
                 </MapContainer>
+              </div>
+
+              {/* Ordenador: lista de resultados junto al mapa; pasar por una ficha resalta su precio en el mapa */}
+              {showResultsList && (
+                <aside aria-label={t('map.results')}
+                  className="hidden w-[22rem] flex-shrink-0 flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800 lg:flex"
+                  style={{ height: 'calc(100vh - 280px)', minHeight: '500px' }}>
+                  <p className="border-b border-gray-100 px-4 py-3 text-sm font-semibold text-gray-900 dark:border-gray-700 dark:text-white">
+                    {hasZone
+                      ? t('view.propertiesInArea', { count: filteredProperties.length })
+                      : t('view.properties', { count: filteredProperties.length })}
+                  </p>
+                  <ul className="flex-1 divide-y divide-gray-100 overflow-y-auto dark:divide-gray-700">
+                    {filteredProperties.map(property => {
+                      const active = hoveredId === property.id || selectedProperty?.id === property.id;
+                      return (
+                        <li key={property.id} id={`map-result-${property.id}`}>
+                          <button type="button" onClick={() => handleViewDetails(property.id)}
+                            onMouseEnter={() => setHoveredId(property.id)} onMouseLeave={() => setHoveredId(null)}
+                            onFocus={() => setHoveredId(property.id)} onBlur={() => setHoveredId(null)}
+                            className={`flex w-full gap-3 p-3 text-left transition-colors ${active ? 'bg-emerald-50 dark:bg-emerald-900/30' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
+                            {property.images?.[0] ? (
+                              <img src={property.images[0]} alt="" loading="lazy" className="h-16 w-24 flex-shrink-0 rounded-lg object-cover"
+                                onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }} />
+                            ) : (
+                              <div className="flex h-16 w-24 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-400 dark:bg-gray-700"><HomeIcon className="h-6 w-6" /></div>
+                            )}
+                            <div className="min-w-0">
+                              <p className="font-display font-semibold tabular-nums text-gray-900 dark:text-white">
+                                {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(property.price)}
+                              </p>
+                              <p className="truncate text-sm text-gray-800 dark:text-gray-200">{property.title}</p>
+                              <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                                {[property.location, property.bedrooms ? `${property.bedrooms} hab.` : null, property.area ? `${property.area} m²` : null].filter(Boolean).join(' · ')}
+                              </p>
+                              {!hasRealCoordinates(property) && (
+                                <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-400">{t('map.noLocation')}</p>
+                              )}
+                            </div>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </aside>
+              )}
               </div>
             </div>
           </div>
