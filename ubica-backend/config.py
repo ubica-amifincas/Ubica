@@ -42,6 +42,8 @@ CORS_ORIGINS = [
     "https://amifincas.es",
     "https://ubica-five.vercel.app"
 ]
+# Vistas previas de Vercel de este proyecto (ramas como develop), que usan la API de producción
+CORS_ORIGIN_REGEX = r"https://ubica-[a-z0-9-]+-verifyubica-7020s-projects\.vercel\.app"
 
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads"))
 AI_USAGE_FILE = os.getenv("AI_USAGE_FILE", "ai_usage.json")

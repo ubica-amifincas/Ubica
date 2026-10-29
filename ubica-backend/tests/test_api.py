@@ -308,3 +308,15 @@ def test_upload_to_supabase_storage(client, make_user, monkeypatch):
     assert post_url.startswith("https://proyecto.supabase.co/storage/v1/object/property-images/")
     assert headers["apikey"] == "sb_secret_prueba" and "Authorization" not in headers
     assert headers["Content-Type"] == "image/png" and size == 24
+
+
+def test_cors_allows_only_this_projects_vercel_previews(client):
+    def allowed(origin):
+        r = client.options("/api/properties", headers={"Origin": origin, "Access-Control-Request-Method": "GET"})
+        return r.headers.get("access-control-allow-origin") == origin
+    assert allowed("https://ubica.amifincas.es")
+    assert allowed("https://ubica-git-develop-verifyubica-7020s-projects.vercel.app")
+    assert allowed("https://ubica-a1b2c3d4e-verifyubica-7020s-projects.vercel.app")
+    assert not allowed("https://ubica-x-verifyubica-7020s-projects.vercel.app.evil.com")
+    assert not allowed("https://otra-app-verifyubica-7020s-projects.vercel.app")
+    assert not allowed("https://ubica-x-otro-equipo.vercel.app")
