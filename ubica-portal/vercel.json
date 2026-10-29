@@ -1,24 +1,28 @@
 {
-    "rewrites": [
+    "redirects": [
         {
-            "source": "/((?!ami-fincas).*)",
-            "has": [
-                {
-                    "type": "host",
-                    "value": "amifincas.es"
-                }
-            ],
-            "destination": "/index.html"
+            "source": "/",
+            "has": [{ "type": "host", "value": "www.amifincas.es" }],
+            "destination": "/ami-fincas",
+            "permanent": false
         },
         {
-            "source": "/((?!ami-fincas).*)",
-            "has": [
-                {
-                    "type": "host",
-                    "value": "www.amifincas.es"
-                }
-            ],
-            "destination": "/index.html"
+            "source": "/",
+            "has": [{ "type": "host", "value": "amifincas.es" }],
+            "destination": "https://www.amifincas.es/ami-fincas",
+            "permanent": false
+        },
+        {
+            "source": "/ami-fincas",
+            "has": [{ "type": "host", "value": "ubica.amifincas.es" }],
+            "destination": "https://www.amifincas.es/ami-fincas",
+            "permanent": true
+        }
+    ],
+    "rewrites": [
+        {
+            "source": "/ami-fincas",
+            "destination": "/ami.html"
         },
         {
             "source": "/(.*)",

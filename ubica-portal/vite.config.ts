@@ -9,5 +9,13 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      // ami.html: la misma app con la cabecera de AMI Fincas (la sirve vercel.json en /ami-fincas)
+      input: {
+        main: path.resolve(__dirname, "index.html"),
+        ami: path.resolve(__dirname, "ami.html"),
+      },
+    },
+  },
 })
-

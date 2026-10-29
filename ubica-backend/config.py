@@ -40,6 +40,7 @@ CORS_ORIGINS = [
     "http://localhost:3000",
     "https://ubica.amifincas.es",
     "https://amifincas.es",
+    "https://www.amifincas.es",
     "https://ubica-five.vercel.app"
 ]
 # Vistas previas de Vercel de este proyecto (ramas como develop), que usan la API de producción

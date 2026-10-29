@@ -21,6 +21,7 @@ import { CookieConsentProvider } from './contexts/CookieConsentContext';
 // Quick wins
 import ScrollToTop from './components/common/ScrollToTop';
 import useDocumentTitle from './hooks/useDocumentTitle';
+import { AMI_PATH, AMI_SITE_PATHS, isAmiSite, amiHref, ubicaHref } from './utils/site';
 import { PWAInstallPrompt } from './components/common/PWAInstallPrompt';
 import { AIChatProvider } from './contexts/AIChatContext';
 import AIChatModal from './components/ai/AIChatModal';
@@ -67,14 +68,28 @@ const InvestorDashboard = lazy(() => import('./pages/Investor/InvestorDashboard'
 function AppRoutes() {
   useDocumentTitle();
   const location = useLocation();
-  const isAmiFincasDomain = window.location.hostname === 'amifincas.es' || window.location.hostname === 'www.amifincas.es';
 
-  // Redirigir todo excepto /ami-fincas a ubica.amifincas.es
+  // Cada página se sirve en la web de su producto. En la de AMI Fincas solo están su portada y
+  // los textos legales; lo demás es Ubica. Y la portada de AMI no se duplica dentro de Ubica.
+  const path = location.pathname.replace(/\/+$/, '') || '/';
+  const params = new URLSearchParams(location.search);
+  params.delete('site');
+  const query = params.toString() ? `?${params}` : '';
+  let externalTarget: string | null = null;
+  let internalTarget: string | null = null;
+  if (isAmiSite) {
+    if (path === '/') internalTarget = AMI_PATH;
+    else if (!AMI_SITE_PATHS.includes(path)) externalTarget = ubicaHref(`${path}${query}`);
+  } else if (path === AMI_PATH) {
+    externalTarget = amiHref(`${AMI_PATH}${location.hash}`);
+  }
+
   useEffect(() => {
-    if (isAmiFincasDomain && !location.pathname.startsWith('/ami-fincas')) {
-      window.location.replace(`https://ubica.amifincas.es${location.pathname}${window.location.search}`);
-    }
-  }, [isAmiFincasDomain, location.pathname]);
+    if (externalTarget) window.location.replace(externalTarget);
+  }, [externalTarget]);
+
+  if (externalTarget) return <RouteFallback fullScreen />;
+  if (internalTarget) return <Navigate to={internalTarget} replace />;
 
   return (
     <>
@@ -196,11 +211,9 @@ function AppRoutes() {
         {/* Banner y panel de cookies */}
         <CookieConsent />
 
-        {/* PWA Install Prompt */}
-        <PWAInstallPrompt />
-
-        {/* Global AI Chat */}
-        <AIChatModal />
+        {/* La app instalable y el asistente IA son de Ubica: no aparecen en la web de AMI Fincas */}
+        {!isAmiSite && <PWAInstallPrompt />}
+        {!isAmiSite && <AIChatModal />}
       </div>
     </>
   );

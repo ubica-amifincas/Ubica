@@ -16,9 +16,22 @@ import {
 } from '@heroicons/react/24/outline';
 import { useLanguage } from '../hooks/useLanguage';
 import ConsentMap from '../components/common/ConsentMap';
+import { ubicaHref } from '../utils/site';
 
 const AMIGreen = '#A2D18D';
 const AMITeal = '#2D8A9D';
+
+const INTRO_KEY = 'ami-intro-seen';
+
+/** La animación de entrada solo la primera vez en la sesión y sin "reducir movimiento". */
+const shouldPlayIntro = () => {
+  try {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
+    return sessionStorage.getItem(INTRO_KEY) !== '1';
+  } catch {
+    return true;
+  }
+};
 
 const PageTransition = ({ t }: { t: any }) => (
   <motion.div
@@ -86,7 +99,8 @@ const PageTransition = ({ t }: { t: any }) => (
 
 export default function AmiFincas() {
   const { t } = useLanguage();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(shouldPlayIntro);
+  const [playedIntro] = useState(isLoading);
   
   // Parallax configuration hooks
   const { scrollYProgress } = useScroll();
@@ -116,36 +130,15 @@ export default function AmiFincas() {
     return <span ref={nodeRef} />;
   };
 
+  // La animación de entrada se ve una vez por sesión (y nunca con "reducir movimiento")
   useEffect(() => {
+    if (!isLoading) return;
+    try { sessionStorage.setItem(INTRO_KEY, '1'); } catch { /* sin almacenamiento: se vuelve a ver */ }
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 2500);
     return () => clearTimeout(timer);
-  }, []);
-
-  // Effect to dynamically handle Favicon and Document Title exclusively for this page
-  useEffect(() => {
-    // Save original values
-    const originalTitle = document.title;
-    const faviconNode = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
-    const appleIconNode = document.querySelector("link[rel~='apple-touch-icon']") as HTMLLinkElement;
-    
-    const originalFaviconHref = faviconNode?.href;
-    const originalAppleIconHref = appleIconNode?.href;
-
-    // Set new values
-    document.title = "Ami Fincas - Administración de fincas";
-    
-    if (faviconNode) faviconNode.href = "/ami-fincas/favAMI.png";
-    if (appleIconNode) appleIconNode.href = "/ami-fincas/favAMI.png";
-
-    // Cleanup function: Restore original title and icons on unmount (when leaving route)
-    return () => {
-      document.title = originalTitle;
-      if (faviconNode && originalFaviconHref) faviconNode.href = originalFaviconHref;
-      if (appleIconNode && originalAppleIconHref) appleIconNode.href = originalAppleIconHref;
-    };
-  }, []);
+  }, [isLoading]);
 
   const services = [
     {
@@ -193,7 +186,7 @@ export default function AmiFincas() {
   const offices = [
     {
       city: t('ami.offices.murcia'),
-      address: 'Calle Angeles, 41, 30007 Murcia',
+      address: 'Calle Ángeles, 41, 30007 Murcia',
       phones: ['+34 676 62 69 33', '+34 609 00 88 64'],
       schedule: t('ami.offices.schedule.murcia'),
       mapUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3143.9!2d-1.08!3d37.99!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd638!2sCalle%20Angeles%2C%2041%2C%2030007%20Murcia!5e0!3m2!1ses!2ses!4v1620000000000!5m2!1ses!2ses'
@@ -219,7 +212,7 @@ export default function AmiFincas() {
           <span itemProp="name">AMI Fincas</span>
           <span itemProp="description">Administración de fincas y correduría de seguros experta en Murcia. Gestionamos tu comunidad y protegemos tu inversión inmobiliaria mediante seguros especializados.</span>
           <div itemProp="address" itemScope itemType="https://schema.org/PostalAddress">
-            <span itemProp="streetAddress">Calle Angeles, 41</span>
+            <span itemProp="streetAddress">Calle Ángeles, 41</span>
             <span itemProp="addressLocality">Murcia</span>
             <span itemProp="postalCode">30007</span>
             <span itemProp="addressCountry">ES</span>
@@ -235,7 +228,7 @@ export default function AmiFincas() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 1, delay: 2.2 }}
+        transition={{ duration: playedIntro ? 1 : 0.3, delay: playedIntro ? 2.2 : 0 }}
         className="min-h-screen bg-slate-50 dark:bg-[#0f172a] text-slate-900 dark:text-white transition-colors duration-300 overflow-hidden font-sans selection:bg-emerald-500/30"
       >
         {/* Hero Section */}
@@ -323,7 +316,7 @@ export default function AmiFincas() {
                     transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
                     className="absolute -top-10 -right-4 bg-[#1e293b]/80 backdrop-blur-xl p-4 rounded-2xl border border-white/10 shadow-2xl"
                   >
-                    <p className="text-xs font-bold text-emerald-400 uppercase tracking-tighter">{t('ami.hero.id')}</p>
+                    <p className="text-xs font-bold text-emerald-200 uppercase tracking-wider">{t('ami.hero.id')}</p>
                   </motion.div>
                 </div>
               </motion.div>
@@ -583,9 +576,7 @@ export default function AmiFincas() {
                   <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
                     ¿Te has fijado en los pequeños logos triangulares que aparecen sobre las islas y los edificios en las imágenes 3D de esta página? Son el sello de <strong className="text-emerald-600 dark:text-emerald-400">Ubica</strong>. AMI Fincas forma parte integral del sólido ecosistema tecnológico de nuestro portal inmobiliario. 
                     <a 
-                      href="https://ubica.amifincas.es/about" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
+                      href={ubicaHref('/about')}
                       className="inline-flex items-center ml-2 text-emerald-600 dark:text-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-300 font-bold underline decoration-emerald-500/30 hover:decoration-emerald-500 transition-all underline-offset-4"
                     >
                       Descubre más sobre Ubica aquí

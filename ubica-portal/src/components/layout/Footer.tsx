@@ -7,6 +7,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useLanguage } from '../../hooks/useLanguage';
 import { useCookieConsent } from '../../contexts/CookieConsentContext';
+import { AMI_PATH, isAmiSite, amiHref, ubicaHref } from '../../utils/site';
 
 // Instagram Icon
 const InstagramIcon = () => (
@@ -19,24 +20,43 @@ export default function Footer() {
   const { t } = useLanguage();
   const { openSettings } = useCookieConsent();
 
-  const footerLinks = {
-    company: [
-      { name: t('footer.about'), href: '/about' },
-      { name: t('footer.ami'), href: 'https://amifincas.es', external: true },
-    ],
-    services: [
-      { name: t('footer.buy'), href: '/?status=for-sale' },
-      { name: t('footer.sell'), href: 'https://ubica.amifincas.es/register', external: true },
-      { name: t('footer.rent'), href: '/?status=for-rent' },
-    ],
-    support: [
-      { name: t('footer.help'), href: '/contact' },
-      { name: t('footer.terms'), href: '/terms' },
-    ],
-    social: [
-      { name: 'Instagram', href: 'https://www.instagram.com/amifincas', external: true, icon: InstagramIcon },
-    ]
-  };
+  const instagram = { name: 'Instagram', href: 'https://www.instagram.com/amifincas', external: true, icon: InstagramIcon };
+
+  // Cada web enlaza a lo suyo y presenta a la otra como el producto hermano
+  const footerLinks = isAmiSite
+    ? {
+      company: [
+        { name: t('ami.nav.services', 'Servicios'), href: `${AMI_PATH}#servicios`, external: true, sameTab: true },
+        { name: t('ami.nav.offices', 'Sedes'), href: `${AMI_PATH}#contacto`, external: true, sameTab: true },
+        { name: 'info@amifincas.es', href: 'mailto:info@amifincas.es', external: true, sameTab: true },
+      ],
+      services: [
+        { name: t('ami.footer.ubica', 'Ubica, portal inmobiliario'), href: ubicaHref('/'), external: true, sameTab: true },
+        { name: t('footer.buy'), href: ubicaHref('/?status=for-sale'), external: true, sameTab: true },
+        { name: t('footer.rent'), href: ubicaHref('/?status=for-rent'), external: true, sameTab: true },
+      ],
+      support: [
+        { name: 'Murcia · 676 62 69 33', href: 'tel:+34676626933', external: true, sameTab: true },
+        { name: 'San Pedro · 968 17 91 80', href: 'tel:+34968179180', external: true, sameTab: true },
+      ],
+      social: [instagram],
+    }
+    : {
+      company: [
+        { name: t('footer.about'), href: '/about' },
+        { name: t('footer.ami'), href: amiHref(), external: true, sameTab: true },
+      ],
+      services: [
+        { name: t('footer.buy'), href: '/?status=for-sale' },
+        { name: t('footer.sell'), href: '/register' },
+        { name: t('footer.rent'), href: '/?status=for-rent' },
+      ],
+      support: [
+        { name: t('footer.help'), href: '/contact' },
+        { name: t('footer.terms'), href: '/terms' },
+      ],
+      social: [instagram],
+    };
 
   return (
     <footer className="bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
@@ -54,8 +74,7 @@ export default function Footer() {
                   {item.external ? (
                     <a
                       href={item.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      {...(!(item as any).sameTab && { target: '_blank', rel: 'noopener noreferrer' })}
                       className="text-sm text-gray-600 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors duration-200"
                     >
                       {item.name}
@@ -76,7 +95,7 @@ export default function Footer() {
           {/* Column 2: Servicios */}
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
-              {t('footer.services')}
+              {isAmiSite ? t('ami.footer.group', 'Nuestros productos') : t('footer.services')}
             </h3>
             <ul className="space-y-2 sm:space-y-3">
               {footerLinks.services.map((item) => (
@@ -84,8 +103,7 @@ export default function Footer() {
                   {(item as any).external ? (
                     <a
                       href={item.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      {...(!(item as any).sameTab && { target: '_blank', rel: 'noopener noreferrer' })}
                       className="text-sm text-gray-600 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors duration-200"
                     >
                       {item.name}
@@ -106,7 +124,7 @@ export default function Footer() {
           {/* Column 3: Soporte */}
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
-              {t('footer.support')}
+              {isAmiSite ? t('footer.contact') : t('footer.support')}
             </h3>
             <ul className="space-y-2 sm:space-y-3">
               {footerLinks.support.map((item) => (
@@ -114,8 +132,7 @@ export default function Footer() {
                   {(item as any).external ? (
                     <a
                       href={item.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      {...(!(item as any).sameTab && { target: '_blank', rel: 'noopener noreferrer' })}
                       className="text-sm text-gray-600 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors duration-200"
                     >
                       {item.name}
@@ -160,7 +177,15 @@ export default function Footer() {
         <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-200 dark:border-gray-700">
           <div className="flex flex-col lg:flex-row justify-between items-center sm:items-start gap-6 lg:gap-8">
 
-            {/* Ubica Info moved here */}
+            {/* Marca de la web en la que estamos */}
+            {isAmiSite ? (
+              <div className="flex-1 max-w-md text-center sm:text-left space-y-2">
+                <h3 className="text-xl font-bold text-[#23707f] dark:text-[#8fd0c3]">AMI Fincas</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                  {t('ami.footer.desc', 'Administración de fincas y correduría de seguros en la Región de Murcia.')}
+                </p>
+              </div>
+            ) : (
             <div className="flex-1 max-w-md text-center sm:text-left space-y-2">
               <h3 className="text-xl font-bold bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-500 bg-clip-text text-transparent">
                 Ubica
@@ -177,12 +202,20 @@ export default function Footer() {
               </p>
             </div>
 
+            )}
+
             {/* Legal Links & Copyright */}
             <div className="flex flex-col items-center lg:items-end space-y-4">
               <div className="flex flex-wrap justify-center lg:justify-end gap-x-6 gap-y-2">
-                <Link to="/contact" className="text-sm font-medium text-gray-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors">
-                  {t('footer.contact')}
-                </Link>
+                {isAmiSite ? (
+                  <a href={`${AMI_PATH}#contacto`} className="text-sm font-medium text-gray-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors">
+                    {t('footer.contact')}
+                  </a>
+                ) : (
+                  <Link to="/contact" className="text-sm font-medium text-gray-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors">
+                    {t('footer.contact')}
+                  </Link>
+                )}
                 <Link to="/aviso-legal" className="text-sm font-medium text-gray-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors">
                   {t('footer.legal')}
                 </Link>
@@ -197,7 +230,7 @@ export default function Footer() {
                 </button>
               </div>
               <p className="text-sm text-gray-400 dark:text-gray-500">
-                {t('footer.rights')}
+                {isAmiSite ? t('ami.footer.rights', `© ${new Date().getFullYear()} AMI Fincas. Todos los derechos reservados.`) : t('footer.rights')}
               </p>
             </div>
           </div>

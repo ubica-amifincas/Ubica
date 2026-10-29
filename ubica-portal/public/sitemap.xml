@@ -6,11 +6,6 @@
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://ubica.amifincas.es/ami-fincas</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://ubica.amifincas.es/about</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>

@@ -6,3 +6,4 @@ Disallow: /realtor
 Disallow: /investor
 
 Sitemap: https://ubica.amifincas.es/sitemap.xml
+Sitemap: https://www.amifincas.es/sitemap-ami.xml
