@@ -161,7 +161,10 @@ function MapMoveWatcher({ userMoveRef, onUserMove }: { userMoveRef: MutableRefOb
   });
   useEffect(() => {
     const container = map.getContainer();
-    const mark = () => { userMoveRef.current = true; };
+    // Abrir un precio desplaza el mapa para que quepa el popup: eso no es buscar en otra zona
+    const mark = (e: Event) => {
+      userMoveRef.current = !(e.target as Element | null)?.closest?.('.leaflet-marker-icon, .leaflet-popup');
+    };
     const events = ['pointerdown', 'wheel', 'keydown'] as const;
     events.forEach(name => container.addEventListener(name, mark, { passive: true }));
     return () => events.forEach(name => container.removeEventListener(name, mark));
@@ -1267,20 +1270,20 @@ export default function Home() {
                         click: () => handleMarkerClick(property),
                       }}
                     >
-                      <Popup>
+                      <Popup autoPanPadding={[56, 56]}>
                         <div className="w-56">
                           {property.images?.[0] ? (
                             <img src={property.images[0]} alt="" loading="lazy"
                               className="mb-2 h-32 w-full rounded-lg object-cover"
                               onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                           ) : (
-                            <div className="mb-2 flex h-32 w-full items-center justify-center rounded-lg bg-gray-100 text-gray-400"><HomeIcon className="h-8 w-8" /></div>
+                            <div className="mb-2 flex h-32 w-full items-center justify-center rounded-lg bg-gray-100 text-gray-400 dark:bg-gray-700"><HomeIcon className="h-8 w-8" /></div>
                           )}
-                          <p className="font-display text-lg font-semibold tabular-nums text-gray-900">
+                          <p className="font-display text-lg font-semibold tabular-nums text-gray-900 dark:text-white">
                             {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(property.price)}
                           </p>
-                          <p className="font-semibold text-gray-900">{property.title}</p>
-                          <p className="mb-2 text-sm text-gray-600">
+                          <p className="font-semibold text-gray-900 dark:text-gray-100">{property.title}</p>
+                          <p className="mb-2 text-sm text-gray-600 dark:text-gray-300">
                             {[property.location, property.bedrooms ? `${property.bedrooms} hab.` : null, property.area ? `${property.area} m²` : null].filter(Boolean).join(' · ')}
                           </p>
                           <button onClick={() => handleViewDetails(property.id)}
@@ -1313,12 +1316,14 @@ export default function Home() {
                             onMouseEnter={() => setHoveredId(property.id)} onMouseLeave={() => setHoveredId(null)}
                             onFocus={() => setHoveredId(property.id)} onBlur={() => setHoveredId(null)}
                             className={`flex w-full gap-3 p-3 text-left transition-colors ${active ? 'bg-emerald-50 dark:bg-emerald-900/30' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}>
-                            {property.images?.[0] ? (
-                              <img src={property.images[0]} alt="" loading="lazy" className="h-16 w-24 flex-shrink-0 rounded-lg object-cover"
-                                onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }} />
-                            ) : (
-                              <div className="flex h-16 w-24 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-400 dark:bg-gray-700"><HomeIcon className="h-6 w-6" /></div>
-                            )}
+                            {/* El icono queda debajo: se ve si no hay foto o si no carga */}
+                            <div className="relative flex h-16 w-24 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-100 text-gray-400 dark:bg-gray-700">
+                              <HomeIcon className="h-6 w-6" aria-hidden="true" />
+                              {property.images?.[0] && (
+                                <img src={property.images[0]} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover"
+                                  onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                              )}
+                            </div>
                             <div className="min-w-0">
                               <p className="font-display font-semibold tabular-nums text-gray-900 dark:text-white">
                                 {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(property.price)}

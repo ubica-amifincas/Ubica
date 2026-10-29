@@ -5,6 +5,8 @@
   <!-- Entrada de la web de AMI Fincas (amifincas.es): misma app, cabecera propia para buscadores y redes -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
+  <!-- Aplica el tema guardado antes de pintar, para que el modo oscuro no parpadee en blanco al cargar -->
+  <script>try{if(localStorage.getItem('ubica-theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}</script>
   <title>AMI Fincas | Administración de fincas en Murcia y Alicante</title>
   <meta name="description" content="AMI Fincas: administración de comunidades de propietarios, gestión de alquileres y correduría de seguros en la Región de Murcia y Alicante. Presupuesto sin compromiso.">
   <meta name="theme-color" content="#23707f">

@@ -72,3 +72,42 @@ body.map-mode-active .map-fullscreen-container>.page-container {
 body.map-mode-active .map-wrapper {
   height: calc(100vh - 190px) !important;
 }
+/* Mapas en modo oscuro: tiles invertidos (los precios, zonas y popups van en otras capas y no se invierten) */
+.dark .leaflet-container {
+  background: #111827;
+}
+.dark .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9) saturate(0.6);
+}
+.dark .leaflet-bar {
+  border-color: #374151;
+}
+.dark .leaflet-bar a {
+  background: #1f2937;
+  color: #e5e7eb;
+  border-bottom-color: #374151;
+}
+.dark .leaflet-bar a:hover,
+.dark .leaflet-bar a:focus {
+  background: #374151;
+  color: #ffffff;
+}
+.dark .leaflet-bar a.leaflet-disabled {
+  background: #1f2937;
+  color: #6b7280;
+}
+.dark .leaflet-control-attribution {
+  background: rgba(17, 24, 39, 0.8);
+  color: #9ca3af;
+}
+.dark .leaflet-control-attribution a {
+  color: #6ee7b7;
+}
+.dark .leaflet-popup-content-wrapper,
+.dark .leaflet-popup-tip {
+  background: #1f2937;
+  color: #f3f4f6;
+}
+.dark .leaflet-container a.leaflet-popup-close-button {
+  color: #9ca3af;
+}

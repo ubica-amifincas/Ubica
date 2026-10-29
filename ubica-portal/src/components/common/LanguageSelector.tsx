@@ -49,7 +49,7 @@ export function LanguageSelector() {
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
       >
-        <span className="text-lg">{currentLang?.flag}</span>
+        <span className="text-lg text-gray-700 dark:text-gray-300">{currentLang?.flag}</span>
         <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:block">
           {currentLang?.name}
         </span>
@@ -89,7 +89,7 @@ export function LanguageSelector() {
                   whileHover={{ x: 4 }}
                   transition={{ duration: 0.15 }}
                 >
-                  <span className="text-lg">{language.flag}</span>
+                  <span className="text-lg text-gray-700 dark:text-gray-300">{language.flag}</span>
                   <span className="font-medium">{language.name}</span>
                   {currentLanguage === language.code && (
                     <motion.div
