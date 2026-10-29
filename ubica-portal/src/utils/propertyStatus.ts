@@ -9,6 +9,7 @@ const STATUS_LABELS: Record<string, string> = {
   'under-renovation': 'En reforma',
   'in-use': 'En uso',
   pending: 'Pendiente',
+  draft: 'Borrador',
 };
 
 export function getStatusLabel(status?: string | null): string {
@@ -27,6 +28,7 @@ const STATUS_LABELS_PLURAL: Record<string, string> = {
   'under-renovation': 'En reforma',
   'in-use': 'En uso',
   pending: 'Pendientes',
+  draft: 'Borradores',
 };
 
 export function getStatusLabelPlural(status?: string | null): string {
@@ -69,5 +71,6 @@ export function getTypeLabel(type?: string | null): string {
 }
 
 /** Estados que se eligen en el formulario de un inmueble. */
-export const PROPERTY_STATUS_OPTIONS = ['for-sale', 'for-rent', 'reserved', 'sold', 'rented', 'under-renovation', 'in-use']
-  .map(value => ({ value, label: getStatusLabel(value) }));
+export const PROPERTY_STATUS_OPTIONS = ['draft', 'for-sale', 'for-rent', 'reserved', 'sold', 'rented', 'under-renovation', 'in-use']
+  // Borrador: solo lo ven su dueño, su inmobiliaria y el admin; no sale en el portal
+  .map(value => ({ value, label: value === 'draft' ? 'Borrador (sin publicar)' : getStatusLabel(value) }));

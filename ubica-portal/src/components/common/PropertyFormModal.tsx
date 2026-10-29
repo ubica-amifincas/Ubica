@@ -58,7 +58,8 @@ interface FormState {
 }
 
 const EMPTY_FORM: FormState = {
-    title: '', type: 'flat', status: 'for-sale', price: '', bedrooms: '', bathrooms: '', area: '',
+    // Los inmuebles nuevos empiezan como borrador: no se publican hasta elegir "En venta" o "En alquiler"
+    title: '', type: 'flat', status: 'draft', price: '', bedrooms: '', bathrooms: '', area: '',
     yearBuilt: '', orientation: '', energyRating: '', location: '', address: '', description: '', features: [],
     purchasePrice: '', totalCost: '', monthlyCost: '', monthlyIncome: '',
 };
@@ -648,7 +649,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                     <div className="flex gap-3">
                         <button type="button" onClick={requestClose} disabled={isSubmitting} className={`${buttonClass.secondary} flex-1 sm:flex-none`}>Cancelar</button>
                         <button type="submit" form={id('form')} disabled={isSubmitting} className={`${buttonClass.primary} flex-1 sm:flex-none sm:min-w-[9rem]`}>
-                            {isSubmitting ? (newFiles.length > 0 ? 'Subiendo fotos…' : 'Guardando…') : initialData ? 'Guardar cambios' : 'Publicar inmueble'}
+                            {isSubmitting ? (newFiles.length > 0 ? 'Subiendo fotos…' : 'Guardando…') : initialData ? 'Guardar cambios' : form.status === 'draft' ? 'Guardar borrador' : 'Publicar inmueble'}
                         </button>
                     </div>
                 </div>
