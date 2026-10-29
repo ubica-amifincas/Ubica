@@ -8,7 +8,6 @@ import {
   CheckCircleIcon,
   PhoneIcon,
   EnvelopeIcon,
-  StarIcon,
   MapPinIcon,
   ClockIcon,
   ShieldCheckIcon,
@@ -17,7 +16,6 @@ import {
   ChevronDownIcon,
   ArrowRightIcon,
 } from '@heroicons/react/24/outline';
-import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../hooks/useLanguage';
 import { apiService } from '../services/apiService';
@@ -30,7 +28,6 @@ const FOUNDED = 2014;
 const MAIN_PHONE = '609 00 88 64';
 const WHATSAPP_NUMBER = '34609008864';
 const EMAIL = 'info@amifincas.es';
-const GOOGLE_PROFILE = 'https://maps.google.com/?cid=4566582778045489499';
 
 /** La animación de entrada solo la primera vez en la sesión y sin "reducir movimiento". */
 const shouldPlayIntro = () => {
@@ -250,7 +247,6 @@ export default function AmiFincas() {
   const facts = [
     { value: t('ami.facts.since'), label: t('ami.facts.sinceSub', { years }) },
     { value: t('ami.facts.offices'), label: t('ami.facts.officesSub') },
-    { value: t('ami.facts.rating'), label: t('ami.facts.ratingSub'), href: GOOGLE_PROFILE },
     { value: t('ami.facts.area'), label: t('ami.facts.areaSub') },
   ];
 
@@ -267,16 +263,6 @@ export default function AmiFincas() {
           <div className="page-container relative">
             <div className="flex flex-col items-center gap-12 lg:flex-row lg:gap-16">
               <div className="flex-1 text-center lg:text-left">
-                <img src="/ami-fincas/logo-480.webp" alt="AMI Fincas" width={480} height={457} className="mx-auto mb-6 h-20 w-auto md:h-24 lg:mx-0" />
-
-                <a href={GOOGLE_PROFILE} target="_blank" rel="noopener noreferrer"
-                  className="mb-6 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-sm font-semibold text-slate-700 shadow-sm hover:border-[#2D8A9D] dark:border-white/10 dark:bg-white/5 dark:text-slate-200">
-                  <span className="flex text-amber-500" aria-hidden="true">
-                    {[0, 1, 2, 3, 4].map(i => <StarSolidIcon key={i} className="h-4 w-4" />)}
-                  </span>
-                  {t('ami.hero.rating')}
-                </a>
-
                 <h1 className="font-display text-4xl font-black leading-[1.1] md:text-6xl">
                   <span className="bg-gradient-to-r from-[#5fa64a] to-[#2D8A9D] bg-clip-text text-transparent">{t('ami.hero.title1')}</span>
                   <br />
@@ -310,17 +296,11 @@ export default function AmiFincas() {
         {/* Datos de la empresa: solo los que se pueden comprobar */}
         <section aria-label="AMI Fincas en cifras" className="border-y border-slate-200 bg-white dark:border-white/5 dark:bg-white/5">
           <div className="page-container">
-            <dl className="grid grid-cols-2 divide-slate-200 py-8 dark:divide-white/10 md:grid-cols-4 md:divide-x">
+            <dl className="grid grid-cols-1 divide-y divide-slate-200 py-6 dark:divide-white/10 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
               {facts.map(fact => (
                 <div key={fact.value} className="px-4 py-3 text-center">
                   <dt className="sr-only">{fact.label}</dt>
-                  <dd className="font-display text-xl font-black text-[#23707f] dark:text-[#8fd0c3] md:text-2xl">
-                    {fact.href ? (
-                      <a href={fact.href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:underline">
-                        <StarIcon className="h-5 w-5" aria-hidden="true" /> {fact.value}
-                      </a>
-                    ) : fact.value}
-                  </dd>
+                  <dd className="font-display text-xl font-black text-[#23707f] dark:text-[#8fd0c3] md:text-2xl">{fact.value}</dd>
                   <dd className="mt-1 text-sm text-slate-500 dark:text-slate-400">{fact.label}</dd>
                 </div>
               ))}

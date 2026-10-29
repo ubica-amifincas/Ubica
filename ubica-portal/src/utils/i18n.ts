@@ -576,7 +576,7 @@ const resources = {
       "ami.offices.sanpedro": "San Pedro del Pinatar",
       "ami.offices.sede": "Sede",
       "ami.offices.schedule.murcia": "Lunes a viernes, 9:30 - 14:00",
-      "ami.offices.schedule.sanpedro": "Con cita previa",
+      "ami.offices.schedule.sanpedro": "Lunes a viernes, 9:30 - 14:00",
 
       "ami.cta.title": "¿Elevamos la gestión de tu vivienda?",
       "ami.cta.button": "Habla con nosotros",
@@ -1365,7 +1365,7 @@ const resources = {
       "ami.offices.sanpedro": "San Pedro del Pinatar",
       "ami.offices.sede": "Office",
       "ami.offices.schedule.murcia": "Monday to Friday, 9:30 - 14:00",
-      "ami.offices.schedule.sanpedro": "By appointment",
+      "ami.offices.schedule.sanpedro": "Monday to Friday, 9:30 - 14:00",
 
       "ami.cta.title": "Shall we elevate your home management?",
       "ami.cta.button": "Talk to us",
