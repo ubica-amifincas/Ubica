@@ -180,6 +180,9 @@ export default function Home() {
       } else if (key === 'searchTerm') {
         setSearchTerm(value);
         hasParams = true;
+      } else if (key === 'view' && value === 'map') {
+        // Enlace "Ver en el mapa" del asistente de IA
+        setViewMode('map');
       }
     });
 

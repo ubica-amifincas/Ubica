@@ -2,6 +2,7 @@
 import asyncio
 import importlib.util
 import json
+import re
 import time
 from datetime import datetime
 from typing import Dict, List, Optional
@@ -38,6 +39,7 @@ PROVIDERS = [
 def build_system_instruction(user_name: str, user_role: str) -> str:
     return f"{AI_CONFIG['system_prompt']} El usuario con quien hablas es: {user_name} (Rol: {user_role}). " \
         f"REGLAS E INSTRUCCIONES DOGMÁTICAS NIVEL 2:\n" \
+        f"0 - VERACIDAD (POR ENCIMA DE TODO): Nunca inventes propiedades, IDs, precios, enlaces, citas ni datos del entorno. Si una herramienta no devuelve resultados, dilo con naturalidad y propón ampliar la búsqueda, crear una alerta registrándose o llamar al 676 62 69 33. No digas que una visita está agendada: el chat no reserva citas. Usa solo enlaces que devuelvan las herramientas o los de estas reglas.\n" \
         f"1 - BÚSQUEDA OBLIGATORIA (ZERO TOLERANCE): Si el usuario menciona cualquier intención de compra, alquiler, búsqueda o menciona una ciudad/zona (ej: 'cartagena', 'vivienda'), DEBES llamar a 'buscar_propiedades' de inmediato con los parámetros inferidos. Trabaja con lo que tengas (incluso si hay faltas de ortografía o es ambiguo). No hagas preguntas de confirmación antes de llamar a la herramienta.\n" \
         f"2 - TRIGGER DE SALUDO: Si el usuario *únicamente* dice 'Hola' sin aportar más detalles, responde amablemente e invítalo a buscar por una zona. NO repitas instrucciones literales.\n" \
         f"3 - FUENTE ÚNICA: Solo puedes recomendar propiedades reales que devuelva el MCP. Usa siempre el formato [Ver Propiedad](/property/ID).\n" \
@@ -51,7 +53,39 @@ def build_system_instruction(user_name: str, user_role: str) -> str:
         f"  - 'mis_favoritos': Cuando pregunten por sus propiedades guardadas (requiere registro).\n" \
         f"  - 'mostrar_en_mapa': Cuando quieran ver propiedades en el mapa interactivo.\n" \
         f"  - 'estadisticas_cartera': Para inmobiliarias/admin que quieran ver sus estadísticas.\n" \
-        f"  - 'propiedades_similares': Cuando quieran alternativas parecidas a una propiedad."
+        f"  - 'propiedades_similares': Cuando quieran alternativas parecidas a una propiedad.\n" \
+        f"  - 'busqueda_semantica': Cuando busquen por cualidades (luminoso, terraza, piscina, vistas).\n" \
+        f"  - 'agendar_visita': Cuando quieran visitar una propiedad; devuelve cómo pedir la visita.\n" \
+        f"  - 'analizar_entorno': Cuando pregunten por el entorno; devuelve la ubicación y un enlace a Google Maps."
+
+
+# Rutas internas de la web a las que el chat puede enlazar
+INTERNAL_LINK_PREFIXES = ("/?", "/contact", "/register", "/login", "/dashboard", "/entretenimiento", "/about")
+MARKDOWN_LINK = re.compile(r"\[([^\]]+)\]\((/[^)\s]*)\)")
+
+
+def sanitize_links(text: str, user_id: Optional[int], user_role: str) -> str:
+    """Quita el enlace (deja el texto) a anuncios que no existen o no puede ver, y a rutas que no existen."""
+    from database import engine
+    from services.properties import get_allowed_properties_statement
+    from sqlmodel import Session
+    import models
+
+    def visible(prop_id: int) -> bool:
+        with Session(engine) as session:
+            stmt = get_allowed_properties_statement(user_id, user_role).where(models.Property.id == prop_id)
+            return session.exec(stmt).first() is not None
+
+    def fix(match: re.Match) -> str:
+        label, path = match.group(1), match.group(2)
+        prop = re.fullmatch(r"/property/(\d+)(#[\w-]+)?", path)
+        if prop:
+            return match.group(0) if visible(int(prop.group(1))) else label
+        if path == "/" or path.startswith(INTERNAL_LINK_PREFIXES):
+            return match.group(0)
+        return label
+
+    return MARKDOWN_LINK.sub(fix, text)
 
 async def run_openai_provider(api_key: str, base_url: str, model_name: str, system_instruction: str,
                               history: List[Dict[str, str]], message: str, user_id: Optional[int], user_role: str) -> str:
@@ -76,7 +110,7 @@ async def run_openai_provider(api_key: str, base_url: str, model_name: str, syst
             text = (msg_out.content or "").strip()
             if not text:
                 raise RuntimeError(f"{model_name} devolvió una respuesta vacía")
-            return text
+            return sanitize_links(text, user_id, user_role)
 
         messages.append(msg_out)
         for tool_call in msg_out.tool_calls:

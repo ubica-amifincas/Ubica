@@ -139,3 +139,43 @@ def test_herramientas_de_mercado_ignoran_borradores(make_property):
     similares = run(tools.execute_tool("propiedades_similares", {"propiedad_id": a.id}, None, "guest"))
     assert "Borrador" not in similares and "Pública B" in similares
     assert "error" in json.loads(run(tools.execute_tool("propiedades_similares", {"propiedad_id": draft.id}, None, "guest")))
+
+
+def test_busqueda_por_concepto_solo_anuncios_reales(make_property):
+    make_property(title="Ático luminoso", description="Muy luminosa, con terraza y vistas al mar", status="for-sale")
+    make_property(title="Borrador luminoso", description="luminoso con terraza", status="draft")
+    make_property(title="Bajo interior", description="Sin vistas", status="for-sale")
+    r = json.loads(run(tools.execute_tool("busqueda_semantica", {"query": "piso luminoso con terraza"}, None, "guest")))
+    assert [p["titulo"] for p in r["resultados"]] == ["Ático luminoso"]
+    vacio = json.loads(run(tools.execute_tool("busqueda_semantica", {"query": "piscina climatizada"}, None, "guest")))
+    assert vacio["resultados"] == []
+
+
+def test_visita_y_entorno_no_inventan(make_property):
+    p = make_property(address="Calle Mayor 3", city="Cartagena")
+    draft = make_property(status="draft")
+    visita = json.loads(run(tools.execute_tool("agendar_visita", {"propiedad_id": p.id, "fecha": "viernes 11:00"}, None, "guest")))
+    assert visita["reservada"] is False and visita["enlace_contacto"] == f"/property/{p.id}#contacto"
+    assert "error" in json.loads(run(tools.execute_tool("agendar_visita", {"propiedad_id": draft.id}, None, "guest")))
+    assert "error" in json.loads(run(tools.execute_tool("agendar_visita", {"propiedad_id": 999}, None, "guest")))
+    entorno = json.loads(run(tools.execute_tool("analizar_entorno", {"propiedad_id": p.id}, None, "guest")))
+    assert entorno["ubicacion"] == "Calle Mayor 3, Cartagena" and entorno["google_maps"].startswith("https://www.google.com/maps/")
+    mapa = json.loads(run(tools.execute_tool("mostrar_en_mapa", {"zona": "Murcia", "tipo": "piso"}, None, "guest")))
+    assert mapa["url_mapa"] == "/?view=map&location=Murcia&type=flat"
+
+
+def test_buscar_pisos_y_terrenos_con_tipos_canonicos(make_property):
+    make_property(title="Uno", type="flat")
+    make_property(title="Parcela", type="land")
+    assert [p["titulo"] for p in json.loads(run(tools.execute_tool("buscar_propiedades", {"tipo": "piso"}, None, "guest")))] == ["Uno"]
+    assert [p["titulo"] for p in json.loads(run(tools.execute_tool("buscar_propiedades", {"tipo": "terreno"}, None, "guest")))] == ["Parcela"]
+
+
+def test_enlaces_inventados_se_quitan(make_property):
+    real = make_property()
+    draft = make_property(status="draft")
+    text = (f"[Piso real](/property/{real.id}) [Inventado](/property/{real.id + 100}) [Borrador](/property/{draft.id}) "
+            f"[mapa](/mapa) [Ver en Mapa](/?view=map&location=Murcia) [Contacto](/property/{real.id}#contacto) [AMI](https://amifincas.es)")
+    out = chat.sanitize_links(text, None, "guest")
+    assert out == (f"[Piso real](/property/{real.id}) Inventado Borrador mapa [Ver en Mapa](/?view=map&location=Murcia) "
+                   f"[Contacto](/property/{real.id}#contacto) [AMI](https://amifincas.es)")

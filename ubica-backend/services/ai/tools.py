@@ -1,13 +1,16 @@
 """Herramientas que el chat de IA puede invocar (function calling compatible con OpenAI)."""
 import json
 import math
+import re
+import unicodedata
 from typing import Optional
+from urllib.parse import quote, urlencode
 
 from sqlmodel import Session, or_, select
 
 import models
 from database import engine
-from services.properties import PRIVATE_PROPERTY_FIELDS, PUBLIC_STATUSES, get_allowed_properties_statement
+from services.properties import PRIVATE_PROPERTY_FIELDS, PUBLIC_STATUSES, get_allowed_properties_statement, normalize_property_type
 
 # El modelo suele pedir el estado en español; en la base de datos se guarda en inglés
 ESTADO_ALIASES = {"venta": "for-sale", "vend": "for-sale", "compra": "for-sale", "alquil": "for-rent", "renta": "for-rent", "reserv": "reserved", "disponible": "available"}
@@ -32,7 +35,8 @@ async def buscar_propiedades(user_id: Optional[int], user_role: str, ubicacion: 
             elif any(x in tipo_lower for x in ["piso", "apartamento", "estudio", "atico", "ático", "loft"]):
                 tipo_filter = or_(
                     models.Property.type.ilike("%apartment%"), 
-                    models.Property.type.ilike("%piso%"), 
+                    models.Property.type.ilike("%piso%"),
+                    models.Property.type.ilike("%flat%"), 
                     models.Property.type.ilike("%apartamento%"),
                     models.Property.type.ilike("%studio%"),
                     models.Property.type.ilike("%penthouse%"),
@@ -55,6 +59,8 @@ async def buscar_propiedades(user_id: Optional[int], user_role: str, ubicacion: 
                     models.Property.title.ilike("%villa%")
                 )
                 statement = statement.where(tipo_filter)
+            elif any(x in tipo_lower for x in ["terreno", "parcela", "solar", "land"]):
+                statement = statement.where(models.Property.type.ilike("%land%"))
             else:
                 statement = statement.where(or_(models.Property.type.ilike(f"%{tipo}%"), models.Property.title.ilike(f"%{tipo}%")))
         if estado:
@@ -207,13 +213,12 @@ async def mis_favoritos(user_id: Optional[int]) -> str:
 
 async def mostrar_en_mapa(zona: str = "", tipo: str = "") -> str:
     """Genera un enlace directo al modo mapa con filtros aplicados."""
-    params = []
+    params = {"view": "map"}
     if zona:
-        params.append(f"city={zona}")
+        params["location"] = zona
     if tipo:
-        params.append(f"type={tipo}")
-    query = "&".join(params)
-    url = f"/map{'?' + query if query else ''}"
+        params["type"] = normalize_property_type(tipo)
+    url = f"/?{urlencode(params)}"
     return json.dumps({
         "url_mapa": url,
         "mensaje_para_ia": f"Genera un enlace markdown clickable con texto 'Ver en Mapa →' apuntando a {url}. Dile al usuario que puede explorar visualmente las propiedades en el mapa interactivo."
@@ -293,6 +298,76 @@ async def propiedades_similares(propiedad_id: int) -> str:
             "total": len(results)
         }, ensure_ascii=False)
 
+STOPWORDS = {
+    "a", "al", "algo", "busco", "buscando", "casa", "cerca", "con", "de", "del", "el", "en", "esta", "este", "inmueble",
+    "la", "las", "lo", "los", "me", "mi", "muy", "o", "para", "piso", "por", "propiedad", "que", "quiero", "se", "sin",
+    "su", "un", "una", "unos", "unas", "vivienda", "y",
+}
+
+
+def _plain(text: str) -> str:
+    """Minúsculas y sin tildes, para comparar palabras."""
+    return "".join(c for c in unicodedata.normalize("NFD", str(text or "").lower()) if unicodedata.category(c) != "Mn")
+
+
+async def busqueda_por_concepto(user_id: Optional[int], user_role: str, query: str) -> str:
+    """Puntúa los anuncios visibles por cuántas palabras de la consulta aparecen en su texto."""
+    terms = [t for t in re.findall(r"[a-z0-9]+", _plain(query)) if len(t) > 2 and t not in STOPWORDS]
+    if not terms:
+        return json.dumps({"resultados": [], "mensaje": "Consulta sin palabras clave; usa buscar_propiedades."}, ensure_ascii=False)
+    with Session(engine) as session:
+        props = session.exec(get_allowed_properties_statement(user_id, user_role)).all()
+    scored = []
+    for p in props:
+        text = _plain(" ".join([p.title or "", p.description or "", p.city or "", p.address or "", " ".join(p.features or [])]))
+        # "luminos" encuentra luminoso/luminosa; la raíz de 5 letras tolera el género y el plural
+        hits = [t for t in terms if t[:5] in text]
+        if hits:
+            scored.append((len(hits), p, hits))
+    scored.sort(key=lambda x: -x[0])
+    results = [{"id": p.id, "titulo": p.title, "precio": p.price, "ubicacion": p.city, "tipo": p.type, "habitaciones": p.bedrooms,
+                "coincidencias": hits} for _, p, hits in scored[:8]]
+    if not results:
+        return json.dumps({"resultados": [], "mensaje": "Ningún anuncio coincide. No hay propiedades que recomendar."}, ensure_ascii=False)
+    return json.dumps({"resultados": results}, ensure_ascii=False)
+
+
+def _visible_property(user_id: Optional[int], user_role: str, propiedad_id: int):
+    with Session(engine) as session:
+        statement = get_allowed_properties_statement(user_id, user_role).where(models.Property.id == propiedad_id)
+        return session.exec(statement).first()
+
+
+async def solicitar_visita(user_id: Optional[int], user_role: str, propiedad_id: int, fecha: str) -> str:
+    """El chat no reserva citas: explica cómo pedir la visita para que nadie crea que ya está agendada."""
+    p = _visible_property(user_id, user_role, propiedad_id) if propiedad_id else None
+    if not p:
+        return json.dumps({"error": f"No existe ningún anuncio disponible con ID {propiedad_id}. No hay visita que solicitar."}, ensure_ascii=False)
+    return json.dumps({
+        "reservada": False,
+        "propiedad": {"id": p.id, "titulo": p.title},
+        "fecha_deseada": fecha,
+        "enlace_contacto": f"/property/{p.id}#contacto",
+        "telefono": "676 62 69 33",
+        "mensaje_para_ia": "La visita NO está reservada ni notificada. Dile al usuario que la pida desde el formulario de contacto del anuncio "
+                           "(enlace_contacto) indicando la fecha que prefiere, o llamando al teléfono.",
+    }, ensure_ascii=False)
+
+
+async def ubicacion_propiedad(user_id: Optional[int], user_role: str, propiedad_id: int) -> str:
+    """Ubicación real del anuncio y un enlace a Google Maps; no hay datos propios del entorno."""
+    p = _visible_property(user_id, user_role, propiedad_id) if propiedad_id else None
+    if not p:
+        return json.dumps({"error": f"No existe ningún anuncio disponible con ID {propiedad_id}."}, ensure_ascii=False)
+    place = ", ".join(x for x in [p.address, p.city] if x)
+    return json.dumps({
+        "propiedad": {"id": p.id, "titulo": p.title},
+        "ubicacion": place,
+        "google_maps": f"https://www.google.com/maps/search/?api=1&query={quote(place)}" if place else None,
+        "mensaje_para_ia": "No tienes datos de colegios, comercios ni transporte: no los inventes. Ofrece el enlace de Google Maps para consultarlos.",
+    }, ensure_ascii=False)
+
+
 # Definiciones para APIs compatibles con OpenAI
 OPENAI_TOOLS = [
     {
@@ -329,7 +404,7 @@ OPENAI_TOOLS = [
         "type": "function",
         "function": {
             "name": "agendar_visita",
-            "description": "Agenda una visita a una propiedad específica para el usuario actual. Requiere que el usuario esté registrado.",
+            "description": "Indica cómo pedir una visita a una propiedad. NO reserva la cita: devuelve el enlace al formulario de contacto del anuncio y el teléfono.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -457,7 +532,7 @@ OPENAI_TOOLS = [
         "type": "function",
         "function": {
             "name": "busqueda_semantica",
-            "description": "Realiza una búsqueda difusa o por conceptos en propiedades (ej: 'casa luminosa cerca del mar').",
+            "description": "Busca propiedades por palabras de su título, descripción y características (ej: 'luminoso terraza piscina'). Devuelve solo anuncios reales.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -485,7 +560,7 @@ OPENAI_TOOLS = [
         "type": "function",
         "function": {
             "name": "analizar_entorno",
-            "description": "Obtiene información de mapas sobre servicios, colegios o entorno cercanos a una propiedad.",
+            "description": "Devuelve la ubicación de una propiedad y un enlace a Google Maps para ver colegios, comercios y transporte cercanos. No incluye datos del entorno.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -512,9 +587,7 @@ async def execute_tool(name: str, args: dict, user_id: Optional[int], user_role:
             float(args.get("seguro_anual", 300.0))
         )
     if name == "agendar_visita":
-        prop = args.get("propiedad_id", "No ID")
-        fecha = args.get("fecha", "Fecha no especificada")
-        return json.dumps({"status": "success", "mensaje_para_ia": f"La cita para la propiedad {prop} el día {fecha} ha sido validada y notificada a la inmobiliaria."})
+        return await solicitar_visita(user_id, user_role, int(args.get("propiedad_id", 0) or 0), str(args.get("fecha", "")))
     if name == "calcular_hipoteca":
         return await calcular_hipoteca(
             float(args.get("precio", 0)),
@@ -535,12 +608,11 @@ async def execute_tool(name: str, args: dict, user_id: Optional[int], user_role:
     if name == "propiedades_similares":
         return await propiedades_similares(int(args.get("propiedad_id", 0)))
     if name == "busqueda_semantica":
-        query = args.get("query", "")
-        return json.dumps({"contexto": f"Se han simulado los embeddings de '{query}'. Dile al usuario que hay 3 propiedades con gran iluminación o cercanía al objetivo en el catálogo."})
+        return await busqueda_por_concepto(user_id, user_role, str(args.get("query", "")))
     if name == "redactar_mensaje":
         ctx = args.get("contexto", "")
-        redaccion = f"Estimado/a,\n\n{ctx}\n\nQuedo a su entera disposición.\n\nUn cordial saludo,\nUbica Bot."
-        return json.dumps({"borrador_sugerido": redaccion})
+        redaccion = f"Estimado/a,\n\n{ctx}\n\nQuedo a su entera disposición.\n\nUn cordial saludo,\nEl equipo de Ubica"
+        return json.dumps({"borrador_sugerido": redaccion}, ensure_ascii=False)
     if name == "analizar_entorno":
-        return json.dumps({"analisis_mapa": "Colegios cercanos: 2. Supermercados: 1 a 5 min andando. Transporte público cercano. Zona residencial nivel seguro."})
+        return await ubicacion_propiedad(user_id, user_role, int(args.get("propiedad_id", 0) or 0))
     return "{}"
