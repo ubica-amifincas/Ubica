@@ -10,29 +10,51 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+// Solo se guarda cuando alguien elige el tema con el botón; mientras tanto se sigue al sistema.
+// (La clave antigua "ubica-theme" se guardaba siempre, aunque nadie hubiera elegido: se descarta.)
+const CHOICE_KEY = 'ubica-theme-choice';
+const LEGACY_KEY = 'ubica-theme';
+const DARK_QUERY = '(prefers-color-scheme: dark)';
+
+function readChoice(): Theme | null {
+  try {
+    localStorage.removeItem(LEGACY_KEY);
+    const saved = localStorage.getItem(CHOICE_KEY);
+    return saved === 'light' || saved === 'dark' ? saved : null;
+  } catch {
+    return null;
+  }
+}
+
+const systemTheme = (): Theme =>
+  typeof window !== 'undefined' && window.matchMedia?.(DARK_QUERY).matches ? 'dark' : 'light';
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window !== 'undefined') {
-      const savedTheme = localStorage.getItem('ubica-theme') as Theme;
-      return savedTheme || 'light';
-    }
-    return 'light';
-  });
+  const [choice, setChoice] = useState<Theme | null>(readChoice);
+  const [system, setSystem] = useState<Theme>(systemTheme);
+  const theme = choice ?? system;
+
+  // Si el sistema cambia (p. ej. modo oscuro automático al anochecer), la web cambia con él
+  useEffect(() => {
+    const media = window.matchMedia?.(DARK_QUERY);
+    if (!media) return;
+    const onChange = () => setSystem(media.matches ? 'dark' : 'light');
+    media.addEventListener('change', onChange);
+    return () => media.removeEventListener('change', onChange);
+  }, []);
 
   useEffect(() => {
     const root = window.document.documentElement;
     root.classList.remove('light', 'dark');
     root.classList.add(theme);
-    localStorage.setItem('ubica-theme', theme);
   }, [theme]);
 
-  const toggleTheme = () => {
-    setThemeState(prev => prev === 'light' ? 'dark' : 'light');
+  const setTheme = (newTheme: Theme) => {
+    setChoice(newTheme);
+    try { localStorage.setItem(CHOICE_KEY, newTheme); } catch { /* sin almacenamiento: vale para esta visita */ }
   };
 
-  const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
-  };
+  const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light');
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
