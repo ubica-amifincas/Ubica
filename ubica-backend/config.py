@@ -32,6 +32,19 @@ RESEND_SENDER = os.getenv("RESEND_SENDER", "onboarding@resend.dev") # Cambiar a 
 # Buzón que recibe el formulario de contacto
 CONTACT_EMAIL = os.getenv("CONTACT_EMAIL", "info@amifincas.es")
 
+# Cuentas del equipo: con estos correos, al registrarse o entrar se recibe ese rol (inmobiliaria ya aprobada).
+# Solo sube permisos, nunca los baja. En Render se puede cambiar con STAFF_ROLES="correo:rol,correo:rol".
+def _parse_staff_roles(raw: str) -> dict:
+    roles = {}
+    for item in raw.split(","):
+        email, _, role = item.strip().partition(":")
+        if email and role.strip() in ("admin", "realtor"):
+            roles[email.strip().lower()] = role.strip()
+    return roles
+
+STAFF_ROLES = _parse_staff_roles(os.getenv(
+    "STAFF_ROLES", "sistemas@amifincas.es:admin,info@amifincas.es:realtor,tatiana@amifincas.es:realtor"))
+
 # Inicio de sesión con Google: el Client ID es público (va también al navegador); sin él, el botón no aparece
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "").strip()
 

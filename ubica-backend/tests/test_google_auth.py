@@ -165,3 +165,37 @@ def test_verify_requires_client_id(monkeypatch):
     monkeypatch.setattr(google_auth, "GOOGLE_CLIENT_ID", "")
     with pytest.raises(ValueError):
         google_auth.verify_google_credential(CREDENTIAL)
+
+
+# --- Cuentas del equipo (STAFF_ROLES) ---
+
+def test_staff_emails_get_their_role(client, db, google):
+    # Inmobiliaria del equipo con Google: aprobada aunque elija "usuario"
+    google(google_info(email="Tatiana@AmiFincas.es"))
+    user = google_login(client, role="user", accept_terms=True).json()["user"]
+    assert (user["role"], user["is_approved"]) == ("realtor", True)
+
+    # Cuenta ya existente con contraseña: sube de rol al entrar
+    make_user(db, email="sistemas@amifincas.es", is_verified=True)
+    assert login(client, "sistemas@amifincas.es").json()["user"]["role"] == "admin"
+
+
+def test_staff_roles_never_lower_a_role(client, db, google):
+    make_user(db, email="info@amifincas.es", role="admin", is_verified=True)
+    assert login(client, "info@amifincas.es").json()["user"]["role"] == "admin"
+    google(google_info(email="info@amifincas.es"))
+    assert google_login(client).json()["user"]["role"] == "admin"
+
+
+def test_staff_register_waits_for_email_verification(client, db):
+    r = client.post("/api/auth/register", json={"email": "sistemas@amifincas.es", "password": "pw123456", "accept_terms": True})
+    u = db.get(models.User, r.json()["user_id"])
+    assert (u.role, u.is_verified) == ("admin", False)
+    # Sin verificar el correo no entra, aunque el rol ya esté fijado
+    assert login(client, "sistemas@amifincas.es", "pw123456").status_code == 403
+
+
+def test_staff_roles_setting_is_parsed_safely():
+    from config import _parse_staff_roles
+    assert _parse_staff_roles(" A@x.es:admin , b@x.es:realtor, c@x.es:superuser, :admin, d@x.es") == {
+        "a@x.es": "admin", "b@x.es": "realtor"}

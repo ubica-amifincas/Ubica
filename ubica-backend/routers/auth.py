@@ -19,6 +19,7 @@ from security import (burn_password_check, create_access_token, create_session_t
 from services.google_auth import verify_google_credential
 from services.email import email_change_email_html, password_reset_email_html, send_email_resend, verification_email_html
 from services.ratelimit import RateLimiter, get_client_ip
+from services.users import apply_staff_role, staff_role
 
 router = APIRouter()
 
@@ -87,6 +88,12 @@ async def login(login_data: LoginRequest, request: Request, session: Session = D
             detail="Por favor verifica tu correo electrónico para iniciar sesión"
         )
 
+    # Cuentas del equipo creadas antes de estar en la lista: reciben su rol al entrar
+    if apply_staff_role(user):
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+
     return _token_response(user)
 
 @router.get("/api/auth/google/config")
@@ -131,6 +138,7 @@ def google_login(data: GoogleLoginRequest, request: Request, session: Session = 
             is_approved=data.role != "realtor",
             terms_accepted_at=datetime.now(),
         )
+        apply_staff_role(user)
         session.add(user)
     else:
         if not user.is_active:
@@ -140,6 +148,8 @@ def google_login(data: GoogleLoginRequest, request: Request, session: Session = 
             # El dueño real (Google lo acaba de confirmar) se queda la cuenta y esa contraseña deja de valer.
             user.hashed_password = hash_password(secrets.token_urlsafe(32))
             user.is_verified = True
+            session.add(user)
+        if apply_staff_role(user):
             session.add(user)
     session.commit()
     session.refresh(user)
@@ -164,13 +174,14 @@ async def register(user_data: UserCreate, background_tasks: BackgroundTasks, ses
         email=user_data.email,
         hashed_password=hash_password(user_data.password),
         full_name=user_data.full_name,
-        role=user_data.role,
+        # Cuentas del equipo: su rol queda fijado, pero no pueden entrar hasta verificar el correo
+        role=staff_role(user_data.email) or user_data.role,
         company=user_data.company,
         phone=user_data.phone,
         is_active=True,
         is_verified=False,
         # Una inmobiliaria que se da de alta sola publica con revisión hasta que el admin la aprueba
-        is_approved=user_data.role != "realtor",
+        is_approved=user_data.role != "realtor" or staff_role(user_data.email) is not None,
         terms_accepted_at=datetime.now(),
     )
     session.add(new_user)
