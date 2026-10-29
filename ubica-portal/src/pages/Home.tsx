@@ -1,34 +1,30 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Popup, useMap, Polygon } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, Polygon, ZoomControl } from 'react-leaflet';
 import { motion, AnimatePresence } from 'framer-motion';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import 'leaflet-draw/dist/leaflet.draw.css';
 import {
   MagnifyingGlassIcon,
   AdjustmentsHorizontalIcon,
   MapIcon,
   ViewColumnsIcon,
   Bars3Icon,
-  PlusIcon,
-  MinusIcon,
   PencilIcon,
   TrashIcon,
-  HandRaisedIcon,
   ArrowsPointingOutIcon,
   ArrowsPointingInIcon,
   BanknotesIcon,
   CheckIcon,
   XMarkIcon,
   ArrowPathIcon,
-  MagnifyingGlassPlusIcon,
-  MagnifyingGlassMinusIcon
+  ArrowUturnLeftIcon,
+  HomeIcon,
 } from '@heroicons/react/24/outline';
 import { Slider } from '../components/ui/slider';
 import { PropertyCard, PropertyCardSkeleton } from '../components/property/PropertyCard';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
-import { DrawControl } from '../components/map/DrawControl';
+import { DrawControl, type DrawControlHandle } from '../components/map/DrawControl';
 import { useLanguage } from '../hooks/useLanguage';
 import appService from '../services';
 import type { Property, PropertyFilters } from '../types';
@@ -48,7 +44,7 @@ const createPriceMarker = (price: number, isSelected: boolean = false) => {
     html: `
       <div class="price-marker ${isSelected ? 'selected' : ''}">
         <div class="price-badge">
-          ${formattedPrice}€
+          ${formattedPrice}&nbsp;€
         </div>
       </div>
     `,
@@ -57,33 +53,25 @@ const createPriceMarker = (price: number, isSelected: boolean = false) => {
   });
 };
 
-// Ray-casting algorithm for precise Point in Polygon intersection
-const isPointInPolygon = (point: L.LatLng, vs: L.LatLng[]) => {
-  let x = point.lat, y = point.lng;
-  let inside = false;
-  for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
-    let xi = vs[i].lat, yi = vs[i].lng;
-    let xj = vs[j].lat, yj = vs[j].lng;
-    let intersect = ((yi > y) !== (yj > y))
-      && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-    if (intersect) inside = !inside;
-  }
-  return inside;
+/** Inmuebles con coordenadas reales (sin ellas, el frontend pone el centro de Murcia y saldrían en un sitio falso). */
+const hasRealCoordinates = (p: Property) => {
+  const raw = p as Property & { latitude?: number | null; longitude?: number | null };
+  return raw.latitude != null && raw.longitude != null;
 };
 
-// Map controller component with fullscreen support
-function MapController({ zoom, isFullscreen }: { zoom: number; isFullscreen: boolean }) {
+/** Encuadra los inmuebles visibles al abrir el mapa y al cambiar los resultados; se reajusta en pantalla completa. */
+function MapController({ points, fitKey, isFullscreen }: { points: [number, number][]; fitKey: string; isFullscreen: boolean }) {
   const map = useMap();
 
   useEffect(() => {
-    map.setZoom(zoom);
-  }, [zoom, map]);
+    if (points.length === 0) return;
+    if (points.length === 1) map.setView(points[0], 14);
+    else map.fitBounds(L.latLngBounds(points), { padding: [48, 48], maxZoom: 14 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fitKey, map]);
 
-  // Invalidate size when entering/exiting fullscreen
   useEffect(() => {
-    const timer = setTimeout(() => {
-      map.invalidateSize();
-    }, 100);
+    const timer = setTimeout(() => map.invalidateSize(), 100);
     return () => clearTimeout(timer);
   }, [isFullscreen, map]);
 
@@ -98,15 +86,15 @@ export default function Home() {
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [viewLayout, setViewLayout] = useState<'grid' | 'list'>(() => window.innerWidth < 768 ? 'list' : 'grid');
-  const [toolbarScale, setToolbarScale] = useState(() => window.innerWidth >= 768 ? 1.0 : 0.7);
   const [searchTerm, setSearchTerm] = useState('');
-  const [mapZoom, setMapZoom] = useState(9);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [drawnArea, setDrawnArea] = useState<any>(null);
   const [isDrawingEnabled, setIsDrawingEnabled] = useState(false);
   const [hasDrawnArea, setHasDrawnArea] = useState(false);
   const [showMapToast, setShowMapToast] = useState(false);
-  const { t } = useLanguage();
+  const [drawPoints, setDrawPoints] = useState(0);
+  const drawRef = useRef<DrawControlHandle>(null);
+  const canFullscreen = typeof document !== 'undefined' && !!document.fullscreenEnabled;  const { t } = useLanguage();
   const { openChat } = useAIChat();
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
@@ -278,13 +266,20 @@ export default function Home() {
     }
 
     if (hasDrawnArea && drawnArea && Array.isArray(drawnArea)) {
-      filtered = filtered.filter(p => {
-        return isPointInPolygon(p.coordinates.lat, p.coordinates.lng, drawnArea);
-      });
+      // Un inmueble sin coordenadas no está "dentro" de ninguna zona
+      filtered = filtered.filter(p => hasRealCoordinates(p) && isPointInPolygon(p.coordinates.lat, p.coordinates.lng, drawnArea));
     }
 
     setFilteredProperties(filtered);
   }, [filters, properties, searchTerm, hasDrawnArea, drawnArea]);
+
+  const mappableProperties = useMemo(() => filteredProperties.filter(hasRealCoordinates), [filteredProperties]);
+  const mapPoints = useMemo<[number, number][]>(
+    () => mappableProperties.map(p => [p.coordinates.lat, p.coordinates.lng]),
+    [mappableProperties],
+  );
+  // Se reencuadra al abrir el mapa y cuando cambian los resultados (no mientras se dibuja)
+  const mapFitKey = `${viewMode}|${mappableProperties.map(p => p.id).join(',')}`;
 
   const handleFilterChange = (key: keyof PropertyFilters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -342,13 +337,6 @@ export default function Home() {
     setSearchTerm('');
   };
 
-  const handleZoomIn = () => {
-    setMapZoom(prev => Math.min(prev + 1, 18));
-  };
-
-  const handleZoomOut = () => {
-    setMapZoom(prev => Math.max(prev - 1, 1));
-  };
 
   // Fullscreen functionality
   const toggleFullscreen = () => {
@@ -375,21 +363,35 @@ export default function Home() {
   }, []);
 
   // Handle drawn area
+  // Al cerrar la zona se sale del modo dibujo: la zona queda en el mapa y filtra los resultados
   const handleDrawCreated = (data: { type: string, coordinates: { lat: number, lng: number }[] }) => {
-    console.log('DRAW CREATED EVENT RECIBIDO!', data);
-
     setDrawnArea(data.coordinates);
     setHasDrawnArea(true);
-    // Note: Do not disable drawing mode here so the floating navbar stays open!
+    setIsDrawingEnabled(false);
   };
 
   const toggleDrawingMode = () => {
-    setIsDrawingEnabled(!isDrawingEnabled);
-    if (!isDrawingEnabled && mapContainerRef.current) {
-      setShowMapToast(true);
-      // Tutorial stays until user dismisses it manually
+    const next = !isDrawingEnabled;
+    setIsDrawingEnabled(next);
+    // La explicación se ve una vez por sesión
+    if (next) {
+      try {
+        if (sessionStorage.getItem('ubica-draw-help') !== '1') {
+          setShowMapToast(true);
+          sessionStorage.setItem('ubica-draw-help', '1');
+        }
+      } catch {
+        setShowMapToast(true);
+      }
     }
   };
+
+  useEffect(() => {
+    if (!isDrawingEnabled) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setIsDrawingEnabled(false); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [isDrawingEnabled]);
 
   // Efecto para asegurar que el mapa se centra y gana visibilidad al empezar a dibujar
   useEffect(() => {
@@ -459,31 +461,6 @@ export default function Home() {
     setIsDrawingEnabled(false);
   };
 
-  // Custom tool handlers for the floating drawing menu
-  const handleFinishDrawing = () => {
-    const btn = document.querySelector('.leaflet-draw-actions a[title="Finalizar dibujo"]') as HTMLElement || document.querySelector('.leaflet-draw-actions a[title="Finish drawing"]') as HTMLElement;
-    if (btn) btn.click();
-    // Toolbar stays open to allow clear, zoom, filters, or fullscreen!
-  };
-
-  const handleCancelDrawing = () => {
-    const btn = document.querySelector('.leaflet-draw-actions a[title="Cancelar dibujo"]') as HTMLElement || document.querySelector('.leaflet-draw-actions a[title="Cancel drawing"]') as HTMLElement;
-    if (btn) btn.click();
-    setIsDrawingEnabled(false);
-  };
-
-  const handleRestartDrawing = () => {
-    setHasDrawnArea(false);
-    setDrawnArea(null);
-    const cancelBtn = document.querySelector('.leaflet-draw-actions a[title="Cancelar dibujo"]') as HTMLElement || document.querySelector('.leaflet-draw-actions a[title="Cancel drawing"]') as HTMLElement;
-    if (cancelBtn) cancelBtn.click();
-
-    // Slight delay to allow Leaflet to clear before retriggering
-    setTimeout(() => {
-      const polygonBtn = document.querySelector('.leaflet-draw-draw-polygon') as HTMLElement;
-      if (polygonBtn) polygonBtn.click();
-    }, 50);
-  };
 
   if (loading) {
     return (
@@ -646,10 +623,19 @@ export default function Home() {
                 </div>
               )}
 
-              <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                {hasDrawnArea
-                  ? t('view.propertiesInArea', { count: filteredProperties.length })
-                  : t('view.properties', { count: filteredProperties.length })}
+              {/* En móvil, con la barra llena, basta el número; el texto completo queda para lectores de pantalla */}
+              <div className="min-w-0 truncate text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                <span className={viewMode === 'map' ? 'hidden sm:inline' : undefined}>
+                  {hasDrawnArea
+                    ? t('view.propertiesInArea', { count: filteredProperties.length })
+                    : t('view.properties', { count: filteredProperties.length })}
+                </span>
+                {viewMode === 'map' && (
+                  <span className="rounded-full bg-gray-100 px-2 py-0.5 font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-200 sm:hidden"
+                    aria-label={hasDrawnArea ? t('view.propertiesInArea', { count: filteredProperties.length }) : t('view.properties', { count: filteredProperties.length })}>
+                    {filteredProperties.length}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -1051,123 +1037,67 @@ export default function Home() {
 
 
 
-                {/* Panel Flotante Minimalista de Dibujo MOVIDO AFUERA del mapa pero anclado al relative map-wrapper */}
-                <AnimatePresence>
-                  {isDrawingEnabled && (
-                    <div className="absolute bottom-6 left-0 right-0 z-[2000] flex justify-center pointer-events-none">
-                      <motion.div
-                        className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl px-2 py-2 md:px-4 md:py-3 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/20 dark:border-gray-700 flex items-center gap-1 sm:gap-2 md:gap-3 transition-all pointer-events-auto cursor-default origin-bottom"
-                        initial={false}
-                        animate={{ opacity: 1, y: 0, scale: toolbarScale }}
-                        exit={{ opacity: 0, y: 50, scale: 0.9 }}
-                        drag
-                        dragMomentum={false}
-                        dragElastic={0.1}
-                        style={{ x: 0, y: 0 }}
-                      >
-                        {/* Drag Handle */}
-                        <div className="flex flex-col items-center justify-center px-1 sm:px-2 md:px-3 cursor-grab active:cursor-grabbing text-gray-400 hover:text-emerald-500 transition-colors">
-                          <HandRaisedIcon className="h-5 w-5 md:h-6 md:w-6" />
-                          <div className="w-1.5 h-1.5 rounded-full bg-current mt-1"></div>
-                        </div>
-
-                        <div className="w-px h-8 bg-gray-200 dark:bg-gray-700 mx-1"></div>
-
-                        {/* Scale Controls */}
-                        <div className="flex flex-col gap-1 px-1">
-                          <button
-                            onClick={() => setToolbarScale(prev => Math.min(prev + 0.1, 1.5))}
-                            className="p-1 rounded-md hover:bg-emerald-50 dark:hover:bg-emerald-900/30 text-emerald-600 transition-colors"
-                            title="Aumentar tamaño barra"
-                          >
-                            <PlusIcon className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => setToolbarScale(prev => Math.max(prev - 0.1, 0.4))}
-                            className="p-1 rounded-md hover:bg-rose-50 dark:hover:bg-rose-900/30 text-rose-600 transition-colors"
-                            title="Reducir tamaño barra"
-                          >
-                            <MinusIcon className="h-4 w-4" />
-                          </button>
-                        </div>
-
-                        <div className="w-px h-8 bg-gray-200 dark:bg-gray-700 mx-1"></div>
-
-                        <button onClick={handleFinishDrawing} className="flex flex-col items-center gap-0.5 md:gap-1 min-w-[50px] sm:min-w-[60px] md:min-w-[72px] p-1.5 md:p-2.5 rounded-xl text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors group">
-                          <div className="bg-emerald-100 dark:bg-emerald-900/50 p-1.5 md:p-2 rounded-lg group-hover:scale-110 transition-transform"><CheckIcon className="h-5 w-5 md:h-6 md:w-6" /></div>
-                          <span className="text-[10px] sm:text-[11px] md:text-xs font-bold">Hecho</span>
+                {/* Barra de dibujo: indica qué hacer y cabe en un móvil */}
+                {isDrawingEnabled && (
+                  <div className="absolute inset-x-0 bottom-4 z-[1000] flex justify-center px-3 pointer-events-none">
+                    <div className="pointer-events-auto w-full max-w-xl rounded-2xl border border-gray-200 bg-white/95 p-2 shadow-xl backdrop-blur dark:border-gray-700 dark:bg-gray-800/95">
+                      <p className="px-2 pb-2 pt-1 text-center text-xs text-gray-600 dark:text-gray-300 sm:text-sm" aria-live="polite">
+                        {drawPoints < 3
+                          ? t('map.draw.hint', { count: drawPoints })
+                          : t('map.draw.hintClose', { count: drawPoints })}
+                      </p>
+                      <div className="grid grid-cols-4 gap-1.5">
+                        <button type="button" onClick={() => drawRef.current?.undo()} disabled={drawPoints === 0}
+                          className="flex flex-col items-center gap-1 rounded-xl px-1 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-40 dark:text-gray-200 dark:hover:bg-gray-700">
+                          <ArrowUturnLeftIcon className="h-5 w-5" aria-hidden="true" />
+                          {t('map.draw.undo')}
                         </button>
-
-                        <button onClick={handleRestartDrawing} className="flex flex-col items-center gap-0.5 md:gap-1 min-w-[50px] sm:min-w-[60px] md:min-w-[72px] p-1.5 md:p-2.5 rounded-xl text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-colors group">
-                          <div className="bg-amber-100 dark:bg-amber-900/50 p-1.5 md:p-2 rounded-lg group-hover:scale-110 transition-transform"><ArrowPathIcon className="h-5 w-5 md:h-6 md:w-6" /></div>
-                          <span className="text-[10px] sm:text-[11px] md:text-xs font-bold">Reiniciar</span>
+                        <button type="button" onClick={() => drawRef.current?.reset()} disabled={drawPoints === 0}
+                          className="flex flex-col items-center gap-1 rounded-xl px-1 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-40 dark:text-gray-200 dark:hover:bg-gray-700">
+                          <ArrowPathIcon className="h-5 w-5" aria-hidden="true" />
+                          {t('map.draw.restart')}
                         </button>
-
-                        <button
-                          onClick={() => {
-                            setHasDrawnArea(false);
-                            setDrawnArea(null);
-                            setIsDrawingEnabled(false);
-                            setTimeout(() => setIsDrawingEnabled(true), 10);
-                          }}
-                          className="flex flex-col items-center gap-0.5 md:gap-1 min-w-[50px] sm:min-w-[60px] md:min-w-[72px] p-1.5 md:p-2.5 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors group"
-                        >
-                          <div className="bg-rose-100 dark:bg-rose-900/50 p-1.5 md:p-2 rounded-lg group-hover:scale-110 transition-transform"><TrashIcon className="h-5 w-5 md:h-6 md:w-6" /></div>
-                          <span className="text-[10px] sm:text-[11px] md:text-xs font-bold">Borrar</span>
+                        <button type="button" onClick={() => drawRef.current?.finish()} disabled={drawPoints < 3}
+                          className="flex flex-col items-center gap-1 rounded-xl bg-emerald-600 px-1 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:bg-gray-200 disabled:text-gray-500 dark:disabled:bg-gray-700 dark:disabled:text-gray-400">
+                          <CheckIcon className="h-5 w-5" aria-hidden="true" />
+                          {t('map.draw.finish')}
                         </button>
-
-                        <div className="w-px h-10 bg-gray-200 dark:bg-gray-700 mx-1"></div>
-
-                        <button onClick={handleZoomIn} className="flex flex-col items-center gap-0.5 md:gap-1 min-w-[44px] md:min-w-[56px] p-1.5 md:p-2.5 rounded-xl text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors group">
-                          <div className="bg-emerald-100 dark:bg-emerald-900/50 p-1.5 md:p-2 rounded-lg group-hover:scale-110 transition-transform"><MagnifyingGlassPlusIcon className="h-5 w-5 md:h-6 md:w-6" /></div>
-                          <span className="text-[10px] md:text-xs font-bold">Zoom+</span>
+                        <button type="button" onClick={() => setIsDrawingEnabled(false)}
+                          className="flex flex-col items-center gap-1 rounded-xl px-1 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700">
+                          <XMarkIcon className="h-5 w-5" aria-hidden="true" />
+                          {t('map.draw.exit')}
                         </button>
-
-                        <button onClick={handleZoomOut} className="flex flex-col items-center gap-0.5 md:gap-1 min-w-[44px] md:min-w-[56px] p-1.5 md:p-2.5 rounded-xl text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors group">
-                          <div className="bg-emerald-100 dark:bg-emerald-900/50 p-1.5 md:p-2 rounded-lg group-hover:scale-110 transition-transform"><MagnifyingGlassMinusIcon className="h-5 w-5 md:h-6 md:w-6" /></div>
-                          <span className="text-[10px] md:text-xs font-bold">Zoom-</span>
-                        </button>
-
-                        <button onClick={toggleFullscreen} className="flex flex-col items-center gap-0.5 md:gap-1 min-w-[50px] sm:min-w-[60px] md:min-w-[72px] p-1.5 md:p-2.5 rounded-xl text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors group">
-                          <div className="bg-emerald-100 dark:bg-emerald-900/50 p-1.5 md:p-2 rounded-lg group-hover:scale-110 transition-transform">
-                            {isFullscreen ? <ArrowsPointingInIcon className="h-5 w-5 md:h-6 md:w-6" /> : <ArrowsPointingOutIcon className="h-5 w-5 md:h-6 md:w-6" />}
-                          </div>
-                          <span className="text-[10px] sm:text-[11px] md:text-xs font-bold">Pantalla</span>
-                        </button>
-
-                        <button onClick={() => setShowFilters(true)} className="flex flex-col items-center gap-0.5 md:gap-1 min-w-[50px] sm:min-w-[60px] md:min-w-[72px] p-1.5 md:p-2.5 rounded-xl text-fuchsia-500 hover:bg-fuchsia-50 dark:hover:bg-fuchsia-900/30 transition-colors group">
-                          <div className="bg-fuchsia-100 dark:bg-fuchsia-900/50 p-1.5 md:p-2 rounded-lg group-hover:scale-110 transition-transform"><AdjustmentsHorizontalIcon className="h-5 w-5 md:h-6 md:w-6" /></div>
-                          <span className="text-[10px] sm:text-[11px] md:text-xs font-bold">Filtros</span>
-                        </button>
-
-                        <div className="w-px h-10 bg-gray-200 dark:bg-gray-700 mx-1"></div>
-
-                        <button onClick={handleCancelDrawing} className="flex flex-col items-center gap-0.5 md:gap-1 min-w-[44px] md:min-w-[56px] p-1.5 md:p-2.5 rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group">
-                          <div className="bg-gray-100 dark:bg-gray-800 p-1.5 md:p-2 rounded-lg group-hover:scale-110 transition-transform border border-gray-200 dark:border-gray-600"><XMarkIcon className="h-5 w-5 md:h-6 md:w-6" /></div>
-                          <span className="text-[10px] md:text-xs font-bold">Salir</span>
-                        </button>
-                      </motion.div>
+                      </div>
                     </div>
-                  )}
-                </AnimatePresence>
+                  </div>
+                )}
+
+                {canFullscreen && (
+                  <button type="button" onClick={toggleFullscreen}
+                    aria-label={isFullscreen ? t('map.exitFullscreen') : t('map.fullscreen')} title={isFullscreen ? t('map.exitFullscreen') : t('map.fullscreen')}
+                    className="absolute left-3 top-3 z-[1000] rounded-lg border border-gray-300 bg-white p-2 text-gray-700 shadow-md hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200">
+                    {isFullscreen ? <ArrowsPointingInIcon className="h-5 w-5" /> : <ArrowsPointingOutIcon className="h-5 w-5" />}
+                  </button>
+                )}
 
                 <MapContainer
                   center={murciaCenter}
-                  zoom={mapZoom}
+                  zoom={9}
                   scrollWheelZoom={true}
                   className="h-full w-full"
                   zoomControl={false}
-                  attributionControl={false}
                 >
+                  <ZoomControl position="topright" zoomInTitle={t('map.zoomIn')} zoomOutTitle={t('map.zoomOut')} />
                   <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   />
-                  <MapController zoom={mapZoom} isFullscreen={isFullscreen} />
+                  <MapController points={mapPoints} fitKey={mapFitKey} isFullscreen={isFullscreen} />
 
-                  {/* Drawing controls */}
                   <DrawControl
+                    ref={drawRef}
                     onCreated={handleDrawCreated}
+                    onPointsChange={setDrawPoints}
                     isEnabled={isDrawingEnabled}
                   />
 
@@ -1179,9 +1109,11 @@ export default function Home() {
                     />
                   )}
 
-                  {filteredProperties.map((property) => (
+                  {mappableProperties.map((property) => (
                     <Marker
-                      key={property.id}
+                      // Mientras se dibuja, los precios no capturan los toques: así se pueden marcar puntos encima
+                      key={`${property.id}-${isDrawingEnabled ? 'draw' : 'view'}`}
+                      interactive={!isDrawingEnabled}
                       position={[property.coordinates.lat, property.coordinates.lng]}
                       icon={createPriceMarker(property.price, selectedProperty?.id === property.id)}
                       eventHandlers={{
@@ -1189,32 +1121,24 @@ export default function Home() {
                       }}
                     >
                       <Popup>
-                        <div className="p-2 min-w-[200px]">
-                          <img
-                            src={property.images?.[0] || 'https://via.placeholder.com/400x300?text=Sin+Imagen'}
-                            alt={property.title}
-                            className="w-full h-32 object-cover rounded-lg mb-2"
-                            onError={(e) => {
-                              e.currentTarget.src = 'https://via.placeholder.com/400x300?text=Sin+Imagen';
-                            }}
-                          />
-                          <h3 className="font-bold text-gray-900 mb-1">{property.title}</h3>
-                          <p className="text-sm text-gray-600 mb-2">{property.location}</p>
-                          <p className="text-lg font-bold bg-gradient-to-r from-emerald-600 to-emerald-500 bg-clip-text text-transparent mb-2">
-                            {new Intl.NumberFormat('es-ES', {
-                              style: 'currency',
-                              currency: 'EUR',
-                              minimumFractionDigits: 0,
-                            }).format(property.price)}
+                        <div className="w-56">
+                          {property.images?.[0] ? (
+                            <img src={property.images[0]} alt="" loading="lazy"
+                              className="mb-2 h-32 w-full rounded-lg object-cover"
+                              onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                          ) : (
+                            <div className="mb-2 flex h-32 w-full items-center justify-center rounded-lg bg-gray-100 text-gray-400"><HomeIcon className="h-8 w-8" /></div>
+                          )}
+                          <p className="font-display text-lg font-semibold tabular-nums text-gray-900">
+                            {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(property.price)}
                           </p>
-                          <div className="text-sm text-gray-600 mb-3">
-                            {property.bedrooms} hab · {property.bathrooms} baños · {property.area}m²
-                          </div>
-                          <button
-                            onClick={() => handleViewDetails(property.id)}
-                            className="w-full bg-gradient-to-r from-emerald-600 to-emerald-600 text-white py-2 rounded-lg hover:from-emerald-700 hover:to-emerald-700 transition-all font-medium shadow-lg hover:shadow-xl hover:scale-105"
-                          >
-                            Ver Detalles
+                          <p className="font-semibold text-gray-900">{property.title}</p>
+                          <p className="mb-2 text-sm text-gray-600">
+                            {[property.location, property.bedrooms ? `${property.bedrooms} hab.` : null, property.area ? `${property.area} m²` : null].filter(Boolean).join(' · ')}
+                          </p>
+                          <button onClick={() => handleViewDetails(property.id)}
+                            className="w-full rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+                            {t('map.viewListing')}
                           </button>
                         </div>
                       </Popup>
