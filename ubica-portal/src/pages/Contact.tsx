@@ -117,7 +117,7 @@ export default function Contact() {
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
-            <div className="container mx-auto px-4">
+            <div className="page-container">
                 {/* Header */}
                 <div className="max-w-3xl mx-auto text-center mb-16">
                     <motion.h1
@@ -137,7 +137,7 @@ export default function Contact() {
                     </motion.p>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 max-w-7xl mx-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                     {/* Contact Info */}
                     <div className="space-y-8">
                         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">{t('contact.info_title')}</h2>

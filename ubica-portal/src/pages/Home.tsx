@@ -486,7 +486,7 @@ export default function Home() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="container mx-auto px-4 py-8">
+        <div className="page-container py-8">
           <div className="mb-8 h-32 rounded-2xl bg-gray-200 dark:bg-gray-700 animate-pulse" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -542,7 +542,7 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Portada: eslogan y búsqueda, en el flujo normal de la página */}
       {!isDrawingEnabled && viewMode !== 'map' && (
-        <div className="mx-auto max-w-7xl w-full px-4 pt-8 pb-4">
+        <div className="page-container pt-8 pb-4">
           <div className="w-full rounded-3xl bg-emerald-600 shadow-xl px-4 py-5 sm:px-8 sm:py-6">
             <div className="mb-5 rounded-2xl bg-black/30 px-6 md:px-8 py-4 text-center">
               <p className="text-sm sm:text-lg md:text-xl font-semibold text-white tracking-wide text-balance leading-snug">
@@ -561,7 +561,7 @@ export default function Home() {
           className={`fixed inset-x-0 top-0 z-40 transition-transform duration-200 ease-out motion-reduce:transition-none ${showCompactSearch ? 'translate-y-0' : '-translate-y-full pointer-events-none'}`}
           style={{ paddingTop: 'env(safe-area-inset-top)' }}
         >
-          <div className="mx-auto max-w-7xl w-full px-3 pt-2.5">
+          <div className="page-container pt-2.5">
             <div className="rounded-3xl bg-emerald-600 shadow-lg px-2.5 py-2">
               {renderSearchRow(true)}
             </div>
@@ -575,7 +575,7 @@ export default function Home() {
         className={`bg-white/95 dark:bg-gray-800/95 backdrop-blur-md shadow-sm z-[30] transition-all ${viewMode === 'map' ? 'sticky top-[72px] sm:top-[80px]' : 'relative'
           } ${!isScrolled ? 'border-b border-gray-200 dark:border-gray-700' : ''}`}
       >
-        <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-3 relative">
+        <div className="page-container py-2 sm:py-3 relative">
 
           <div className="flex flex-row justify-between items-center gap-2 sm:gap-4">
             {/* Left Controls */}
@@ -706,7 +706,7 @@ export default function Home() {
           transition={{ duration: 0.3 }}
           className="bg-white dark:bg-gray-900 border-b border-emerald-100 dark:border-gray-800 shadow-sm relative z-20"
         >
-          <div className="container mx-auto px-4 py-6">
+          <div className="page-container py-6">
             {/* Row 1: Main filters */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
               {/* Type */}
@@ -886,7 +886,7 @@ export default function Home() {
             ref={mapContainerRef}
             className="map-fullscreen-container"
           >
-            <div className={`container mx-auto px-4 relative transition-all duration-500 ease-in-out ${isDrawingEnabled ? 'mt-4 mb-8 md:mt-6 md:mb-12' : 'my-8 md:my-16'}`}>
+            <div className={`page-container relative transition-all duration-500 ease-in-out ${isDrawingEnabled ? 'mt-4 mb-8 md:mt-6 md:mb-12' : 'my-8 md:my-16'}`}>
 
               {/* Mini Tutorial — Drawing Instructions */}
               <AnimatePresence>
@@ -992,7 +992,7 @@ export default function Home() {
                     padding: 0 !important;
                     background: #f9fafb;
                   }
-                  .map-fullscreen-container:fullscreen .container {
+                  .map-fullscreen-container:fullscreen .page-container {
                     max-width: 100% !important;
                     padding: 0 !important;
                     margin: 0 !important;
@@ -1230,7 +1230,7 @@ export default function Home() {
           </div>
         ) : (
           /* Grid/List View */
-          <div className="container mx-auto px-4 py-6 md:py-8">
+          <div className="page-container py-6 md:py-8">
             <div className={
               viewLayout === 'list'
                 ? "flex flex-col gap-6"

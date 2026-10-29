@@ -243,7 +243,7 @@ export default function AmiFincas() {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(16,185,129,0.05)_0%,transparent_100%)]" />
           <div className="absolute top-0 right-0 w-[600px] md:w-[1000px] h-[600px] md:h-[1000px] bg-emerald-500/10 rounded-full blur-[80px] md:blur-[120px] -translate-y-1/2 translate-x-1/2" />
 
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="page-container relative z-10">
             <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
               {/* Left Column: Content */}
               <div className="flex-1 text-center lg:text-left">
@@ -332,7 +332,7 @@ export default function AmiFincas() {
 
         {/* Stats/Ticker Section */}
         <div className="py-12 bg-slate-100 dark:bg-white/5 border-y border-slate-200 dark:border-white/5 backdrop-blur-sm relative z-20 shadow-[-10px_-20px_40px_rgba(0,0,0,0.1)]">
-          <div className="container mx-auto px-4 overflow-hidden">
+          <div className="page-container overflow-hidden">
             <div className="flex flex-col sm:flex-row justify-center items-center gap-12 md:gap-24 opacity-80 transition-all">
               <div className="flex items-center space-x-3 group">
                 <span className="text-4xl font-black text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
@@ -360,7 +360,7 @@ export default function AmiFincas() {
         <section id="servicios" className="py-32 relative">
           <div className="absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-[100px]" />
 
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-[1400px]">
+          <div className="page-container">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -452,7 +452,7 @@ export default function AmiFincas() {
         <section className="py-24 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-emerald-500/5 to-transparent" />
 
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="page-container relative z-10">
             <div className="flex flex-col lg:flex-row items-center gap-16">
               <div className="flex-1">
                 <motion.div
@@ -506,7 +506,7 @@ export default function AmiFincas() {
 
         {/* Offices Section with Maps */}
         <section id="contacto" className="py-32 bg-slate-50 dark:bg-[#0a0f1c] transition-colors">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="page-container">
             <div className="text-center mb-20">
               <h2 className="text-emerald-500 font-black tracking-widest uppercase text-xs mb-4">{t('ami.offices.badge')}</h2>
               <h3 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white mb-6">{t('ami.offices.title')}</h3>

@@ -169,8 +169,8 @@ export default function Navbar() {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:block">
-            <div className="ml-6 lg:ml-8 flex items-center space-x-2 lg:space-x-4">
+          <div className="hidden lg:block">
+            <div className="ml-6 xl:ml-8 flex items-center space-x-1 xl:space-x-4">
               {navigation.map((item) => (
                 item.external ? (
                   <a
@@ -205,7 +205,7 @@ export default function Navbar() {
           </div>
 
           {/* Desktop Controls */}
-          <div className="hidden md:flex items-center space-x-2">
+          <div className="hidden lg:flex items-center space-x-2">
             <ThemeToggle />
             <LanguageSelector />
 
@@ -216,12 +216,14 @@ export default function Navbar() {
                     e.stopPropagation();
                     setIsUserMenuOpen(!isUserMenuOpen);
                   }}
+                  title={user?.full_name || user?.email}
+                  aria-label={user?.full_name || user?.email}
                   className="flex items-center space-x-2 rounded-lg bg-[#0f6b4f] h-10 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-[#0b5440] focus:outline-none focus:ring-2 focus:ring-[#0f6b4f] focus:ring-offset-2"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
                   <UserCircleIcon className="h-4 w-4" />
-                  <span>{user?.full_name || user?.email}</span>
+                  <span className="hidden xl:inline max-w-[12rem] truncate">{user?.full_name || user?.email}</span>
                 </motion.button>
 
                 {/* User dropdown menu */}
@@ -305,7 +307,7 @@ export default function Navbar() {
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden">
+          <div className="lg:hidden">
             <div className="flex items-center space-x-2">
               <ThemeToggle />
               <motion.button
@@ -337,11 +339,11 @@ export default function Navbar() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 md:hidden"
+                className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 lg:hidden"
                 onClick={() => setIsMenuOpen(false)}
               />
               <motion.div
-                className="fixed top-24 right-4 left-4 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-2xl z-[60] md:hidden overflow-hidden"
+                className="fixed top-24 right-4 left-4 rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-2xl z-[60] lg:hidden overflow-hidden"
                 initial={{ opacity: 0, scale: 0.9, y: -20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: -20 }}

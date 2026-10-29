@@ -36,7 +36,7 @@ export default function About() {
                 transition={{ duration: 0.6 }}
                 className="relative overflow-hidden bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-500 py-20"
             >
-                <div className="container mx-auto px-4 text-center">
+                <div className="page-container text-center">
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -66,7 +66,7 @@ export default function About() {
             </motion.div>
 
             {/* Stats */}
-            <div className="container mx-auto px-4 -mt-10 relative z-10">
+            <div className="page-container -mt-10 relative z-10">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {stats.map((stat, i) => (
                         <motion.div
@@ -86,7 +86,7 @@ export default function About() {
             </div>
 
             {/* Mission */}
-            <div className="container mx-auto px-4 py-16">
+            <div className="page-container py-16">
                 <div className="max-w-4xl mx-auto">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -112,7 +112,7 @@ export default function About() {
 
             {/* Values */}
             <div className="bg-gradient-to-r from-emerald-50 to-emerald-50 dark:from-gray-800 dark:to-gray-900 py-16">
-                <div className="container mx-auto px-4">
+                <div className="page-container">
                     <motion.h2
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -141,7 +141,7 @@ export default function About() {
             </div>
 
             {/* CTA */}
-            <div className="container mx-auto px-4 py-16">
+            <div className="page-container py-16">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}

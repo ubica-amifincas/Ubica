@@ -57,7 +57,7 @@ export default function Terms() {
                 transition={{ duration: 0.6 }}
                 className="relative overflow-hidden bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-500 py-16"
             >
-                <div className="container mx-auto px-4 text-center">
+                <div className="page-container text-center">
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -73,7 +73,7 @@ export default function Terms() {
             </motion.div>
 
             {/* Content */}
-            <div className="container mx-auto px-4 py-12">
+            <div className="page-container py-12">
                 <div className="max-w-4xl mx-auto">
                     <button
                         onClick={() => navigate(-1)}

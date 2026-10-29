@@ -139,7 +139,7 @@ export default function TasadorExpress() {
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-12">
             {/* Mini header */}
             <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <div className="page-container h-16 flex items-center justify-between">
                     <Link to="/entretenimiento" className="flex items-center text-gray-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors font-medium text-sm">
                         <ChevronLeftIcon className="w-5 h-5 mr-1" />
                         Volver a Juegos
@@ -159,7 +159,7 @@ export default function TasadorExpress() {
                 </div>
             </div>
 
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+            <div className="page-container mt-8">
                 <AnimatePresence mode="wait">
                     {gameState === 'intro' && (
                         <motion.div
@@ -219,7 +219,7 @@ export default function TasadorExpress() {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, y: -20 }}
-                            className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700"
+                            className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700 max-w-4xl mx-auto"
                         >
                             {/* Image Section */}
                             <div className="relative h-64 md:h-80 w-full overflow-hidden bg-gray-200 dark:bg-gray-700 group">

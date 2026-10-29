@@ -6,17 +6,19 @@ import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 export default function LegalLayout({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="container mx-auto max-w-3xl px-4 py-10 sm:py-14">
-        <Link to="/" className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-emerald-700 dark:hover:text-emerald-400">
-          <ArrowLeftIcon className="h-4 w-4" /> Volver al inicio
-        </Link>
-        <header className="mt-6 mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">{title}</h1>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">MAYNSASER 2014, S.L. · Avda. Casillas de Coria, 4 · 30007 Murcia (Murcia) · España</p>
-        </header>
-        <article className="rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6 sm:p-10 text-gray-700 dark:text-gray-300 leading-relaxed space-y-4 text-[15px]">
-          {children}
-        </article>
+      <div className="page-container py-10 sm:py-14">
+        <div className="max-w-3xl">
+          <Link to="/" className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-emerald-700 dark:hover:text-emerald-400">
+            <ArrowLeftIcon className="h-4 w-4" /> Volver al inicio
+          </Link>
+          <header className="mt-6 mb-8">
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">{title}</h1>
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">MAYNSASER 2014, S.L. · Avda. Casillas de Coria, 4 · 30007 Murcia (Murcia) · España</p>
+          </header>
+          <article className="rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6 sm:p-10 text-gray-700 dark:text-gray-300 leading-relaxed space-y-4 text-[15px]">
+            {children}
+          </article>
+        </div>
       </div>
     </div>
   );

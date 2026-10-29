@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  /* Contenedor único de página: mismo ancho y márgenes que la barra de navegación y el pie */
+  .page-container {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+}
+
 @layer base {
   :root {
     --radius: 0.5rem;
@@ -57,7 +64,7 @@ body.map-mode-active footer {
   display: none !important;
 }
 
-body.map-mode-active .map-fullscreen-container>.container {
+body.map-mode-active .map-fullscreen-container>.page-container {
   margin-top: 1rem !important;
   margin-bottom: 0 !important;
 }
