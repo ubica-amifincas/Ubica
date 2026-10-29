@@ -18,14 +18,19 @@ Portal inmobiliario con frontend React (Vite, desplegado en Vercel) y backend Fa
 
 ```
 Ubica/
-├── ubica-backend/          # API FastAPI (Python) — desplegada en Render
-│   ├── main.py             # Servidor y endpoints
-│   ├── models.py           # Modelos SQLModel (tablas de Supabase)
-│   ├── database.py         # Conexión a Postgres (DATABASE_URL)
-│   ├── mcp_server.py       # Herramientas del chat de IA
-│   ├── setup_cloud_db.sql  # Esquema inicial de la base de datos
-│   ├── enable_rls.sql      # Activa RLS en las tablas
-│   └── requirements.txt    # Dependencias (versiones fijadas)
+├── ubica-backend/              # API FastAPI (Python) — desplegada en Render
+│   ├── main.py                 # Crea la app, CORS, /uploads e incluye los routers
+│   ├── config.py               # Variables de entorno
+│   ├── database.py, models.py  # Conexión a Postgres y tablas (SQLModel)
+│   ├── schemas.py              # Modelos Pydantic de entrada/salida
+│   ├── security.py             # Contraseñas (bcrypt) y autenticación JWT
+│   ├── routers/                # Endpoints: auth, properties, admin, user, games, realtor, investor, ai, uploads, health
+│   ├── services/               # Lógica compartida: email (Resend), properties, ai/ (chat, herramientas, límites)
+│   ├── tests/                  # Tests de la API (pytest, SQLite temporal)
+│   ├── mcp_server.py           # Servidor MCP independiente (no lo usa la API)
+│   ├── setup_cloud_db.sql      # Esquema inicial de la base de datos
+│   ├── enable_rls.sql          # Activa RLS en las tablas
+│   └── requirements.txt        # Dependencias (versiones fijadas); requirements-dev.txt para tests
 ├── ubica-portal/           # Frontend React + Vite (TypeScript) — desplegado en Vercel
 │   ├── src/                # Código fuente
 │   └── public/             # Estáticos
@@ -63,6 +68,16 @@ El backend estará disponible en:
 - API: `http://localhost:8000`
 - Documentación Swagger: `http://localhost:8000/docs`
 - Health check: `http://localhost:8000/health`
+
+### Tests del backend
+
+Usan una base SQLite temporal: no tocan Supabase ni envían correos.
+
+```bash
+cd ubica-backend
+pip install -r requirements-dev.txt
+python -m pytest tests
+```
 
 ### 2. Frontend (Vite + React) — Puerto 5173
 

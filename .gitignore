@@ -61,3 +61,4 @@ ubica-backend/data/searches.json
 ubica-backend/ai_usage.json
 ubica-backend/uploads/*.txt
 --store-dir/
+.pytest_cache/

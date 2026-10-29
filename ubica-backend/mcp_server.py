@@ -10,31 +10,7 @@ from sqlmodel import Session, select, or_
 from database import engine
 import models
 
-# --- Filter Helper (Database version) ---
-def get_allowed_properties_statement(user_id: Optional[int], user_role: Optional[str]):
-    """
-    Returns a SQLModel statement for properties based on the user's role and ID.
-    - None (Guest): Only sees 'public/available' properties.
-    - Professional roles: See everything for now or specific ones.
-    - 'admin': Sees everything.
-    """
-    if user_role == "admin":
-        return select(models.Property)
-        
-    # Public statuses
-    public_statuses = ["available", "for-sale", "for-rent"]
-    
-    if user_id is None:
-        return select(models.Property).where(models.Property.status.in_(public_statuses))
-        
-    # Authenticated user: sees public + their own
-    return select(models.Property).where(
-        or_(
-            models.Property.status.in_(public_statuses),
-            models.Property.owner_id == user_id,
-            models.Property.realtor_id == user_id
-        )
-    )
+from services.properties import get_allowed_properties_statement
 
 # --- MCP Tools ---
 

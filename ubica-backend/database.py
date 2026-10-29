@@ -17,7 +17,9 @@ for prefix in ("postgres://", "postgresql://"):
         DATABASE_URL = "postgresql+psycopg2://" + DATABASE_URL[len(prefix):]
         break
 
-engine = create_engine(DATABASE_URL, echo=os.getenv("SQL_ECHO") == "1")
+# SQLite (tests) necesita compartir la conexión entre hilos
+connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+engine = create_engine(DATABASE_URL, echo=os.getenv("SQL_ECHO") == "1", connect_args=connect_args)
 
 def create_db_and_tables():
     from . import models # Ensure models are loaded
