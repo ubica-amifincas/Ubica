@@ -92,7 +92,6 @@ function buildNavigation(role: string | undefined, t: TFn): NavGroup[] {
           label: t('panel.group.investor', 'Inversor'),
           items: [
             { label: t('panel.nav.overview', 'Resumen'), href: '/investor', icon: PresentationChartLineIcon, exact: true },
-            { label: t('panel.nav.portfolio', 'Mi portfolio'), href: '/investor/portfolio', icon: BriefcaseIcon },
             { label: t('panel.nav.opportunities', 'Oportunidades'), href: '/investor/oportunidades', icon: LightBulbIcon },
             { label: t('panel.nav.wealth', 'Patrimonio'), href: '/investor/patrimonio', icon: WalletIcon },
           ],
@@ -404,6 +403,11 @@ export default function DashboardLayout() {
         {/* Contenido: mismo ancho y relleno en todos los paneles */}
         <main className="flex-1 focus:outline-none">
           <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+            {user?.role === 'realtor' && user.is_approved === false && (
+              <p role="status" className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-300">
+                Tu cuenta de inmobiliaria está pendiente de aprobación. Mientras tanto, revisaremos tus anuncios antes de publicarlos.
+              </p>
+            )}
             <Suspense fallback={<RouteFallback />}>
               <Outlet />
             </Suspense>

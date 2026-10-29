@@ -283,7 +283,10 @@ export function propertyStatusTone(status?: string | null): BadgeTone {
     case 'under-renovation':
     case 'pending':
     case 'draft':
+    case 'pending-review':
       return 'warning';
+    case 'rejected':
+      return 'danger';
     default:
       return 'neutral'; // sold, rented, in-use y desconocidos
   }

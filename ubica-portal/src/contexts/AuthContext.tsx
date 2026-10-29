@@ -11,6 +11,8 @@ export interface User {
   company?: string;
   is_active: boolean;
   is_verified?: boolean;
+  /** Inmobiliarias dadas de alta solas: false hasta que el admin las aprueba */
+  is_approved?: boolean;
   phone?: string;
   avatar?: string;
   created_at: string;
@@ -38,6 +40,8 @@ interface RegisterData {
   company?: string;
   phone?: string;
   role?: string;
+  /** Casilla obligatoria de condiciones y privacidad */
+  accept_terms?: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

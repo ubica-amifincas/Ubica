@@ -36,6 +36,13 @@ export interface LoginRequest {
   password: string;
 }
 
+/** Correo de Google sin cuenta: falta elegir el tipo de cuenta y aceptar las condiciones. */
+export interface GoogleSignupRequired {
+  needs_signup: true;
+  email: string;
+  full_name?: string;
+}
+
 export interface LoginResponse {
   access_token: string;
   token_type: string;
@@ -52,6 +59,8 @@ export interface User {
   phone?: string;
   is_active: boolean;
   is_verified?: boolean;
+  /** Inmobiliarias dadas de alta solas: false hasta que el admin las aprueba */
+  is_approved?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -76,6 +85,7 @@ export interface UpdateUserRequest {
   company?: string;
   phone?: string;
   is_active?: boolean;
+  is_approved?: boolean;
 }
 
 export interface AdminDashboardStats {
@@ -179,6 +189,8 @@ class ApiService {
       totalCost: data.total_cost ?? data.totalCost ?? undefined,
       monthlyCost: data.monthly_cost ?? data.monthlyCost ?? undefined,
       monthlyIncome: data.monthly_income ?? data.monthlyIncome ?? undefined,
+      pendingStatus: data.pending_status ?? undefined,
+      reviewNote: data.review_note ?? undefined,
     } as Property;
   }
 
@@ -199,13 +211,17 @@ class ApiService {
   }
 
   /** Entra (o crea la cuenta) con el ID token que devuelve el botón de Google. */
-  async loginWithGoogle(credential: string, role?: string): Promise<LoginResponse> {
+  /**
+   * Entrar con Google. Si el correo no tiene cuenta, el backend no crea nada y responde needs_signup:
+   * hay que volver a llamar con el tipo de cuenta y la aceptación de las condiciones.
+   */
+  async loginWithGoogle(credential: string, signup?: { role: string; acceptTerms: boolean }): Promise<LoginResponse | GoogleSignupRequired> {
     const response = await fetch(`${API_BASE_URL}/auth/google`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(role ? { credential, role } : { credential }),
+      body: JSON.stringify(signup ? { credential, role: signup.role, accept_terms: signup.acceptTerms } : { credential }),
     });
-    return this.handleResponse<LoginResponse>(response, { skipAuthRedirect: true });
+    return this.handleResponse<LoginResponse | GoogleSignupRequired>(response, { skipAuthRedirect: true });
   }
 
   async register(userData: any): Promise<{ message: string; user_id: number }> {

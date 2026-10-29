@@ -13,7 +13,13 @@ PUBLIC_STATUSES = ("for-sale", "for-rent", "reserved", "available")
 
 # Todos los estados que puede tener un anuncio
 PROPERTY_STATUSES = ("for-sale", "for-rent", "reserved", "available", "sold", "rented",
-                     "under-renovation", "in-use", "pending", "draft")
+                     "under-renovation", "in-use", "pending", "draft", "pending-review", "rejected")
+
+# Anuncios de quien no publica directamente: esperan a que el admin los revise
+REVIEW_STATUS = "pending-review"
+REJECTED_STATUS = "rejected"
+# Lo que el anunciante puede cambiar sin revisión en un anuncio ya publicado
+NO_REVIEW_FIELDS = {"status"}
 
 # Tipos en una sola forma (la que usan el filtro y las traducciones del frontend)
 PROPERTY_TYPES = ("villa", "apartment", "flat", "house", "penthouse", "townhouse", "studio", "duplex", "chalet", "land")
@@ -155,6 +161,44 @@ def get_allowed_properties_statement(user_id: Optional[int], user_role: Optional
 
 # Datos que solo ven el propietario, su inmobiliaria y el admin
 PRIVATE_PROPERTY_FIELDS = ("purchase_price", "total_cost", "monthly_cost", "monthly_income", "owner_id", "realtor_id")
+
+
+def publishes_directly(user: Optional[models.User]) -> bool:
+    """El admin y las inmobiliarias aprobadas publican sin revisión; el resto pasa por el admin."""
+    return user is not None and (user.role == "admin" or (user.role == "realtor" and user.is_approved))
+
+
+def apply_review(p: models.Property, user: models.User, payload: dict, previous_status: Optional[str]) -> None:
+    """
+    Decide el estado final de un anuncio que crea o edita su dueño (después de aplicar los cambios).
+    Si quien lo hace no publica directamente y el anuncio quedaría visible con contenido nuevo, queda
+    "pendiente de revisión" y se guarda el estado que pidió (en venta, en alquiler...) para aplicarlo al aprobarlo.
+    """
+    requested = p.status
+    if requested == REVIEW_STATUS:
+        # Reenvía el formulario sin cambiar el estado: se mantiene lo que pidió
+        requested = p.pending_status or "for-sale"
+    if publishes_directly(user):
+        p.status = requested
+        p.pending_status = None
+        p.review_note = None
+        return
+    if requested == REJECTED_STATUS:
+        # Solo el admin rechaza; si lo reenvía tal cual, vuelve a revisión con lo que había pedido
+        requested = p.pending_status or "draft"
+    if requested not in PUBLIC_STATUSES:
+        # Borrador, vendido, alquilado...: no publica nada, no hace falta revisión
+        p.status = requested
+        p.pending_status = None
+        return
+    content_changed = any(key not in NO_REVIEW_FIELDS for key in payload)
+    # Un anuncio ya aprobado puede marcarse como reservado (o quedarse igual) sin volver a revisión
+    if previous_status in PUBLIC_STATUSES and not content_changed and requested in (previous_status, "reserved"):
+        p.status = requested
+        return
+    p.pending_status = requested
+    p.status = REVIEW_STATUS
+    p.review_note = None
 
 
 def can_manage_property(p: models.Property, user: Optional[models.User]) -> bool:

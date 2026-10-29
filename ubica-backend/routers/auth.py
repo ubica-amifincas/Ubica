@@ -1,6 +1,6 @@
 """Registro, verificación de email, login, recuperación de contraseña y cambio de email."""
 import secrets
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 import jwt
@@ -12,8 +12,8 @@ from google.auth.exceptions import GoogleAuthError
 
 from config import ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM, FRONTEND_URL, GOOGLE_CLIENT_ID, SECRET_KEY
 from database import get_session
-from schemas import (ChangeEmailRequest, ChangePasswordRequest, ForgotPasswordRequest, GoogleLoginRequest, LoginRequest, ResetPasswordRequest,
-                     Token, User, UserCreate)
+from schemas import (ChangeEmailRequest, ChangePasswordRequest, ForgotPasswordRequest, GoogleLoginRequest, GoogleSignupRequired, LoginRequest,
+                     ResetPasswordRequest, Token, User, UserCreate)
 from security import (burn_password_check, create_access_token, create_session_token, decode_purpose_token, get_current_user,
                       hash_password, is_legacy_hash, password_fingerprint, verify_password)
 from services.google_auth import verify_google_credential
@@ -23,6 +23,7 @@ from services.ratelimit import RateLimiter, get_client_ip
 router = APIRouter()
 
 SELF_SERVICE_ROLES = {"user", "investor", "realtor"}
+TERMS_REQUIRED = "Debes aceptar las condiciones de uso y la política de privacidad"
 
 # Fuerza bruta: intentos fallidos por email y por IP en 15 minutos
 login_email_limiter = RateLimiter(10, 15 * 60)
@@ -93,7 +94,7 @@ async def google_config():
     """El frontend pinta el botón de Google solo si hay Client ID (es público)."""
     return {"client_id": GOOGLE_CLIENT_ID or None}
 
-@router.post("/api/auth/google", response_model=Token)
+@router.post("/api/auth/google", response_model=Union[Token, GoogleSignupRequired])
 def google_login(data: GoogleLoginRequest, request: Request, session: Session = Depends(get_session)):
     """Entrar (o registrarse) con Google. Síncrona: verificar el token descarga las claves de Google."""
     if not GOOGLE_CLIENT_ID:
@@ -111,17 +112,24 @@ def google_login(data: GoogleLoginRequest, request: Request, session: Session = 
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Google no responde ahora mismo. Inténtalo de nuevo en unos minutos.")
 
     email = info["email"].strip().lower()
+    full_name = (info.get("name") or email.split("@")[0])[:120]
     user = _find_user_by_email(session, email)
     if user is None:
-        # Cuenta nueva: Google ya ha verificado el correo. Contraseña aleatoria que nadie conoce;
+        # Cuenta nueva: no se crea nada hasta que elige el tipo de cuenta y acepta las condiciones.
+        # La web vuelve a enviar el mismo token de Google (válido una hora) con esos datos.
+        if not data.accept_terms or not data.role:
+            return GoogleSignupRequired(email=email, full_name=full_name)
+        # Google ya ha verificado el correo. Contraseña aleatoria que nadie conoce;
         # si algún día quiere entrar con contraseña, la crea con "¿Olvidaste tu contraseña?"
         user = models.User(
             email=email,
             hashed_password=hash_password(secrets.token_urlsafe(32)),
-            full_name=(info.get("name") or email.split("@")[0])[:120],
-            role=data.role or "user",
+            full_name=full_name,
+            role=data.role,
             is_active=True,
             is_verified=True,
+            is_approved=data.role != "realtor",
+            terms_accepted_at=datetime.now(),
         )
         session.add(user)
     else:
@@ -143,6 +151,10 @@ async def register(user_data: UserCreate, background_tasks: BackgroundTasks, ses
     # El registro público no puede crear administradores: solo los roles que ofrece el formulario
     if user_data.role not in SELF_SERVICE_ROLES:
         raise HTTPException(status_code=400, detail="Rol no permitido")
+    if not user_data.accept_terms:
+        raise HTTPException(status_code=400, detail=TERMS_REQUIRED)
+    if len(user_data.password) < 8:
+        raise HTTPException(status_code=400, detail="La contraseña debe tener al menos 8 caracteres")
 
     existing_user = _find_user_by_email(session, user_data.email)
     if existing_user:
@@ -156,7 +168,10 @@ async def register(user_data: UserCreate, background_tasks: BackgroundTasks, ses
         company=user_data.company,
         phone=user_data.phone,
         is_active=True,
-        is_verified=False
+        is_verified=False,
+        # Una inmobiliaria que se da de alta sola publica con revisión hasta que el admin la aprueba
+        is_approved=user_data.role != "realtor",
+        terms_accepted_at=datetime.now(),
     )
     session.add(new_user)
     session.commit()

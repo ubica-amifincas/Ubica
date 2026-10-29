@@ -1,3 +1,4 @@
+import models
 from conftest import auth, make_token
 
 
@@ -22,7 +23,7 @@ def test_removed_debug_endpoints(client):
 # --- Autenticación ---
 
 def test_register_verify_and_login(client, db):
-    r = client.post("/api/auth/register", json={"email": "new@example.com", "password": "pw123456", "full_name": "Nuevo"})
+    r = client.post("/api/auth/register", json={"email": "new@example.com", "password": "pw123456", "full_name": "Nuevo", "accept_terms": True})
     assert r.status_code == 200
     user_id = r.json()["user_id"]
 
@@ -43,10 +44,20 @@ def test_register_verify_and_login(client, db):
 
 
 def test_register_cannot_choose_admin_role(client):
-    r = client.post("/api/auth/register", json={"email": "evil@example.com", "password": "x", "role": "admin"})
+    r = client.post("/api/auth/register", json={"email": "evil@example.com", "password": "pw123456", "role": "admin", "accept_terms": True})
     assert r.status_code == 400
-    r = client.post("/api/auth/register", json={"email": "agente@example.com", "password": "x", "role": "realtor"})
+    r = client.post("/api/auth/register", json={"email": "agente@example.com", "password": "pw123456", "role": "realtor", "accept_terms": True})
     assert r.status_code == 200
+
+
+def test_register_requires_terms_and_password_length(client, db):
+    base = {"email": "t@example.com", "password": "pw123456"}
+    assert client.post("/api/auth/register", json=base).status_code == 400
+    assert client.post("/api/auth/register", json={**base, "password": "corta", "accept_terms": True}).status_code == 400
+    r = client.post("/api/auth/register", json={**base, "accept_terms": True, "role": "realtor"})
+    u = db.get(models.User, r.json()["user_id"])
+    # Las inmobiliarias que se dan de alta solas esperan la aprobación del admin
+    assert u.terms_accepted_at is not None and u.is_approved is False
 
 
 def test_login_wrong_password(client, make_user):
@@ -160,7 +171,7 @@ def test_user_property_ownership(client, make_user):
     owner, other = make_user(email="o@example.com"), make_user(email="x@example.com")
     r = client.post("/api/user/properties", json={"title": "Mía", "price": 1000, "type": "piso"}, headers=auth(owner))
     pid = r.json()["id"]
-    assert r.json()["status"] == "for-sale"
+    assert r.json()["status"] == "draft"
     assert [p["id"] for p in client.get("/api/user/properties", headers=auth(owner)).json()] == [pid]
     assert client.get("/api/user/properties", headers=auth(other)).json() == []
     assert client.put(f"/api/user/properties/{pid}", json={"price": 1}, headers=auth(other)).status_code == 403

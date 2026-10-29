@@ -4,7 +4,10 @@ export interface Property {
   title: string;
   price: number;
   type: 'villa' | 'apartment' | 'house' | 'penthouse' | 'townhouse' | 'studio' | 'duplex' | 'piso' | 'terreno';
-  status: 'for-sale' | 'for-rent' | 'sold' | 'rented' | 'under-renovation' | 'in-use' | 'reserved';
+  status: 'for-sale' | 'for-rent' | 'sold' | 'rented' | 'under-renovation' | 'in-use' | 'reserved' | 'draft' | 'pending-review' | 'rejected';
+  /** Revisión: estado con el que se publicará al aprobarlo, y motivo si el admin lo rechazó */
+  pendingStatus?: string;
+  reviewNote?: string;
   bedrooms: number;
   bathrooms: number;
   area: number;

@@ -22,6 +22,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ isEmbedded }) => {
     phone: '',
     role: 'user'
   });
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -49,11 +50,16 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ isEmbedded }) => {
       return;
     }
 
+    if (!acceptTerms) {
+      setError('Para crear la cuenta tienes que aceptar las condiciones y la política de privacidad.');
+      return;
+    }
+
     setLoading(true);
 
     try {
       const { confirmPassword: _confirmPassword, ...registrationData } = formData;
-      await register(registrationData);
+      await register({ ...registrationData, accept_terms: true });
       setIsSuccess(true);
     } catch (error) {
       setError(error instanceof Error ? error.message : t('auth.register_error'));
@@ -169,11 +175,20 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ isEmbedded }) => {
 
         <p className="text-xs text-gray-400 dark:text-gray-500 px-1">La contraseña debe tener al menos 8 caracteres.</p>
 
+        <label className="flex gap-3 px-1 text-sm text-gray-600 dark:text-gray-300">
+          <input type="checkbox" required checked={acceptTerms} onChange={(e) => setAcceptTerms(e.target.checked)}
+            className="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500" />
+          <span>
+            He leído y acepto las <Link to="/terms" target="_blank" className="font-semibold text-emerald-600 underline dark:text-emerald-400">condiciones de uso</Link>{' '}
+            y la <Link to="/privacy" target="_blank" className="font-semibold text-emerald-600 underline dark:text-emerald-400">política de privacidad</Link>.
+          </span>
+        </label>
+
         <button type="submit" disabled={loading} className="w-full h-14 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-black rounded-xl shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 uppercase text-sm tracking-wider">
           {loading ? t('auth.registering') : t('auth.register_button')}
         </button>
 
-        {/* Con Google la cuenta queda verificada al momento: no hace falta el correo de confirmación */}
+        {/* Con Google la cuenta queda verificada al momento; el tipo de cuenta y las condiciones se confirman en un último paso */}
         <GoogleSignInButton
           mode="signup"
           role={formData.role}

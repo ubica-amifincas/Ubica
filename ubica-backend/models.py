@@ -15,6 +15,10 @@ class UserBase(SQLModel):
 class User(UserBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     hashed_password: str
+    # Inmobiliarias dadas de alta por sí mismas: hasta que el admin las aprueba, sus anuncios pasan revisión
+    is_approved: bool = True
+    # Cuándo aceptó las condiciones y la política de privacidad (RGPD)
+    terms_accepted_at: Optional[NaiveDatetime] = None
     created_at: NaiveDatetime = Field(default_factory=datetime.now)
     updated_at: NaiveDatetime = Field(default_factory=datetime.now)
     
@@ -51,6 +55,9 @@ class Property(PropertyBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     owner_id: Optional[int] = Field(default=None, foreign_key="user.id")
     realtor_id: Optional[int] = None # For simplicity, keeping as ID for now
+    # Revisión: estado que tendrá al aprobarlo (en venta, en alquiler...) y motivo si se rechaza
+    pending_status: Optional[str] = None
+    review_note: Optional[str] = None
     created_at: NaiveDatetime = Field(default_factory=datetime.now)
     updated_at: NaiveDatetime = Field(default_factory=datetime.now)
     

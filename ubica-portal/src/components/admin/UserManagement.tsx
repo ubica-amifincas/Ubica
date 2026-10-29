@@ -180,6 +180,17 @@ const UserManagement: React.FC = () => {
     }
   };
 
+  const approveRealtor = async (user: User) => {
+    try {
+      await apiService.updateUser(user.id, { is_approved: true });
+      setUsers(prev => prev.map(u => (u.id === user.id ? { ...u, is_approved: true } : u)));
+    } catch (error: any) {
+      alert(`Error: ${error.message}`);
+    }
+  };
+
+  const pendingRealtors = users.filter(u => u.role === 'realtor' && u.is_approved === false).length;
+
   const getRoleInfo = (role: string) => {
     return ROLES.find(r => r.value === role) || ROLES[3];
   };
@@ -215,6 +226,7 @@ const UserManagement: React.FC = () => {
         actions={
           <span className="text-sm tabular-nums text-gray-500 dark:text-gray-400">
             {users.length} {users.length === 1 ? 'usuario' : 'usuarios'}
+            {pendingRealtors > 0 && ` · ${pendingRealtors} ${pendingRealtors === 1 ? 'inmobiliaria pendiente' : 'inmobiliarias pendientes'} de aprobar`}
           </span>
         }
         flush
@@ -242,7 +254,19 @@ const UserManagement: React.FC = () => {
                       <div className="text-gray-500 dark:text-gray-400">{user.email}</div>
                     </Td>
                     <Td>
-                      <Badge tone={roleInfo.tone}>{roleInfo.label}</Badge>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <Badge tone={roleInfo.tone}>{roleInfo.label}</Badge>
+                        {/* Se dio de alta como inmobiliaria: sus anuncios pasan revisión hasta aprobarla */}
+                        {user.role === 'realtor' && user.is_approved === false && (
+                          <>
+                            <Badge tone="warning">Sin aprobar</Badge>
+                            <button type="button" onClick={() => approveRealtor(user)}
+                              className="rounded-md px-2 py-0.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-900/30">
+                              Aprobar
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </Td>
                     <Td>{user.company || 'N/A'}</Td>
                     <Td>

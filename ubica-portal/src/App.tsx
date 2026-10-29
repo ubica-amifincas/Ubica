@@ -198,7 +198,7 @@ function AppRoutes() {
               </ProtectedRoute>
             }>
               <Route index element={<InvestorDashboard section="overview" />} />
-              <Route path="portfolio" element={<InvestorDashboard section="portfolio" />} />
+              <Route path="portfolio" element={<Navigate to="/investor" replace />} />
               <Route path="oportunidades" element={<InvestorDashboard section="opportunities" />} />
               <Route path="patrimonio" element={<InvestorDashboard section="wealth" />} />
               <Route path="opportunities" element={<Navigate to="/investor/oportunidades" replace />} />

@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from config import CORS_ORIGIN_REGEX, CORS_ORIGINS, UPLOAD_DIR
+from database import ensure_columns
 from routers import admin, ai, auth, contact, games, health, investor, properties, realtor, uploads, user
 from services.ai.chat import log_provider_status
 from services.ai.usage import load_ai_usage
@@ -58,6 +59,7 @@ async def render_keep_alive():
 
 @app.on_event("startup")
 async def startup_event():
+    ensure_columns()
     # Solo en background
     asyncio.create_task(render_keep_alive())
     # Comprueba que OpenRouter y Groq responden y lo deja en el log (en Render)

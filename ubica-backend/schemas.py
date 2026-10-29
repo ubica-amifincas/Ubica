@@ -15,9 +15,13 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+    # Casilla obligatoria del formulario: condiciones y política de privacidad
+    accept_terms: bool = False
 
 class User(UserBase):
     id: int
+    is_approved: bool = True
+    terms_accepted_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
 
@@ -41,6 +45,8 @@ class AdminUserUpdate(BaseModel):
     company: Optional[str] = None
     phone: Optional[str] = None
     is_active: Optional[StrictBool] = None
+    # Aprobar (o retirar la aprobación de) una inmobiliaria
+    is_approved: Optional[StrictBool] = None
 
 class LoginRequest(BaseModel):
     email: EmailStr
@@ -49,8 +55,15 @@ class LoginRequest(BaseModel):
 class GoogleLoginRequest(BaseModel):
     # ID token (JWT) que devuelve el botón de Google
     credential: str = Field(min_length=20, max_length=4096)
-    # Solo se usa si la cuenta es nueva (registro con Google); por defecto, usuario
+    # Solo para cuentas nuevas: se crean cuando la persona elige el tipo de cuenta y acepta las condiciones
     role: Optional[Literal["user", "investor", "realtor"]] = None
+    accept_terms: StrictBool = False
+
+class GoogleSignupRequired(BaseModel):
+    """Correo de Google sin cuenta: falta elegir el tipo de cuenta y aceptar las condiciones."""
+    needs_signup: Literal[True] = True
+    email: str
+    full_name: Optional[str] = None
 
 class ChangePasswordRequest(BaseModel):
     current_password: str

@@ -226,7 +226,7 @@ async def mostrar_en_mapa(zona: str = "", tipo: str = "") -> str:
 
 async def estadisticas_cartera(user_id: Optional[int], user_role: str) -> str:
     """Obtiene estadísticas de la cartera de propiedades del usuario (inmobiliaria/admin)."""
-    if user_role not in ["inmobiliaria", "admin"]:
+    if user_role not in ["realtor", "admin"]:
         return json.dumps({"error": "Esta herramienta solo está disponible para inmobiliarias y administradores.", "requiere_rol": True})
     with Session(engine) as session:
         if user_role == "admin":

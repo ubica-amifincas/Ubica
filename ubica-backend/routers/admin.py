@@ -11,7 +11,7 @@ import models
 from database import get_session
 from schemas import AdminUserCreate, AdminUserUpdate, DashboardStats, User
 from security import hash_password, require_role
-from services.properties import (PROPERTY_STATUSES, apply_property_payload, assign_realtor, count_status_this_month,
+from services.properties import (PROPERTY_STATUSES, REJECTED_STATUS, REVIEW_STATUS, apply_property_payload, assign_realtor, count_status_this_month,
                                  delete_property as delete_property_and_data, normalize_property_type, property_from_payload)
 from services.users import delete_user as delete_user_and_data
 
@@ -94,6 +94,9 @@ async def update_user(user_id: int, user_data: AdminUserUpdate, current_user: mo
     new_password = changes.pop("password", None)
     if new_password:
         u.hashed_password = hash_password(new_password)
+    # Si el admin convierte a alguien en inmobiliaria, ya la está aprobando
+    if changes.get("role") == "realtor" and u.role != "realtor" and "is_approved" not in changes:
+        changes["is_approved"] = True
     for field, value in changes.items():
         # Rol y estado no se pueden vaciar; los datos de contacto sí
         if value is not None or field in ("full_name", "company", "phone"):
@@ -235,7 +238,14 @@ async def update_property(property_id: int, prop_data: dict, current_user: model
     apply_property_payload(p, prop_data)
     if "realtor_id" in prop_data:
         assign_realtor(session, p, prop_data["realtor_id"])
-    
+    # Revisión: al publicarlo se olvida lo pendiente; al rechazarlo se guarda el motivo para el anunciante
+    if p.status == REJECTED_STATUS:
+        if "reviewNote" in prop_data:
+            p.review_note = str(prop_data.get("reviewNote") or "").strip()[:500] or None
+    elif p.status != REVIEW_STATUS:
+        p.pending_status = None
+        p.review_note = None
+
     session.add(p)
     session.commit()
     session.refresh(p)

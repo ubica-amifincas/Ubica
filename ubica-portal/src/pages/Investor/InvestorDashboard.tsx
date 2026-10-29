@@ -173,18 +173,19 @@ const InvestorDashboard: React.FC<{ section?: InvestorSection }> = ({ section = 
 
       {section === 'overview' && (
         <>
-          <StatGrid cols={4}>
+          {/* Las cifras del portfolio solo tienen sentido con inversiones registradas */}
+          {portfolio.length > 0 && <StatGrid cols={4}>
             <StatCard label="Valor del portfolio" value={eur(stats.portfolio_value)} hint={`Invertido: ${eur(stats.total_investment)}`} icon={CurrencyEuroIcon} />
             <StatCard label="Plusvalía latente" value={eur(stats.unrealized_gains)} hint={`Revalorización media ${pct(stats.appreciation_rate)}`} icon={ArrowTrendingUpIcon} />
             <StatCard label="Ingresos por alquiler" value={eur(stats.monthly_income)} hint="Al mes" icon={BanknotesIcon} />
             <StatCard label="ROI medio" value={pct(stats.average_roi)} hint={`Rentabilidad alquiler ${pct(stats.rental_yield)}`} icon={BuildingOfficeIcon} />
-          </StatGrid>
+          </StatGrid>}
 
           {portfolio.length === 0 && (
             <EmptyState
               icon={BriefcaseIcon}
               title="Todavía no tienes inversiones registradas."
-              description="Cuando registremos una operación a tu nombre aparecerá aquí. Mientras tanto, echa un vistazo a las oportunidades."
+              description="Echa un vistazo a las oportunidades del mercado o calcula tu patrimonio."
               action={
                 <Link to="/investor/oportunidades" className={buttonClass.primary}>
                   Ver oportunidades <ArrowRightIcon className="h-4 w-4" />

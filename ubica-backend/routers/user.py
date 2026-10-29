@@ -9,7 +9,8 @@ import models
 from database import get_session
 from schemas import PublicProperty
 from security import get_current_user
-from services.properties import apply_property_payload, can_view_property, delete_property, property_from_payload
+from services.properties import (apply_property_payload, apply_review, can_view_property, delete_property,
+                                 property_from_payload)
 
 router = APIRouter()
 
@@ -21,7 +22,8 @@ async def get_user_properties(current_user: models.User = Depends(get_current_us
 
 @router.post("/api/user/properties", response_model=models.Property)
 async def create_user_property(prop_data: dict, current_user: models.User = Depends(get_current_user), session: Session = Depends(get_session)):
-    new_property = property_from_payload(prop_data, current_user.id, default_status='for-sale')
+    new_property = property_from_payload(prop_data, current_user.id, default_status='draft')
+    apply_review(new_property, current_user, prop_data, previous_status=None)
     session.add(new_property)
     session.commit()
     session.refresh(new_property)
@@ -37,8 +39,10 @@ async def update_user_property(property_id: int, prop_data: dict, current_user: 
     if p.owner_id != current_user.id and current_user.role != "admin":
         raise HTTPException(status_code=403, detail="No tienes permiso para editar esta propiedad")
     
+    previous_status = p.status
     apply_property_payload(p, prop_data)
-    
+    apply_review(p, current_user, prop_data, previous_status)
+
     session.add(p)
     session.commit()
     session.refresh(p)

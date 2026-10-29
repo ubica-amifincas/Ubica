@@ -214,6 +214,9 @@ export default function DashboardProperties() {
                   </Td>
                   <Td>
                     <Badge tone={propertyStatusTone(property.status)}>{translateStatus(property.status)}</Badge>
+                    {property.status === 'rejected' && property.reviewNote && (
+                      <p className="mt-1 max-w-[16rem] text-xs text-red-700 dark:text-red-400">Motivo: {property.reviewNote}</p>
+                    )}
                   </Td>
                   <Td className="tabular-nums">
                     {property.created_at ? new Date(property.created_at).toLocaleDateString('es-ES') : ''}

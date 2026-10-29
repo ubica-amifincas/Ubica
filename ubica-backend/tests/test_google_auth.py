@@ -2,6 +2,7 @@
 La firma del token la comprueba google-auth; aquí se sustituye la verificación por datos fijos."""
 import bcrypt
 import pytest
+from sqlmodel import select
 from google.auth.exceptions import TransportError
 
 import models
@@ -59,8 +60,17 @@ def test_config_exposes_client_id(client, google):
     assert client.get("/api/auth/google/config").json() == {"client_id": CLIENT_ID}
 
 
+def test_new_google_user_must_choose_role_and_accept_terms(client, db, google):
+    # Sin tipo de cuenta ni condiciones aceptadas no se crea nada: la web pide completar el registro
+    for body in ({}, {"role": "user"}, {"accept_terms": True}):
+        res = google_login(client, **body)
+        assert res.status_code == 200
+        assert res.json() == {"needs_signup": True, "email": "ana@gmail.com", "full_name": "Ana Pérez"}
+    assert db.exec(select(models.User)).all() == []
+
+
 def test_new_google_user_is_created_verified(client, db, google):
-    res = google_login(client)
+    res = google_login(client, role="user", accept_terms=True)
     assert res.status_code == 200
     body = res.json()
     assert body["user"]["email"] == "ana@gmail.com"
@@ -71,13 +81,19 @@ def test_new_google_user_is_created_verified(client, db, google):
     assert me.status_code == 200 and me.json()["email"] == "ana@gmail.com"
     # Una sola cuenta aunque entre dos veces
     assert google_login(client).json()["user"]["id"] == body["user"]["id"]
+    assert db.get(models.User, body["user"]["id"]).terms_accepted_at is not None
 
 
 def test_signup_role_is_used_only_for_new_accounts(client, db, google):
-    assert google_login(client, role="investor").json()["user"]["role"] == "investor"
+    assert google_login(client, role="investor", accept_terms=True).json()["user"]["role"] == "investor"
     make_user(db, email="otro@gmail.com", role="user", is_verified=True)
     google(google_info(email="otro@gmail.com"))
-    assert google_login(client, role="realtor").json()["user"]["role"] == "user"
+    assert google_login(client, role="realtor", accept_terms=True).json()["user"]["role"] == "user"
+
+
+def test_google_realtor_signup_waits_for_approval(client, db, google):
+    user = google_login(client, role="realtor", accept_terms=True).json()["user"]
+    assert user["role"] == "realtor" and user["is_approved"] is False
 
 
 def test_admin_role_cannot_be_requested(client, google):

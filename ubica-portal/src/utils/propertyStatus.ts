@@ -10,6 +10,8 @@ const STATUS_LABELS: Record<string, string> = {
   'in-use': 'En uso',
   pending: 'Pendiente',
   draft: 'Borrador',
+  'pending-review': 'Pendiente de revisión',
+  rejected: 'Rechazado',
 };
 
 export function getStatusLabel(status?: string | null): string {
@@ -29,6 +31,8 @@ const STATUS_LABELS_PLURAL: Record<string, string> = {
   'in-use': 'En uso',
   pending: 'Pendientes',
   draft: 'Borradores',
+  'pending-review': 'Pendientes de revisión',
+  rejected: 'Rechazados',
 };
 
 export function getStatusLabelPlural(status?: string | null): string {
@@ -69,6 +73,13 @@ export function getTypeLabel(type?: string | null): string {
   const key = normalizeType(type);
   return PROPERTY_TYPES.find(t => t.value === key)?.label ?? type;
 }
+
+/** Estados visibles en el portal (deben coincidir con PUBLIC_STATUSES del backend). */
+export const PUBLIC_STATUSES = ['for-sale', 'for-rent', 'reserved', 'available'];
+
+/** El admin y las inmobiliarias aprobadas publican sin revisión; el resto pasa por el admin. */
+export const publishesDirectly = (user?: { role?: string; is_approved?: boolean } | null) =>
+  !!user && (user.role === 'admin' || (user.role === 'realtor' && user.is_approved !== false));
 
 /** Estados que se eligen en el formulario de un inmueble. */
 export const PROPERTY_STATUS_OPTIONS = ['draft', 'for-sale', 'for-rent', 'reserved', 'sold', 'rented', 'under-renovation', 'in-use']

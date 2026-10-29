@@ -225,7 +225,7 @@ def _(w):
     def check(w, r, allowed):
         [u] = rows(models.User, email=email)
         assert u.id == r.json()["user_id"] and u.role == "user" and u.is_verified is False
-    return "POST", "/api/auth/register", {"json": {"email": email, "password": "pw123456"}}, check
+    return "POST", "/api/auth/register", {"json": {"email": email, "password": "pw123456", "accept_terms": True}}, check
 
 
 @case("GET", "/api/auth/verify-email")
@@ -459,8 +459,10 @@ def _(w):
         created = rows(models.Property, title=title)
         assert len(created) == (1 if allowed else 0)
         if allowed:
-            assert created[0].owner_id == w.actor_id and created[0].status == "for-sale"
-    return "POST", "/api/user/properties", {"json": {"title": title, "price": 1000, "type": "piso"}}, check
+            # El admin y las inmobiliarias aprobadas publican; el resto queda pendiente de revisión
+            expected = "for-sale" if w.role in ("admin", "realtor") else "pending-review"
+            assert created[0].owner_id == w.actor_id and created[0].status == expected
+    return "POST", "/api/user/properties", {"json": {"title": title, "price": 1000, "type": "piso", "status": "for-sale"}}, check
 
 
 @case("PUT", "/api/user/properties/{property_id}")
@@ -985,11 +987,14 @@ def test_user_lifecycle(client, db):
     other_prop = new_prop(db, owner_id=seller.id, title="Chalet del vendedor")
 
     # Registro -> sin verificar no puede entrar
-    r = client.post("/api/auth/register", json={"email": "ana@example.com", "password": "pw123456", "full_name": "Ana"})
+    no_terms = {"email": "ana@example.com", "password": "pw123456", "full_name": "Ana"}
+    assert client.post("/api/auth/register", json=no_terms).status_code == 400
+    r = client.post("/api/auth/register", json={**no_terms, "accept_terms": True})
     assert r.status_code == 200
     uid = r.json()["user_id"]
     u = fetch(models.User, uid)
-    assert (u.role, u.is_verified, u.is_active) == ("user", False, True) and u.hashed_password.startswith("$2")
+    assert (u.role, u.is_verified, u.is_active, u.is_approved) == ("user", False, True, True) and u.hashed_password.startswith("$2")
+    assert u.terms_accepted_at is not None
     assert login(client, "ana@example.com", "pw123456").status_code == 403
 
     # Verificación de email
@@ -1003,21 +1008,27 @@ def test_user_lifecycle(client, db):
     h = bearer(r.json()["access_token"])
     assert client.get("/api/auth/me", headers=h).json()["id"] == uid
 
-    # Crear propiedades: la API acepta cualquier estado; sin estado -> for-sale (publicada)
+    # Crear propiedades: sin estado -> borrador; lo que se publicaría espera la revisión del admin
     default = client.post("/api/user/properties", json={"title": "Por defecto", "price": 100000, "type": "piso", "location": "Murcia"}, headers=h).json()
-    assert default["status"] == "for-sale" and default["owner_id"] == uid and default["city"] == "Murcia"
-    ids = {"for-sale": default["id"]}
-    for status in ALL_STATUSES[1:]:
+    assert default["status"] == "draft" and default["owner_id"] == uid and default["city"] == "Murcia"
+    ids = {}
+    for status in ALL_STATUSES:
         r = client.post("/api/user/properties", json={"title": f"Estado {status}", "price": 100000, "type": "piso", "status": status}, headers=h)
-        assert r.status_code == 200 and r.json()["status"] == status
+        public_request = status in PUBLIC_STATUSES
+        assert r.status_code == 200
+        assert (r.json()["status"], r.json()["pending_status"]) == (("pending-review", status) if public_request else (status, None))
         ids[status] = r.json()["id"]
-    assert {p.status for p in rows(models.Property, owner_id=uid)} == set(ALL_STATUSES)
 
-    # El listado público muestra solo for-sale / for-rent / reserved (y el anuncio del vendedor)
+    # Nada suyo sale en el portal hasta que el admin lo aprueba con el estado que pidió
+    assert {p["id"] for p in client.get("/api/properties").json()} == {other_prop.id}
+    admin = auth(new_user(db, "revisor@example.com", role="admin"))
+    for status in PUBLIC_STATUSES:
+        assert client.put(f"/api/admin/properties/{ids[status]}", json={"status": status}, headers=admin).status_code == 200
     public = {p["id"] for p in client.get("/api/properties").json()}
     assert public == {ids[s] for s in PUBLIC_STATUSES} | {other_prop.id}
+    assert fetch(models.Property, ids["for-rent"]).pending_status is None
     # Su panel muestra todas, incluido el borrador
-    assert {p["id"] for p in client.get("/api/user/properties", headers=h).json()} == set(ids.values())
+    assert {p["id"] for p in client.get("/api/user/properties", headers=h).json()} == set(ids.values()) | {default["id"]}
 
     # Editar
     pid = ids["for-sale"]
@@ -1025,8 +1036,11 @@ def test_user_lifecycle(client, db):
     r = client.put(f"/api/user/properties/{pid}", json={"title": "Piso reformado", "price": 120000, "bedrooms": 3, "coordinates": {"lat": 37.98, "lng": -1.13}, "energyRating": "B"}, headers=h)
     assert r.status_code == 200
     p = fetch(models.Property, pid)
-    assert (p.title, p.price, p.bedrooms, p.latitude, p.longitude, p.energy_rating, p.city) == ("Piso reformado", 120000, 3, 37.98, -1.13, "B", "Murcia")
+    assert (p.title, p.price, p.bedrooms, p.latitude, p.longitude, p.energy_rating) == ("Piso reformado", 120000, 3, 37.98, -1.13, "B")
     assert p.updated_at > before
+    # Cambiar el contenido de un anuncio aprobado lo devuelve a revisión
+    assert (p.status, p.pending_status) == ("pending-review", "for-sale")
+    assert pid not in {x["id"] for x in client.get("/api/properties").json()}
 
     # Subir imágenes y adjuntarlas
     r = client.post("/api/upload-images", files=[("files", ("a.png", PNG, "image/png")), ("files", ("b.JPG", JPG, "image/jpeg"))], headers=h)
@@ -1038,6 +1052,7 @@ def test_user_lifecycle(client, db):
         assert served.status_code == 200 and served.content == content
     assert client.put(f"/api/user/properties/{pid}", json={"images": urls}, headers=h).status_code == 200
     assert fetch(models.Property, pid).images == urls
+    assert client.put(f"/api/admin/properties/{pid}", json={"status": "for-sale"}, headers=admin).status_code == 200
     assert next(x for x in client.get("/api/properties").json() if x["id"] == pid)["images"] == urls
 
     # Favorito de otro anuncio
@@ -1073,7 +1088,8 @@ def test_user_lifecycle(client, db):
         assert client.delete(f"/api/user/properties/{ids[status]}", headers=h).status_code == 200
         assert fetch(models.Property, ids[status]) is None
     assert ids["for-sale"] not in {x["id"] for x in client.get("/api/properties").json()}
-    assert len(rows(models.Property, owner_id=uid)) == len(ALL_STATUSES) - 2
+    # Una por estado más la creada sin estado, menos las dos borradas
+    assert len(rows(models.Property, owner_id=uid)) == len(ALL_STATUSES) + 1 - 2
 
 
 def test_admin_lifecycle(client, db):

@@ -8,7 +8,7 @@ import 'leaflet/dist/leaflet.css';
 import { useAuth, useAuthenticatedFetch } from '../../contexts/AuthContext';
 import type { Property } from '../../types';
 import { buttonClass } from '../dashboard/ui';
-import { PROPERTY_STATUS_OPTIONS, PROPERTY_TYPES, getStatusLabel, normalizeType } from '../../utils/propertyStatus';
+import { PROPERTY_STATUS_OPTIONS, PROPERTY_TYPES, PUBLIC_STATUSES, getStatusLabel, normalizeType, publishesDirectly } from '../../utils/propertyStatus';
 
 const markerIcon = L.icon({
     iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -71,7 +71,8 @@ function formFromProperty(p: Property): FormState {
     return {
         title: p.title || '',
         type: normalizeType(p.type) || 'flat',
-        status: p.status || 'for-sale',
+        // Pendiente o rechazado: se muestra lo que pidió el anunciante (al guardar vuelve a revisión)
+        status: (p.status === 'pending-review' || p.status === 'rejected') ? (p.pendingStatus || 'for-sale') : (p.status || 'for-sale'),
         price: str(p.price),
         bedrooms: p.bedrooms === 0 ? '0' : str(p.bedrooms),
         bathrooms: p.bathrooms === 0 ? '0' : str(p.bathrooms),
@@ -163,6 +164,8 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
     const apiService = useAuthenticatedFetch();
     const { user } = useAuth();
     const isAdmin = user?.role === 'admin';
+    // Quien no publica directamente envía el anuncio a revisión al elegir un estado visible
+    const goesToReview = !publishesDirectly(user) && PUBLIC_STATUSES.includes(form.status);
     const formId = useId();
     const id = (name: string) => `${formId}-${name}`;
     const dialogRef = useRef<HTMLDivElement>(null);
@@ -426,6 +429,18 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                 </div>
 
                 <form id={id('form')} onSubmit={handleSubmit} noValidate className="flex-1 space-y-6 overflow-y-auto px-5 py-6 sm:px-6">
+                    {initialData?.status === 'rejected' && (
+                        <div role="status" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-300">
+                            <p className="font-semibold">El equipo de Ubica no ha publicado este anuncio.</p>
+                            {initialData.reviewNote && <p className="mt-1">Motivo: {initialData.reviewNote}</p>}
+                            <p className="mt-1">Corrígelo y guárdalo para enviarlo de nuevo a revisión.</p>
+                        </div>
+                    )}
+                    {initialData?.status === 'pending-review' && (
+                        <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-300">
+                            Este anuncio está pendiente de revisión. Se publicará cuando el equipo de Ubica lo apruebe.
+                        </p>
+                    )}
                     <FormSection title="Datos básicos">
                         <Field label="Título del anuncio" htmlFor={id('title')} error={errors.title} required>
                             <input id={id('title')} type="text" value={form.title} onChange={(e) => set('title', e.target.value)} maxLength={200}
@@ -438,9 +453,13 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                 </select>
                             </Field>
                             <Field label="Estado" htmlFor={id('status')} required>
-                                <select id={id('status')} value={form.status} onChange={(e) => set('status', e.target.value)} className={inputClass()}>
+                                <select id={id('status')} value={form.status} onChange={(e) => set('status', e.target.value)} className={inputClass()}
+                                    aria-describedby={goesToReview ? id('review-hint') : undefined}>
                                     {statusOptions.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                                 </select>
+                                {goesToReview && (
+                                    <p id={id('review-hint')} className="mt-1 text-xs text-gray-500 dark:text-gray-400">Lo revisaremos antes de publicarlo.</p>
+                                )}
                             </Field>
                             <Field label={form.status === 'for-rent' || form.status === 'rented' ? 'Precio (€/mes)' : 'Precio (€)'} htmlFor={id('price')} error={errors.price} required>
                                 <input id={id('price')} type="number" inputMode="decimal" min="0" step="any" value={form.price} onChange={(e) => set('price', e.target.value)}
@@ -649,7 +668,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                     <div className="flex gap-3">
                         <button type="button" onClick={requestClose} disabled={isSubmitting} className={`${buttonClass.secondary} flex-1 sm:flex-none`}>Cancelar</button>
                         <button type="submit" form={id('form')} disabled={isSubmitting} className={`${buttonClass.primary} flex-1 sm:flex-none sm:min-w-[9rem]`}>
-                            {isSubmitting ? (newFiles.length > 0 ? 'Subiendo fotos…' : 'Guardando…') : initialData ? 'Guardar cambios' : form.status === 'draft' ? 'Guardar borrador' : 'Publicar inmueble'}
+                            {isSubmitting ? (newFiles.length > 0 ? 'Subiendo fotos…' : 'Guardando…') : goesToReview ? 'Enviar a revisión' : initialData ? 'Guardar cambios' : form.status === 'draft' ? 'Guardar borrador' : 'Publicar inmueble'}
                         </button>
                     </div>
                 </div>

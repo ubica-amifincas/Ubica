@@ -5,6 +5,8 @@ import {
   TrashIcon,
   PhotoIcon,
   BuildingOfficeIcon,
+  CheckIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { useAuthenticatedFetch } from '../../contexts/AuthContext';
 import type { Property } from '../../types';
@@ -70,6 +72,11 @@ const PropertyManagement: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
+  // Revisión de anuncios de particulares, inversores e inmobiliarias sin aprobar
+  const [view, setView] = useState<'all' | 'review'>('all');
+  const [rejecting, setRejecting] = useState<{ id: number; note: string } | null>(null);
+  const [reviewError, setReviewError] = useState('');
+  const [ownerEmails, setOwnerEmails] = useState<Record<number, string>>({});
   const [formData, setFormData] = useState<PropertyFormData>({
     title: '',
     price: 0,
@@ -96,7 +103,24 @@ const PropertyManagement: React.FC = () => {
 
   useEffect(() => {
     fetchProperties();
+    // Para saber de quién es cada anuncio pendiente
+    apiService.getAllUsers()
+      .then(users => setOwnerEmails(Object.fromEntries(users.map(u => [u.id, u.email]))))
+      .catch(() => { /* sin la lista se muestra el id del propietario */ });
   }, []);
+
+  const review = async (property: Property, decision: 'approve' | 'reject', note = '') => {
+    setReviewError('');
+    try {
+      await apiService.updateProperty(property.id, decision === 'approve'
+        ? { status: property.pendingStatus || 'for-sale' }
+        : { status: 'rejected', reviewNote: note.trim() });
+      setRejecting(null);
+      await fetchProperties(true);
+    } catch (error: any) {
+      setReviewError(error.message || 'No se pudo guardar la revisión');
+    }
+  };
 
   // silent: refresca la lista sin pasar por la pantalla de carga (que cerraría los diálogos abiertos)
   const fetchProperties = async (silent = false) => {
@@ -292,9 +316,31 @@ const PropertyManagement: React.FC = () => {
     );
   }
 
+  const pending = properties.filter(p => p.status === 'pending-review');
+  const shown = view === 'review' ? pending : properties;
+  const tabClass = (active: boolean) =>
+    `rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors ${active
+      ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-white'
+      : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'}`;
+
   return (
     <PageStack>
       {header}
+
+      {properties.length > 0 && (
+        <div role="tablist" aria-label="Filtrar propiedades" className="inline-flex gap-1 self-start rounded-xl bg-gray-100 p-1 dark:bg-gray-800">
+          <button type="button" role="tab" aria-selected={view === 'all'} onClick={() => setView('all')} className={tabClass(view === 'all')}>
+            Todas <span className="tabular-nums text-gray-500 dark:text-gray-400">{properties.length}</span>
+          </button>
+          <button type="button" role="tab" aria-selected={view === 'review'} onClick={() => setView('review')} className={tabClass(view === 'review')}>
+            Pendientes de revisión{' '}
+            <span className={`tabular-nums ${pending.length > 0 ? 'rounded-full bg-amber-100 px-1.5 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300' : 'text-gray-500 dark:text-gray-400'}`}>
+              {pending.length}
+            </span>
+          </button>
+        </div>
+      )}
+      {reviewError && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{reviewError}</p>}
 
       {properties.length === 0 ? (
         <EmptyState
@@ -307,9 +353,11 @@ const PropertyManagement: React.FC = () => {
             </button>
           }
         />
+      ) : shown.length === 0 ? (
+        <EmptyState icon={CheckIcon} title="No hay anuncios pendientes de revisión." />
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {properties.map((property) => {
+          {shown.map((property) => {
             const statusInfo = getStatusInfo(property.status);
             return (
               <Card key={property.id} className="flex flex-col overflow-hidden">
@@ -345,10 +393,47 @@ const PropertyManagement: React.FC = () => {
                     {[property.location, getTypeLabel(property.type)].filter(Boolean).join(' · ')}
                   </p>
                   <div className="mt-2 flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                    <span>{property.bedrooms} hab.</span>
-                    <span>{property.bathrooms} {property.bathrooms === 1 ? 'baño' : 'baños'}</span>
-                    <span>{property.area} m²</span>
+                    {property.bedrooms != null && <span>{property.bedrooms} hab.</span>}
+                    {property.bathrooms != null && <span>{property.bathrooms} {property.bathrooms === 1 ? 'baño' : 'baños'}</span>}
+                    {property.area != null && <span>{property.area} m²</span>}
                   </div>
+
+                  {property.status === 'rejected' && property.reviewNote && (
+                    <p className="mt-2 text-sm text-red-700 dark:text-red-400">Motivo: {property.reviewNote}</p>
+                  )}
+
+                  {/* Revisión: se publica con el estado que pidió el anunciante, o se rechaza con un motivo que verá */}
+                  {property.status === 'pending-review' && (
+                    <div className="mt-3 space-y-2 rounded-xl bg-amber-50 p-3 text-sm dark:bg-amber-900/20">
+                      <p className="text-amber-900 dark:text-amber-200">
+                        Pide publicarlo como <strong>{getStatusLabel(property.pendingStatus || 'for-sale').toLowerCase()}</strong>
+                        {property.owner_id != null && <> · {ownerEmails[property.owner_id] || `usuario ${property.owner_id}`}</>}
+                      </p>
+                      {rejecting?.id === property.id ? (
+                        <form onSubmit={(e) => { e.preventDefault(); review(property, 'reject', rejecting.note); }} className="space-y-2">
+                          <label htmlFor={`reject-${property.id}`} className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                            Motivo (lo verá el anunciante)
+                          </label>
+                          <textarea id={`reject-${property.id}`} rows={2} maxLength={500} autoFocus value={rejecting.note}
+                            onChange={(e) => setRejecting({ id: property.id, note: e.target.value })}
+                            className="w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white" />
+                          <div className="flex gap-2">
+                            <button type="submit" className={buttonClass.danger}>Rechazar</button>
+                            <button type="button" onClick={() => setRejecting(null)} className={buttonClass.secondary}>Cancelar</button>
+                          </div>
+                        </form>
+                      ) : (
+                        <div className="flex gap-2">
+                          <button type="button" onClick={() => review(property, 'approve')} className={buttonClass.primary}>
+                            <CheckIcon className="h-4 w-4" /> Publicar
+                          </button>
+                          <button type="button" onClick={() => setRejecting({ id: property.id, note: '' })} className={buttonClass.secondary}>
+                            <XMarkIcon className="h-4 w-4" /> Rechazar
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Actions */}
                   <div className="mt-auto flex items-center justify-between border-t border-gray-200 pt-3 dark:border-gray-700">
