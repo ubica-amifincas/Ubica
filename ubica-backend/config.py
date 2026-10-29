@@ -32,6 +32,9 @@ RESEND_SENDER = os.getenv("RESEND_SENDER", "onboarding@resend.dev") # Cambiar a 
 # Buzón que recibe el formulario de contacto
 CONTACT_EMAIL = os.getenv("CONTACT_EMAIL", "info@amifincas.es")
 
+# Inicio de sesión con Google: el Client ID es público (va también al navegador); sin él, el botón no aparece
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+
 # URL pública del frontend (enlaces de verificación)
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 

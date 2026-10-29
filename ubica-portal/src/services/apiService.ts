@@ -190,6 +190,22 @@ class ApiService {
     return this.handleResponse<LoginResponse>(response, { skipAuthRedirect: true });
   }
 
+  /** Client ID público de Google; null si el acceso con Google no está activado. */
+  async getGoogleConfig(): Promise<{ client_id: string | null }> {
+    const response = await fetch(`${API_BASE_URL}/auth/google/config`);
+    return this.handleResponse<{ client_id: string | null }>(response, { skipAuthRedirect: true });
+  }
+
+  /** Entra (o crea la cuenta) con el ID token que devuelve el botón de Google. */
+  async loginWithGoogle(credential: string, role?: string): Promise<LoginResponse> {
+    const response = await fetch(`${API_BASE_URL}/auth/google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(role ? { credential, role } : { credential }),
+    });
+    return this.handleResponse<LoginResponse>(response, { skipAuthRedirect: true });
+  }
+
   async register(userData: any): Promise<{ message: string; user_id: number }> {
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
       method: 'POST',

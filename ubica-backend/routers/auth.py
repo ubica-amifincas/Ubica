@@ -1,4 +1,5 @@
 """Registro, verificación de email, login, recuperación de contraseña y cambio de email."""
+import secrets
 from typing import Any, Dict
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
@@ -7,11 +8,15 @@ from datetime import datetime
 from sqlmodel import Session, func, select
 
 import models
-from config import ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM, FRONTEND_URL, SECRET_KEY
+from google.auth.exceptions import GoogleAuthError
+
+from config import ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM, FRONTEND_URL, GOOGLE_CLIENT_ID, SECRET_KEY
 from database import get_session
-from schemas import ChangeEmailRequest, ChangePasswordRequest, ForgotPasswordRequest, LoginRequest, ResetPasswordRequest, Token, User, UserCreate
+from schemas import (ChangeEmailRequest, ChangePasswordRequest, ForgotPasswordRequest, GoogleLoginRequest, LoginRequest, ResetPasswordRequest,
+                     Token, User, UserCreate)
 from security import (burn_password_check, create_access_token, create_session_token, decode_purpose_token, get_current_user,
                       hash_password, is_legacy_hash, password_fingerprint, verify_password)
+from services.google_auth import verify_google_credential
 from services.email import email_change_email_html, password_reset_email_html, send_email_resend, verification_email_html
 from services.ratelimit import RateLimiter, get_client_ip
 
@@ -50,7 +55,7 @@ async def login(login_data: LoginRequest, request: Request, session: Session = D
     if login_email_limiter.is_limited(email_key) or login_ip_limiter.is_limited(client_ip):
         raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=TOO_MANY_ATTEMPTS)
 
-    user = session.exec(select(models.User).where(models.User.email == login_data.email)).first()
+    user = _find_user_by_email(session, login_data.email)
     if user is None:
         burn_password_check(login_data.password)
     if not user or not verify_password(login_data.password, user.hashed_password):
@@ -83,13 +88,63 @@ async def login(login_data: LoginRequest, request: Request, session: Session = D
 
     return _token_response(user)
 
+@router.get("/api/auth/google/config")
+async def google_config():
+    """El frontend pinta el botón de Google solo si hay Client ID (es público)."""
+    return {"client_id": GOOGLE_CLIENT_ID or None}
+
+@router.post("/api/auth/google", response_model=Token)
+def google_login(data: GoogleLoginRequest, request: Request, session: Session = Depends(get_session)):
+    """Entrar (o registrarse) con Google. Síncrona: verificar el token descarga las claves de Google."""
+    if not GOOGLE_CLIENT_ID:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El acceso con Google no está disponible")
+    client_ip = get_client_ip(request)
+    if login_ip_limiter.is_limited(client_ip):
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=TOO_MANY_ATTEMPTS)
+
+    try:
+        info = verify_google_credential(data.credential)
+    except ValueError:
+        login_ip_limiter.hit(client_ip)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No se ha podido verificar tu cuenta de Google")
+    except GoogleAuthError:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Google no responde ahora mismo. Inténtalo de nuevo en unos minutos.")
+
+    email = info["email"].strip().lower()
+    user = _find_user_by_email(session, email)
+    if user is None:
+        # Cuenta nueva: Google ya ha verificado el correo. Contraseña aleatoria que nadie conoce;
+        # si algún día quiere entrar con contraseña, la crea con "¿Olvidaste tu contraseña?"
+        user = models.User(
+            email=email,
+            hashed_password=hash_password(secrets.token_urlsafe(32)),
+            full_name=(info.get("name") or email.split("@")[0])[:120],
+            role=data.role or "user",
+            is_active=True,
+            is_verified=True,
+        )
+        session.add(user)
+    else:
+        if not user.is_active:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Esta cuenta está desactivada")
+        if not user.is_verified:
+            # Alguien registró este correo con contraseña y nunca lo verificó: no demostró que fuera suyo.
+            # El dueño real (Google lo acaba de confirmar) se queda la cuenta y esa contraseña deja de valer.
+            user.hashed_password = hash_password(secrets.token_urlsafe(32))
+            user.is_verified = True
+            session.add(user)
+    session.commit()
+    session.refresh(user)
+    login_email_limiter.reset(email)
+    return _token_response(user)
+
 @router.post("/api/auth/register", response_model=Dict[str, Any])
 async def register(user_data: UserCreate, background_tasks: BackgroundTasks, session: Session = Depends(get_session)):
     # El registro público no puede crear administradores: solo los roles que ofrece el formulario
     if user_data.role not in SELF_SERVICE_ROLES:
         raise HTTPException(status_code=400, detail="Rol no permitido")
 
-    existing_user = session.exec(select(models.User).where(models.User.email == user_data.email)).first()
+    existing_user = _find_user_by_email(session, user_data.email)
     if existing_user:
         raise HTTPException(status_code=400, detail="El email ya está registrado")
 

@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { useLanguage } from '../../hooks/useLanguage';
 import { getStoredUser } from '../../services/session';
 import { panelHome } from '../../utils/panelHome';
+import GoogleSignInButton from './GoogleSignInButton';
 
 interface LoginFormProps {
   isEmbedded?: boolean;
@@ -134,6 +135,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ isEmbedded }) => {
             {loading ? t('auth.logging_in') : t('auth.login_button')}
           </button>
         </div>
+
+        <GoogleSignInButton
+          onSuccess={(user) => navigate(location.state?.from?.pathname || panelHome(user.role), { replace: true })}
+          onError={setError}
+        />
 
         {!isEmbedded && (
           <div className="pt-4 flex items-center justify-between border-t border-gray-100 dark:border-gray-700">

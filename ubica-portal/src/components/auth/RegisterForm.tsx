@@ -4,6 +4,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../../hooks/useLanguage';
+import GoogleSignInButton from './GoogleSignInButton';
+import { panelHome } from '../../utils/panelHome';
 import { useMemo } from 'react';
 
 interface RegisterFormProps {
@@ -170,6 +172,14 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ isEmbedded }) => {
         <button type="submit" disabled={loading} className="w-full h-14 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-black rounded-xl shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 uppercase text-sm tracking-wider">
           {loading ? t('auth.registering') : t('auth.register_button')}
         </button>
+
+        {/* Con Google la cuenta queda verificada al momento: no hace falta el correo de confirmación */}
+        <GoogleSignInButton
+          mode="signup"
+          role={formData.role}
+          onSuccess={(user) => navigate(panelHome(user.role), { replace: true })}
+          onError={setError}
+        />
 
         {!isEmbedded && (
           <div className="pt-4 flex items-center justify-between border-t border-gray-100 dark:border-gray-700">

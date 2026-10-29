@@ -46,6 +46,12 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
+class GoogleLoginRequest(BaseModel):
+    # ID token (JWT) que devuelve el botón de Google
+    credential: str = Field(min_length=20, max_length=4096)
+    # Solo se usa si la cuenta es nueva (registro con Google); por defecto, usuario
+    role: Optional[Literal["user", "investor", "realtor"]] = None
+
 class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str = Field(min_length=MIN_PASSWORD_LENGTH)

@@ -16,3 +16,6 @@ google-generativeai==0.8.6
 mcp==2.3.0
 openai==3.41.0
 bcrypt==4.3.0
+# Inicio de sesión con Google (verificación del ID token)
+google-auth==2.62.0
+requests==2.34.2

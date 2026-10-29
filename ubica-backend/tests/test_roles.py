@@ -126,6 +126,10 @@ MATRIX = {
     ("GET",    "/api/auth/me"):                             (401, 200, 200, 200, 200),
     ("POST",   "/api/auth/change-password"):                (401, 200, 200, 200, 200),
     ("POST",   "/api/auth/forgot-password"):                (200, 200, 200, 200, 200),
+    ("GET",    "/api/auth/google/config"):                  (200, 200, 200, 200, 200),
+    # Sin GOOGLE_CLIENT_ID (como en los tests) el acceso con Google no existe; el alta y la vinculación
+    # se prueban en test_google_auth.py con el Client ID activado
+    ("POST",   "/api/auth/google"):                         (404, 404, 404, 404, 404),
     ("POST",   "/api/auth/reset-password"):                 (200, 200, 200, 200, 200),
     ("POST",   "/api/auth/change-email"):                   (401, 200, 200, 200, 200),
     ("GET",    "/api/auth/confirm-email-change"):           (200, 200, 200, 200, 200),
@@ -250,6 +254,22 @@ def _(w):
     def check(w, r, allowed):
         assert r.json()["message"].startswith("Si el email está registrado")
     return "POST", "/api/auth/forgot-password", {"json": {"email": "owner@example.com"}}, check
+
+
+@case("GET", "/api/auth/google/config")
+def _(w):
+    def check(w, r, allowed):
+        assert r.json() == {"client_id": None}
+    return "GET", "/api/auth/google/config", {}, check
+
+
+@case("POST", "/api/auth/google")
+def _(w):
+    users_before = count(models.User)
+
+    def check(w, r, allowed):
+        assert count(models.User) == users_before
+    return "POST", "/api/auth/google", {"json": {"credential": "x" * 40}}, check
 
 
 @case("POST", "/api/auth/reset-password")
@@ -692,7 +712,7 @@ def client_get_me(token):
 
 def test_matrix_covers_every_openapi_route():
     routes = {(m.upper(), p) for p, ops in app.openapi()["paths"].items() for m in ops}
-    assert len(routes) == 51
+    assert len(routes) == 53
     assert set(MATRIX) == routes
     assert set(CASES) == routes
 
@@ -718,6 +738,7 @@ VALIDATION = [
     ("GET", "/api/auth/verify-email", {},                                       (422, 422, 422, 422, 422)),
     ("POST", "/api/auth/change-password", {"json": {"current_password": PASSWORD, "new_password": "corta"}}, (401, 422, 422, 422, 422)),
     ("POST", "/api/auth/forgot-password", {"json": {"email": "no-es-email"}},     (422, 422, 422, 422, 422)),
+    ("POST", "/api/auth/google", {"json": {"credential": "x" * 40, "role": "admin"}}, (422, 422, 422, 422, 422)),
     ("POST", "/api/auth/reset-password", {"json": {"token": "x"}},              (422, 422, 422, 422, 422)),
     ("POST", "/api/auth/change-email", {"json": {"new_email": "x", "password": PASSWORD}}, (401, 422, 422, 422, 422)),
     ("GET", "/api/auth/confirm-email-change", {},                               (422, 422, 422, 422, 422)),
