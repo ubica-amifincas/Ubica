@@ -69,8 +69,8 @@ function AppRoutes() {
   useDocumentTitle();
   const location = useLocation();
 
-  // Cada página se sirve en la web de su producto. En la de AMI Fincas solo están su portada y
-  // los textos legales; lo demás es Ubica. Y la portada de AMI no se duplica dentro de Ubica.
+  // Cada página se sirve en la web de su producto. En la de AMI Fincas (amifincas.es) solo están su
+  // portada, en la raíz, y los textos legales; lo demás es Ubica. /ami-fincas es la dirección antigua.
   const path = location.pathname.replace(/\/+$/, '') || '/';
   const params = new URLSearchParams(location.search);
   params.delete('site');
@@ -78,10 +78,10 @@ function AppRoutes() {
   let externalTarget: string | null = null;
   let internalTarget: string | null = null;
   if (isAmiSite) {
-    if (path === '/') internalTarget = AMI_PATH;
+    if (path === AMI_PATH) internalTarget = `/${location.hash}`;
     else if (!AMI_SITE_PATHS.includes(path)) externalTarget = ubicaHref(`${path}${query}`);
   } else if (path === AMI_PATH) {
-    externalTarget = amiHref(`${AMI_PATH}${location.hash}`);
+    externalTarget = amiHref(`/${location.hash}`);
   }
 
   useEffect(() => {
@@ -99,7 +99,7 @@ function AppRoutes() {
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<MainLayout />}>
-              <Route index element={<Home />} />
+              <Route index element={isAmiSite ? <AmiFincas /> : <Home />} />
               <Route path="ami-fincas" element={<AmiFincas />} />
               <Route path="property/:id" element={<PropertyDetail />} />
               <Route path="about" element={<About />} />

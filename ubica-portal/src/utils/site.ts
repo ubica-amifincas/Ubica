@@ -1,15 +1,16 @@
 /**
  * AMI Fincas tiene dos productos en un mismo despliegue:
- * - AMI Fincas (administración de fincas): https://www.amifincas.es/ami-fincas
+ * - AMI Fincas (administración de fincas): https://amifincas.es
  * - Ubica (portal inmobiliario): https://ubica.amifincas.es
  * Este módulo decide en cuál estamos y construye los enlaces entre ambos.
  */
-export const AMI_ORIGIN = 'https://www.amifincas.es';
+export const AMI_ORIGIN = 'https://amifincas.es';
 export const UBICA_ORIGIN = 'https://ubica.amifincas.es';
+/** Dirección antigua de la portada de AMI Fincas: ahora redirige a la raíz de amifincas.es. */
 export const AMI_PATH = '/ami-fincas';
 
 /** Páginas que se sirven también en la web de AMI Fincas (el resto vive en Ubica). */
-export const AMI_SITE_PATHS = [AMI_PATH, '/aviso-legal', '/privacy', '/politica-cookies'];
+export const AMI_SITE_PATHS = ['/', '/aviso-legal', '/privacy', '/politica-cookies'];
 
 export type Site = 'ami' | 'ubica';
 
@@ -48,7 +49,7 @@ export const SITE: Site = detectSite();
 export const isAmiSite = SITE === 'ami';
 
 /** Enlace a una página de la web de AMI Fincas (por defecto, su portada). */
-export function amiHref(path: string = AMI_PATH): string {
+export function amiHref(path = '/'): string {
   if (isProductionHost()) return `${AMI_ORIGIN}${path}`;
   return isAmiSite ? path : withSiteParam(path, 'ami');
 }

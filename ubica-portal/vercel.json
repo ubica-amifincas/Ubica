@@ -1,21 +1,21 @@
 {
     "redirects": [
         {
-            "source": "/",
+            "source": "/:path*",
             "has": [{ "type": "host", "value": "www.amifincas.es" }],
-            "destination": "/ami-fincas",
-            "permanent": false
+            "destination": "https://amifincas.es/:path*",
+            "permanent": true
         },
         {
-            "source": "/",
+            "source": "/ami-fincas",
             "has": [{ "type": "host", "value": "amifincas.es" }],
-            "destination": "https://www.amifincas.es/ami-fincas",
-            "permanent": false
+            "destination": "/",
+            "permanent": true
         },
         {
             "source": "/ami-fincas",
             "has": [{ "type": "host", "value": "ubica.amifincas.es" }],
-            "destination": "https://www.amifincas.es/ami-fincas",
+            "destination": "https://amifincas.es/",
             "permanent": true
         }
     ],

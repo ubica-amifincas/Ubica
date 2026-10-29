@@ -7,7 +7,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useLanguage } from '../../hooks/useLanguage';
 import { useCookieConsent } from '../../contexts/CookieConsentContext';
-import { AMI_PATH, isAmiSite, amiHref, ubicaHref } from '../../utils/site';
+import { isAmiSite, amiHref, ubicaHref } from '../../utils/site';
 
 // Instagram Icon
 const InstagramIcon = () => (
@@ -26,8 +26,8 @@ export default function Footer() {
   const footerLinks = isAmiSite
     ? {
       company: [
-        { name: t('ami.nav.services', 'Servicios'), href: `${AMI_PATH}#servicios`, external: true, sameTab: true },
-        { name: t('ami.nav.offices', 'Sedes'), href: `${AMI_PATH}#contacto`, external: true, sameTab: true },
+        { name: t('ami.nav.services', 'Servicios'), href: '/#servicios', external: true, sameTab: true },
+        { name: t('ami.nav.offices', 'Sedes'), href: '/#contacto', external: true, sameTab: true },
         { name: 'info@amifincas.es', href: 'mailto:info@amifincas.es', external: true, sameTab: true },
       ],
       services: [
@@ -208,7 +208,7 @@ export default function Footer() {
             <div className="flex flex-col items-center lg:items-end space-y-4">
               <div className="flex flex-wrap justify-center lg:justify-end gap-x-6 gap-y-2">
                 {isAmiSite ? (
-                  <a href={`${AMI_PATH}#contacto`} className="text-sm font-medium text-gray-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors">
+                  <a href="/#contacto" className="text-sm font-medium text-gray-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors">
                     {t('footer.contact')}
                   </a>
                 ) : (

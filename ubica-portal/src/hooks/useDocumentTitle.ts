@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { AMI_ORIGIN, AMI_PATH, UBICA_ORIGIN, isAmiSite } from '../utils/site';
+import { AMI_ORIGIN, UBICA_ORIGIN, isAmiSite } from '../utils/site';
 
 /**
  * useDocumentTitle - Pone el título de la pestaña, la descripción, la URL canónica y el icono
@@ -52,7 +52,6 @@ const ROUTE_TITLES: Record<string, string> = {
     '/entretenimiento': 'Juegos | Ubica',
     '/entretenimiento/tasador': 'Tasador exprés | Ubica',
     '/entretenimiento/balance': 'Ubica Balance | Ubica',
-    [AMI_PATH]: AMI_TITLE,
 };
 
 function setLink(rel: string, href: string) {
@@ -75,9 +74,9 @@ export default function useDocumentTitle() {
 
     useEffect(() => {
         const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
-        const isAmi = isAmiSite || path === AMI_PATH;
+        const isAmi = isAmiSite;
 
-        let title = ROUTE_TITLES[path] || 'Página no encontrada | Ubica';
+        let title = isAmi && path === '/' ? AMI_TITLE : ROUTE_TITLES[path] || 'Página no encontrada | Ubica';
         if (path.startsWith('/property/')) title = 'Inmueble | Ubica';
         // En la web de AMI Fincas, las páginas legales llevan su marca
         if (isAmi) title = title.replace(/\| Ubica$/, '| AMI Fincas');

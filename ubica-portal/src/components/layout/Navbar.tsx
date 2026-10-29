@@ -17,7 +17,7 @@ import {
   PhoneIcon,
 } from '@heroicons/react/24/outline';
 import { panelHome } from '../../utils/panelHome';
-import { AMI_PATH, isAmiSite, amiHref, ubicaHref } from '../../utils/site';
+import { isAmiSite, amiHref, ubicaHref } from '../../utils/site';
 import { ThemeToggle } from '../common/ThemeToggle';
 import { LanguageSelector } from '../common/LanguageSelector';
 import { useLanguage } from '../../hooks/useLanguage';
@@ -36,8 +36,8 @@ export default function Navbar() {
   const { theme } = useTheme();
   const { user, isAuthenticated, hasRole, logoutWithNotification } = useAuthNotifications();
 
-  // La portada de AMI Fincas lleva la barra fija que se esconde al bajar
-  const isAmiFincasPage = location.pathname === AMI_PATH;
+  // La portada de AMI Fincas (raíz de amifincas.es) lleva la barra fija que se esconde al bajar
+  const isAmiFincasPage = isAmiSite && location.pathname === '/';
 
   // Auto-hide navbar on scroll or hover (only on AMI Fincas page)
   useEffect(() => {
@@ -108,8 +108,8 @@ export default function Navbar() {
     // Web de AMI Fincas: sus secciones y el paso a Ubica; sin cuentas de usuario
     if (isAmiSite) {
       return [
-        { name: t('ami.nav.services', 'Servicios'), href: `${AMI_PATH}#servicios`, icon: WrenchScrewdriverIcon, external: true },
-        { name: t('ami.nav.offices', 'Sedes'), href: `${AMI_PATH}#contacto`, icon: MapPinIcon, external: true },
+        { name: t('ami.nav.services', 'Servicios'), href: '/#servicios', icon: WrenchScrewdriverIcon, external: true },
+        { name: t('ami.nav.offices', 'Sedes'), href: '/#contacto', icon: MapPinIcon, external: true },
         { name: t('ami.nav.ubica', 'Portal inmobiliario Ubica'), href: ubicaHref('/'), icon: HomeIcon, external: true },
       ];
     }
@@ -166,7 +166,7 @@ export default function Navbar() {
           {/* Logo */}
           <div className="flex items-center">
             {isAmiSite ? (
-              <Link to={AMI_PATH} className="flex items-center space-x-3">
+              <Link to="/" className="flex items-center space-x-3">
                 <img src="/ami-fincas/favAMI.png" alt="" className="h-10 md:h-11 w-auto object-contain" />
                 <span className="text-xl md:text-2xl font-bold text-[#23707f] dark:text-[#8fd0c3]">AMI Fincas</span>
               </Link>
@@ -221,7 +221,7 @@ export default function Navbar() {
 
             {isAmiSite ? (
               <a
-                href={`${AMI_PATH}#contacto`}
+                href="/#contacto"
                 className="flex items-center space-x-2 rounded-lg bg-[#23707f] h-10 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors duration-200 hover:bg-[#1b5a66] focus:outline-none focus:ring-2 focus:ring-[#23707f] focus:ring-offset-2"
               >
                 <PhoneIcon className="h-4 w-4" />
@@ -413,7 +413,7 @@ export default function Navbar() {
 
                     {isAmiSite ? (
                       <a
-                        href={`${AMI_PATH}#contacto`}
+                        href="/#contacto"
                         onClick={() => setIsMenuOpen(false)}
                         className="flex items-center justify-center space-x-2 w-full rounded-xl bg-[#23707f] py-4 text-base font-bold text-white shadow-lg transition-colors duration-200 hover:bg-[#1b5a66]"
                       >
