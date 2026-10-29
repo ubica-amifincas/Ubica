@@ -29,6 +29,7 @@ from sqlmodel import Session, SQLModel  # noqa: E402
 import models  # noqa: E402
 from database import engine  # noqa: E402
 from main import app  # noqa: E402
+from services.ratelimit import reset_all_limiters  # noqa: E402
 
 
 # Postgres (producción) aplica las claves foráneas; SQLite solo si se activan en cada conexión.
@@ -58,6 +59,7 @@ def fresh_db():
     ai_usage = os.environ["AI_USAGE_FILE"]
     if os.path.exists(ai_usage):
         os.remove(ai_usage)
+    reset_all_limiters()  # los límites de login/contacto son en memoria: cada test empieza de cero
     yield
 
 

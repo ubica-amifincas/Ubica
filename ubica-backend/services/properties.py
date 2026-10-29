@@ -4,7 +4,7 @@ from typing import Optional
 
 from fastapi import HTTPException
 from sqlalchemy import delete, update
-from sqlmodel import Session, or_, select
+from sqlmodel import Session, func, or_, select
 
 import models
 
@@ -96,6 +96,17 @@ def apply_property_payload(p: models.Property, prop_data: dict) -> None:
     p.updated_at = datetime.now()
 
 
+def month_start(now: Optional[datetime] = None) -> datetime:
+    return (now or datetime.now()).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+
+def count_status_this_month(session: Session, status: str, *conditions) -> int:
+    """Anuncios con ese estado modificados este mes (al venderse o alquilarse se actualiza updated_at)."""
+    statement = select(func.count(models.Property.id)).where(
+        models.Property.status == status, models.Property.updated_at >= month_start(), *conditions)
+    return session.exec(statement).one()
+
+
 def get_allowed_properties_statement(user_id: Optional[int], user_role: Optional[str]):
     """
     Returns a SQLModel statement for properties based on the user's role and ID.
@@ -119,10 +130,16 @@ def get_allowed_properties_statement(user_id: Optional[int], user_role: Optional
     )
 
 
-def can_view_property(p: models.Property, user: Optional[models.User]) -> bool:
-    if p.status in PUBLIC_STATUSES:
-        return True
+# Datos que solo ven el propietario, su inmobiliaria y el admin
+PRIVATE_PROPERTY_FIELDS = ("purchase_price", "total_cost", "monthly_cost", "monthly_income", "owner_id", "realtor_id")
+
+
+def can_manage_property(p: models.Property, user: Optional[models.User]) -> bool:
     return user is not None and (user.role == "admin" or user.id in (p.owner_id, p.realtor_id))
+
+
+def can_view_property(p: models.Property, user: Optional[models.User]) -> bool:
+    return p.status in PUBLIC_STATUSES or can_manage_property(p, user)
 
 
 def assign_realtor(session: Session, p: models.Property, realtor_id: Optional[int]) -> None:

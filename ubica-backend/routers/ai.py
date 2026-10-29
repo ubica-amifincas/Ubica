@@ -11,6 +11,7 @@ from schemas import AIChatRequest
 from security import get_current_user, get_user_or_none, require_role
 from services.ai.chat import AI_CONFIG, OPENAI_AVAILABLE, PROVIDERS, build_system_instruction, fallback_answer, persist_conversation, run_openai_provider
 from services.ai.usage import check_ai_usage
+from services.ratelimit import get_client_ip
 
 router = APIRouter()
 
@@ -23,7 +24,7 @@ async def ai_chat(request: AIChatRequest, request_obj: Request, current_user: Op
     # 1. Verificar Límites (Freemium)
     user_id = current_user.id if current_user else None
     user_role = current_user.role if current_user else "guest"
-    client_ip = request_obj.client.host if request_obj.client else "unknown"
+    client_ip = get_client_ip(request_obj)
 
     if not check_ai_usage(user_id=user_id, ip=client_ip, role=user_role):
         raise HTTPException(

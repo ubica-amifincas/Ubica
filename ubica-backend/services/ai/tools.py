@@ -7,7 +7,7 @@ from sqlmodel import Session, or_, select
 
 import models
 from database import engine
-from services.properties import PUBLIC_STATUSES, get_allowed_properties_statement
+from services.properties import PRIVATE_PROPERTY_FIELDS, PUBLIC_STATUSES, get_allowed_properties_statement
 
 # El modelo suele pedir el estado en español; en la base de datos se guarda en inglés
 ESTADO_ALIASES = {"venta": "for-sale", "vend": "for-sale", "compra": "for-sale", "alquil": "for-rent", "renta": "for-rent", "reserv": "reserved", "disponible": "available"}
@@ -70,8 +70,12 @@ async def obtener_detalles(user_id: Optional[int], user_role: str, propiedad_id:
     with Session(engine) as session:
         p = session.get(models.Property, propiedad_id)
         if not p: return json.dumps({"error": f"No se encontró la propiedad con ID {propiedad_id}"})
-        if user_role == "admin" or p.status in PUBLIC_STATUSES or (user_id is not None and (p.owner_id == user_id or p.realtor_id == user_id)):
+        manages = user_role == "admin" or (user_id is not None and user_id in (p.owner_id, p.realtor_id))
+        if manages:
             return json.dumps(p.model_dump(), default=str, ensure_ascii=False)
+        if p.status in PUBLIC_STATUSES:
+            # Al resto no se le dan los datos económicos privados ni quién es el propietario
+            return json.dumps(p.model_dump(exclude=set(PRIVATE_PROPERTY_FIELDS)), default=str, ensure_ascii=False)
     return json.dumps({"error": "No tienes permisos."})
 
 async def calcular_hipoteca(precio: float, entrada_porcentaje: float = 20.0, plazo_anos: int = 25, interes_anual: float = 3.0) -> str:
@@ -110,7 +114,8 @@ async def comparar_propiedades(ids: list) -> str:
         props = []
         for pid in ids:
             p = session.get(models.Property, int(pid))
-            if p:
+            # Las herramientas de mercado solo trabajan con anuncios publicados
+            if p and p.status in PUBLIC_STATUSES:
                 precio_m2 = round(p.price / p.area, 2) if p.area and p.area > 0 else None
                 props.append({
                     "id": p.id,
@@ -134,6 +139,7 @@ async def analisis_zona(zona: str) -> str:
     """Obtiene estadísticas del mercado inmobiliario en una zona."""
     with Session(engine) as session:
         statement = select(models.Property).where(
+            models.Property.status.in_(PUBLIC_STATUSES),
             or_(models.Property.city.ilike(f"%{zona}%"), models.Property.address.ilike(f"%{zona}%"))
         )
         props = session.exec(statement).all()
@@ -252,10 +258,10 @@ async def propiedades_similares(propiedad_id: int) -> str:
     """Busca propiedades similares a una dada (mismo tipo, ciudad cercana, precio ±30%)."""
     with Session(engine) as session:
         ref = session.get(models.Property, propiedad_id)
-        if not ref:
+        if not ref or ref.status not in PUBLIC_STATUSES:
             return json.dumps({"error": f"No se encontró la propiedad con ID {propiedad_id}"})
         # Build similarity query
-        statement = select(models.Property).where(models.Property.id != ref.id)
+        statement = select(models.Property).where(models.Property.id != ref.id, models.Property.status.in_(PUBLIC_STATUSES))
         # Same type
         if ref.type:
             statement = statement.where(models.Property.type == ref.type)
@@ -272,7 +278,7 @@ async def propiedades_similares(propiedad_id: int) -> str:
         if not similares:
             # Relax: try just same city without type filter
             statement2 = select(models.Property).where(
-                models.Property.id != ref.id
+                models.Property.id != ref.id, models.Property.status.in_(PUBLIC_STATUSES)
             )
             if ref.city:
                 statement2 = statement2.where(models.Property.city.ilike(f"%{ref.city}%"))

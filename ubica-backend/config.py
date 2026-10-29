@@ -29,6 +29,9 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 1440
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 RESEND_SENDER = os.getenv("RESEND_SENDER", "onboarding@resend.dev") # Cambiar a no-reply@amifincas.es tras verificar dominio
 
+# Buzón que recibe el formulario de contacto
+CONTACT_EMAIL = os.getenv("CONTACT_EMAIL", "info@amifincas.es")
+
 # URL pública del frontend (enlaces de verificación)
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 

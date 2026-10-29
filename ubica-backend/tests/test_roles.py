@@ -24,7 +24,7 @@ from sqlmodel import Session, func, select
 
 import models
 from conftest import app, auth, engine
-from security import create_access_token
+from security import create_access_token, password_fingerprint
 from services.properties import get_allowed_properties_statement
 
 ROLES = ["guest", "user", "realtor", "investor", "admin"]
@@ -124,6 +124,12 @@ MATRIX = {
     ("POST",   "/api/auth/register"):                       (200, 200, 200, 200, 200),
     ("GET",    "/api/auth/verify-email"):                   (200, 200, 200, 200, 200),
     ("GET",    "/api/auth/me"):                             (401, 200, 200, 200, 200),
+    ("POST",   "/api/auth/change-password"):                (401, 200, 200, 200, 200),
+    ("POST",   "/api/auth/forgot-password"):                (200, 200, 200, 200, 200),
+    ("POST",   "/api/auth/reset-password"):                 (200, 200, 200, 200, 200),
+    ("POST",   "/api/auth/change-email"):                   (401, 200, 200, 200, 200),
+    ("GET",    "/api/auth/confirm-email-change"):           (200, 200, 200, 200, 200),
+    ("POST",   "/api/contact"):                             (200, 200, 200, 200, 200),
     ("POST",   "/api/upload-images"):                       (401, 200, 200, 200, 200),
     ("GET",    "/api/properties"):                          (200, 200, 200, 200, 200),
     ("GET",    "/api/properties/{property_id}"):            (200, 200, 200, 200, 200),
@@ -226,6 +232,59 @@ def _(w):
     def check(w, r, allowed):
         assert fetch(models.User, pending.id).is_verified is True
     return "GET", "/api/auth/verify-email", {"params": {"token": token}}, check
+
+
+@case("POST", "/api/auth/change-password")
+def _(w):
+    def check(w, r, allowed):
+        if allowed:
+            assert bcrypt.checkpw(b"clave-nueva-1", fetch(models.User, w.actor_id).hashed_password.encode())
+            assert client_get_me(r.json()["access_token"]) == w.actor_id
+        else:
+            assert fetch(models.User, w.owner_id).hashed_password == _HASH
+    return "POST", "/api/auth/change-password", {"json": {"current_password": PASSWORD, "new_password": "clave-nueva-1"}}, check
+
+
+@case("POST", "/api/auth/forgot-password")
+def _(w):
+    def check(w, r, allowed):
+        assert r.json()["message"].startswith("Si el email está registrado")
+    return "POST", "/api/auth/forgot-password", {"json": {"email": "owner@example.com"}}, check
+
+
+@case("POST", "/api/auth/reset-password")
+def _(w):
+    token = create_access_token({"sub": str(w.me), "type": "reset", "pv": password_fingerprint(_HASH)}, expires_minutes=60)
+
+    def check(w, r, allowed):
+        assert bcrypt.checkpw(b"clave-nueva-1", fetch(models.User, w.me).hashed_password.encode())
+    return "POST", "/api/auth/reset-password", {"json": {"token": token, "new_password": "clave-nueva-1"}}, check
+
+
+@case("POST", "/api/auth/change-email")
+def _(w):
+    def check(w, r, allowed):
+        # Solo se envía el enlace: el email no cambia hasta confirmarlo
+        assert not rows(models.User, email="nuevo@example.com")
+    return "POST", "/api/auth/change-email", {"json": {"new_email": "nuevo@example.com", "password": PASSWORD}}, check
+
+
+@case("GET", "/api/auth/confirm-email-change")
+def _(w):
+    me = fetch(models.User, w.me)
+    token = create_access_token({"sub": str(me.id), "type": "email_change", "new_email": "nuevo@example.com", "email": me.email,
+                                 "pv": password_fingerprint(_HASH)}, expires_minutes=60)
+
+    def check(w, r, allowed):
+        assert fetch(models.User, w.me).email == "nuevo@example.com"
+    return "GET", "/api/auth/confirm-email-change", {"params": {"token": token}}, check
+
+
+@case("POST", "/api/contact")
+def _(w):
+    def check(w, r, allowed):
+        assert r.json()["message"].startswith("Mensaje enviado")
+    return "POST", "/api/contact", {"json": {"name": "Ana", "email": "ana@example.com", "message": "Quiero información del piso"}}, check
 
 
 @case("GET", "/api/auth/me")
@@ -536,11 +595,12 @@ def _(w):
 
 @case("GET", "/api/realtor/dashboard")
 def _(w):
-    new_prop(w.db, realtor_id=w.me, price=100000, title="Asignada")
+    new_prop(w.db, realtor_id=w.me, price=100000, title="Asignada", status="sold")
 
     def check(w, r, allowed):
         if allowed:
             assert r.json()["total_properties"] == 1 and r.json()["avg_sale_price"] == 100000
+            assert r.json()["properties_sold"] == r.json()["this_month_sales"] == 1
     return "GET", "/api/realtor/dashboard", {}, check
 
 
@@ -622,13 +682,17 @@ def _(w):
 @case("GET", "/health")
 def _(w):
     def check(w, r, allowed):
-        assert r.json()["total_users"] == count(models.User)
+        assert r.json()["total_properties"] == count(models.Property) and "total_users" not in r.json()
     return "GET", "/health", {}, check
+
+
+def client_get_me(token):
+    return TestClient(app).get("/api/auth/me", headers=bearer(token)).json()["id"]
 
 
 def test_matrix_covers_every_openapi_route():
     routes = {(m.upper(), p) for p, ops in app.openapi()["paths"].items() for m in ops}
-    assert len(routes) == 45
+    assert len(routes) == 51
     assert set(MATRIX) == routes
     assert set(CASES) == routes
 
@@ -652,6 +716,13 @@ VALIDATION = [
     ("POST", "/api/auth/login", {"json": {}},                                   (422, 422, 422, 422, 422)),
     ("POST", "/api/auth/register", {"json": {"email": "no-es-email", "password": "x"}}, (422, 422, 422, 422, 422)),
     ("GET", "/api/auth/verify-email", {},                                       (422, 422, 422, 422, 422)),
+    ("POST", "/api/auth/change-password", {"json": {"current_password": PASSWORD, "new_password": "corta"}}, (401, 422, 422, 422, 422)),
+    ("POST", "/api/auth/forgot-password", {"json": {"email": "no-es-email"}},     (422, 422, 422, 422, 422)),
+    ("POST", "/api/auth/reset-password", {"json": {"token": "x"}},              (422, 422, 422, 422, 422)),
+    ("POST", "/api/auth/change-email", {"json": {"new_email": "x", "password": PASSWORD}}, (401, 422, 422, 422, 422)),
+    ("GET", "/api/auth/confirm-email-change", {},                               (422, 422, 422, 422, 422)),
+    ("POST", "/api/contact", {"json": {"name": "A", "email": "a@example.com", "message": "corto"}}, (422, 422, 422, 422, 422)),
+    ("GET", "/api/properties?limit=101", {},                                    (422, 422, 422, 422, 422)),
     ("POST", "/api/upload-images", {},                                          (401, 422, 422, 422, 422)),
     ("GET", "/api/properties/abc", {},                                          (422, 422, 422, 422, 422)),
     ("GET", "/api/properties?limit=abc", {},                                    (422, 422, 422, 422, 422)),
@@ -683,13 +754,14 @@ def test_validation_matrix(req, role, client, db):
 
 
 @pytest.mark.parametrize("url", ["/api/auth/me", "/api/admin/users", "/api/realtor/dashboard", "/api/user/favorites"])
-@pytest.mark.parametrize("token", ["basura", "verify", "expired", "deleted_user", "wrong_secret"])
+@pytest.mark.parametrize("token", ["basura", "verify", "reset", "expired", "deleted_user", "wrong_secret"])
 def test_bad_tokens_are_401(url, token, client, db):
     import jwt
     u = new_user(db, "admin@example.com", role="admin")
     tokens = {
         "basura": "abc.def.ghi",
         "verify": create_access_token({"sub": str(u.id), "type": "verify"}),
+        "reset": create_access_token({"sub": str(u.id), "type": "reset", "pv": password_fingerprint(u.hashed_password)}),
         "expired": jwt.encode({"sub": str(u.id), "exp": datetime.utcnow() - timedelta(minutes=1)}, "test-secret", algorithm="HS256"),
         "deleted_user": create_access_token({"sub": "9999", "type": "access"}),
         "wrong_secret": jwt.encode({"sub": str(u.id), "exp": datetime.utcnow() + timedelta(minutes=5)}, "otra", algorithm="HS256"),
@@ -1088,7 +1160,7 @@ def test_realtor_lifecycle(client, db):
     new_prop(db, price=1)
     assert {p["id"] for p in client.get("/api/realtor/properties", headers=h).json()} == {a.id, b.id}
     dash = client.get("/api/realtor/dashboard", headers=h).json()
-    assert dash["total_properties"] == 2 and dash["avg_sale_price"] == 150000
+    assert dash["total_properties"] == 2 and dash["properties_sold"] == 0 and dash["avg_sale_price"] == 0
 
     # Un comprador escribe sobre el anuncio: puede dirigirse al agente asignado
     buyer = new_user(db, "buyer@example.com")
@@ -1166,7 +1238,7 @@ def test_ai_conversations_keep_only_last_five(client, db):
 
 
 # ==========================================================================
-# 4. ERRORES CONOCIDOS (xfail estricto)
+# 4. ERRORES CONOCIDOS (los corregidos quedan como tests de regresión)
 # ==========================================================================
 
 @pytest.mark.parametrize("endpoint", ["user", "admin"])
@@ -1190,7 +1262,6 @@ def test_known_detail_hides_non_public(status, client, db):
     assert client.get(f"/api/properties/{prop.id}").status_code == 404
 
 
-@xfail_known("el listado público expone purchase_price/monthly_income/total_cost/owner_id")
 def test_known_public_listing_hides_private_fields(client, db):
     new_prop(db, owner_id=new_user(db, "o@example.com").id, purchase_price=90000, monthly_income=800, total_cost=95000)
     [p] = client.get("/api/properties").json()
@@ -1229,7 +1300,6 @@ def test_known_upload_url_not_localhost(client, db):
     assert r.status_code == 200 and not r.json()["urls"][0].startswith("http://localhost:8000")
 
 
-@xfail_known("las puntuaciones aceptan cualquier entero (negativos; 10**20 -> 500 por desbordamiento)")
 @pytest.mark.parametrize("score", [-5, 10**20])
 def test_known_game_score_validated(score, client, db):
     r = client.post("/api/games/score", json={"game_name": "balance", "score": score}, headers=auth(new_user(db, "u@example.com")))
@@ -1237,7 +1307,6 @@ def test_known_game_score_validated(score, client, db):
     assert count(models.GameScore) == 0
 
 
-@xfail_known("paginación sin límite superior ni validación de negativos")
 @pytest.mark.parametrize("url", ["/api/properties?limit=100000", "/api/properties?limit=-1", "/api/properties?skip=-1",
                                  "/api/games/balance/leaderboard?limit=100000", "/api/games/balance/leaderboard?limit=-1"])
 def test_known_pagination_bounded(url, client, db):
@@ -1245,7 +1314,7 @@ def test_known_pagination_bounded(url, client, db):
 
 
 # ==========================================================================
-# 5. ERRORES NUEVOS ENCONTRADOS (xfail estricto)
+# 5. ERRORES NUEVOS ENCONTRADOS (los corregidos quedan como tests de regresión)
 # ==========================================================================
 
 def _user_with(kind, client, db):
@@ -1398,14 +1467,12 @@ def test_new_admin_can_assign_realtor(client, db):
     assert fetch(models.Property, pid).realtor_id == realtor.id
 
 
-@xfail_new("investor.py:15-24 el panel del inversor devuelve cifras fijas (total_properties=12, portfolio_value=875000) sin mirar sus inversiones")
 def test_new_investor_dashboard_matches_portfolio(client, db):
     investor = new_user(db, "inv@example.com", role="investor")
     dash = client.get("/api/investor/dashboard", headers=auth(investor)).json()
     assert dash["total_properties"] == 0 and dash["portfolio_value"] == 0
 
 
-@xfail_new("admin.py:22-31 el panel de admin devuelve cifras fijas (total_transactions=45, total_revenue=1250000, vendidas este mes=12) con la BD vacía")
 def test_new_admin_dashboard_numbers_from_db(client, db):
     dash = client.get("/api/admin/dashboard", headers=auth(new_user(db, "admin@example.com", role="admin"))).json()
     assert (dash["total_transactions"], dash["total_revenue"], dash["properties_sold_this_month"], dash["properties_rented_this_month"]) == (0, 0, 0, 0)

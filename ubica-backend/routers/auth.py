@@ -1,30 +1,66 @@
-"""Registro, verificación de email, login y usuario actual."""
+"""Registro, verificación de email, login, recuperación de contraseña y cambio de email."""
 from typing import Any, Dict
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 import jwt
 from datetime import datetime
-from sqlmodel import Session, select
+from sqlmodel import Session, func, select
 
 import models
 from config import ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM, FRONTEND_URL, SECRET_KEY
 from database import get_session
-from schemas import LoginRequest, Token, User, UserCreate
-from security import create_access_token, create_session_token, get_current_user, hash_password, is_legacy_hash, verify_password
-from services.email import send_email_resend, verification_email_html
+from schemas import ChangeEmailRequest, ChangePasswordRequest, ForgotPasswordRequest, LoginRequest, ResetPasswordRequest, Token, User, UserCreate
+from security import (burn_password_check, create_access_token, create_session_token, decode_purpose_token, get_current_user,
+                      hash_password, is_legacy_hash, password_fingerprint, verify_password)
+from services.email import email_change_email_html, password_reset_email_html, send_email_resend, verification_email_html
+from services.ratelimit import RateLimiter, get_client_ip
 
 router = APIRouter()
 
 SELF_SERVICE_ROLES = {"user", "investor", "realtor"}
 
+# Fuerza bruta: intentos fallidos por email y por IP en 15 minutos
+login_email_limiter = RateLimiter(10, 15 * 60)
+login_ip_limiter = RateLimiter(30, 15 * 60)
+# Correos de recuperación: por encima del límite no se envían, pero la respuesta es la misma
+forgot_email_limiter = RateLimiter(3, 60 * 60)
+forgot_ip_limiter = RateLimiter(10, 60 * 60)
+
+TOO_MANY_ATTEMPTS = "Demasiados intentos fallidos. Espera unos minutos e inténtalo de nuevo."
+INVALID_LINK = "El enlace no es válido o ha caducado"
+FORGOT_MESSAGE = "Si el email está registrado, te hemos enviado un enlace para restablecer la contraseña."
+RESET_TOKEN_MINUTES = 60
+EMAIL_CHANGE_TOKEN_MINUTES = 24 * 60
+
+def _find_user_by_email(session: Session, email: str):
+    return session.exec(select(models.User).where(func.lower(models.User.email) == email.strip().lower())).first()
+
+def _token_response(user: models.User) -> Token:
+    return Token(
+        access_token=create_session_token(user),
+        token_type="bearer",
+        expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        user=User.model_validate(user, from_attributes=True)
+    )
+
 @router.post("/api/auth/login", response_model=Token)
-async def login(login_data: LoginRequest, session: Session = Depends(get_session)):
+async def login(login_data: LoginRequest, request: Request, session: Session = Depends(get_session)):
+    email_key = login_data.email.strip().lower()
+    client_ip = get_client_ip(request)
+    if login_email_limiter.is_limited(email_key) or login_ip_limiter.is_limited(client_ip):
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=TOO_MANY_ATTEMPTS)
+
     user = session.exec(select(models.User).where(models.User.email == login_data.email)).first()
+    if user is None:
+        burn_password_check(login_data.password)
     if not user or not verify_password(login_data.password, user.hashed_password):
+        login_email_limiter.hit(email_key)
+        login_ip_limiter.hit(client_ip)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email o contraseña incorrectos"
         )
+    login_email_limiter.reset(email_key)
 
     # Migración transparente: al entrar con un hash SHA-256 antiguo se guarda en bcrypt
     if is_legacy_hash(user.hashed_password):
@@ -45,13 +81,7 @@ async def login(login_data: LoginRequest, session: Session = Depends(get_session
             detail="Por favor verifica tu correo electrónico para iniciar sesión"
         )
 
-    access_token = create_session_token(user)
-    return Token(
-        access_token=access_token,
-        token_type="bearer",
-        expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        user=User.model_validate(user, from_attributes=True)
-    )
+    return _token_response(user)
 
 @router.post("/api/auth/register", response_model=Dict[str, Any])
 async def register(user_data: UserCreate, background_tasks: BackgroundTasks, session: Session = Depends(get_session)):
@@ -126,3 +156,82 @@ async def verify_email(token: str, session: Session = Depends(get_session)):
 @router.get("/api/auth/me", response_model=User)
 async def get_current_user_info(current_user: User = Depends(get_current_user)):
     return current_user
+
+@router.post("/api/auth/change-password", response_model=Token)
+async def change_password(data: ChangePasswordRequest, current_user: models.User = Depends(get_current_user), session: Session = Depends(get_session)):
+    if not verify_password(data.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="La contraseña actual no es correcta")
+    current_user.hashed_password = hash_password(data.new_password)
+    current_user.updated_at = datetime.now()
+    session.add(current_user)
+    session.commit()
+    session.refresh(current_user)
+    # El token anterior queda revocado (cambia "pv"): se devuelve uno nuevo
+    return _token_response(current_user)
+
+@router.post("/api/auth/forgot-password")
+async def forgot_password(data: ForgotPasswordRequest, request: Request, background_tasks: BackgroundTasks, session: Session = Depends(get_session)):
+    # Misma respuesta exista o no la cuenta, para no revelar qué emails están registrados
+    email_key = data.email.strip().lower()
+    if not forgot_ip_limiter.check_and_hit(get_client_ip(request)) or not forgot_email_limiter.check_and_hit(email_key):
+        return {"message": FORGOT_MESSAGE}
+    user = _find_user_by_email(session, data.email)
+    if user is not None and user.is_active:
+        token = create_access_token(
+            {"sub": str(user.id), "type": "reset", "pv": password_fingerprint(user.hashed_password)},
+            expires_minutes=RESET_TOKEN_MINUTES)
+        html = password_reset_email_html(user.full_name, f"{FRONTEND_URL}/reset-password?token={token}")
+        background_tasks.add_task(send_email_resend, user.email, "Restablece tu contraseña de Ubica", html)
+    return {"message": FORGOT_MESSAGE}
+
+@router.post("/api/auth/reset-password")
+async def reset_password(data: ResetPasswordRequest, session: Session = Depends(get_session)):
+    # El token lleva la huella de la contraseña: al cambiarla el enlace deja de valer (un solo uso)
+    found = decode_purpose_token(data.token, "reset", session)
+    if found is None:
+        raise HTTPException(status_code=400, detail=INVALID_LINK)
+    user, _ = found
+    user.hashed_password = hash_password(data.new_password)
+    user.is_verified = True  # ha demostrado que controla el email
+    user.updated_at = datetime.now()
+    session.add(user)
+    session.commit()
+    login_email_limiter.reset(user.email.strip().lower())
+    return {"message": "Contraseña actualizada. Ya puedes iniciar sesión con tu nueva contraseña."}
+
+@router.post("/api/auth/change-email")
+async def change_email(data: ChangeEmailRequest, background_tasks: BackgroundTasks, current_user: models.User = Depends(get_current_user), session: Session = Depends(get_session)):
+    if not verify_password(data.password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="La contraseña no es correcta")
+    if _find_user_by_email(session, data.new_email) is not None:
+        raise HTTPException(status_code=400, detail="El email ya está registrado")
+    token = create_access_token(
+        {"sub": str(current_user.id), "type": "email_change", "new_email": data.new_email, "email": current_user.email,
+         "pv": password_fingerprint(current_user.hashed_password)},
+        expires_minutes=EMAIL_CHANGE_TOKEN_MINUTES)
+    html = email_change_email_html(current_user.full_name, data.new_email, f"{FRONTEND_URL}/confirm-email-change?token={token}")
+    # El enlace va a la dirección nueva: así se comprueba que es suya
+    background_tasks.add_task(send_email_resend, data.new_email, "Confirma tu nuevo email en Ubica", html)
+    return {"message": f"Te hemos enviado un enlace de confirmación a {data.new_email}"}
+
+@router.get("/api/auth/confirm-email-change")
+async def confirm_email_change(token: str, session: Session = Depends(get_session)):
+    found = decode_purpose_token(token, "email_change", session)
+    if found is None or not isinstance(found[1].get("new_email"), str):
+        raise HTTPException(status_code=400, detail=INVALID_LINK)
+    user, payload = found
+    new_email = payload["new_email"]
+    if user.email == new_email:
+        return {"message": "Tu email ya estaba actualizado"}
+    # Un enlace antiguo no sirve si el email ha cambiado después de pedirlo
+    if user.email != payload.get("email"):
+        raise HTTPException(status_code=400, detail=INVALID_LINK)
+    existing = _find_user_by_email(session, new_email)
+    if existing is not None and existing.id != user.id:
+        raise HTTPException(status_code=400, detail="El email ya está registrado")
+    user.email = new_email
+    user.is_verified = True
+    user.updated_at = datetime.now()
+    session.add(user)
+    session.commit()
+    return {"message": "Email actualizado correctamente. Usa tu nuevo email para iniciar sesión."}

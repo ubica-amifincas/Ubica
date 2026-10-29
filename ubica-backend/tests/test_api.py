@@ -10,7 +10,7 @@ def test_health_and_ping(client, make_user, make_property):
     assert r.status_code == 200
     body = r.json()
     assert body["database"] == "connected"
-    assert body["total_properties"] == 1 and body["total_users"] == 1
+    assert body["total_properties"] == 1 and "total_users" not in body
     assert client.get("/api/ping").json()["message"] == "pong"
 
 
@@ -228,8 +228,8 @@ def test_game_scores(client, make_user):
 
 def test_realtor_endpoints(client, make_user, make_property):
     realtor = make_user(role="realtor")
-    make_property(realtor_id=realtor.id, price=100000)
-    make_property(price=999999)
+    make_property(realtor_id=realtor.id, price=100000, status="sold")
+    make_property(price=999999, status="sold")
     dash = client.get("/api/realtor/dashboard", headers=auth(realtor)).json()
     assert dash["total_properties"] == 1 and dash["avg_sale_price"] == 100000
     props = client.get("/api/realtor/properties", headers=auth(realtor))

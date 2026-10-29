@@ -17,12 +17,10 @@ async def ping():
 @router.get("/health")
 async def health_check(session: Session = Depends(get_session)):
     total_properties = session.exec(select(func.count(models.Property.id))).one()
-    total_users = session.exec(select(func.count(models.User.id))).one()
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
         "version": "1.0.0",
         "database": "connected",
-        "total_properties": total_properties,
-        "total_users": total_users
+        "total_properties": total_properties
     }

@@ -29,9 +29,15 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         return hmac.compare_digest(legacy, hashed_password)
     return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
 
-def create_access_token(data: dict):
+# Hash de relleno: un login con email inexistente tarda lo mismo que con contraseña incorrecta
+_DUMMY_HASH = bcrypt.hashpw(b"ubica-dummy-password", bcrypt.gensalt()).decode()
+
+def burn_password_check(plain_password: str) -> None:
+    bcrypt.checkpw(plain_password.encode(), _DUMMY_HASH.encode())
+
+def create_access_token(data: dict, expires_minutes: Optional[int] = None):
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.utcnow() + timedelta(minutes=expires_minutes or ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -42,6 +48,23 @@ def password_fingerprint(hashed_password: str) -> str:
 
 def create_session_token(user: models.User) -> str:
     return create_access_token(data={"sub": str(user.id), "type": "access", "pv": password_fingerprint(user.hashed_password)})
+
+def decode_purpose_token(token: str, token_type: str, session: Session) -> Optional[tuple]:
+    """(usuario, payload) de un token de un solo uso (reset, cambio de email) aún válido, o None.
+    Exige "pv": al cambiar la contraseña los enlaces pendientes dejan de valer."""
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = int(payload["sub"])
+    except (jwt.PyJWTError, KeyError, TypeError, ValueError):
+        return None
+    if payload.get("type") != token_type or not isinstance(payload.get("pv"), str):
+        return None
+    user = session.get(models.User, user_id)
+    if user is None or not user.is_active:
+        return None
+    if not hmac.compare_digest(payload["pv"], password_fingerprint(user.hashed_password)):
+        return None
+    return user, payload
 
 def _user_from_token(token: str, session: Session) -> Optional[models.User]:
     """Usuario activo del token de sesión, o None si el token no sirve para autenticar."""

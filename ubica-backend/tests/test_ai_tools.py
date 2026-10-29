@@ -71,3 +71,16 @@ def test_chat_con_proveedor_y_tool_calling(client, make_user, make_property, mon
     assert body["provider"] == "groq" and f"/property/{prop.id}" in body["message"]
     assert body["conversation_id"] is not None
     assert calls[0]["tools"] and "Invitado" not in calls[0]["messages"][0]["content"]
+
+
+def test_herramientas_de_mercado_ignoran_borradores(make_property):
+    a = make_property(title="Pública A", status="for-sale", type="piso", price=100000)
+    b = make_property(title="Pública B", status="for-sale", type="piso", price=110000)
+    draft = make_property(title="Borrador", status="draft", type="piso", price=105000)
+    comp = json.loads(run(tools.execute_tool("comparar_propiedades", {"ids": [a.id, b.id, draft.id]}, None, "guest")))
+    assert [p["titulo"] for p in comp["comparativa"]] == ["Pública A", "Pública B"]
+    zona = json.loads(run(tools.execute_tool("analisis_zona", {"zona": "Cartagena"}, None, "guest")))
+    assert zona["total_propiedades"] == 2
+    similares = run(tools.execute_tool("propiedades_similares", {"propiedad_id": a.id}, None, "guest"))
+    assert "Borrador" not in similares and "Pública B" in similares
+    assert "error" in json.loads(run(tools.execute_tool("propiedades_similares", {"propiedad_id": draft.id}, None, "guest")))

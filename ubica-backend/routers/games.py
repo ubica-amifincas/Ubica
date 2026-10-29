@@ -2,7 +2,7 @@
 from datetime import datetime
 from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlmodel import Session, select
 
 import models
@@ -39,7 +39,7 @@ async def save_game_score(score_data: GameScoreRequest, current_user: models.Use
     return {"message": "Score saved successfully!", "score": score_data.score}
 
 @router.get("/api/games/{game_name}/leaderboard", response_model=List[GameScoreResponse])
-async def get_leaderboard(game_name: str, limit: int = 10, session: Session = Depends(get_session)):
+async def get_leaderboard(game_name: str, limit: int = Query(10, ge=1, le=50), session: Session = Depends(get_session)):
     # Join con User para sacar el email o el nombre
     statement = (
         select(models.GameScore, models.User.full_name, models.User.email)

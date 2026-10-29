@@ -2,29 +2,33 @@
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, func, select
 
 import models
 from database import get_session
+from schemas import PublicProperty
 from security import get_user_or_none
-from services.properties import PUBLIC_STATUSES, can_view_property
+from services.properties import PUBLIC_STATUSES, can_manage_property, can_view_property
 
 router = APIRouter()
 
-@router.get("/api/properties", response_model=List[models.Property])
-async def get_properties(skip: int = 0, limit: int = 20, session: Session = Depends(get_session)):
+@router.get("/api/properties", response_model=List[PublicProperty])
+async def get_properties(skip: int = Query(0, ge=0), limit: int = Query(20, ge=1, le=100), session: Session = Depends(get_session)):
     statement = select(models.Property).where(models.Property.status.in_(PUBLIC_STATUSES)).offset(skip).limit(limit)
     results = session.exec(statement).all()
     return results
 
-@router.get("/api/properties/{property_id}", response_model=models.Property)
+@router.get("/api/properties/{property_id}", response_model=None, responses={200: {"model": PublicProperty}})
 async def get_property(property_id: int, current_user: Optional[models.User] = Depends(get_user_or_none), session: Session = Depends(get_session)):
     property_obj = session.get(models.Property, property_id)
     # Los anuncios no publicados solo los ven su propietario, su inmobiliaria y el admin
     if not property_obj or not can_view_property(property_obj, current_user):
         raise HTTPException(status_code=404, detail="Propiedad no encontrada")
-    return property_obj
+    # Ellos reciben el anuncio completo (datos económicos incluidos); el resto, la vista pública
+    if can_manage_property(property_obj, current_user):
+        return property_obj
+    return PublicProperty.model_validate(property_obj)
 
 @router.get("/api/stats/market")
 async def get_market_stats(session: Session = Depends(get_session)):

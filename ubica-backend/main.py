@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from config import CORS_ORIGINS, UPLOAD_DIR
-from routers import admin, ai, auth, games, health, investor, properties, realtor, uploads, user
+from routers import admin, ai, auth, contact, games, health, investor, properties, realtor, uploads, user
 from services.ai.usage import load_ai_usage
 
 # Inicializar FastAPI
@@ -63,7 +63,7 @@ async def startup_event():
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
-for module in (auth, uploads, properties, admin, user, games, realtor, investor, ai, health):
+for module in (auth, uploads, properties, admin, user, games, realtor, investor, ai, contact, health):
     app.include_router(module.router)
 
 # Cargar el contador de uso de IA al inicio

@@ -7,6 +7,7 @@ from sqlmodel import Session, select
 
 import models
 from database import get_session
+from schemas import PublicProperty
 from security import get_current_user
 from services.properties import apply_property_payload, can_view_property, delete_property, property_from_payload
 
@@ -53,7 +54,7 @@ async def delete_user_property(property_id: int, current_user: models.User = Dep
     delete_property(session, p)
     return {"message": "Propiedad eliminada con éxito"}
 
-@router.get("/api/user/favorites", response_model=List[models.Property])
+@router.get("/api/user/favorites", response_model=List[PublicProperty])
 async def get_favorites(current_user: models.User = Depends(get_current_user), session: Session = Depends(get_session)):
     statement = select(models.Property).join(models.Favorite).where(models.Favorite.user_id == current_user.id)
     return [p for p in session.exec(statement).all() if can_view_property(p, current_user)]

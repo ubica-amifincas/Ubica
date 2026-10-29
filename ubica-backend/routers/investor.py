@@ -11,16 +11,27 @@ from security import require_role
 router = APIRouter()
 
 @router.get("/api/investor/dashboard")
-async def get_investor_dashboard(current_user: models.User = Depends(require_role(["investor"]))):
+async def get_investor_dashboard(current_user: models.User = Depends(require_role(["investor"])), session: Session = Depends(get_session)):
+    investments = session.exec(select(models.Investment).where(models.Investment.investor_id == current_user.id)).all()
+    n = len(investments)
+
+    def total(field):
+        return float(sum(getattr(i, field) or 0 for i in investments))
+
+    def average(field):
+        return total(field) / n if n else 0.0
+
+    portfolio_value = total("current_value")
+    total_investment = total("investment_amount")
     return {
-        "portfolio_value": 875000.0,
-        "total_properties": 12,
-        "monthly_income": 5200.0,
-        "average_roi": 8.3,
-        "total_investment": 720000.0,
-        "unrealized_gains": 155000.0,
-        "rental_yield": 7.2,
-        "appreciation_rate": 4.8
+        "portfolio_value": portfolio_value,
+        "total_properties": n,
+        "monthly_income": total("annual_rental_income") / 12,
+        "average_roi": average("roi_percentage"),
+        "total_investment": total_investment,
+        "unrealized_gains": portfolio_value - total_investment,
+        "rental_yield": average("rental_yield"),
+        "appreciation_rate": average("appreciation_rate")
     }
 
 @router.get("/api/investor/portfolio", response_model=List[models.Investment])

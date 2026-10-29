@@ -10,7 +10,7 @@ import models
 from database import get_session
 from schemas import AdminUserCreate, AdminUserUpdate, DashboardStats, User
 from security import hash_password, require_role
-from services.properties import apply_property_payload, assign_realtor, delete_property as delete_property_and_data, property_from_payload
+from services.properties import apply_property_payload, assign_realtor, count_status_this_month, delete_property as delete_property_and_data, property_from_payload
 from services.users import delete_user as delete_user_and_data
 
 router = APIRouter()
@@ -19,16 +19,25 @@ router = APIRouter()
 async def get_admin_dashboard(current_user: models.User = Depends(require_role(["admin"])), session: Session = Depends(get_session)):
     total_properties = session.exec(select(func.count(models.Property.id))).one()
     total_users = session.exec(select(func.count(models.User.id))).one()
-    
+    total_transactions, total_revenue, average_roi = session.exec(select(
+        func.count(models.Investment.id), func.sum(models.Investment.investment_amount), func.avg(models.Investment.roi_percentage))).one()
+
+    users_by_role = {role: 0 for role in ("admin", "realtor", "investor", "user")}
+    for role, n in session.exec(select(models.User.role, func.count(models.User.id)).group_by(models.User.role)).all():
+        users_by_role[role] = users_by_role.get(role, 0) + n
+    properties_by_status = dict(session.exec(select(models.Property.status, func.count(models.Property.id)).group_by(models.Property.status)).all())
+
     return DashboardStats(
         total_properties=total_properties,
         total_users=total_users,
-        total_transactions=45,
-        total_revenue=1250000.0,
-        properties_sold_this_month=12,
-        properties_rented_this_month=8,
-        average_roi=7.8,
-        market_growth=5.2
+        total_transactions=total_transactions,
+        total_revenue=float(total_revenue or 0),
+        properties_sold_this_month=count_status_this_month(session, "sold"),
+        properties_rented_this_month=count_status_this_month(session, "rented"),
+        average_roi=float(average_roi or 0),
+        market_growth=0.0,
+        users_by_role=users_by_role,
+        properties_by_status=properties_by_status,
     )
 
 @router.get("/api/admin/users", response_model=List[User])
