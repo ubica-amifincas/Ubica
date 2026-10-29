@@ -38,6 +38,9 @@ export default function AIChatModal() {
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    // Zona de mensajes: se mantiene pegada abajo salvo que el usuario haya subido a leer
+    const messagesRef = useRef<HTMLDivElement>(null);
+    const stickToBottom = useRef(true);
     const inputRef = useRef<HTMLInputElement>(null);
     const { isAuthenticated } = useAuth();
     const [hasReachedLimit, setHasReachedLimit] = useState(false);
@@ -101,10 +104,39 @@ export default function AIChatModal() {
         };
     }, [isResizing]);
 
-    // Auto-scroll to bottom on new messages
+    const scrollToBottom = (smooth = true) => {
+        const el = messagesRef.current;
+        // Se desplaza solo la zona de mensajes (scrollIntoView movía también la página en el móvil)
+        if (el) el.scrollTo({ top: el.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+    };
+
+    // Nuevos mensajes o "escribiendo…": abajo del todo si estaba abajo
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+        if (stickToBottom.current) scrollToBottom();
+    }, [messages, isLoading]);
+
+    // Al abrirse o cerrarse el teclado del móvil cambia el alto del chat: se mantiene abajo
+    useEffect(() => {
+        const el = messagesRef.current;
+        if (!el) return;
+        const keep = () => { if (stickToBottom.current) scrollToBottom(false); };
+        // El teclado cambia el tamaño de la ventana (y del visualViewport); el observer cubre el resto
+        const afterLayout = () => requestAnimationFrame(keep);
+        window.addEventListener('resize', keep);
+        window.visualViewport?.addEventListener('resize', afterLayout);
+        const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(keep) : null;
+        observer?.observe(el);
+        return () => {
+            window.removeEventListener('resize', keep);
+            window.visualViewport?.removeEventListener('resize', afterLayout);
+            observer?.disconnect();
+        };
+    }, [isOpen, isMinimized]);
+
+    const handleMessagesScroll = () => {
+        const el = messagesRef.current;
+        if (el) stickToBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    };
 
     // Focus input when modal opens and reset state
     useEffect(() => {
@@ -172,6 +204,8 @@ export default function AIChatModal() {
             timestamp: new Date(),
         };
 
+        // Al enviar siempre se baja a la conversación, aunque estuviera leyendo más arriba
+        stickToBottom.current = true;
         setMessages(prev => [...prev, userMessage]);
         setInput('');
         setIsLoading(true);
@@ -407,7 +441,7 @@ export default function AIChatModal() {
                             </div>
 
                             {/* Messages Area */}
-                            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 text-left">
+                            <div ref={messagesRef} onScroll={handleMessagesScroll} className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 space-y-4 text-left">
                                 {messages.map((message, index) => (
                                     <motion.div
                                         key={message.id}
@@ -540,14 +574,17 @@ export default function AIChatModal() {
                                         onChange={(e) => setInput(e.target.value)}
                                         onKeyDown={handleKeyDown}
                                         placeholder="Pregunta sobre propiedades..."
-                                        disabled={isLoading}
-                                        className="flex-1 bg-transparent text-sm text-gray-900 dark:text-white placeholder-gray-400 border-0 focus:outline-none focus:ring-0 disabled:opacity-50"
+                                        enterKeyHint="send"
+                                        className="flex-1 bg-transparent text-sm text-gray-900 dark:text-white placeholder-gray-400 border-0 focus:outline-none focus:ring-0"
                                     />
                                     <motion.button
                                         whileHover={{ scale: 1.1 }}
                                         whileTap={{ scale: 0.9 }}
                                         onClick={sendMessage}
+                                        // Sin esto, pulsar enviar quita el foco a la caja y el móvil cierra el teclado
+                                        onPointerDown={(e) => e.preventDefault()}
                                         disabled={!input.trim() || isLoading}
+                                        aria-label="Enviar"
                                         className="p-2 rounded-lg disabled:opacity-30 transition-all"
                                         style={{
                                             background: input.trim() && !isLoading
