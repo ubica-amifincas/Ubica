@@ -604,9 +604,6 @@ const resources = {
       "ami.cta.title": "¿Elevamos la gestión de tu vivienda?",
       "ami.cta.button": "Habla con nosotros",
       "ami.cta.sub": "O llámanos directamente",
-
-      "ami.transition.p1": "Administración",
-      "ami.transition.p2": "de fincas",
       "ami.hero.rating": "5,0 en Google · 3 opiniones",
       "ami.hero.cta.quote": "Pedir presupuesto",
       "ami.hero.cta.call": "Llamar",
@@ -1416,9 +1413,6 @@ const resources = {
       "ami.cta.title": "Shall we elevate your home management?",
       "ami.cta.button": "Talk to us",
       "ami.cta.sub": "Or call us directly",
-
-      "ami.transition.p1": "Property",
-      "ami.transition.p2": "management",
       "ami.hero.rating": "5.0 on Google · 3 reviews",
       "ami.hero.cta.quote": "Get a quote",
       "ami.hero.cta.call": "Call",

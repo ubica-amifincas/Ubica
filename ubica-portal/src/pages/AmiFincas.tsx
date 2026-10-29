@@ -1,5 +1,4 @@
 import { useState, useEffect, useId } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   BuildingOfficeIcon,
   WrenchScrewdriverIcon,
@@ -21,7 +20,6 @@ import { useLanguage } from '../hooks/useLanguage';
 import { apiService } from '../services/apiService';
 import { ubicaHref } from '../utils/site';
 
-const INTRO_KEY = 'ami-intro-seen';
 const FOUNDED = 2014;
 
 // Datos de contacto (los mismos que la ficha de Google Maps de cada sede)
@@ -29,48 +27,7 @@ const MAIN_PHONE = '676 62 69 33';
 const WHATSAPP_NUMBER = '34676626933';
 const EMAIL = 'info@amifincas.es';
 
-/** La animación de entrada solo la primera vez en la sesión y sin "reducir movimiento". */
-const shouldPlayIntro = () => {
-  try {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
-    return sessionStorage.getItem(INTRO_KEY) !== '1';
-  } catch {
-    return true;
-  }
-};
-
 const tel = (phone: string) => `tel:+34${phone.replace(/\s+/g, '')}`;
-
-const PageTransition = ({ t }: { t: (key: string) => string }) => (
-  <motion.div
-    initial={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    transition={{ duration: 0.6, ease: 'easeInOut' }}
-    className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-50 dark:bg-[#0f172a]"
-  >
-    <motion.div
-      initial={{ y: 16, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6, ease: 'easeOut' }}
-      className="px-6 text-center"
-    >
-      <img src="/ami-fincas/logo-480.webp" alt="" className="mx-auto mb-8 h-28 w-auto md:h-40" />
-      <p className="text-sm font-black uppercase tracking-[0.4em] text-[#23707f] dark:text-[#8fd0c3]">AMI Fincas</p>
-      <p className="mt-3 font-display text-3xl font-black leading-tight text-slate-800 dark:text-white md:text-5xl">
-        {t('ami.transition.p1')}{' '}
-        <span className="bg-gradient-to-r from-[#7fbf6a] to-[#2D8A9D] bg-clip-text text-transparent">{t('ami.transition.p2')}</span>
-      </p>
-      <div className="relative mx-auto mt-10 h-1.5 w-64 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
-        <motion.div
-          initial={{ width: '0%' }}
-          animate={{ width: '100%' }}
-          transition={{ delay: 0.4, duration: 1.6, ease: 'easeInOut' }}
-          className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[#A2D18D] to-[#2D8A9D]"
-        />
-      </div>
-    </motion.div>
-  </motion.div>
-);
 
 function SectionHeading({ eyebrow, title, description, center = true }: { eyebrow?: string; title: string; description?: string; center?: boolean }) {
   return (
@@ -193,16 +150,8 @@ function QuoteForm() {
 
 export default function AmiFincas() {
   const { t } = useLanguage();
-  const [isLoading, setIsLoading] = useState(shouldPlayIntro);
   const years = new Date().getFullYear() - FOUNDED;
   const whatsappHref = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(t('ami.whatsapp.text'))}`;
-
-  useEffect(() => {
-    if (!isLoading) return;
-    try { sessionStorage.setItem(INTRO_KEY, '1'); } catch { /* sin almacenamiento: se vuelve a ver */ }
-    const timer = setTimeout(() => setIsLoading(false), 2200);
-    return () => clearTimeout(timer);
-  }, [isLoading]);
 
   // La barra fija de "Llamar / WhatsApp" en móvil no debe tapar el final de la página
   useEffect(() => {
@@ -252,10 +201,6 @@ export default function AmiFincas() {
 
   return (
     <>
-      <AnimatePresence>
-        {isLoading && <PageTransition t={t} />}
-      </AnimatePresence>
-
       <div className="bg-slate-50 font-sans text-slate-900 dark:bg-[#0f172a] dark:text-white">
         {/* Portada */}
         <section className="relative overflow-hidden pb-16 pt-10 md:pb-24 md:pt-16">

@@ -1,66 +1,49 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowDownTrayIcon, XMarkIcon, DevicePhoneMobileIcon } from '@heroicons/react/24/outline';
+import { useInstallApp } from '../../hooks/useInstallApp';
 
-interface BeforeInstallPromptEvent extends Event {
-    prompt(): Promise<void>;
-    userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-}
+const DISMISS_KEY = 'pwa-install-dismissed';
+const DISMISS_DAYS = 7;
 
+const recentlyDismissed = () => {
+    try {
+        const dismissed = Number(localStorage.getItem(DISMISS_KEY));
+        return dismissed > 0 && Date.now() - dismissed < DISMISS_DAYS * 24 * 60 * 60 * 1000;
+    } catch {
+        return false;
+    }
+};
+
+/**
+ * Aviso flotante para instalar la app, unos segundos después de que el navegador lo permita.
+ * Usa el mismo aviso que el botón "Instalar app" (useInstallApp): el navegador solo deja usarlo una vez.
+ */
 export function PWAInstallPrompt() {
-    const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+    const { canPrompt, install } = useInstallApp();
     const [showBanner, setShowBanner] = useState(false);
-    const [isInstalled, setIsInstalled] = useState(false);
 
     useEffect(() => {
-        // Check if already installed
-        if (window.matchMedia('(display-mode: standalone)').matches) {
-            setIsInstalled(true);
+        if (!canPrompt || recentlyDismissed()) {
+            setShowBanner(false);
             return;
         }
-
-        // Check if user dismissed before (respect for 7 days)
-        const dismissed = localStorage.getItem('pwa-install-dismissed');
-        if (dismissed) {
-            const dismissedTime = parseInt(dismissed, 10);
-            if (Date.now() - dismissedTime < 7 * 24 * 60 * 60 * 1000) return;
-        }
-
-        const handler = (e: Event) => {
-            e.preventDefault();
-            setDeferredPrompt(e as BeforeInstallPromptEvent);
-            // Show banner after a small delay so it doesn't feel intrusive
-            setTimeout(() => setShowBanner(true), 3000);
-        };
-
-        window.addEventListener('beforeinstallprompt', handler);
-
-        // Detect when app is installed
-        window.addEventListener('appinstalled', () => {
-            setIsInstalled(true);
-            setShowBanner(false);
-            setDeferredPrompt(null);
-        });
-
-        return () => window.removeEventListener('beforeinstallprompt', handler);
-    }, []);
+        // Con un pequeño retraso, para no asaltar nada más entrar
+        const timer = setTimeout(() => setShowBanner(true), 3000);
+        return () => clearTimeout(timer);
+    }, [canPrompt]);
 
     const handleInstall = async () => {
-        if (!deferredPrompt) return;
-        await deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-            setShowBanner(false);
-        }
-        setDeferredPrompt(null);
+        await install();
+        setShowBanner(false);
     };
 
     const handleDismiss = () => {
         setShowBanner(false);
-        localStorage.setItem('pwa-install-dismissed', Date.now().toString());
+        try { localStorage.setItem(DISMISS_KEY, Date.now().toString()); } catch { /* se vuelve a ofrecer */ }
     };
 
-    if (isInstalled || !showBanner) return null;
+    if (!showBanner) return null;
 
     return (
         <AnimatePresence>
@@ -76,6 +59,7 @@ export function PWAInstallPrompt() {
 
                     <button
                         onClick={handleDismiss}
+                        aria-label="Ahora no"
                         className="absolute top-3 right-3 p-1 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     >
                         <XMarkIcon className="h-4 w-4" />
