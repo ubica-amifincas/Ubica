@@ -20,6 +20,7 @@ import { panelHome } from '../../utils/panelHome';
 import { isAmiSite, amiHref, ubicaHref } from '../../utils/site';
 import { ThemeToggle } from '../common/ThemeToggle';
 import { LanguageSelector } from '../common/LanguageSelector';
+import InstallAppButton from '../common/InstallAppButton';
 import { useLanguage } from '../../hooks/useLanguage';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../contexts/AuthContext';
@@ -149,6 +150,8 @@ export default function Navbar() {
 
           {/* Desktop Controls */}
           <div className="hidden lg:flex items-center space-x-2">
+            {/* Solo Ubica se instala como app (la web de AMI Fincas no tiene manifiesto) */}
+            {!isAmiSite && <InstallAppButton />}
             <ThemeToggle />
             <LanguageSelector />
 
@@ -343,6 +346,7 @@ export default function Navbar() {
                       <span className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">{t('nav.settings')}</span>
                       <LanguageSelector />
                     </div>
+                    {!isAmiSite && <InstallAppButton variant="menu" onDone={() => setIsMenuOpen(false)} />}
 
                     {isAmiSite ? (
                       <a

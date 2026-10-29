@@ -12,7 +12,9 @@ const UBICA_DESCRIPTION = 'Ubica - Menos búsquedas, más precisión. Portal inm
 const AMI_TITLE = 'AMI Fincas | Administración de fincas en Murcia y Alicante';
 const AMI_DESCRIPTION = 'AMI Fincas: administración de comunidades de propietarios, gestión de alquileres y correduría de seguros en la Región de Murcia y Alicante. Presupuesto sin compromiso.';
 const AMI_ICON = '/ami-fincas/favicon-64.png';
-const UBICA_ICON = '/logo_ubica.png';
+const UBICA_ICON = '/icons/favicon-64.png';
+const AMI_TOUCH_ICON = '/ami-fincas/icon-192.png';
+const UBICA_TOUCH_ICON = '/icons/apple-touch-icon.png';
 
 const ROUTE_TITLES: Record<string, string> = {
     '/': DEFAULT_TITLE,
@@ -92,6 +94,6 @@ export default function useDocumentTitle() {
         setMeta('property', 'og:site_name', isAmi ? 'AMI Fincas' : 'Ubica');
         setLink('canonical', url);
         setLink('icon', isAmi ? AMI_ICON : UBICA_ICON);
-        setLink('apple-touch-icon', isAmi ? AMI_ICON : UBICA_ICON);
+        setLink('apple-touch-icon', isAmi ? AMI_TOUCH_ICON : UBICA_TOUCH_ICON);
     }, [pathname]);
 }

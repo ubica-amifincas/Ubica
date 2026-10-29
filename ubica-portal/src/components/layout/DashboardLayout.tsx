@@ -29,6 +29,7 @@ import { ThemeToggle } from '../common/ThemeToggle';
 import { LanguageSelector } from '../common/LanguageSelector';
 import { useLanguage } from '../../hooks/useLanguage';
 import { useAuth } from '../../contexts/AuthContext';
+import InstallAppButton from '../common/InstallAppButton';
 
 type IconType = React.ComponentType<{ className?: string }>;
 
@@ -273,6 +274,7 @@ function UserMenu({ onLogout }: { onLogout: () => void }) {
           <Link role="menuitem" to="/" className={itemClass}>
             <HomeIcon className="h-4 w-4 text-gray-400" /> {t('panel.goToPortal', 'Ir al portal')}
           </Link>
+          <InstallAppButton variant="item" />
           <button role="menuitem" type="button" onClick={onLogout} className={`${itemClass} border-t border-gray-200 dark:border-gray-700`}>
             <ArrowLeftOnRectangleIcon className="h-4 w-4 text-gray-400" /> {t('dashboard.logout')}
           </button>

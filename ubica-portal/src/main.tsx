@@ -6,6 +6,8 @@ import '@fontsource-variable/inter'
 import '@fontsource-variable/bricolage-grotesque'
 import './index.css'
 import App from './App.tsx'
+// Escucha desde el principio el aviso de "se puede instalar" (puede llegar antes de pintar la app)
+import './hooks/useInstallApp'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
