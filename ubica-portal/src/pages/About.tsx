@@ -34,7 +34,7 @@ export default function About() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
-                className="relative overflow-hidden bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 py-20"
+                className="relative overflow-hidden bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-500 py-20"
             >
                 <div className="container mx-auto px-4 text-center">
                     <motion.div
@@ -76,7 +76,7 @@ export default function About() {
                             transition={{ delay: 0.5 + i * 0.1 }}
                             className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg text-center border border-gray-100 dark:border-gray-700"
                         >
-                            <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
+                            <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-500 bg-clip-text text-transparent">
                                 {stat.value}
                             </div>
                             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{stat.label}</p>
@@ -95,7 +95,7 @@ export default function About() {
                         className="bg-white dark:bg-gray-800 rounded-3xl p-8 md:p-12 shadow-lg border border-gray-100 dark:border-gray-700"
                     >
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="bg-gradient-to-r from-emerald-500 to-teal-500 p-3 rounded-xl">
+                            <div className="bg-gradient-to-r from-emerald-500 to-emerald-500 p-3 rounded-xl">
                                 <BuildingOffice2Icon className="h-6 w-6 text-white" />
                             </div>
                             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">El Propósito de Ubica</h2>
@@ -111,7 +111,7 @@ export default function About() {
             </div>
 
             {/* Values */}
-            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-gray-800 dark:to-gray-900 py-16">
+            <div className="bg-gradient-to-r from-emerald-50 to-emerald-50 dark:from-gray-800 dark:to-gray-900 py-16">
                 <div className="container mx-auto px-4">
                     <motion.h2
                         initial={{ opacity: 0, y: 20 }}
@@ -129,7 +129,7 @@ export default function About() {
                                 transition={{ delay: 0.7 + i * 0.1 }}
                                 className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-shadow"
                             >
-                                <div className="inline-flex items-center justify-center w-12 h-12 mb-4 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500">
+                                <div className="inline-flex items-center justify-center w-12 h-12 mb-4 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-500">
                                     <val.icon className="w-6 h-6 text-white" />
                                 </div>
                                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">{val.title}</h3>
@@ -145,7 +145,7 @@ export default function About() {
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 rounded-3xl p-8 md:p-12 text-center shadow-2xl"
+                    className="bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-500 rounded-3xl p-8 md:p-12 text-center shadow-2xl"
                 >
                     <h2 className="text-3xl font-bold text-white mb-4">{t('about.cta.title')}</h2>
                     <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">

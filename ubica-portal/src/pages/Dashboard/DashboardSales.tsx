@@ -64,7 +64,7 @@ export default function DashboardSales() {
             <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Propiedades vendidas</p>
             <p className="text-2xl font-bold text-gray-900 dark:text-white">{sold.length}</p>
           </div>
-          <div className="p-3 rounded-full bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400">
+          <div className="p-3 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
             <BanknotesIcon className="h-6 w-6" />
           </div>
         </div>

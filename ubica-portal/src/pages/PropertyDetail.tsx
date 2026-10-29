@@ -264,7 +264,7 @@ export default function PropertyDetail() {
           </h1>
           <Link
             to="/"
-            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+            className="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300"
           >
             Volver al inicio
           </Link>
@@ -323,7 +323,7 @@ export default function PropertyDetail() {
             {/* Image Gallery */}
             <motion.div
               className="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden mb-8"
-              initial={{ opacity: 0, y: 20 }}
+              initial={false}
               animate={{ opacity: 1, y: 0 }}
             >
               <div
@@ -341,7 +341,7 @@ export default function PropertyDetail() {
                     onError={handleImageError}
                   />
                 ) : (
-                  <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-gray-700 dark:via-gray-750 dark:to-gray-800">
+                  <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-emerald-50 via-emerald-50 to-emerald-50 dark:from-gray-700 dark:via-gray-750 dark:to-gray-800">
                     <div className="rounded-full bg-white/60 dark:bg-gray-600/40 p-6 mb-3 shadow-inner">
                       <HomeIcon className="h-16 w-16 text-emerald-400 dark:text-emerald-500" />
                     </div>
@@ -388,7 +388,7 @@ export default function PropertyDetail() {
             {/* Property Information */}
             <motion.div
               className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-8"
-              initial={{ opacity: 0, y: 20 }}
+              initial={false}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
             >
@@ -408,7 +408,7 @@ export default function PropertyDetail() {
                   </a>
                 </div>
                 <div className="w-full md:w-auto flex flex-row md:flex-col justify-between items-center md:items-end gap-2 bg-emerald-50/50 dark:bg-emerald-900/10 p-3 md:p-0 rounded-2xl md:bg-transparent">
-                  <div className="text-2xl md:text-3xl font-black bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
+                  <div className="text-2xl md:text-3xl font-black bg-gradient-to-r from-emerald-600 to-emerald-500 bg-clip-text text-transparent">
                     {formatPrice(property.price)}
                   </div>
                   <span className="inline-block px-3 py-1 bg- emerald-100/50 text-emerald-700 text-xs font-bold rounded-full dark:bg-emerald-900/30 dark:text-emerald-400 uppercase tracking-wider">
@@ -474,7 +474,7 @@ export default function PropertyDetail() {
                       key={index}
                       className="flex items-center space-x-2 text-gray-600 dark:text-gray-400"
                     >
-                      <StarIcon className="h-4 w-4 text-blue-600" />
+                      <StarIcon className="h-4 w-4 text-emerald-600" />
                       <span className="text-sm">{feature}</span>
                     </div>
                   ))}
@@ -483,13 +483,13 @@ export default function PropertyDetail() {
 
               {/* Investment Data */}
               {property.investmentData && (
-                <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div className="mt-6 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
                     Datos de Inversión
                   </h2>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div>
-                      <div className="text-lg font-bold text-blue-600">
+                      <div className="text-lg font-bold text-emerald-600">
                         {property.investmentData.roi}%
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -497,7 +497,7 @@ export default function PropertyDetail() {
                       </div>
                     </div>
                     <div>
-                      <div className="text-lg font-bold text-green-600">
+                      <div className="text-lg font-bold text-emerald-600">
                         {property.investmentData.rentalYield}%
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -505,7 +505,7 @@ export default function PropertyDetail() {
                       </div>
                     </div>
                     <div>
-                      <div className="text-lg font-bold text-purple-600">
+                      <div className="text-lg font-bold text-emerald-600">
                         {property.investmentData.monthsOnMarket}
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -520,7 +520,7 @@ export default function PropertyDetail() {
             {/* Map */}
             <motion.div
               className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden"
-              initial={{ opacity: 0, y: 20 }}
+              initial={false}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
@@ -568,7 +568,7 @@ export default function PropertyDetail() {
             {/* Contact Form */}
             <motion.div
               className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-8"
-              initial={{ opacity: 0, x: 20 }}
+              initial={false}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
             >
@@ -578,7 +578,7 @@ export default function PropertyDetail() {
 
               <div className="space-y-4">
                 <motion.button
-                  className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-4 py-3 rounded-lg hover:from-emerald-700 hover:to-teal-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                  className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-emerald-600 to-emerald-600 text-white px-4 py-3 rounded-lg hover:from-emerald-700 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl"
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -602,7 +602,7 @@ export default function PropertyDetail() {
                       {showContactForm && (
                         <motion.div
                           className="mt-4"
-                          initial={{ opacity: 0, height: 0 }}
+                          initial={false}
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
                         >
@@ -625,7 +625,7 @@ export default function PropertyDetail() {
                           </form>
                           {messageStatus === 'success' && (
                             <motion.p
-                              initial={{ opacity: 0, y: 5 }}
+                              initial={false}
                               animate={{ opacity: 1, y: 0 }}
                               className="text-xs text-emerald-600 mt-2 text-center font-medium"
                             >
@@ -659,7 +659,7 @@ export default function PropertyDetail() {
             {similarProperties.length > 0 && (
               <motion.div
                 className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6"
-                initial={{ opacity: 0, x: 20 }}
+                initial={false}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 }}
               >

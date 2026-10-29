@@ -144,7 +144,7 @@ export default function TasadorExpress() {
                         <ChevronLeftIcon className="w-5 h-5 mr-1" />
                         Volver a Juegos
                     </Link>
-                    <div className="font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500 flex items-center gap-2">
+                    <div className="font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-emerald-500 flex items-center gap-2">
                         <CalculatorIcon className="w-6 h-6 text-emerald-500" />
                         Tasador Exprés
                     </div>
@@ -184,7 +184,7 @@ export default function TasadorExpress() {
                                 <div className="space-y-4">
                                     <button
                                         onClick={startGame}
-                                        className="w-full bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-bold text-xl py-4 rounded-xl shadow-lg hover:shadow-xl hover:from-emerald-500 hover:to-teal-400 transition-all transform hover:-translate-y-1"
+                                        className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-bold text-xl py-4 rounded-xl shadow-lg hover:shadow-xl hover:from-emerald-500 hover:to-emerald-400 transition-all transform hover:-translate-y-1"
                                     >
                                         {!user ? 'Jugar Ronda de Prueba' : 'Empezar Partida'}
                                     </button>
@@ -356,7 +356,7 @@ export default function TasadorExpress() {
 
                             <div className="my-8 space-y-2">
                                 <p className="text-gray-500 dark:text-gray-400 text-lg uppercase tracking-widest font-semibold">Puntuación Final</p>
-                                <div className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">
+                                <div className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-emerald-500">
                                     {score}
                                 </div>
                             </div>
@@ -374,7 +374,7 @@ export default function TasadorExpress() {
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
                                 <button
                                     onClick={startGame}
-                                    className="px-8 py-3 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:from-emerald-500 hover:to-teal-400 transition-all transform hover:-translate-y-0.5"
+                                    className="px-8 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:from-emerald-500 hover:to-emerald-400 transition-all transform hover:-translate-y-0.5"
                                 >
                                     Jugar de Nuevo
                                 </button>

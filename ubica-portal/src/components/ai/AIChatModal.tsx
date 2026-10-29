@@ -326,7 +326,7 @@ export default function AIChatModal() {
                                      className="absolute top-0 left-0 w-10 h-10 cursor-nwse-resize z-[10001] group flex items-start justify-start p-1"
                                      title="Arrastra para redimensionar"
                                  >
-                                     <div className={`w-2 h-2 rounded-full m-1 transition-all duration-300 ${isResizing ? 'bg-violet-500 scale-150 shadow-[0_0_10px_rgba(139,92,246,0.5)]' : 'bg-gray-300 dark:bg-gray-600 group-hover:bg-violet-400 group-hover:scale-125'}`} />
+                                     <div className={`w-2 h-2 rounded-full m-1 transition-all duration-300 ${isResizing ? 'bg-emerald-500 scale-150 shadow-[0_0_10px_rgba(139,92,246,0.5)]' : 'bg-gray-300 dark:bg-gray-600 group-hover:bg-emerald-400 group-hover:scale-125'}`} />
                                  </div>
                              )}
 
@@ -364,7 +364,7 @@ export default function AIChatModal() {
                                         </div>
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-bold bg-gradient-to-r from-violet-600 via-cyan-500 to-emerald-500 bg-clip-text text-transparent">
+                                        <h3 className="text-sm font-bold bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-500 bg-clip-text text-transparent">
                                             Ubica IA
                                         </h3>
                                         <p className="text-xs text-gray-500 dark:text-gray-400">Asistente inmobiliario</p>
@@ -386,7 +386,7 @@ export default function AIChatModal() {
                                         whileHover={{ scale: 1.1 }}
                                         whileTap={{ scale: 0.9 }}
                                         onClick={(e) => { e.stopPropagation(); toggleFullScreen(); }}
-                                        className={`p-2 rounded-lg transition-colors hidden sm:block ${isFullScreen ? 'text-violet-500 bg-violet-50 dark:bg-violet-900/20' : 'text-gray-400 hover:text-cyan-500 hover:bg-cyan-50 dark:hover:bg-cyan-900/20'}`}
+                                        className={`p-2 rounded-lg transition-colors hidden sm:block ${isFullScreen ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'text-gray-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'}`}
                                         title={isFullScreen ? "Salir de pantalla completa" : "Pantalla completa"}
                                     >
                                         <ArrowsPointingOutIcon className="h-4 w-4" />
@@ -422,12 +422,12 @@ export default function AIChatModal() {
                                         <motion.div
                                             whileHover={{ scale: 1.01 }}
                                             className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed relative ${message.role === 'user'
-                                                ? 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white rounded-br-md shadow-md'
+                                                ? 'bg-gradient-to-br from-emerald-500 to-emerald-500 text-white rounded-br-md shadow-md'
                                                 : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-md border border-gray-100 dark:border-gray-700 shadow-sm'
                                                 }`}
                                         >
                                             {message.role === 'assistant' && (
-                                                <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-violet-500/5 to-cyan-500/5 pointer-events-none" />
+                                                <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-500/5 to-emerald-500/5 pointer-events-none" />
                                             )}
                                             <div className="relative z-10">
                                                 {message.role === 'assistant' ? (
@@ -438,14 +438,14 @@ export default function AIChatModal() {
                                                                 ul: ({ children }) => <ul className="list-disc ml-4 mb-2">{children}</ul>,
                                                                 ol: ({ children }) => <ol className="list-decimal ml-4 mb-2">{children}</ol>,
                                                                 li: ({ children }) => <li className="mb-1">{children}</li>,
-                                                                strong: ({ children }) => <strong className="font-bold text-violet-600 dark:text-violet-400">{children}</strong>,
+                                                                strong: ({ children }) => <strong className="font-bold text-emerald-600 dark:text-emerald-400">{children}</strong>,
                                                                 code: ({ children }) => <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded font-mono text-xs">{children}</code>,
                                                                 a: ({ node, ...props }) => {
                                                                     const isInternal = props.href?.startsWith('/');
                                                                     if (isInternal) {
-                                                                        return <Link to={props.href!} onClick={minimizeChat} className="inline-flex items-center gap-1 px-3 py-1 mt-1 bg-violet-600 text-white rounded-md font-semibold text-xs hover:bg-violet-700 transition-all shadow-md active:scale-95">{props.children} →</Link>;
+                                                                        return <Link to={props.href!} onClick={minimizeChat} className="inline-flex items-center gap-1 px-3 py-1 mt-1 bg-emerald-600 text-white rounded-md font-semibold text-xs hover:bg-emerald-700 transition-all shadow-md active:scale-95">{props.children} →</Link>;
                                                                     }
-                                                                    return <a {...props} target="_blank" rel="noopener noreferrer" className="text-violet-600 dark:text-violet-400 font-semibold hover:underline" />;
+                                                                    return <a {...props} target="_blank" rel="noopener noreferrer" className="text-emerald-600 dark:text-emerald-400 font-semibold hover:underline" />;
                                                                 }
                                                             }}
                                                         >
@@ -471,12 +471,12 @@ export default function AIChatModal() {
                                             <motion.div
                                                 animate={{ scale: [1, 1.3, 1] }}
                                                 transition={{ repeat: Infinity, duration: 0.8, delay: 0 }}
-                                                className="w-2 h-2 rounded-full bg-violet-400"
+                                                className="w-2 h-2 rounded-full bg-emerald-400"
                                             />
                                             <motion.div
                                                 animate={{ scale: [1, 1.3, 1] }}
                                                 transition={{ repeat: Infinity, duration: 0.8, delay: 0.2 }}
-                                                className="w-2 h-2 rounded-full bg-cyan-400"
+                                                className="w-2 h-2 rounded-full bg-emerald-400"
                                             />
                                             <motion.div
                                                 animate={{ scale: [1, 1.3, 1] }}
@@ -490,9 +490,9 @@ export default function AIChatModal() {
                                     <motion.div
                                         initial={{ opacity: 0, scale: 0.95 }}
                                         animate={{ opacity: 1, scale: 1 }}
-                                        className="p-4 rounded-xl bg-violet-50 dark:bg-violet-900/20 border border-violet-100 dark:border-violet-800 text-center space-y-3"
+                                        className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 text-center space-y-3"
                                     >
-                                        <p className="text-sm font-medium text-violet-800 dark:text-violet-300">
+                                        <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
                                             {isAuthenticated
                                                 ? "Has agotado tus consultas gratuitas. Si necesitas más, escríbenos y te ayudamos."
                                                 : "Para seguir usando nuestro asistente de IA gratis, por favor regístrate."}
@@ -501,7 +501,7 @@ export default function AIChatModal() {
                                             {isAuthenticated ? (
                                                 <Link
                                                     to="/contact"
-                                                    className="px-4 py-2 bg-violet-600 text-white text-xs font-bold rounded-lg hover:bg-violet-700 transition-colors"
+                                                    className="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 transition-colors"
                                                 >
                                                     Contactar
                                                 </Link>
@@ -509,13 +509,13 @@ export default function AIChatModal() {
                                                 <>
                                                     <Link
                                                         to="/login"
-                                                        className="px-4 py-2 bg-white dark:bg-gray-800 text-violet-600 dark:text-violet-400 text-xs font-bold rounded-lg border border-violet-200 dark:border-violet-700 hover:bg-violet-50 transition-colors"
+                                                        className="px-4 py-2 bg-white dark:bg-gray-800 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded-lg border border-emerald-200 dark:border-emerald-700 hover:bg-emerald-50 transition-colors"
                                                     >
                                                         Iniciar Sesión
                                                     </Link>
                                                     <Link
                                                         to="/register"
-                                                        className="px-4 py-2 bg-violet-600 text-white text-xs font-bold rounded-lg hover:bg-violet-700 transition-colors"
+                                                        className="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 transition-colors"
                                                     >
                                                         Registrarse Gratis
                                                     </Link>
@@ -530,7 +530,7 @@ export default function AIChatModal() {
 
                             {/* Input Area */}
                             <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
-                                <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-2 border border-gray-200 dark:border-gray-700 focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-100 dark:focus-within:ring-violet-900 transition-all">
+                                <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-2 border border-gray-200 dark:border-gray-700 focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-100 dark:focus-within:ring-emerald-900 transition-all">
                                     <input
                                         ref={inputRef}
                                         type="text"

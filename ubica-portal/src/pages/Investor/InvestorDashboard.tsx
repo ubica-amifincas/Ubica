@@ -195,9 +195,9 @@ const InvestorDashboard: React.FC = () => {
         <div className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <MetricCard label="Valor del Portfolio" value={eur(stats.portfolio_value)} hint={`Invertido: ${eur(stats.total_investment)}`} icon={CurrencyEuroIcon} color="text-emerald-600" />
-            <MetricCard label="Plusvalía latente" value={eur(stats.unrealized_gains)} hint={`Revalorización media ${pct(stats.appreciation_rate)}`} icon={ArrowTrendingUpIcon} color="text-teal-600" />
+            <MetricCard label="Plusvalía latente" value={eur(stats.unrealized_gains)} hint={`Revalorización media ${pct(stats.appreciation_rate)}`} icon={ArrowTrendingUpIcon} color="text-emerald-600" />
             <MetricCard label="Ingresos por alquiler" value={eur(stats.monthly_income)} hint="Al mes" icon={BanknotesIcon} color="text-yellow-600" />
-            <MetricCard label="ROI medio" value={pct(stats.average_roi)} hint={`Rentabilidad alquiler ${pct(stats.rental_yield)}`} icon={BuildingOfficeIcon} color="text-cyan-600" />
+            <MetricCard label="ROI medio" value={pct(stats.average_roi)} hint={`Rentabilidad alquiler ${pct(stats.rental_yield)}`} icon={BuildingOfficeIcon} color="text-emerald-600" />
           </div>
 
           {portfolio.length === 0 && (
@@ -291,7 +291,7 @@ const InvestorDashboard: React.FC = () => {
                         </div>
                         <div>
                           <p className="text-xs text-gray-500 dark:text-gray-400">ROI</p>
-                          <p className={`text-sm font-semibold ${row.roi_percentage >= 0 ? 'text-green-600' : 'text-red-600'}`}>{pct(row.roi_percentage)}</p>
+                          <p className={`text-sm font-semibold ${row.roi_percentage >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{pct(row.roi_percentage)}</p>
                         </div>
                       </div>
                       {row.purchase_date && (

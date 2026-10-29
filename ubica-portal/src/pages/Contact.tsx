@@ -121,14 +121,14 @@ export default function Contact() {
                 {/* Header */}
                 <div className="max-w-3xl mx-auto text-center mb-16">
                     <motion.h1
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={false}
                         animate={{ opacity: 1, y: 0 }}
                         className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6"
                     >
                         {t('contact.title')}
                     </motion.h1>
                     <motion.p
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={false}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
                         className="text-xl text-gray-600 dark:text-gray-400"
@@ -144,7 +144,7 @@ export default function Contact() {
                         {contactInfo.map((info, i) => (
                             <motion.div
                                 key={info.title}
-                                initial={{ opacity: 0, x: -20 }}
+                                initial={false}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: i * 0.1 }}
                                 className="flex items-start gap-4"
@@ -181,7 +181,7 @@ export default function Contact() {
                     {/* Contact Form */}
                     <div className="lg:col-span-2">
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
+                            initial={false}
                             animate={{ opacity: 1, scale: 1 }}
                             className="bg-white dark:bg-gray-800 rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 dark:border-gray-700"
                         >
@@ -308,7 +308,7 @@ export default function Contact() {
                                 {formStatus === 'success' && (
                                     <motion.p
                                         role="status"
-                                        initial={{ opacity: 0, y: 10 }}
+                                        initial={false}
                                         animate={{ opacity: 1, y: 0 }}
                                         className="text-emerald-600 dark:text-emerald-400 text-center font-medium"
                                     >
@@ -318,7 +318,7 @@ export default function Contact() {
                                 {formStatus === 'error' && (
                                     <motion.p
                                         role="alert"
-                                        initial={{ opacity: 0, y: 10 }}
+                                        initial={false}
                                         animate={{ opacity: 1, y: 0 }}
                                         className="text-red-600 dark:text-red-400 text-center font-medium"
                                     >

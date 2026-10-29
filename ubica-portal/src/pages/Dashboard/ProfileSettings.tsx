@@ -34,7 +34,7 @@ const ProfileSettings: React.FC = () => {
                 </div>
 
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <div className="h-24 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600" />
+                    <div className="h-24 bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600" />
                     <div className="px-6 pb-6">
                         <div className="flex items-end -mt-12 mb-6">
                             <div className="h-24 w-24 rounded-full border-4 border-white dark:border-gray-800 shadow-lg overflow-hidden bg-gray-200 dark:bg-gray-600">

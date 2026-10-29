@@ -81,28 +81,28 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const getIcon = (type: Notification['type']) => {
     switch (type) {
       case 'success':
-        return <CheckCircleIcon className="h-5 w-5 text-green-400" />;
+        return <CheckCircleIcon className="h-5 w-5 text-emerald-400" />;
       case 'error':
         return <XCircleIcon className="h-5 w-5 text-red-400" />;
       case 'warning':
         return <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400" />;
       case 'info':
-        return <InformationCircleIcon className="h-5 w-5 text-blue-400" />;
+        return <InformationCircleIcon className="h-5 w-5 text-emerald-400" />;
       default:
-        return <InformationCircleIcon className="h-5 w-5 text-blue-400" />;
+        return <InformationCircleIcon className="h-5 w-5 text-emerald-400" />;
     }
   };
 
   const getColorClasses = (type: Notification['type']) => {
     switch (type) {
       case 'success':
-        return 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800';
+        return 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800';
       case 'error':
         return 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800';
       case 'warning':
         return 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800';
       case 'info':
-        return 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800';
+        return 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800';
       default:
         return 'bg-gray-50 border-gray-200 dark:bg-gray-900/20 dark:border-gray-800';
     }
@@ -111,13 +111,13 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const getTitleColorClasses = (type: Notification['type']) => {
     switch (type) {
       case 'success':
-        return 'text-green-800 dark:text-green-300';
+        return 'text-emerald-800 dark:text-emerald-300';
       case 'error':
         return 'text-red-800 dark:text-red-300';
       case 'warning':
         return 'text-yellow-800 dark:text-yellow-300';
       case 'info':
-        return 'text-blue-800 dark:text-blue-300';
+        return 'text-emerald-800 dark:text-emerald-300';
       default:
         return 'text-gray-800 dark:text-gray-300';
     }
@@ -126,13 +126,13 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const getMessageColorClasses = (type: Notification['type']) => {
     switch (type) {
       case 'success':
-        return 'text-green-700 dark:text-green-400';
+        return 'text-emerald-700 dark:text-emerald-400';
       case 'error':
         return 'text-red-700 dark:text-red-400';
       case 'warning':
         return 'text-yellow-700 dark:text-yellow-400';
       case 'info':
-        return 'text-blue-700 dark:text-blue-400';
+        return 'text-emerald-700 dark:text-emerald-400';
       default:
         return 'text-gray-700 dark:text-gray-400';
     }
@@ -185,10 +185,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                     onClick={() => removeNotification(notification.id)}
                     className={`
                       inline-flex rounded-md p-1.5 transition-colors
-                      ${notification.type === 'success' ? 'text-green-500 hover:bg-green-100 dark:hover:bg-green-800/30' : ''}
+                      ${notification.type === 'success' ? 'text-emerald-500 hover:bg-emerald-100 dark:hover:bg-emerald-800/30' : ''}
                       ${notification.type === 'error' ? 'text-red-500 hover:bg-red-100 dark:hover:bg-red-800/30' : ''}
                       ${notification.type === 'warning' ? 'text-yellow-500 hover:bg-yellow-100 dark:hover:bg-yellow-800/30' : ''}
-                      ${notification.type === 'info' ? 'text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-800/30' : ''}
+                      ${notification.type === 'info' ? 'text-emerald-500 hover:bg-emerald-100 dark:hover:bg-emerald-800/30' : ''}
                     `}
                   >
                     <XMarkIcon className="h-4 w-4" />

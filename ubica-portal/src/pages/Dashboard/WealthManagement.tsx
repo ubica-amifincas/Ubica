@@ -172,7 +172,7 @@ export default function WealthManagement() {
                     <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Pasivos Totales</p>
                     <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">€{totalLiabilities.toLocaleString()}</p>
                 </div>
-                <div className="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-lg p-6 shadow-lg text-center transform md:scale-105 transition-transform duration-300 flex flex-col items-center justify-center border border-emerald-500">
+                <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-lg p-6 shadow-lg text-center transform md:scale-105 transition-transform duration-300 flex flex-col items-center justify-center border border-emerald-500">
                     <p className="text-sm font-medium text-emerald-100 uppercase tracking-wide">Patrimonio Neto (Net Worth)</p>
                     <p className="text-4xl font-extrabold text-white mt-2">€{netWorth.toLocaleString()}</p>
                 </div>
@@ -186,7 +186,7 @@ export default function WealthManagement() {
                     exit={{ opacity: 0, height: 0 }}
                     className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden"
                 >
-                    <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20">
+                    <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-emerald-50 to-emerald-50 dark:from-emerald-900/20 dark:to-emerald-900/20">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                             <ChartBarIcon className="h-5 w-5 text-emerald-600" />
                             Simulador Financiero
@@ -257,7 +257,7 @@ export default function WealthManagement() {
                                 <div className="space-y-3">
                                     <div className="flex justify-between">
                                         <span className="text-sm text-gray-600 dark:text-gray-400">Ingresos</span>
-                                        <span className="text-sm font-semibold text-green-600">+€{monthlyIncome.toLocaleString()}</span>
+                                        <span className="text-sm font-semibold text-emerald-600">+€{monthlyIncome.toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-sm text-gray-600 dark:text-gray-400">Gastos</span>
@@ -265,7 +265,7 @@ export default function WealthManagement() {
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-sm text-gray-600 dark:text-gray-400">Inversión</span>
-                                        <span className="text-sm font-semibold text-blue-600">€{monthlyInvestment.toLocaleString()}</span>
+                                        <span className="text-sm font-semibold text-emerald-600">€{monthlyInvestment.toLocaleString()}</span>
                                     </div>
                                     <hr className="border-gray-200 dark:border-gray-600" />
                                     <div className="flex justify-between">
@@ -289,11 +289,11 @@ export default function WealthManagement() {
                                 <div className="space-y-3">
                                     <div className="flex justify-between">
                                         <span className="text-sm text-gray-600 dark:text-gray-400">Ahorro anual</span>
-                                        <span className="text-sm font-semibold text-green-600">€{annualSavings.toLocaleString()}</span>
+                                        <span className="text-sm font-semibold text-emerald-600">€{annualSavings.toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-sm text-gray-600 dark:text-gray-400">Inversión anual</span>
-                                        <span className="text-sm font-semibold text-blue-600">€{annualInvestment.toLocaleString()}</span>
+                                        <span className="text-sm font-semibold text-emerald-600">€{annualInvestment.toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-sm text-gray-600 dark:text-gray-400">Total aportado ({years}a)</span>
@@ -306,7 +306,7 @@ export default function WealthManagement() {
                                     <hr className="border-gray-200 dark:border-gray-600" />
                                     <div className="flex justify-between">
                                         <span className="text-sm text-gray-600 dark:text-gray-400">Valor inversiones</span>
-                                        <span className="text-lg font-bold text-blue-600">€{Math.round(futureInvestmentValue).toLocaleString()}</span>
+                                        <span className="text-lg font-bold text-emerald-600">€{Math.round(futureInvestmentValue).toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-600">
                                         <span className="text-sm font-medium text-gray-900 dark:text-white">Patrimonio neto proyectado</span>
@@ -394,7 +394,7 @@ export default function WealthManagement() {
                 >
                     <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-                            <ArrowTrendingUpIcon className="h-6 w-6 mr-2 text-green-500" />
+                            <ArrowTrendingUpIcon className="h-6 w-6 mr-2 text-emerald-500" />
                             Mis Activos (Assets)
                         </h3>
                         <button

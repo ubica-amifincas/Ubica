@@ -90,7 +90,7 @@ export default function DashboardInvestments() {
             <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Rentabilidad neta media</p>
             <p className="text-2xl font-bold text-gray-900 dark:text-white">{withData.length ? `${weightedRoi.toFixed(1)} %` : '—'}</p>
           </div>
-          <div className="p-3 rounded-full bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400">
+          <div className="p-3 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
             <ArrowTrendingUpIcon className="h-6 w-6" />
           </div>
         </div>
@@ -108,7 +108,7 @@ export default function DashboardInvestments() {
             <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Propiedades con datos</p>
             <p className="text-2xl font-bold text-gray-900 dark:text-white">{withData.length} / {properties.length}</p>
           </div>
-          <div className="p-3 rounded-full bg-cyan-50 text-cyan-600 dark:bg-cyan-900/20 dark:text-cyan-400">
+          <div className="p-3 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
             <CalculatorIcon className="h-6 w-6" />
           </div>
         </div>
@@ -152,7 +152,7 @@ export default function DashboardInvestments() {
                         Coste {eur(p.totalCost || p.purchasePrice || 0)} · {eur((p.monthlyIncome || 0) - (p.monthlyCost || 0))}/mes netos
                       </p>
                     </div>
-                    <p className={`text-lg font-bold whitespace-nowrap ${roi >= 0 ? 'text-green-600' : 'text-red-600'}`}>{roi.toFixed(1)} %</p>
+                    <p className={`text-lg font-bold whitespace-nowrap ${roi >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{roi.toFixed(1)} %</p>
                   </div>
                 ))}
             </div>

@@ -162,7 +162,7 @@ export default function Footer() {
 
             {/* Ubica Info moved here */}
             <div className="flex-1 max-w-md text-center sm:text-left space-y-2">
-              <h3 className="text-xl font-bold bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 bg-clip-text text-transparent">
+              <h3 className="text-xl font-bold bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-500 bg-clip-text text-transparent">
                 Ubica
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -170,7 +170,7 @@ export default function Footer() {
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                 {t('footer.slogan').split(t('footer.precision'))[0]}
-                <span className="font-bold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
+                <span className="font-bold bg-gradient-to-r from-emerald-600 to-emerald-500 bg-clip-text text-transparent">
                   {t('footer.precision')}
                 </span>
                 {t('footer.slogan').split(t('footer.precision'))[1]}

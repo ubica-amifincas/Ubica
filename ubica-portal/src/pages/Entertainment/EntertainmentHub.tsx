@@ -15,7 +15,7 @@ export default function EntertainmentHub() {
             description: 'Pon a prueba tu "ojo clínico" inmobiliario. Adivina el precio de mercado de distintas propiedades basándote en sus características.',
             icon: CalculatorIcon,
             path: '/entretenimiento/tasador',
-            color: 'from-emerald-500 to-teal-500',
+            color: 'from-emerald-500 to-emerald-500',
             requiresAuth: false, // The demo is free, but the full game requires login
         },
         {
@@ -24,7 +24,7 @@ export default function EntertainmentHub() {
             description: 'Demuestra tu pulso de arquitecto. Apila bloques usando físicas reales para construir el rascacielos más alto posible.',
             icon: BuildingOffice2Icon,
             path: '/entretenimiento/balance',
-            color: 'from-sky-500 to-blue-600',
+            color: 'from-emerald-500 to-emerald-600',
             requiresAuth: true, // Only for registered users (global rankings)
         }
     ];
@@ -38,7 +38,7 @@ export default function EntertainmentHub() {
                         animate={{ opacity: 1, y: 0 }}
                         className="text-4xl font-extrabold text-gray-900 dark:text-white sm:text-5xl"
                     >
-                        Ubica <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500">Play</span>
+                        Ubica <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-emerald-500">Play</span>
                     </motion.h1>
                     <motion.p
                         initial={{ opacity: 0 }}
@@ -80,7 +80,7 @@ export default function EntertainmentHub() {
                                         <div>
                                             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Requiere cuenta gratuita</h3>
                                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Regístrate para jugar al juego completo, guardar tus puntuaciones y competir en el ranking mensual.</p>
-                                            <Link to="/register" className="mt-2 inline-block text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
+                                            <Link to="/register" className="mt-2 inline-block text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:underline">
                                                 Crear cuenta ahora
                                             </Link>
                                         </div>

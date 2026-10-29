@@ -217,10 +217,10 @@ export default function MessagesPanel() {
         >
             <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center gap-2">
-                    <ChatBubbleLeftRightIcon className="w-5 h-5 text-purple-500" />
+                    <ChatBubbleLeftRightIcon className="w-5 h-5 text-emerald-500" />
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Mis Mensajes</h3>
                     {conversations.length > 0 && (
-                        <span className="ml-auto text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 px-2 py-0.5 rounded-full">
+                        <span className="ml-auto text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 px-2 py-0.5 rounded-full">
                             {conversations.length} conversación{conversations.length !== 1 ? 'es' : ''}
                         </span>
                     )}
@@ -250,7 +250,7 @@ export default function MessagesPanel() {
                                 transition={{ delay: idx * 0.05 }}
                             >
                                 {/* Avatar */}
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
                                     {conv.other_user_name.charAt(0).toUpperCase()}
                                 </div>
 

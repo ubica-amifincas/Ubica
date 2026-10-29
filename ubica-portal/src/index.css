@@ -27,7 +27,13 @@
   }
 
   body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+  }
+
+  /* Titulares con la letra de marca; los precios usan font-display + tabular-nums */
+  h1, h2, h3 {
+    font-family: 'Bricolage Grotesque Variable', 'Inter Variable', system-ui, sans-serif;
+    letter-spacing: -0.01em;
   }
 }
 

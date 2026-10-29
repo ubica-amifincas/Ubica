@@ -16,7 +16,7 @@ const sizeClasses = {
 };
 
 const colorClasses = {
-  blue: 'text-blue-600',
+  blue: 'text-emerald-600',
   gray: 'text-gray-600',
   white: 'text-white'
 };

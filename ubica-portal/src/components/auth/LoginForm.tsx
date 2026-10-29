@@ -135,7 +135,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ isEmbedded }) => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-14 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-black rounded-xl shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 tracking-wider uppercase text-sm"
+            className="w-full h-14 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-black rounded-xl shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 tracking-wider uppercase text-sm"
           >
             {loading ? t('auth.logging_in') : t('auth.login_button')}
           </button>

@@ -164,7 +164,7 @@ export default function Navbar() {
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-3">
               <img src="/logo_ubica.png" alt="Ubica" className="h-8 md:h-10 w-auto object-contain" />
-              <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 bg-clip-text text-transparent">Ubica</span>
+              <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-500 bg-clip-text text-transparent">Ubica</span>
             </Link>
           </div>
 
@@ -178,7 +178,7 @@ export default function Navbar() {
                     href={item.href}
                     className={`
                       flex items-center space-x-1 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200
-                      text-gray-700 hover:text-[#4a9d78] dark:text-gray-300 dark:hover:text-[#4a9d78]
+                      text-gray-700 hover:text-[#0f6b4f] dark:text-gray-300 dark:hover:text-[#0f6b4f]
                     `}
                   >
                     <item.icon className="h-4 w-4" />
@@ -191,8 +191,8 @@ export default function Navbar() {
                     className={`
                       flex items-center space-x-1 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200
                       ${isActive(item.href)
-                        ? 'bg-[#4a9d78] text-white'
-                        : 'text-gray-700 hover:text-[#4a9d78] dark:text-gray-300 dark:hover:text-[#4a9d78]'
+                        ? 'bg-[#0f6b4f] text-white'
+                        : 'text-gray-700 hover:text-[#0f6b4f] dark:text-gray-300 dark:hover:text-[#0f6b4f]'
                       }
                     `}
                   >
@@ -216,7 +216,7 @@ export default function Navbar() {
                     e.stopPropagation();
                     setIsUserMenuOpen(!isUserMenuOpen);
                   }}
-                  className="flex items-center space-x-2 rounded-lg bg-[#4a9d78] h-10 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-[#3a8d68] focus:outline-none focus:ring-2 focus:ring-[#4a9d78] focus:ring-offset-2"
+                  className="flex items-center space-x-2 rounded-lg bg-[#0f6b4f] h-10 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-[#0b5440] focus:outline-none focus:ring-2 focus:ring-[#0f6b4f] focus:ring-offset-2"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -294,7 +294,7 @@ export default function Navbar() {
             ) : (
               <motion.button
                 onClick={() => navigate('/login')}
-                className="flex items-center space-x-1 rounded-lg bg-[#4a9d78] h-10 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-[#3a8d68] focus:outline-none focus:ring-2 focus:ring-[#4a9d78] focus:ring-offset-2"
+                className="flex items-center space-x-1 rounded-lg bg-[#0f6b4f] h-10 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-[#0b5440] focus:outline-none focus:ring-2 focus:ring-[#0f6b4f] focus:ring-offset-2"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -313,7 +313,7 @@ export default function Navbar() {
                   e.stopPropagation();
                   setIsMenuOpen(!isMenuOpen);
                 }}
-                className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#4a9d78] focus:ring-offset-2 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+                className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0f6b4f] focus:ring-offset-2 dark:hover:bg-gray-800 dark:hover:text-gray-300"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -397,7 +397,7 @@ export default function Navbar() {
                           navigate('/login');
                           setIsMenuOpen(false);
                         }}
-                        className="flex items-center justify-center space-x-2 w-full rounded-xl bg-[#4a9d78] py-4 text-base font-bold text-white shadow-lg transition-all duration-200 hover:bg-[#3a8d68]"
+                        className="flex items-center justify-center space-x-2 w-full rounded-xl bg-[#0f6b4f] py-4 text-base font-bold text-white shadow-lg transition-all duration-200 hover:bg-[#0b5440]"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
@@ -407,7 +407,7 @@ export default function Navbar() {
                     ) : (
                       <div className="space-y-2">
                         <div className="flex items-center space-x-3 px-4 py-2 opacity-60">
-                          <UserCircleIcon className="h-6 w-6 text-[#4a9d78]" />
+                          <UserCircleIcon className="h-6 w-6 text-[#0f6b4f]" />
                           <span className="text-sm font-bold truncate">{user?.full_name || user?.email}</span>
                         </div>
                         <button

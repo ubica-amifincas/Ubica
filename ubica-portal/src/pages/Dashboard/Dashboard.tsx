@@ -31,9 +31,9 @@ interface StatCardProps {
 
 const StatCard = ({ title, value, change, icon: Icon, color }: StatCardProps) => {
   const colorClasses = {
-    blue: 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400',
-    green: 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400',
-    purple: 'bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400',
+    blue: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400',
+    green: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400',
+    purple: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400',
     orange: 'bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400',
     red: 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'
   };
@@ -55,7 +55,7 @@ const StatCard = ({ title, value, change, icon: Icon, color }: StatCardProps) =>
             {value}
           </p>
           {change !== undefined && (
-            <p className={`text-sm font-medium mt-1 ${change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <p className={`text-sm font-medium mt-1 ${change >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
               {change >= 0 ? '+' : ''}{change}% vs mes anterior
             </p>
           )}
@@ -189,10 +189,10 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Tus consultas IA */}
-        <div className="rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-violet-100 dark:border-gray-800 p-6 md:p-8 flex flex-col justify-between col-span-1 md:col-span-2 lg:col-span-4 bg-gradient-to-r from-violet-50 via-white to-white dark:from-violet-900/10 dark:via-gray-800 dark:to-gray-800 transition-all duration-300 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] hover:-translate-y-1">
+        <div className="rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-emerald-100 dark:border-gray-800 p-6 md:p-8 flex flex-col justify-between col-span-1 md:col-span-2 lg:col-span-4 bg-gradient-to-r from-emerald-50 via-white to-white dark:from-emerald-900/10 dark:via-gray-800 dark:to-gray-800 transition-all duration-300 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] hover:-translate-y-1">
           <div className="flex justify-between items-center sm:items-start mb-2">
              <div className="flex items-center space-x-4">
-                 <div className="p-3 bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 w-max rounded-lg">
+                 <div className="p-3 bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 w-max rounded-lg">
                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                    </svg>
@@ -206,14 +206,14 @@ export default function Dashboard() {
              </div>
              <button
                 onClick={() => navigate('/dashboard?view=ia_history')}
-                className="hidden sm:inline-flex px-4 py-2 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 transition"
+                className="hidden sm:inline-flex px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition"
               >
                 Ver Historial
               </button>
           </div>
           <button
             onClick={() => navigate('/dashboard?view=ia_history')}
-            className="sm:hidden w-full text-center mt-4 px-4 py-2 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 transition"
+            className="sm:hidden w-full text-center mt-4 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition"
           >
             Ver Historial
           </button>
@@ -243,7 +243,7 @@ export default function Dashboard() {
         {/* Búsquedas Guardadas */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 p-6 md:p-8 flex flex-col justify-between transition-all duration-300 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] hover:-translate-y-1">
           <div>
-            <div className="p-3 bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 w-max rounded-lg mb-4">
+            <div className="p-3 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 w-max rounded-lg mb-4">
               <MagnifyingGlassIcon className="w-6 h-6" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Búsquedas Guardadas</h3>
@@ -264,7 +264,7 @@ export default function Dashboard() {
         {/* Mensajes Inmobiliarios */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 p-6 md:p-8 flex flex-col justify-between lg:col-span-2 transition-all duration-300 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] hover:-translate-y-1">
           <div>
-            <div className="p-3 bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400 w-max rounded-lg mb-4">
+            <div className="p-3 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 w-max rounded-lg mb-4">
               <ChatBubbleLeftRightIcon className="w-6 h-6" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Mensajes Inmobiliarios</h3>
@@ -310,7 +310,7 @@ export default function Dashboard() {
         transition={{ duration: 0.5, delay: 0.1 }}
       >
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400 rounded-lg">
+          <div className="p-3 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 rounded-lg">
             <ChatBubbleLeftRightIcon className="w-6 h-6" />
           </div>
           <div>

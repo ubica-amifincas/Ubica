@@ -46,11 +46,11 @@ const PROPERTY_TYPES = [
 
 const STATUS_COLORS: Record<string, string> = {
   'for-sale': 'bg-emerald-100 text-emerald-800',
-  'for-rent': 'bg-cyan-100 text-cyan-800',
-  available: 'bg-green-100 text-green-800',
+  'for-rent': 'bg-emerald-100 text-emerald-800',
+  available: 'bg-emerald-100 text-emerald-800',
   reserved: 'bg-yellow-100 text-yellow-800',
   sold: 'bg-red-100 text-red-800',
-  rented: 'bg-teal-100 text-teal-800',
+  rented: 'bg-emerald-100 text-emerald-800',
 };
 
 const MURCIA_LOCATIONS = [

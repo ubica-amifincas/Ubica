@@ -14,7 +14,7 @@ const AuthCard: React.FC<AuthCardProps> = ({ title, subtitle, children }) => (
   <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
     <div className="fixed inset-0 overflow-hidden pointer-events-none">
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-emerald-500/10 blur-[120px]" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-cyan-500/10 blur-[120px]" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-emerald-500/10 blur-[120px]" />
     </div>
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -40,7 +40,7 @@ export const authLabelClass =
   'block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1 px-1';
 
 export const authButtonClass =
-  'w-full h-14 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-black rounded-xl shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 tracking-wider uppercase text-sm';
+  'w-full h-14 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-black rounded-xl shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 tracking-wider uppercase text-sm';
 
 export const AuthAlert: React.FC<{ type: 'success' | 'error' | 'info'; children: React.ReactNode }> = ({ type, children }) => {
   const styles = {

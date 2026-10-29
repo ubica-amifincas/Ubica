@@ -138,8 +138,8 @@ const AdminDashboard: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard label="Total Usuarios" value={formatNumber(stats.total_users)} icon={UsersIcon} tone="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400" />
-          <StatCard label="Propiedades" value={formatNumber(stats.total_properties)} icon={BuildingOfficeIcon} tone="bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400" />
-          <StatCard label="Inversiones registradas" value={formatNumber(stats.total_transactions)} icon={BanknotesIcon} tone="bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 dark:text-cyan-400" />
+          <StatCard label="Propiedades" value={formatNumber(stats.total_properties)} icon={BuildingOfficeIcon} tone="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400" />
+          <StatCard label="Inversiones registradas" value={formatNumber(stats.total_transactions)} icon={BanknotesIcon} tone="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400" />
           <StatCard label="Capital invertido" value={formatCurrency(stats.total_revenue)} icon={ArrowTrendingUpIcon} tone="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400" />
         </div>
 

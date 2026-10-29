@@ -30,7 +30,7 @@ const PageTransition = ({ t }: { t: any }) => (
     {/* Cinematic Background Blurs */}
     <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(16,185,129,0.05)_0%,transparent_100%)]" />
     <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-emerald-500/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
-    <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-teal-500/20 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2" />
+    <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-emerald-500/20 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2" />
 
     <div className="relative z-10 w-full max-w-2xl px-6 flex flex-col items-center justify-center">
       {/* Glassmorphic Container for Loading Content */}
@@ -358,7 +358,7 @@ export default function AmiFincas() {
 
         {/* Services Section with Gears Image */}
         <section id="servicios" className="py-32 relative">
-          <div className="absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-500/5 rounded-full blur-[100px]" />
+          <div className="absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-[100px]" />
 
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-[1400px]">
             <motion.div
@@ -383,7 +383,7 @@ export default function AmiFincas() {
                 viewport={{ once: true }}
                 className="col-span-1 md:col-span-2 md:row-span-2 relative group rounded-[2rem] overflow-hidden shadow-sm border border-slate-200 dark:border-white/5 bg-slate-100 dark:bg-slate-800/50 min-h-[350px] md:min-h-0"
               >
-                <div className="absolute inset-0 bg-teal-500/10 blur-3xl group-hover:bg-teal-500/20 transition-all duration-700 z-0" />
+                <div className="absolute inset-0 bg-emerald-500/10 blur-3xl group-hover:bg-emerald-500/20 transition-all duration-700 z-0" />
                 <img
                   src="/ami-fincas/3d_gears.jpg"
                   alt="3D Property Mechanics"
@@ -426,7 +426,7 @@ export default function AmiFincas() {
                     <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.1)_0%,transparent_70%)] pointer-events-none" />
 
                     <div className="flex items-center justify-between mb-4 mt-auto md:max-w-[70%] lg:max-w-full">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-lg shrink-0 ${service.highlight ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-[#A2D18D] to-[#2D8A9D]'}`}>
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-lg shrink-0 ${service.highlight ? 'bg-gradient-to-br from-emerald-500 to-emerald-600' : 'bg-gradient-to-br from-[#A2D18D] to-[#2D8A9D]'}`}>
                         <service.icon className="w-6 h-6" />
                       </div>
                       {service.highlight && (
@@ -565,11 +565,11 @@ export default function AmiFincas() {
               transition={{ delay: 0.2 }}
               className="mt-24 max-w-4xl mx-auto"
             >
-              <div className="relative p-8 md:p-10 rounded-[2.5rem] bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 dark:border-emerald-400/10 backdrop-blur-xl overflow-hidden flex flex-col md:flex-row items-center gap-8 group">
+              <div className="relative p-8 md:p-10 rounded-[2.5rem] bg-gradient-to-r from-emerald-500/10 to-emerald-500/10 border border-emerald-500/20 dark:border-emerald-400/10 backdrop-blur-xl overflow-hidden flex flex-col md:flex-row items-center gap-8 group">
                 <div className="absolute inset-0 bg-white/40 dark:bg-black/20 pointer-events-none" />
                 
                 {/* Decorative glowing blob */}
-                <div className="absolute -left-20 -top-20 w-40 h-40 bg-teal-400/20 blur-[50px] rounded-full group-hover:bg-teal-400/30 transition-colors duration-700 pointer-events-none" />
+                <div className="absolute -left-20 -top-20 w-40 h-40 bg-emerald-400/20 blur-[50px] rounded-full group-hover:bg-emerald-400/30 transition-colors duration-700 pointer-events-none" />
 
                 <div className="relative z-10 w-16 h-16 shrink-0 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-lg border border-emerald-100 dark:border-slate-700/50 rotate-3 group-hover:rotate-6 transition-transform">
                   <span className="text-3xl">💡</span>
@@ -585,7 +585,7 @@ export default function AmiFincas() {
                       href="https://ubica.amifincas.es/about" 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="inline-flex items-center ml-2 text-emerald-600 dark:text-emerald-400 hover:text-teal-600 dark:hover:text-teal-300 font-bold underline decoration-emerald-500/30 hover:decoration-teal-500 transition-all underline-offset-4"
+                      className="inline-flex items-center ml-2 text-emerald-600 dark:text-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-300 font-bold underline decoration-emerald-500/30 hover:decoration-emerald-500 transition-all underline-offset-4"
                     >
                       Descubre más sobre Ubica aquí
                       <span className="ml-1">→</span>
@@ -605,7 +605,7 @@ export default function AmiFincas() {
               <div className="relative rounded-[3rem] md:rounded-[4rem] bg-gradient-to-br from-white to-slate-50 dark:from-[#111827] dark:to-[#0f172a] border border-slate-200 dark:border-white/10 overflow-hidden shadow-2xl group-hover:shadow-[0_40px_100px_rgba(16,185,129,0.15)] transition-all duration-700">
                 {/* Asymmetric Background Elements */}
                 <div className="absolute -top-40 -right-40 w-96 h-96 bg-emerald-500/20 rounded-full blur-[100px] pointer-events-none group-hover:scale-150 transition-transform duration-1000" />
-                <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-teal-500/20 rounded-full blur-[100px] pointer-events-none group-hover:scale-150 transition-transform duration-1000" />
+                <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-emerald-500/20 rounded-full blur-[100px] pointer-events-none group-hover:scale-150 transition-transform duration-1000" />
                 
                 <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMDAnIGhlaWdodD0nMTAwJz48cmVjdCB3aWR0aD0nMTAwJz0gaGVpZ2h0PScxMDAnIGZpbGw9J25vbmUnIHN0cm9rZT0nIzBmMHdpZHRoPScwLjUnLz48L3N2Zz4=')] bg-[length:40px_40px]" />
 
@@ -615,7 +615,7 @@ export default function AmiFincas() {
                     <motion.div
                       initial={{ scale: 0 }}
                       whileInView={{ scale: 1 }}
-                      className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-2xl flex items-center justify-center mb-10 shadow-lg"
+                      className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl flex items-center justify-center mb-10 shadow-lg"
                     >
                       <BuildingOfficeIcon className="w-8 h-8 text-white" />
                     </motion.div>
@@ -678,7 +678,7 @@ export default function AmiFincas() {
                       }}
                       className="relative z-10"
                     >
-                      <div className="absolute inset-0 bg-teal-400/20 blur-[60px] rounded-full" />
+                      <div className="absolute inset-0 bg-emerald-400/20 blur-[60px] rounded-full" />
                       <img
                         src="/ami-fincas/3d_islands.jpg"
                         alt="Ami Network"
@@ -704,7 +704,7 @@ export default function AmiFincas() {
                       transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
                       className="absolute bottom-12 right-12 px-4 py-3 bg-white/90 dark:bg-slate-800/90 backdrop-blur shadow-xl rounded-2xl flex items-center gap-3 border border-slate-200 dark:border-slate-700 z-30"
                     >
-                      <BuildingOfficeIcon className="w-6 h-6 text-teal-500" />
+                      <BuildingOfficeIcon className="w-6 h-6 text-emerald-500" />
                       <div className="text-left leading-tight">
                         <span className="block text-xs text-slate-500 font-bold uppercase">Gestión</span>
                         <span className="block text-sm text-slate-900 dark:text-white font-black">+2000 Propietarios</span>

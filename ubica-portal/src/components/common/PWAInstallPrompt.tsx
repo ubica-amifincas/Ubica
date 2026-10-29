@@ -72,7 +72,7 @@ export function PWAInstallPrompt() {
             >
                 <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.2)] border border-gray-200/50 dark:border-gray-700 p-4 relative overflow-hidden">
                     {/* Gradient accent */}
-                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500"></div>
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-500"></div>
 
                     <button
                         onClick={handleDismiss}
@@ -82,7 +82,7 @@ export function PWAInstallPrompt() {
                     </button>
 
                     <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 bg-gradient-to-br from-emerald-500 to-teal-600 p-2.5 rounded-xl shadow-lg">
+                        <div className="flex-shrink-0 bg-gradient-to-br from-emerald-500 to-emerald-600 p-2.5 rounded-xl shadow-lg">
                             <DevicePhoneMobileIcon className="h-6 w-6 text-white" />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -97,7 +97,7 @@ export function PWAInstallPrompt() {
 
                     <motion.button
                         onClick={handleInstall}
-                        className="mt-3 w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transition-all"
+                        className="mt-3 w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transition-all"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                     >

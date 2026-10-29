@@ -84,7 +84,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ isEmbedded }) => {
         </div>
         <button
           onClick={() => navigate('/login')}
-          className="w-full mt-6 py-4 px-4 rounded-xl text-white bg-gradient-to-r from-emerald-600 to-teal-500 font-bold transition-all shadow-lg hover:shadow-emerald-500/30 hover:scale-[1.02]"
+          className="w-full mt-6 py-4 px-4 rounded-xl text-white bg-gradient-to-r from-emerald-600 to-emerald-500 font-bold transition-all shadow-lg hover:shadow-emerald-500/30 hover:scale-[1.02]"
         >
           {t('auth.go_to_login')}
         </button>
@@ -167,7 +167,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ isEmbedded }) => {
 
         <p className="text-xs text-gray-400 dark:text-gray-500 px-1">La contraseña debe tener al menos 8 caracteres.</p>
 
-        <button type="submit" disabled={loading} className="w-full h-14 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-black rounded-xl shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 uppercase text-sm tracking-wider">
+        <button type="submit" disabled={loading} className="w-full h-14 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-black rounded-xl shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 uppercase text-sm tracking-wider">
           {loading ? t('auth.registering') : t('auth.register_button')}
         </button>
 

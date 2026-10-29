@@ -335,7 +335,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                 type="text"
                                 value={formData.title}
                                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
                                 placeholder="Ej: Villa moderna en Cartagena"
                             />
                             {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
@@ -349,7 +349,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                     type="number"
                                     value={formData.price}
                                     onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
                                     placeholder="200000"
                                 />
                                 {errors.price && <p className="text-red-500 text-xs mt-1">{errors.price}</p>}
@@ -360,7 +360,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                 <select
                                     value={formData.type}
                                     onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
                                 >
                                     {PROPERTY_TYPES.map((type) => (
                                         <option key={type.value} value={type.value}>{type.label}</option>
@@ -375,7 +375,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                 <select
                                     value={realtorId}
                                     onChange={(e) => setRealtorId(e.target.value === '' ? '' : Number(e.target.value))}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
                                 >
                                     <option value="">Sin asignar</option>
                                     {realtors.map((r) => (
@@ -392,7 +392,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                 <select
                                     value={formData.status}
                                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
                                 >
                                     {PROPERTY_STATUS.map((status) => (
                                         <option key={status.value} value={status.value}>{status.label}</option>
@@ -405,7 +405,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                 <select
                                     value={formData.location}
                                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
                                 >
                                     {MURCIA_LOCATIONS.map((location) => (
                                         <option key={location} value={location}>{location}</option>
@@ -423,7 +423,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                     min="0"
                                     value={formData.bedrooms}
                                     onChange={(e) => setFormData({ ...formData, bedrooms: Number(e.target.value) })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
                                 />
                                 {errors.bedrooms && <p className="text-red-500 text-xs mt-1">{errors.bedrooms}</p>}
                             </div>
@@ -435,7 +435,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                     min="0"
                                     value={formData.bathrooms}
                                     onChange={(e) => setFormData({ ...formData, bathrooms: Number(e.target.value) })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
                                 />
                                 {errors.bathrooms && <p className="text-red-500 text-xs mt-1">{errors.bathrooms}</p>}
                             </div>
@@ -447,7 +447,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                     min="1"
                                     value={formData.area}
                                     onChange={(e) => setFormData({ ...formData, area: Number(e.target.value) })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
                                 />
                                 {errors.area && <p className="text-red-500 text-xs mt-1">{errors.area}</p>}
                             </div>
@@ -460,7 +460,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                 type="text"
                                 value={formData.address}
                                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
                                 placeholder="Calle Ejemplo, 123, Cartagena"
                             />
                             {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
@@ -473,7 +473,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                 rows={3}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
                                 placeholder="Descripción detallada de la propiedad..."
                             />
                             {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
@@ -486,7 +486,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                 type="text"
                                 value={featuresInput}
                                 onChange={(e) => setFeaturesInput(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
                                 placeholder="Piscina privada, Jardín, Garaje, Aire acondicionado"
                             />
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Sugerencias: {COMMON_FEATURES.slice(0, 5).join(', ')}...</p>
@@ -501,7 +501,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                             <div
                                 {...getRootProps()}
                                 className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md transition-colors ${isDragActive
-                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
                                     : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
                                     }`}
                             >
@@ -509,7 +509,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                     <input {...getInputProps()} />
                                     <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
                                     <div className="flex text-sm text-gray-600 dark:text-gray-400">
-                                        <span className="relative rounded-md font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                                        <span className="relative rounded-md font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-emerald-500">
                                             Selecciona archivos
                                         </span>
                                         <p className="pl-1">o arrastra y suelta aquí</p>
@@ -539,7 +539,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
 
                                     {/* New Files to upload */}
                                     {newFiles.map((file, idx) => (
-                                        <div key={`new-${idx}`} className="relative group rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800 aspect-video ring-2 ring-blue-500/50">
+                                        <div key={`new-${idx}`} className="relative group rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800 aspect-video ring-2 ring-emerald-500/50">
                                             <img src={URL.createObjectURL(file)} alt={`Nueva ${idx}`} className="object-cover w-full h-full opacity-70" />
                                             <span className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[10px] text-center py-0.5 truncate px-1">
                                                 {file.name}
@@ -571,7 +571,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                     min="1800"
                                     value={formData.yearBuilt}
                                     onChange={(e) => setFormData({ ...formData, yearBuilt: Number(e.target.value) })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
                                 />
                             </div>
 
@@ -581,7 +581,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                 <select
                                     value={formData.orientation}
                                     onChange={(e) => setFormData({ ...formData, orientation: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
                                 >
                                     <option value="Norte">Norte</option>
                                     <option value="Sur">Sur</option>
@@ -600,7 +600,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                 <select
                                     value={formData.energyRating}
                                     onChange={(e) => setFormData({ ...formData, energyRating: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
                                 >
                                     {['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(rating => (
                                         <option key={rating} value={rating}>{rating}</option>
@@ -622,7 +622,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                     step="0.0001"
                                     value={formData.coordinates.lat}
                                     onChange={(e) => setFormData({ ...formData, coordinates: { ...formData.coordinates, lat: Number(e.target.value) } })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
                                 />
                             </div>
                             <div>
@@ -632,7 +632,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                     step="0.0001"
                                     value={formData.coordinates.lng}
                                     onChange={(e) => setFormData({ ...formData, coordinates: { ...formData.coordinates, lng: Number(e.target.value) } })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
                                 />
                             </div>
                         </div>
@@ -689,7 +689,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                     step="0.1"
                                     value={formData.investmentData.roi}
                                     onChange={(e) => setFormData({ ...formData, investmentData: { ...formData.investmentData, roi: Number(e.target.value) } })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
                                 />
                             </div>
                             <div>
@@ -699,7 +699,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                     step="0.1"
                                     value={formData.investmentData.rentalYield}
                                     onChange={(e) => setFormData({ ...formData, investmentData: { ...formData.investmentData, rentalYield: Number(e.target.value) } })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
                                 />
                             </div>
                             <div>
@@ -709,7 +709,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                     min="0"
                                     value={formData.investmentData.monthsOnMarket}
                                     onChange={(e) => setFormData({ ...formData, investmentData: { ...formData.investmentData, monthsOnMarket: Number(e.target.value) } })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
                                 />
                             </div>
                         </div>
@@ -732,7 +732,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                     step="1000"
                                     value={formData.purchasePrice}
                                     onChange={(e) => setFormData({ ...formData, purchasePrice: Number(e.target.value) })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
                                     placeholder="Ej: 150000"
                                 />
                             </div>
@@ -746,7 +746,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                     step="1000"
                                     value={formData.totalCost}
                                     onChange={(e) => setFormData({ ...formData, totalCost: Number(e.target.value) })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
                                     placeholder="Compra + impuestos + notaría + reformas"
                                 />
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Incluye impuestos, notaría, reformas y comisiones</p>
@@ -764,7 +764,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                     step="1"
                                     value={formData.monthlyCost}
                                     onChange={(e) => setFormData({ ...formData, monthlyCost: Number(e.target.value) })}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
                                     placeholder="Comunidad, IBI, seguro..."
                                 />
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Comunidad + IBI + seguro + mantenimiento</p>
@@ -783,7 +783,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                     value={formData.monthlyIncome}
                                     onChange={(e) => setFormData({ ...formData, monthlyIncome: Number(e.target.value) })}
                                     disabled={formData.status !== 'rented'}
-                                    className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white ${formData.status !== 'rented' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white ${formData.status !== 'rented' ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     placeholder="Alquiler mensual recibido"
                                 />
                             </div>
@@ -794,7 +794,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                             <div className="mt-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600">
                                 <div className="flex items-center justify-between text-sm">
                                     <span className="text-gray-600 dark:text-gray-400">Cash Flow Mensual:</span>
-                                    <span className={`font-bold ${(formData.monthlyIncome - formData.monthlyCost) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                    <span className={`font-bold ${(formData.monthlyIncome - formData.monthlyCost) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                                         {(formData.monthlyIncome - formData.monthlyCost) >= 0 ? '+' : ''}
                                         {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(formData.monthlyIncome - formData.monthlyCost)}
                                     </span>
@@ -802,7 +802,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                 {formData.totalCost > 0 && formData.monthlyIncome > 0 && (
                                     <div className="flex items-center justify-between text-sm mt-1">
                                         <span className="text-gray-600 dark:text-gray-400">ROI Anual Estimado:</span>
-                                        <span className="font-bold text-blue-600 dark:text-blue-400">
+                                        <span className="font-bold text-emerald-600 dark:text-emerald-400">
                                             {(((formData.monthlyIncome - formData.monthlyCost) * 12 / formData.totalCost) * 100).toFixed(2)}%
                                         </span>
                                     </div>
@@ -825,7 +825,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center"
+                                className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors disabled:opacity-50 flex items-center justify-center"
                             >
                                 {isSubmitting ? (
                                     <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>

@@ -26,7 +26,7 @@ const AuthPage: React.FC = () => {
             {/* Floating Background Elements */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-emerald-500/10 blur-[120px]" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-cyan-500/10 blur-[120px]" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-emerald-500/10 blur-[120px]" />
             </div>
 
             {/* Back to Home Button - Standardized Style */}
@@ -54,7 +54,7 @@ const AuthPage: React.FC = () => {
                     }}
                     transition={{ type: 'spring', stiffness: 200, damping: 25 }}
                 >
-                    <div className="w-full h-full bg-gradient-to-br from-emerald-600 via-teal-500 to-cyan-500 relative flex flex-col items-center justify-center p-12 text-white text-center">
+                    <div className="w-full h-full bg-gradient-to-br from-emerald-600 via-emerald-500 to-emerald-500 relative flex flex-col items-center justify-center p-12 text-white text-center">
                         {/* Shapes */}
                         <div className="absolute inset-0 overflow-hidden opacity-20 pointer-events-none">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-white/20 rounded-full -mr-32 -mt-32" />

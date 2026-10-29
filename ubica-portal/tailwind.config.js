@@ -17,9 +17,15 @@ module.exports = {
 		},
 		extend: {
 			fontFamily: {
-				sans: ['Inter', 'sans-serif'],
+				sans: ['"Inter Variable"', 'Inter', 'system-ui', 'sans-serif'],
+				display: ['"Bricolage Grotesque Variable"', '"Inter Variable"', 'system-ui', 'sans-serif'],
 			},
 			colors: {
+				// Verde Ubica: un único acento. Desde el 500, el texto blanco cumple WCAG AA
+				emerald: {
+					50: '#e6f2ec', 100: '#cde7da', 200: '#a3d3bb', 300: '#6fb896', 400: '#3b9a72',
+					500: '#1a8360', 600: '#0f6b4f', 700: '#0b5440', 800: '#0a4334', 900: '#08372b', 950: '#04201a',
+				},
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',

@@ -145,9 +145,9 @@ const RealtorDashboardComplete: React.FC = () => {
     switch (status) {
       case 'available':
       case 'for-sale':
-      case 'for-rent': return 'bg-green-100 text-green-800';
+      case 'for-rent': return 'bg-emerald-100 text-emerald-800';
       case 'reserved': return 'bg-orange-100 text-orange-800';
-      case 'sold': return 'bg-blue-100 text-blue-800';
+      case 'sold': return 'bg-emerald-100 text-emerald-800';
       case 'rented': return 'bg-yellow-100 text-yellow-800';
       case 'pending': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -170,7 +170,7 @@ const RealtorDashboardComplete: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
       </div>
     );
   }
@@ -205,7 +205,7 @@ const RealtorDashboardComplete: React.FC = () => {
                   onClick={() => tab.key === 'add-property' ? handleEditProperty(null) : setActiveTab(tab.key as any)}
                   className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                     activeTab === tab.key
-                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                      ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
                       : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                   }`}
                 >
@@ -228,7 +228,7 @@ const RealtorDashboardComplete: React.FC = () => {
               >
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <HomeIcon className="h-8 w-8 text-blue-600" />
+                    <HomeIcon className="h-8 w-8 text-emerald-600" />
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
@@ -249,7 +249,7 @@ const RealtorDashboardComplete: React.FC = () => {
               >
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <CheckCircleIcon className="h-8 w-8 text-green-600" />
+                    <CheckCircleIcon className="h-8 w-8 text-emerald-600" />
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
@@ -291,7 +291,7 @@ const RealtorDashboardComplete: React.FC = () => {
               >
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <ArrowTrendingUpIcon className="h-8 w-8 text-purple-600" />
+                    <ArrowTrendingUpIcon className="h-8 w-8 text-emerald-600" />
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
@@ -332,7 +332,7 @@ const RealtorDashboardComplete: React.FC = () => {
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-semibold text-green-600">
+                          <p className="text-sm font-semibold text-emerald-600">
                             +€{transaction.commission}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">comisión</p>
@@ -354,11 +354,11 @@ const RealtorDashboardComplete: React.FC = () => {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600 dark:text-gray-400">Disponibles</span>
-                      <span className="text-sm font-semibold text-green-600">{stats.availableProperties}</span>
+                      <span className="text-sm font-semibold text-emerald-600">{stats.availableProperties}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600 dark:text-gray-400">Vendidas</span>
-                      <span className="text-sm font-semibold text-blue-600">{stats.soldProperties}</span>
+                      <span className="text-sm font-semibold text-emerald-600">{stats.soldProperties}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600 dark:text-gray-400">Alquiladas</span>
@@ -379,7 +379,7 @@ const RealtorDashboardComplete: React.FC = () => {
               </h2>
               <button
                 onClick={() => handleEditProperty(null)}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 transition-colors duration-200"
               >
                 <PlusIcon className="h-5 w-5 mr-2" />
                 Añadir Propiedad
@@ -409,7 +409,7 @@ const RealtorDashboardComplete: React.FC = () => {
                       </span>
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{property.location}</p>
-                    <p className="text-xl font-bold text-blue-600 dark:text-blue-400 mb-4">
+                    <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mb-4">
                       €{property.price.toLocaleString()}
                     </p>
                     <div className="grid grid-cols-3 gap-2 text-sm text-gray-600 dark:text-gray-400 mb-4">
@@ -510,7 +510,7 @@ const RentalsView: React.FC<{ rentals: RentalContract[] }> = ({ rentals }) => {
                     <div className="text-sm text-gray-900 dark:text-white">{rental.tenantName}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-semibold text-green-600">
+                    <div className="text-sm font-semibold text-emerald-600">
                       €{rental.monthlyRent.toLocaleString()}
                     </div>
                   </td>
@@ -519,7 +519,7 @@ const RentalsView: React.FC<{ rentals: RentalContract[] }> = ({ rentals }) => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      rental.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      rental.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
                     }`}>
                       {rental.status === 'active' ? 'Activo' : 'Inactivo'}
                     </span>
@@ -578,12 +578,12 @@ const SalesView: React.FC<{ transactions: Transaction[] }> = ({ transactions }) 
                     <div className="text-sm text-gray-900 dark:text-white">{transaction.clientName}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-semibold text-blue-600">
+                    <div className="text-sm font-semibold text-emerald-600">
                       €{transaction.amount.toLocaleString()}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-semibold text-green-600">
+                    <div className="text-sm font-semibold text-emerald-600">
                       €{transaction.commission.toLocaleString()}
                     </div>
                   </td>
@@ -618,7 +618,7 @@ const AnalyticsView: React.FC<{
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             Ingresos por Comisiones
           </h3>
-          <p className="text-3xl font-bold text-green-600">
+          <p className="text-3xl font-bold text-emerald-600">
             €{stats.totalCommissions.toLocaleString()}
           </p>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -630,7 +630,7 @@ const AnalyticsView: React.FC<{
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             Precio Promedio
           </h3>
-          <p className="text-3xl font-bold text-blue-600">
+          <p className="text-3xl font-bold text-emerald-600">
             €{Math.round(stats.averagePropertyPrice).toLocaleString()}
           </p>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -642,7 +642,7 @@ const AnalyticsView: React.FC<{
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             Tasa de Conversión
           </h3>
-          <p className="text-3xl font-bold text-purple-600">
+          <p className="text-3xl font-bold text-emerald-600">
             {properties.length > 0 ? Math.round(((stats.soldProperties + stats.rentedProperties) / properties.length) * 100) : 0}%
           </p>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -658,11 +658,11 @@ const AnalyticsView: React.FC<{
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">{stats.availableProperties}</div>
+            <div className="text-2xl font-bold text-emerald-600">{stats.availableProperties}</div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Disponibles</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">{stats.soldProperties}</div>
+            <div className="text-2xl font-bold text-emerald-600">{stats.soldProperties}</div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Vendidas</div>
           </div>
           <div className="text-center">

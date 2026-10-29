@@ -283,7 +283,7 @@ export default function DashboardLayout() {
             <div className="flex items-center">
               <button
                 type="button"
-                className="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 dark:hover:bg-gray-700"
+                className="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500 dark:hover:bg-gray-700"
                 onClick={() => setIsSidebarOpen(true)}
               >
                 <Bars3Icon className="h-6 w-6" />
@@ -296,7 +296,7 @@ export default function DashboardLayout() {
             <div className="flex items-center space-x-2">
               <Link
                 to="/"
-                className="flex items-center space-x-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all duration-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                className="flex items-center space-x-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all duration-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
               >
                 <HomeIcon className="h-4 w-4" />
                 <span className="hidden sm:block">{t('nav.home')}</span>

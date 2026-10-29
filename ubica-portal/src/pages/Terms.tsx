@@ -55,7 +55,7 @@ export default function Terms() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
-                className="relative overflow-hidden bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 py-16"
+                className="relative overflow-hidden bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-500 py-16"
             >
                 <div className="container mx-auto px-4 text-center">
                     <motion.div

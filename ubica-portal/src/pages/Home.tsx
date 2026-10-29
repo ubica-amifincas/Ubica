@@ -539,7 +539,7 @@ export default function Home() {
           >
             {/* Gradient Box Container */}
             <motion.div
-              className="w-full bg-gradient-to-br from-emerald-600 via-teal-500 to-cyan-500 shadow-xl overflow-hidden"
+              className="w-full bg-gradient-to-br from-emerald-600 via-emerald-500 to-emerald-500 shadow-xl overflow-hidden"
               style={{
                 padding: boxPadding,
                 borderRadius: boxRadiusFinal
@@ -625,7 +625,7 @@ export default function Home() {
                         fill="url(#aiSparkleGrad)" stroke="url(#aiSparkleGrad)" strokeWidth="0.5" />
                     </motion.svg>
                     <motion.span
-                      className="font-semibold bg-gradient-to-r from-violet-600 via-cyan-500 to-emerald-500 bg-clip-text text-transparent whitespace-nowrap hidden sm:inline"
+                      className="font-semibold bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-500 bg-clip-text text-transparent whitespace-nowrap hidden sm:inline"
                       style={{ fontSize: inputFontSize }}
                     >
                       {t('view.ia_mode')}
@@ -690,7 +690,7 @@ export default function Home() {
                   {/* Tutorial Highlight Animation for "Draw Area" */}
                   {!hasDrawnArea && !isDrawingEnabled && (
                     <motion.div
-                      initial={{ opacity: 0, scale: 0.8 }}
+                      initial={false}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{
                         repeat: Infinity,
@@ -711,7 +711,7 @@ export default function Home() {
 
                   {hasDrawnArea && (
                     <motion.button
-                      initial={{ opacity: 0, scale: 0.9 }}
+                      initial={false}
                       animate={{ opacity: 1, scale: 1 }}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
@@ -781,7 +781,7 @@ export default function Home() {
       {/* Filters Panel */}
       {showFilters && (
         <motion.div
-          initial={{ opacity: 0, y: -10 }}
+          initial={false}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.3 }}
@@ -973,7 +973,7 @@ export default function Home() {
               <AnimatePresence>
                 {showMapToast && (
                   <motion.div
-                    initial={{ opacity: 0 }}
+                    initial={false}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3 }}
@@ -985,7 +985,7 @@ export default function Home() {
 
                     {/* Tutorial Card */}
                     <motion.div
-                      initial={{ opacity: 0, scale: 0.85, y: 30 }}
+                      initial={false}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.85, y: 30 }}
                       transition={{ type: 'spring', stiffness: 350, damping: 25, delay: 0.1 }}
@@ -1007,7 +1007,7 @@ export default function Home() {
                       <div className="space-y-4 mb-6">
                         {/* Step 1 */}
                         <motion.div
-                          initial={{ opacity: 0, x: -20 }}
+                          initial={false}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: 0.3 }}
                           className="flex items-start gap-3"
@@ -1021,12 +1021,12 @@ export default function Home() {
 
                         {/* Step 2 */}
                         <motion.div
-                          initial={{ opacity: 0, x: -20 }}
+                          initial={false}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: 0.5 }}
                           className="flex items-start gap-3"
                         >
-                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-teal-500 text-white flex items-center justify-center text-sm font-black">2</div>
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-sm font-black">2</div>
                           <div>
                             <p className="text-sm font-bold text-gray-900 dark:text-white">{t('map.tutorial.step2.title')}</p>
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('map.tutorial.step2.desc')}</p>
@@ -1035,12 +1035,12 @@ export default function Home() {
 
                         {/* Step 3 */}
                         <motion.div
-                          initial={{ opacity: 0, x: -20 }}
+                          initial={false}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: 0.7 }}
                           className="flex items-start gap-3"
                         >
-                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-cyan-500 text-white flex items-center justify-center text-sm font-black">3</div>
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-sm font-black">3</div>
                           <div>
                             <p className="text-sm font-bold text-gray-900 dark:text-white">{t('map.tutorial.step3.title')}</p>
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('map.tutorial.step3.desc')}</p>
@@ -1050,11 +1050,11 @@ export default function Home() {
 
                       {/* CTA */}
                       <motion.button
-                        initial={{ opacity: 0 }}
+                        initial={false}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.9 }}
                         onClick={() => setShowMapToast(false)}
-                        className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold text-sm shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 transition-all active:scale-[0.98]"
+                        className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 transition-all active:scale-[0.98]"
                       >
                         {t('map.tutorial.start')}
                       </motion.button>
@@ -1142,7 +1142,7 @@ export default function Home() {
                     <div className="absolute bottom-6 left-0 right-0 z-[2000] flex justify-center pointer-events-none">
                       <motion.div
                         className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl px-2 py-2 md:px-4 md:py-3 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/20 dark:border-gray-700 flex items-center gap-1 sm:gap-2 md:gap-3 transition-all pointer-events-auto cursor-default origin-bottom"
-                        initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                        initial={false}
                         animate={{ opacity: 1, y: 0, scale: toolbarScale }}
                         exit={{ opacity: 0, y: 50, scale: 0.9 }}
                         drag
@@ -1203,18 +1203,18 @@ export default function Home() {
 
                         <div className="w-px h-10 bg-gray-200 dark:bg-gray-700 mx-1"></div>
 
-                        <button onClick={handleZoomIn} className="flex flex-col items-center gap-0.5 md:gap-1 min-w-[44px] md:min-w-[56px] p-1.5 md:p-2.5 rounded-xl text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors group">
-                          <div className="bg-blue-100 dark:bg-blue-900/50 p-1.5 md:p-2 rounded-lg group-hover:scale-110 transition-transform"><MagnifyingGlassPlusIcon className="h-5 w-5 md:h-6 md:w-6" /></div>
+                        <button onClick={handleZoomIn} className="flex flex-col items-center gap-0.5 md:gap-1 min-w-[44px] md:min-w-[56px] p-1.5 md:p-2.5 rounded-xl text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors group">
+                          <div className="bg-emerald-100 dark:bg-emerald-900/50 p-1.5 md:p-2 rounded-lg group-hover:scale-110 transition-transform"><MagnifyingGlassPlusIcon className="h-5 w-5 md:h-6 md:w-6" /></div>
                           <span className="text-[10px] md:text-xs font-bold">Zoom+</span>
                         </button>
 
-                        <button onClick={handleZoomOut} className="flex flex-col items-center gap-0.5 md:gap-1 min-w-[44px] md:min-w-[56px] p-1.5 md:p-2.5 rounded-xl text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors group">
-                          <div className="bg-blue-100 dark:bg-blue-900/50 p-1.5 md:p-2 rounded-lg group-hover:scale-110 transition-transform"><MagnifyingGlassMinusIcon className="h-5 w-5 md:h-6 md:w-6" /></div>
+                        <button onClick={handleZoomOut} className="flex flex-col items-center gap-0.5 md:gap-1 min-w-[44px] md:min-w-[56px] p-1.5 md:p-2.5 rounded-xl text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors group">
+                          <div className="bg-emerald-100 dark:bg-emerald-900/50 p-1.5 md:p-2 rounded-lg group-hover:scale-110 transition-transform"><MagnifyingGlassMinusIcon className="h-5 w-5 md:h-6 md:w-6" /></div>
                           <span className="text-[10px] md:text-xs font-bold">Zoom-</span>
                         </button>
 
-                        <button onClick={toggleFullscreen} className="flex flex-col items-center gap-0.5 md:gap-1 min-w-[50px] sm:min-w-[60px] md:min-w-[72px] p-1.5 md:p-2.5 rounded-xl text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors group">
-                          <div className="bg-indigo-100 dark:bg-indigo-900/50 p-1.5 md:p-2 rounded-lg group-hover:scale-110 transition-transform">
+                        <button onClick={toggleFullscreen} className="flex flex-col items-center gap-0.5 md:gap-1 min-w-[50px] sm:min-w-[60px] md:min-w-[72px] p-1.5 md:p-2.5 rounded-xl text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors group">
+                          <div className="bg-emerald-100 dark:bg-emerald-900/50 p-1.5 md:p-2 rounded-lg group-hover:scale-110 transition-transform">
                             {isFullscreen ? <ArrowsPointingInIcon className="h-5 w-5 md:h-6 md:w-6" /> : <ArrowsPointingOutIcon className="h-5 w-5 md:h-6 md:w-6" />}
                           </div>
                           <span className="text-[10px] sm:text-[11px] md:text-xs font-bold">Pantalla</span>
@@ -1285,7 +1285,7 @@ export default function Home() {
                           />
                           <h3 className="font-bold text-gray-900 mb-1">{property.title}</h3>
                           <p className="text-sm text-gray-600 mb-2">{property.location}</p>
-                          <p className="text-lg font-bold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent mb-2">
+                          <p className="text-lg font-bold bg-gradient-to-r from-emerald-600 to-emerald-500 bg-clip-text text-transparent mb-2">
                             {new Intl.NumberFormat('es-ES', {
                               style: 'currency',
                               currency: 'EUR',
@@ -1297,7 +1297,7 @@ export default function Home() {
                           </div>
                           <button
                             onClick={() => handleViewDetails(property.id)}
-                            className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-2 rounded-lg hover:from-emerald-700 hover:to-teal-700 transition-all font-medium shadow-lg hover:shadow-xl hover:scale-105"
+                            className="w-full bg-gradient-to-r from-emerald-600 to-emerald-600 text-white py-2 rounded-lg hover:from-emerald-700 hover:to-emerald-700 transition-all font-medium shadow-lg hover:shadow-xl hover:scale-105"
                           >
                             Ver Detalles
                           </button>
@@ -1320,7 +1320,7 @@ export default function Home() {
               {filteredProperties.map((property, index) => (
                 <motion.div
                   key={property.id}
-                  initial={{ opacity: 0, scale: 0.95 }}
+                  initial={false}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.3, delay: index * 0.05 }}
                   className={viewLayout === 'grid' ? 'col-span-1' : ''}

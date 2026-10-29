@@ -65,7 +65,7 @@ export default function DashboardRentals() {
             <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Propiedades alquiladas</p>
             <p className="text-2xl font-bold text-gray-900 dark:text-white">{rented.length}</p>
           </div>
-          <div className="p-3 rounded-full bg-teal-50 text-teal-600 dark:bg-teal-900/20 dark:text-teal-400">
+          <div className="p-3 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
             <KeyIcon className="h-6 w-6" />
           </div>
         </div>
@@ -75,7 +75,7 @@ export default function DashboardRentals() {
             <p className="text-2xl font-bold text-gray-900 dark:text-white">{eur(monthlyIncome)}</p>
             <p className="text-xs text-gray-400 mt-1">Según los ingresos que has indicado</p>
           </div>
-          <div className="p-3 rounded-full bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400">
+          <div className="p-3 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
             <BanknotesIcon className="h-6 w-6" />
           </div>
         </div>
@@ -85,7 +85,7 @@ export default function DashboardRentals() {
             <p className="text-2xl font-bold text-gray-900 dark:text-white">{occupancy === null ? '—' : `${occupancy} %`}</p>
             <p className="text-xs text-gray-400 mt-1">{rented.length} de {rentable} destinadas a alquiler</p>
           </div>
-          <div className="p-3 rounded-full bg-cyan-50 text-cyan-600 dark:bg-cyan-900/20 dark:text-cyan-400">
+          <div className="p-3 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
             <HomeIcon className="h-6 w-6" />
           </div>
         </div>

@@ -41,7 +41,7 @@ export function LanguageSelector() {
         className={`
           flex items-center space-x-2 rounded-lg border border-gray-200 bg-white h-10 px-3 py-2
           shadow-sm transition-all duration-200 hover:bg-gray-50 focus:outline-none
-          focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+          focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2
           dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700
         `}
         title={t('language.toggle')}
@@ -82,7 +82,7 @@ export function LanguageSelector() {
                     flex w-full items-center space-x-3 px-4 py-2 text-left text-sm transition-colors
                     hover:bg-gray-50 dark:hover:bg-gray-700
                     ${currentLanguage === language.code
-                      ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300'
+                      ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300'
                       : 'text-gray-700 dark:text-gray-300'
                     }
                   `}
@@ -95,7 +95,7 @@ export function LanguageSelector() {
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className="ml-auto h-2 w-2 rounded-full bg-blue-600"
+                      className="ml-auto h-2 w-2 rounded-full bg-emerald-600"
                     />
                   )}
                 </motion.button>
@@ -117,7 +117,7 @@ export function LanguageToggle() {
       className={`
         relative inline-flex h-10 w-10 items-center justify-center rounded-lg
         border border-gray-200 bg-white shadow-sm transition-all duration-200
-        hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+        hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2
         dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700
       `}
       title={getCurrentLanguageLabel()}

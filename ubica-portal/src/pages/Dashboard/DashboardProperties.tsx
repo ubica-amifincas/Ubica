@@ -72,15 +72,15 @@ export default function DashboardProperties() {
       case 'sold':
         return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300';
       case 'rented':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300';
+        return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300';
       case 'for-sale':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300';
+        return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300';
       case 'for-rent':
         return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300';
       case 'under-renovation':
         return 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-300';
       case 'in-use':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300';
+        return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300';
       case 'reserved':
         return 'bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300';
       default:
@@ -104,7 +104,7 @@ export default function DashboardProperties() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-96">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
       </div>
     );
   }
@@ -128,7 +128,7 @@ export default function DashboardProperties() {
 
         <motion.button
           onClick={handleCreateProperty}
-          className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+          className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
@@ -166,7 +166,7 @@ export default function DashboardProperties() {
                 key={item.key}
                 onClick={() => setFilter(item.key)}
                 className={`px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${filter === item.key
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
                   }`}
                 whileHover={{ scale: 1.05 }}
@@ -254,7 +254,7 @@ export default function DashboardProperties() {
                       <motion.button
                         onClick={() => navigate(`/property/${property.id}`)}
                         title="Ver en web"
-                        className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                        className="text-emerald-600 hover:text-emerald-900 dark:text-emerald-400 dark:hover:text-emerald-300"
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                       >
@@ -310,26 +310,26 @@ export default function DashboardProperties() {
           </p>
         </div>
 
-        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-300 mb-2">
+        <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-emerald-900 dark:text-emerald-300 mb-2">
             Propiedades Alquiladas
           </h3>
-          <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+          <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
             {properties.filter(p => p.status === 'rented').length}
           </p>
-          <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+          <p className="text-sm text-emerald-700 dark:text-emerald-300 mt-1">
             Generando ingresos mensuales
           </p>
         </div>
 
-        <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-green-900 dark:text-green-300 mb-2">
+        <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-emerald-900 dark:text-emerald-300 mb-2">
             Propiedades En Venta
           </h3>
-          <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+          <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
             {properties.filter(p => p.status === 'for-sale' || p.status === 'for-rent').length}
           </p>
-          <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+          <p className="text-sm text-emerald-700 dark:text-emerald-300 mt-1">
             Listas para venta o alquiler
           </p>
         </div>

@@ -1,6 +1,9 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ErrorBoundary } from './components/ErrorBoundary.tsx'
+// Fuentes servidas desde la propia web (sin enviar la IP de cada visitante a Google)
+import '@fontsource-variable/inter'
+import '@fontsource-variable/bricolage-grotesque'
 import './index.css'
 import App from './App.tsx'
 

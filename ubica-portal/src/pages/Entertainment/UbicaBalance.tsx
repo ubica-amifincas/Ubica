@@ -822,7 +822,7 @@ export default function UbicaBalance() {
 
     return (
         <div className={`w-full h-screen relative transition-colors duration-700 overflow-hidden font-sans select-none touch-none ${
-            isDarkMode ? 'bg-slate-900 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-950' : 'bg-slate-50 bg-gradient-to-b from-sky-50 via-slate-100 to-slate-200'
+            isDarkMode ? 'bg-slate-900 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-950' : 'bg-slate-50 bg-gradient-to-b from-emerald-50 via-slate-100 to-slate-200'
         }`}>
 
             {/* HUD & UI - Rediseñado y responsivo */}
@@ -857,7 +857,7 @@ export default function UbicaBalance() {
                     <motion.div 
                         animate={scoreAnimation ? { scale: [1, 1.2, 1] } : { scale: 1 }}
                         transition={{ duration: 0.2 }}
-                        className="bg-gradient-to-br from-emerald-500/90 to-teal-600/90 backdrop-blur-md rounded-2xl px-5 py-2 sm:px-6 sm:py-3 text-center pointer-events-auto shadow-[0_0_20px_rgba(16,185,129,0.3)] border border-emerald-400/50 min-w-[100px]"
+                        className="bg-gradient-to-br from-emerald-500/90 to-emerald-600/90 backdrop-blur-md rounded-2xl px-5 py-2 sm:px-6 sm:py-3 text-center pointer-events-auto shadow-[0_0_20px_rgba(16,185,129,0.3)] border border-emerald-400/50 min-w-[100px]"
                     >
                         <h3 className="text-emerald-50 text-[9px] sm:text-[10px] font-black uppercase tracking-widest mb-1">Tu Torre</h3>
                         <p className="text-white text-2xl sm:text-3xl font-black font-mono leading-none">{score}</p>
@@ -949,12 +949,12 @@ export default function UbicaBalance() {
 
                             <div className={`rounded-2xl p-6 mb-8 border ${isDarkMode ? 'bg-black/30 border-white/5' : 'bg-slate-100 border-slate-200'}`}>
                                 <span className={`block text-xs font-black uppercase tracking-widest mb-2 ${isDarkMode ? 'text-white/50' : 'text-slate-400'}`}>Puntuación Final</span>
-                                <span className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">{score}</span>
+                                <span className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-400">{score}</span>
                             </div>
 
                             <button
                                 onClick={restartGame}
-                                className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black text-lg py-4 rounded-xl shadow-[0_10px_20px_rgba(16,185,129,0.3)] hover:shadow-[0_15px_30px_rgba(16,185,129,0.4)] hover:scale-105 transition-all outline-none border border-emerald-400/50"
+                                className="w-full bg-gradient-to-r from-emerald-500 to-emerald-500 text-white font-black text-lg py-4 rounded-xl shadow-[0_10px_20px_rgba(16,185,129,0.3)] hover:shadow-[0_15px_30px_rgba(16,185,129,0.4)] hover:scale-105 transition-all outline-none border border-emerald-400/50"
                             >
                                 Reconstruir
                             </button>
@@ -983,7 +983,7 @@ export default function UbicaBalance() {
                             initial={{ scale: 0, rotate: 0 }}
                             animate={{ scale: [0, 1.5, 1.2], rotate: 360 }}
                             transition={{ duration: 1.5, ease: "easeOut" }}
-                            className="absolute w-[600px] h-[600px] bg-gradient-to-r from-emerald-500/20 via-teal-400/30 to-emerald-500/20 rounded-full blur-[100px]"
+                            className="absolute w-[600px] h-[600px] bg-gradient-to-r from-emerald-500/20 via-emerald-400/30 to-emerald-500/20 rounded-full blur-[100px]"
                         />
                         
                         <div className="relative flex flex-col items-center">
@@ -1045,7 +1045,7 @@ export default function UbicaBalance() {
                                         delay: Math.random() * 0.5
                                     }}
                                     className={`absolute w-4 h-4 rounded-sm ${
-                                        i % 3 === 0 ? 'bg-emerald-400' : i % 3 === 1 ? 'bg-teal-300' : 'bg-white'
+                                        i % 3 === 0 ? 'bg-emerald-400' : i % 3 === 1 ? 'bg-emerald-300' : 'bg-white'
                                     } blur-[1px] opacity-60`}
                                 />
                             ))}
