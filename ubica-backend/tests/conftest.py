@@ -23,11 +23,23 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import jwt  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
+from sqlalchemy import event  # noqa: E402
 from sqlmodel import Session, SQLModel  # noqa: E402
 
 import models  # noqa: E402
 from database import engine  # noqa: E402
 from main import app  # noqa: E402
+
+
+# Postgres (producción) aplica las claves foráneas; SQLite solo si se activan en cada conexión.
+@event.listens_for(engine, "connect")
+def _sqlite_foreign_keys_on(dbapi_connection, _record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()
+
+
+engine.dispose()  # por si alguna conexión se abrió antes de registrar el listener
 
 
 def make_token(user_id: int, **extra) -> str:
