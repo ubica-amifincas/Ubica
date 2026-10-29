@@ -1,4 +1,5 @@
-const CACHE_NAME = 'ubica-cache-v1';
+// Cambiar la versión al modificar la estrategia de caché: el "activate" borra las cachés antiguas
+const CACHE_NAME = 'ubica-cache-v2';
 const PRECACHE_URLS = [
     '/',
     '/index.html',
@@ -9,9 +10,7 @@ const PRECACHE_URLS = [
 // Install: precache essential resources
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(PRECACHE_URLS);
-        })
+        caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS))
     );
     self.skipWaiting();
 });
@@ -19,59 +18,57 @@ self.addEventListener('install', (event) => {
 // Activate: clean up old caches
 self.addEventListener('activate', (event) => {
     event.waitUntil(
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
+        caches.keys().then((cacheNames) =>
+            Promise.all(
                 cacheNames
                     .filter((name) => name !== CACHE_NAME)
                     .map((name) => caches.delete(name))
-            );
-        })
+            )
+        )
     );
     self.clients.claim();
 });
 
-// Fetch: network-first strategy for API calls, cache-first for assets
+function putInCache(request, response) {
+    // Solo respuestas completas y propias (no opacas ni errores)
+    if (!response || !response.ok || response.type === 'opaque') return;
+    const copy = response.clone();
+    caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+}
+
 self.addEventListener('fetch', (event) => {
-    const url = new URL(event.request.url);
+    const { request } = event;
+    if (request.method !== 'GET') return;
 
-    // Skip non-GET requests
-    if (event.request.method !== 'GET') return;
+    const url = new URL(request.url);
+    const sameOrigin = url.origin === self.location.origin;
 
-    // Skip cross-origin requests except for CDN assets
-    if (url.origin !== self.location.origin && !url.hostname.includes('unpkg.com')) return;
-
-    // Network-first for API calls and navigation
-    if (url.pathname.startsWith('/api') || event.request.mode === 'navigate') {
+    // Recursos de terceros: solo los ficheros versionados de unpkg (Leaflet), cache-first
+    if (!sameOrigin) {
+        if (!url.hostname.includes('unpkg.com')) return;
         event.respondWith(
-            fetch(event.request)
-                .then((response) => {
-                    // Cache navigation responses
-                    if (event.request.mode === 'navigate') {
-                        const responseClone = response.clone();
-                        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
-                    }
-                    return response;
-                })
-                .catch(() => {
-                    return caches.match(event.request).then((cached) => {
-                        return cached || caches.match('/index.html');
-                    });
-                })
+            caches.match(request).then((cached) => cached || fetch(request).then((response) => {
+                putInCache(request, response);
+                return response;
+            }))
         );
         return;
     }
 
-    // Cache-first for static assets
+    // Mismo origen: network-first para que los visitantes reciban siempre la última versión;
+    // la caché solo se usa sin conexión
     event.respondWith(
-        caches.match(event.request).then((cached) => {
-            if (cached) return cached;
-            return fetch(event.request).then((response) => {
-                if (response.ok) {
-                    const responseClone = response.clone();
-                    caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
-                }
+        fetch(request)
+            .then((response) => {
+                putInCache(request, response);
                 return response;
-            });
-        })
+            })
+            .catch(() =>
+                caches.match(request).then((cached) => {
+                    if (cached) return cached;
+                    if (request.mode === 'navigate') return caches.match('/index.html');
+                    return Response.error();
+                })
+            )
     );
 });

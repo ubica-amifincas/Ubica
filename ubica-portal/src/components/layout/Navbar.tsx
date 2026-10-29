@@ -12,7 +12,6 @@ import {
   CogIcon,
   KeyIcon,
   EnvelopeIcon,
-  ShieldCheckIcon,
   PuzzlePieceIcon
 } from '@heroicons/react/24/outline';
 import { ThemeToggle } from '../common/ThemeToggle';
@@ -125,8 +124,6 @@ export default function Navbar() {
       dashboardNav.push({ name: t('nav.realtor'), href: '/realtor', icon: BuildingOfficeIcon, external: false });
     } else if (hasRole('investor')) {
       dashboardNav.push({ name: t('nav.investor', 'Inversor'), href: '/investor', icon: ChartBarIcon, external: false });
-    } else if (hasRole('property_manager')) {
-      dashboardNav.push({ name: t('nav.property_manager'), href: '/property-manager', icon: BuildingOfficeIcon, external: false });
     }
 
     return dashboardNav;
@@ -240,7 +237,6 @@ export default function Navbar() {
                         {user?.role === 'admin' && t('roles.admin')}
                         {user?.role === 'realtor' && t('roles.realtor')}
                         {user?.role === 'investor' && t('roles.investor')}
-                        {user?.role === 'property_manager' && t('roles.property_manager')}
                         {user?.role === 'user' && t('roles.user')}
                         {user?.company && ` - ${user.company}`}
                       </div>
@@ -274,16 +270,6 @@ export default function Navbar() {
                         <div className="flex items-center space-x-2">
                           <KeyIcon className="h-4 w-4" />
                           <span>{t('nav.change_password')}</span>
-                        </div>
-                      </Link>
-                      <Link
-                        to="/dashboard/settings/mfa"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-                        onClick={() => setIsUserMenuOpen(false)}
-                      >
-                        <div className="flex items-center space-x-2">
-                          <ShieldCheckIcon className="h-4 w-4" />
-                          <span>{t('nav.mfa')}</span>
                         </div>
                       </Link>
 

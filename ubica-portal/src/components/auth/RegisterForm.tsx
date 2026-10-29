@@ -18,8 +18,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ isEmbedded }) => {
     full_name: '',
     company: '',
     phone: '',
-    role: 'user',
-    wantsMfa: false
+    role: 'user'
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -43,7 +42,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ isEmbedded }) => {
       return;
     }
 
-    if (formData.password.length < 6) {
+    if (formData.password.length < 8) {
       setError(t('forms.passwordTooShort'));
       return;
     }
@@ -51,7 +50,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ isEmbedded }) => {
     setLoading(true);
 
     try {
-      const { confirmPassword, wantsMfa, ...registrationData } = formData;
+      const { confirmPassword: _confirmPassword, ...registrationData } = formData;
       await register(registrationData);
       setIsSuccess(true);
     } catch (error) {
@@ -164,15 +163,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ isEmbedded }) => {
               <input name="confirmPassword" type="password" required value={formData.confirmPassword} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-0 border-b-2 border-transparent focus:border-emerald-500 dark:focus:border-emerald-400 rounded-xl text-gray-900 dark:text-white transition-all focus:ring-0" placeholder="••••••••" />
             </div>
           </div>
-
-          <div className="flex items-start gap-3 p-3 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-xl border border-emerald-100/50 dark:border-emerald-900/30">
-            <input id="wantsMfa" name="wantsMfa" type="checkbox" checked={formData.wantsMfa} onChange={(e) => setFormData(prev => ({ ...prev, wantsMfa: e.target.checked }))} className="mt-1 h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500" />
-            <div className="text-xs">
-              <label htmlFor="wantsMfa" className="font-bold text-gray-700 dark:text-gray-300 tracking-tight">{t('mfa.title')}</label>
-              <p className="text-gray-500 dark:text-gray-400 mt-0.5">{t('mfa.description')}</p>
-            </div>
-          </div>
         </div>
+
+        <p className="text-xs text-gray-400 dark:text-gray-500 px-1">La contraseña debe tener al menos 8 caracteres.</p>
 
         <button type="submit" disabled={loading} className="w-full h-14 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-black rounded-xl shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 uppercase text-sm tracking-wider">
           {loading ? t('auth.registering') : t('auth.register_button')}

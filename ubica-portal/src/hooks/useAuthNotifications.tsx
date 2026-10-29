@@ -18,9 +18,12 @@ export const useAuthNotifications = () => {
       );
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Por favor, verifica tus credenciales e intenta nuevamente.';
-      const title = errorMessage.includes('verifica tu correo')
-        ? 'Verificación Requerida'
-        : t('auth.invalidCredentials');
+      const status = (error as { status?: number } | null)?.status;
+      const title = status === 429
+        ? 'Demasiados intentos'
+        : errorMessage.includes('verifica tu correo')
+          ? 'Verificación Requerida'
+          : t('auth.invalidCredentials');
 
       notifications.error(
         title,

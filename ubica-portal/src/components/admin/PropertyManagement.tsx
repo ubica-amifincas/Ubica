@@ -13,6 +13,7 @@ import type { Property } from '../../types';
 import PropertyFormModal from '../common/PropertyFormModal';
 import { ImportPropertiesModal } from './ImportPropertiesModal';
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import { getStatusLabel } from '../../utils/propertyStatus';
 
 interface PropertyFormData {
   title: string;
@@ -43,12 +44,14 @@ const PROPERTY_TYPES = [
   { value: 'estudio', label: 'Estudio' },
 ];
 
-const PROPERTY_STATUS = [
-  { value: 'available', label: 'Disponible', color: 'bg-green-100 text-green-800' },
-  { value: 'sold', label: 'Vendido', color: 'bg-red-100 text-red-800' },
-  { value: 'rented', label: 'Alquilado', color: 'bg-emerald-100 text-emerald-800' },
-  { value: 'reserved', label: 'Reservado', color: 'bg-yellow-100 text-yellow-800' },
-];
+const STATUS_COLORS: Record<string, string> = {
+  'for-sale': 'bg-emerald-100 text-emerald-800',
+  'for-rent': 'bg-cyan-100 text-cyan-800',
+  available: 'bg-green-100 text-green-800',
+  reserved: 'bg-yellow-100 text-yellow-800',
+  sold: 'bg-red-100 text-red-800',
+  rented: 'bg-teal-100 text-teal-800',
+};
 
 const MURCIA_LOCATIONS = [
   'Cartagena', 'Murcia', 'Lorca', 'Águilas', 'San Pedro del Pinatar',
@@ -246,7 +249,10 @@ const PropertyManagement: React.FC = () => {
   };
 
   const getStatusInfo = (status: string) => {
-    return PROPERTY_STATUS.find(s => s.value === status) || PROPERTY_STATUS[0];
+    return {
+      label: getStatusLabel(status),
+      color: STATUS_COLORS[status] || 'bg-gray-100 text-gray-800',
+    };
   };
 
   const formatPrice = (price: number): string => {

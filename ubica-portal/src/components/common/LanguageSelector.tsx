@@ -45,6 +45,7 @@ export function LanguageSelector() {
           dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700
         `}
         title={t('language.toggle')}
+        aria-label={t('language.toggle')}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
       >

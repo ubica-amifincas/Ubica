@@ -4,7 +4,9 @@ import { Physics, RigidBody, useRapier } from '@react-three/rapier';
 import { Environment, ContactShadows, Edges, Circle, OrbitControls, Sky, Trail } from '@react-three/drei';
 import { ChevronLeftIcon, LockClosedIcon, SunIcon, MoonIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
-import { useAuth, useAuthenticatedFetch } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { API_BASE_URL } from '../../config';
+import { getToken } from '../../services/session';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
 
@@ -606,7 +608,6 @@ function CameraRig({ targetY }: { targetY: number }) {
 // --- MAIN UX COMPONENT ---
 export default function UbicaBalance() {
     const { user } = useAuth();
-    const appService = useAuthenticatedFetch(); // To make API calls for Leaderboard
 
     const [blocks, setBlocks] = useState<BlockData[]>([]);
     const [highestY, setHighestY] = useState(0);
@@ -639,11 +640,9 @@ export default function UbicaBalance() {
 
     const fetchLeaderboard = useCallback(async () => {
         try {
-            // Re-using the known appService api pattern or default fetch
-            const token = localStorage.getItem('access_token');
-            const apiUrl = import.meta.env.VITE_API_URL || (window.location.hostname.includes('amifincas.es') || window.location.hostname.includes('vercel.app') ? 'https://ubica-backend.onrender.com/api' : 'http://localhost:8000/api');
-            
-            const res = await fetch(`${apiUrl}/games/balance/leaderboard`, {
+            const token = getToken();
+
+            const res = await fetch(`${API_BASE_URL}/games/balance/leaderboard`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -670,10 +669,9 @@ export default function UbicaBalance() {
         if (gameOver && score > 0 && user) {
             const saveScore = async () => {
                 try {
-                    const token = localStorage.getItem('access_token');
-                    const apiUrl = import.meta.env.VITE_API_URL || (window.location.hostname.includes('amifincas.es') || window.location.hostname.includes('vercel.app') ? 'https://ubica-backend.onrender.com/api' : 'http://localhost:8000/api');
-                    
-                    const res = await fetch(`${apiUrl}/games/score`, {
+                    const token = getToken();
+
+                    const res = await fetch(`${API_BASE_URL}/games/score`, {
                         method: 'POST',
                         headers: { 
                             'Content-Type': 'application/json',

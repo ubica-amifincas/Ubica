@@ -1,91 +1,32 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
-export interface CookiePreferences {
-  necessary: boolean;
-  analytics: boolean;
-  marketing: boolean;
-  functional: boolean;
+/** Clave en localStorage que recuerda que el usuario ya ha visto el aviso de almacenamiento. */
+export const STORAGE_NOTICE_KEY = 'ubica-storage-notice';
+
+// Claves del antiguo banner de consentimiento (ya no se usan)
+const LEGACY_KEYS = ['ami-cookie-consent', 'ami-cookie-consent-date'];
+
+function readDismissed(): boolean {
+  try {
+    return localStorage.getItem(STORAGE_NOTICE_KEY) !== null;
+  } catch {
+    return false;
+  }
 }
 
-interface UseCookieConsentReturn {
-  showBanner: boolean;
-  preferences: CookiePreferences | null;
-  acceptAll: () => void;
-  rejectAll: () => void;
-  updatePreferences: (prefs: CookiePreferences) => void;
-}
+/** Estado del aviso informativo de almacenamiento (no es un gestor de consentimiento). */
+export function useStorageNotice() {
+  const [showNotice, setShowNotice] = useState(() => !readDismissed());
 
-export function useCookieConsent(): UseCookieConsentReturn {
-  const [showBanner, setShowBanner] = useState(false);
-  const [preferences, setPreferences] = useState<CookiePreferences | null>(null);
-
-  useEffect(() => {
-    const storedConsent = localStorage.getItem('ami-cookie-consent');
-    const consentDate = localStorage.getItem('ami-cookie-consent-date');
-    
-    if (storedConsent && consentDate) {
-      // Verificar si el consentimiento ha expirado (6 meses)
-      const sixMonthsAgo = new Date();
-      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-      const storedDate = new Date(consentDate);
-      
-      if (storedDate > sixMonthsAgo) {
-        try {
-          const parsedPreferences = JSON.parse(storedConsent);
-          setPreferences(parsedPreferences);
-          setShowBanner(false);
-        } catch (error) {
-          console.error('Error parsing stored cookie consent:', error);
-          setShowBanner(true);
-        }
-      } else {
-        // Consentimiento expirado
-        localStorage.removeItem('ami-cookie-consent');
-        localStorage.removeItem('ami-cookie-consent-date');
-        setShowBanner(true);
-      }
-    } else {
-      // No hay consentimiento guardado
-      setShowBanner(true);
+  const dismiss = () => {
+    try {
+      localStorage.setItem(STORAGE_NOTICE_KEY, new Date().toISOString());
+      LEGACY_KEYS.forEach(k => localStorage.removeItem(k));
+    } catch {
+      /* almacenamiento no disponible: se ocultará solo en esta visita */
     }
-  }, []);
-
-  const saveConsent = (prefs: CookiePreferences) => {
-    localStorage.setItem('ami-cookie-consent', JSON.stringify(prefs));
-    localStorage.setItem('ami-cookie-consent-date', new Date().toISOString());
-    setPreferences(prefs);
-    setShowBanner(false);
+    setShowNotice(false);
   };
 
-  const acceptAll = () => {
-    const fullConsent: CookiePreferences = {
-      necessary: true,
-      analytics: true,
-      marketing: true,
-      functional: true
-    };
-    saveConsent(fullConsent);
-  };
-
-  const rejectAll = () => {
-    const minimalConsent: CookiePreferences = {
-      necessary: true,
-      analytics: false,
-      marketing: false,
-      functional: false
-    };
-    saveConsent(minimalConsent);
-  };
-
-  const updatePreferences = (prefs: CookiePreferences) => {
-    saveConsent(prefs);
-  };
-
-  return {
-    showBanner,
-    preferences,
-    acceptAll,
-    rejectAll,
-    updatePreferences
-  };
+  return { showNotice, dismiss };
 }

@@ -231,10 +231,12 @@ export function PropertyCard({
                 {property.title}
               </h3>
             </div>
-            <div className="flex items-center text-xs md:text-sm text-gray-500 dark:text-gray-400">
-              <MapPinIcon className="mr-1 h-3.5 w-3.5 flex-shrink-0" />
-              <span className="line-clamp-1">{property.location}</span>
-            </div>
+            {property.location?.trim() && (
+              <div className="flex items-center text-xs md:text-sm text-gray-500 dark:text-gray-400">
+                <MapPinIcon className="mr-1 h-3.5 w-3.5 flex-shrink-0" />
+                <span className="line-clamp-1">{property.location}</span>
+              </div>
+            )}
           </div>
 
           {/* Property Type and Details */}

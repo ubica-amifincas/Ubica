@@ -1,15 +1,11 @@
 /**
  * Ubica API Service
- * Sistema de autenticación simulado para demo
+ * Cliente HTTP del backend real (FastAPI)
  * AMI Fincas
  */
 
-// Simulamos el backend con datos locales para el demo
-const DEMO_MODE = false; // Desactivamos el modo demo para usar el backend real
-// Automatically use the Render backend in production if VITE_API_URL is not set
-const isProdContainer = window.location.hostname.includes('amifincas.es') || window.location.hostname.includes('vercel.app');
-const defaultApiUrl = isProdContainer ? 'https://ubica-backend.onrender.com/api' : 'http://localhost:8000/api';
-const API_BASE_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || defaultApiUrl;
+import { API_BASE_URL } from '../config';
+import { getToken, clearSession } from './session';
 
 const FIELD_LABELS: Record<string, string> = {
   email: 'Email', password: 'Contraseña', full_name: 'Nombre', role: 'Rol', message: 'Mensaje',
@@ -62,20 +58,74 @@ export interface User {
 
 import type { Property } from '../types';
 
-export interface DashboardStats {
+export type UserRole = 'admin' | 'realtor' | 'investor' | 'user';
+
+export interface CreateUserRequest {
+  email: string;
+  password: string;
+  full_name: string;
+  role: UserRole;
+  company?: string;
+  phone?: string;
+}
+
+export interface UpdateUserRequest {
+  email?: string;
+  full_name?: string;
+  role?: UserRole;
+  company?: string;
+  phone?: string;
+  is_active?: boolean;
+}
+
+export interface AdminDashboardStats {
   total_properties: number;
   total_users: number;
   total_transactions: number;
   total_revenue: number;
-  properties_sold_this_month: number;
-  properties_rented_this_month: number;
-  average_roi: number;
-  market_growth: number;
+  properties_sold_this_month?: number;
+  properties_rented_this_month?: number;
+  average_roi?: number;
+  market_growth?: number;
+  users_by_role?: Partial<Record<UserRole, number>>;
+  properties_by_status?: Record<string, number>;
+  [key: string]: unknown;
+}
+
+export interface ContactRequest {
+  name: string;
+  email: string;
+  phone?: string;
+  subject?: string;
+  message: string;
+}
+
+/** Error de la API con el código HTTP, para distinguir p. ej. 429 (demasiados intentos). */
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
+interface HandleOptions {
+  /** No tratar un 401 como sesión caducada (p. ej. el propio login o la validación inicial). */
+  skipAuthRedirect?: boolean;
+}
+
+/** Limpia la sesión y manda al login avisando de que ha caducado. */
+function handleExpiredSession() {
+  clearSession();
+  if (typeof window === 'undefined') return;
+  if (window.location.pathname.startsWith('/login')) return;
+  window.location.assign('/login?expired=1');
 }
 
 class ApiService {
   private getAuthHeaders(): HeadersInit {
-    const token = localStorage.getItem('ubica_token');
+    const token = getToken();
     return {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -88,14 +138,19 @@ class ApiService {
     return typeof img === 'string' && img.trim() !== '';
   }
 
-  private async handleResponse<T>(response: Response): Promise<T> {
+  private async handleResponse<T>(response: Response, options: HandleOptions = {}): Promise<T> {
     if (!response.ok) {
+      if (response.status === 401 && !options.skipAuthRedirect && getToken()) {
+        handleExpiredSession();
+        throw new ApiError('Tu sesión ha caducado. Vuelve a iniciar sesión.', 401);
+      }
       const errorData = await response.json().catch(() => ({}));
       const errorMessage = formatApiError(errorData, response.status);
       console.error('API Error:', errorMessage, 'at', response.url);
-      throw new Error(errorMessage);
+      throw new ApiError(errorMessage, response.status);
     }
-    return response.json();
+    if (response.status === 204) return undefined as T;
+    return response.json().catch(() => undefined) as Promise<T>;
   }
 
   // Mapear datos del backend (snake_case y coords planas) al frontend (camelCase y coords anidadas)
@@ -116,11 +171,12 @@ class ApiService {
       energyRating: data.energy_rating || data.energyRating,
       type: data.type || 'house',
       status: data.status || 'for-sale',
-      // Campos financieros de inversión
-      purchasePrice: data.purchase_price ?? data.purchasePrice ?? 0,
-      totalCost: data.total_cost ?? data.totalCost ?? 0,
-      monthlyCost: data.monthly_cost ?? data.monthlyCost ?? 0,
-      monthlyIncome: data.monthly_income ?? data.monthlyIncome ?? 0,
+      // Campos financieros de inversión: solo llegan al propietario y al admin;
+      // en los listados públicos quedan sin definir
+      purchasePrice: data.purchase_price ?? data.purchasePrice ?? undefined,
+      totalCost: data.total_cost ?? data.totalCost ?? undefined,
+      monthlyCost: data.monthly_cost ?? data.monthlyCost ?? undefined,
+      monthlyIncome: data.monthly_income ?? data.monthlyIncome ?? undefined,
     } as Property;
   }
 
@@ -128,10 +184,10 @@ class ApiService {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
-      headers: this.getAuthHeaders(),
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentials),
     });
-    return this.handleResponse<LoginResponse>(response);
+    return this.handleResponse<LoginResponse>(response, { skipAuthRedirect: true });
   }
 
   async register(userData: any): Promise<{ message: string; user_id: number }> {
@@ -144,17 +200,71 @@ class ApiService {
   }
 
   async verifyEmail(token: string): Promise<{ message: string }> {
-    const response = await fetch(`${API_BASE_URL}/auth/verify-email?token=${token}`, {
+    const response = await fetch(`${API_BASE_URL}/auth/verify-email?token=${encodeURIComponent(token)}`, {
       method: 'GET',
     });
     return this.handleResponse<{ message: string }>(response);
   }
 
-  async getCurrentUser(): Promise<User> {
+  /** Devuelve el usuario del token actual. `silent` evita la redirección por sesión caducada. */
+  async getCurrentUser(silent = false): Promise<User> {
     const response = await fetch(`${API_BASE_URL}/auth/me`, {
       headers: this.getAuthHeaders(),
     });
-    return this.handleResponse<User>(response);
+    return this.handleResponse<User>(response, { skipAuthRedirect: silent });
+  }
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<LoginResponse> {
+    const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+    });
+    return this.handleResponse<LoginResponse>(response);
+  }
+
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    return this.handleResponse<{ message: string }>(response, { skipAuthRedirect: true });
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+    const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, new_password: newPassword }),
+    });
+    return this.handleResponse<{ message: string }>(response, { skipAuthRedirect: true });
+  }
+
+  async changeEmail(newEmail: string, password: string): Promise<{ message: string }> {
+    const response = await fetch(`${API_BASE_URL}/auth/change-email`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ new_email: newEmail, password }),
+    });
+    return this.handleResponse<{ message: string }>(response);
+  }
+
+  async confirmEmailChange(token: string): Promise<{ message: string }> {
+    const response = await fetch(`${API_BASE_URL}/auth/confirm-email-change?token=${encodeURIComponent(token)}`, {
+      method: 'GET',
+    });
+    return this.handleResponse<{ message: string }>(response, { skipAuthRedirect: true });
+  }
+
+  // Contacto
+  async sendContact(data: ContactRequest): Promise<{ message: string }> {
+    const response = await fetch(`${API_BASE_URL}/contact`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return this.handleResponse<{ message: string }>(response, { skipAuthRedirect: true });
   }
 
   // Propiedades públicas
@@ -182,33 +292,11 @@ class ApiService {
   }
 
   // Admin endpoints
-  async getAdminDashboard(): Promise<any> {
+  async getAdminDashboard(): Promise<AdminDashboardStats> {
     const response = await fetch(`${API_BASE_URL}/admin/dashboard`, {
       headers: this.getAuthHeaders(),
     });
-    const stats = await this.handleResponse<DashboardStats>(response);
-
-    // Mappear al formato complejo que espera AdminDashboard.tsx
-    return {
-      overview: {
-        total_users: stats.total_users,
-        total_properties: stats.total_properties,
-        total_investments: 15,
-        total_transactions: stats.total_transactions,
-        total_property_value: 15750000,
-        users_by_role: { admin: 1, realtor: 1, investor: 1, user: 0 },
-        properties_by_status: { available: stats.total_properties, sold: 12, rented: 5 }
-      },
-      revenue: {
-        total_transaction_value: stats.total_revenue,
-        total_commissions: 45000,
-        platform_revenue: 12000,
-        transaction_count: stats.total_transactions
-      },
-      user_growth: [],
-      top_properties: [],
-      top_realtors: []
-    };
+    return this.handleResponse<AdminDashboardStats>(response);
   }
 
   async getAllUsers(): Promise<User[]> {
@@ -218,7 +306,7 @@ class ApiService {
     return this.handleResponse<User[]>(response);
   }
 
-  async createUser(userData: any): Promise<User> {
+  async createUser(userData: CreateUserRequest): Promise<User> {
     const response = await fetch(`${API_BASE_URL}/admin/users`, {
       method: 'POST',
       headers: this.getAuthHeaders(),
@@ -227,7 +315,7 @@ class ApiService {
     return this.handleResponse<User>(response);
   }
 
-  async updateUser(userId: number, userData: any): Promise<User> {
+  async updateUser(userId: number, userData: UpdateUserRequest): Promise<User> {
     const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
       method: 'PUT',
       headers: this.getAuthHeaders(),
@@ -294,7 +382,7 @@ class ApiService {
     });
 
     // Don't use standard getAuthHeaders() because we must let the browser set the boundary for multipart/form-data
-    const token = localStorage.getItem('ubica_token');
+    const token = getToken();
     const headers: HeadersInit = {};
     if (token) {
       headers.Authorization = `Bearer ${token}`;
@@ -312,7 +400,7 @@ class ApiService {
 
   // Property Import
   async importProperties(formData: FormData): Promise<any> {
-    const token = localStorage.getItem('ubica_token');
+    const token = getToken();
     const headers: HeadersInit = {};
     if (token) {
       headers.Authorization = `Bearer ${token}`;
@@ -505,7 +593,8 @@ class ApiService {
     return this.handleResponse<any[]>(response);
   }
 
-  async sendMessage(msgData: { property_id?: number, realtor_id?: number, receiver_id?: number, content: string }): Promise<any> {
+  /** Sin receiver_id el backend envía el mensaje al propietario del anuncio. */
+  async sendMessage(msgData: { property_id?: number, receiver_id?: number, content: string }): Promise<any> {
     const response = await fetch(`${API_BASE_URL}/user/messages`, {
       method: 'POST',
       headers: this.getAuthHeaders(),

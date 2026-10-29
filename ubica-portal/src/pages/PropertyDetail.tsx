@@ -166,6 +166,7 @@ export default function PropertyDetail() {
       try {
         const foundProperty = await appService.getProperty(Number(id));
         setProperty(foundProperty);
+        if (foundProperty?.title) document.title = `${foundProperty.title} | Ubica`;
 
         // Filter valid images
         const imgs = foundProperty.images?.filter((img: string) => img && typeof img === 'string' && img.trim() !== '') || [];
@@ -237,9 +238,8 @@ export default function PropertyDetail() {
     setMessageStatus('sending');
     try {
       await appService.sendMessage({
+        // El backend entrega el mensaje al propietario del anuncio
         property_id: Number(id),
-        realtor_id: property?.realtor_id,
-        receiver_id: property?.owner_id,
         content: messageForm.message
       });
       setMessageStatus('success');

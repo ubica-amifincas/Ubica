@@ -202,6 +202,7 @@ const resources = {
       "language.spanish": "Español",
       "language.english": "Inglés",
       "language.change": "Cambiar Idioma",
+      "language.toggle": "Cambiar idioma",
 
       // Authentication & Security
       "auth.login": "Iniciar Sesión",
@@ -477,7 +478,6 @@ const resources = {
       "login.email": "Correo Electrónico",
       "login.password": "Contraseña",
       "login.submit": "Iniciar Sesión",
-      "login.demo": "Demo: admin@ubica.com / admin123",
       "login.subtitle": "Portal de inmobiliarias e inversionistas",
       "login.slogan": "Menos búsquedas, más precisión. Ubica.",
       "login.use_demo": "Usar credenciales demo",
@@ -853,6 +853,7 @@ const resources = {
       "language.spanish": "Spanish",
       "language.english": "English",
       "language.change": "Change Language",
+      "language.toggle": "Change language",
 
       // Authentication & Security
       "auth.login": "Sign In",
@@ -1142,7 +1143,6 @@ const resources = {
       "login.email": "Email",
       "login.password": "Password",
       "login.submit": "Sign In",
-      "login.demo": "Demo: admin@ubica.com / admin123",
       "login.subtitle": "Realtors and Investors Portal",
       "login.slogan": "Fewer searches, more precision. Ubica.",
       "login.use_demo": "Use demo credentials",

@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /realtor
+Disallow: /investor
+
+Sitemap: https://ubica.amifincas.es/sitemap.xml

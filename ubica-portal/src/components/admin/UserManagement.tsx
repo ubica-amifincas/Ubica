@@ -9,7 +9,7 @@ import {
   CheckIcon
 } from '@heroicons/react/24/outline';
 import { useAuthenticatedFetch } from '../../contexts/AuthContext';
-import type { CreateUserRequest, UpdateUserRequest } from '../../services/mockApiService';
+import type { CreateUserRequest, UpdateUserRequest } from '../../services/apiService';
 import type { User } from '../../services/apiService';
 
 interface UserFormData {

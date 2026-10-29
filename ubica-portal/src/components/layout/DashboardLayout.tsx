@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
+import RouteFallback from '../common/RouteFallback';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -13,7 +14,6 @@ import {
   ArrowLeftOnRectangleIcon,
   UserCircleIcon,
   EnvelopeIcon,
-  ShieldCheckIcon,
   WalletIcon,
   HeartIcon,
   SparklesIcon,
@@ -32,6 +32,7 @@ export default function DashboardLayout() {
   const { user, logout } = useAuth();
 
   const isInvestor = user?.role === 'investor';
+  const isRealtor = user?.role === 'realtor';
   const isStandardUser = user?.role === 'user';
 
   const navigation = [
@@ -39,6 +40,8 @@ export default function DashboardLayout() {
       ? [{ name: 'Panel de Inversionista', href: '/investor', icon: ArrowTrendingUpIcon }]
       : [{ name: t('dashboard.overview'), href: '/dashboard', icon: ChartBarIcon }]
     ),
+    ...(isRealtor ? [{ name: 'Panel Inmobiliaria', href: '/realtor', icon: BuildingOfficeIcon }] : []),
+    ...(isStandardUser ? [{ name: 'Mis propiedades', href: '/dashboard/properties', icon: BuildingOfficeIcon }] : []),
     ...(!isStandardUser ? [
       { name: t('dashboard.properties'), href: '/dashboard/properties', icon: BuildingOfficeIcon },
       { name: t('dashboard.sales'), href: '/dashboard/sales', icon: BanknotesIcon },
@@ -58,7 +61,6 @@ export default function DashboardLayout() {
     { name: 'Mi Perfil', href: '/dashboard/settings/profile', icon: UserCircleIcon },
     { name: 'Cambiar Email', href: '/dashboard/settings/email', icon: EnvelopeIcon },
     { name: 'Cambiar Contraseña', href: '/dashboard/settings/password', icon: KeyIcon },
-    { name: 'Configurar MFA', href: '/dashboard/settings/mfa', icon: ShieldCheckIcon },
   ];
 
   const isActive = (href: string) => {
@@ -76,7 +78,7 @@ export default function DashboardLayout() {
     
     // For other paths that are pure paths (like '/dashboard/investments' or '/investor')
     if (!href.includes('?')) {
-        if (href === '/investor') return location.pathname === href;
+        if (href === '/investor' || href === '/realtor') return location.pathname === href;
         return location.pathname.startsWith(href);
     }
 
@@ -163,10 +165,10 @@ export default function DashboardLayout() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                    {user?.full_name || 'Admin Ubica'}
+                    {user?.full_name || 'Usuario'}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                    {user?.email || 'admin@ubica.com'}
+                    {user?.email || ''}
                   </p>
                 </div>
               </Link>
@@ -309,7 +311,9 @@ export default function DashboardLayout() {
         <main className="flex-1 relative overflow-y-auto focus:outline-none">
           <div className="py-6">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-              <Outlet />
+              <Suspense fallback={<RouteFallback />}>
+                <Outlet />
+              </Suspense>
             </div>
           </div>
         </main>

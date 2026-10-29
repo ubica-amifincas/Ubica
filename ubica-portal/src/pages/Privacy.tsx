@@ -24,7 +24,7 @@ export default function Privacy() {
         },
         {
             title: '5. Destinatarios de los Datos',
-            content: 'Sus datos no serán cedidos a terceros salvo obligación legal. Podemos compartir datos con proveedores de servicios que actúan como encargados del tratamiento (hosting, email marketing, analítica web) con los que tenemos contratos de protección de datos.',
+            content: 'Sus datos no serán cedidos a terceros salvo obligación legal. Podemos compartir datos con proveedores de servicios que actúan como encargados del tratamiento (alojamiento web y servidores, envío de correos del servicio, almacenamiento de imágenes) con los que tenemos contratos de protección de datos.',
         },
         {
             title: '6. Derechos del Usuario',
@@ -40,7 +40,7 @@ export default function Privacy() {
         },
         {
             title: '9. Cookies',
-            content: 'Utilizamos cookies y tecnologías similares para mejorar su experiencia. Para más información, consulte nuestra Política de Cookies, accesible desde el pie de página de nuestra web.',
+            content: 'No utilizamos cookies analíticas ni publicitarias. Solo guardamos en su navegador la información técnica necesaria para el funcionamiento de la web (sesión y preferencias). Para más información, consulte nuestra Política de Cookies, accesible desde el pie de página de nuestra web.',
         },
         {
             title: '10. Modificaciones',

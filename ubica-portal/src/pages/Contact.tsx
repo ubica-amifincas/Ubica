@@ -8,17 +8,64 @@ import {
     PaperAirplaneIcon,
 } from '@heroicons/react/24/outline';
 import { useLanguage } from '../hooks/useLanguage';
+import apiService from '../services/apiService';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MESSAGE_MIN = 10;
+const MESSAGE_MAX = 5000;
+
+type ContactField = 'name' | 'email' | 'phone' | 'subject' | 'message';
+type ContactForm = Record<ContactField, string>;
+type ContactErrors = Partial<Record<ContactField, string>>;
+
+const EMPTY_FORM: ContactForm = { name: '', email: '', phone: '', subject: '', message: '' };
+
+function validate(form: ContactForm): ContactErrors {
+    const errors: ContactErrors = {};
+    if (!form.name.trim()) errors.name = 'Indica tu nombre.';
+    else if (form.name.trim().length > 200) errors.name = 'El nombre no puede superar 200 caracteres.';
+    if (!EMAIL_RE.test(form.email.trim())) errors.email = 'Introduce un correo electrónico válido.';
+    if (form.phone.trim() && !/^[+\d\s().-]{6,50}$/.test(form.phone.trim())) errors.phone = 'Introduce un teléfono válido.';
+    const msg = form.message.trim();
+    if (msg.length < MESSAGE_MIN) errors.message = `El mensaje debe tener al menos ${MESSAGE_MIN} caracteres.`;
+    else if (msg.length > MESSAGE_MAX) errors.message = `El mensaje no puede superar ${MESSAGE_MAX} caracteres.`;
+    return errors;
+}
+
+const FieldError = ({ field, errors }: { field: ContactField; errors: ContactErrors }) =>
+    errors[field] ? <p id={`contact-${field}-error`} className="mt-1 text-sm text-red-600 dark:text-red-400">{errors[field]}</p> : null;
 
 export default function Contact() {
     const { t } = useLanguage();
     const [formStatus, setFormStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+    const [form, setForm] = useState<ContactForm>(EMPTY_FORM);
+    const [errors, setErrors] = useState<ContactErrors>({});
+    const [serverMessage, setServerMessage] = useState('');
+
+    const subjectOptions = [
+        { value: 'buy', label: t('contact.form.subj_buy') },
+        { value: 'sell', label: t('contact.form.subj_sell') },
+        { value: 'rent', label: t('contact.form.subj_rent') },
+        { value: 'invest', label: t('contact.form.subj_invest') },
+        { value: 'admin', label: t('contact.form.subj_admin') },
+        { value: 'other', label: t('contact.form.subj_other') },
+    ];
+
+    const setField = (field: ContactField) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        setForm(prev => ({ ...prev, [field]: e.target.value }));
+        if (errors[field]) setErrors(prev => ({ ...prev, [field]: undefined }));
+        if (formStatus === 'success' || formStatus === 'error') setFormStatus('idle');
+    };
+
+    const inputClass = (field: ContactField) =>
+        `w-full px-4 py-3 rounded-xl border ${errors[field] ? 'border-red-400 dark:border-red-500' : 'border-gray-200 dark:border-gray-600'} bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all`;
 
     const contactInfo = [
         {
             icon: MapPinIcon,
             title: t('contact.address'),
             content: 'C. Ángeles, 41, 30007 Murcia',
-            link: 'https://goo.gl/maps/...'
+            link: 'https://www.google.com/maps/search/?api=1&query=C.+%C3%81ngeles+41+30007+Murcia'
         },
         {
             icon: PhoneIcon,
@@ -42,9 +89,28 @@ export default function Contact() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        const validation = validate(form);
+        setErrors(validation);
+        if (Object.keys(validation).length > 0) return;
+
         setFormStatus('submitting');
-        // Simular envío
-        setTimeout(() => setFormStatus('success'), 1500);
+        setServerMessage('');
+        try {
+            const subjectLabel = subjectOptions.find(o => o.value === form.subject)?.label;
+            const res = await apiService.sendContact({
+                name: form.name.trim(),
+                email: form.email.trim(),
+                phone: form.phone.trim() || undefined,
+                subject: subjectLabel || undefined,
+                message: form.message.trim(),
+            });
+            setServerMessage(res?.message || t('contact.form.success'));
+            setFormStatus('success');
+            setForm(EMPTY_FORM);
+        } catch (err) {
+            setServerMessage(err instanceof Error ? err.message : 'No se pudo enviar el mensaje. Inténtalo de nuevo más tarde.');
+            setFormStatus('error');
+        }
     };
 
     return (
@@ -123,67 +189,102 @@ export default function Contact() {
                             className="bg-white dark:bg-gray-800 rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 dark:border-gray-700"
                         >
                             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">{t('contact.form.title')}</h2>
-                            <form onSubmit={handleSubmit} className="space-y-6">
+                            <form onSubmit={handleSubmit} className="space-y-6" noValidate>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        <label htmlFor="contact-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                             {t('contact.form.name')}
                                         </label>
                                         <input
+                                            id="contact-name"
                                             type="text"
                                             required
-                                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                                            autoComplete="name"
+                                            maxLength={200}
+                                            value={form.name}
+                                            onChange={setField('name')}
+                                            aria-invalid={!!errors.name}
+                                            aria-describedby={errors.name ? 'contact-name-error' : undefined}
+                                            className={inputClass('name')}
                                             placeholder={t('contact.form.name_placeholder')}
                                         />
+                                        <FieldError field="name" errors={errors} />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        <label htmlFor="contact-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                             {t('contact.form.email')}
                                         </label>
                                         <input
+                                            id="contact-email"
                                             type="email"
                                             required
-                                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                                            autoComplete="email"
+                                            value={form.email}
+                                            onChange={setField('email')}
+                                            aria-invalid={!!errors.email}
+                                            aria-describedby={errors.email ? 'contact-email-error' : undefined}
+                                            className={inputClass('email')}
                                             placeholder={t('contact.form.email_placeholder')}
                                         />
+                                        <FieldError field="email" errors={errors} />
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        <label htmlFor="contact-phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                             {t('contact.form.phone')}
                                         </label>
                                         <input
+                                            id="contact-phone"
                                             type="tel"
-                                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                                            autoComplete="tel"
+                                            maxLength={50}
+                                            value={form.phone}
+                                            onChange={setField('phone')}
+                                            aria-invalid={!!errors.phone}
+                                            aria-describedby={errors.phone ? 'contact-phone-error' : undefined}
+                                            className={inputClass('phone')}
                                             placeholder="+34 000 000 000"
                                         />
+                                        <FieldError field="phone" errors={errors} />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        <label htmlFor="contact-subject" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                             {t('contact.form.subject')}
                                         </label>
-                                        <select className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all">
+                                        <select
+                                            id="contact-subject"
+                                            value={form.subject}
+                                            onChange={setField('subject')}
+                                            className={inputClass('subject')}
+                                        >
                                             <option value="">{t('contact.form.subject_placeholder')}</option>
-                                            <option value="buy">{t('contact.form.subj_buy')}</option>
-                                            <option value="sell">{t('contact.form.subj_sell')}</option>
-                                            <option value="rent">{t('contact.form.subj_rent')}</option>
-                                            <option value="invest">{t('contact.form.subj_invest')}</option>
-                                            <option value="admin">{t('contact.form.subj_admin')}</option>
-                                            <option value="other">{t('contact.form.subj_other')}</option>
+                                            {subjectOptions.map(o => (
+                                                <option key={o.value} value={o.value}>{o.label}</option>
+                                            ))}
                                         </select>
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    <label htmlFor="contact-message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                         {t('contact.form.message')}
                                     </label>
                                     <textarea
+                                        id="contact-message"
                                         rows={4}
                                         required
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                                        maxLength={MESSAGE_MAX}
+                                        value={form.message}
+                                        onChange={setField('message')}
+                                        aria-invalid={!!errors.message}
+                                        aria-describedby={errors.message ? 'contact-message-error' : undefined}
+                                        className={inputClass('message')}
                                         placeholder={t('contact.form.message_placeholder')}
                                     ></textarea>
+                                    <div className="flex justify-between gap-4">
+                                        <FieldError field="message" errors={errors} />
+                                        <span className="mt-1 ml-auto text-xs text-gray-400">{form.message.trim().length}/{MESSAGE_MAX}</span>
+                                    </div>
                                 </div>
                                 <button
                                     type="submit"
@@ -201,11 +302,22 @@ export default function Contact() {
                                 </button>
                                 {formStatus === 'success' && (
                                     <motion.p
+                                        role="status"
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         className="text-emerald-600 dark:text-emerald-400 text-center font-medium"
                                     >
-                                        {t('contact.form.success')}
+                                        {serverMessage}
+                                    </motion.p>
+                                )}
+                                {formStatus === 'error' && (
+                                    <motion.p
+                                        role="alert"
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="text-red-600 dark:text-red-400 text-center font-medium"
+                                    >
+                                        {serverMessage}
                                     </motion.p>
                                 )}
                             </form>

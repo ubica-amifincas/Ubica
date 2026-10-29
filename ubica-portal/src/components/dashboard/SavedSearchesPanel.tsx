@@ -3,6 +3,35 @@ import { motion } from 'framer-motion';
 import { MagnifyingGlassIcon, TrashIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { useAuthenticatedFetch } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { getStatusLabel } from '../../utils/propertyStatus';
+
+const TYPE_LABELS: Record<string, string> = {
+    villa: 'Villa', apartment: 'Apartamento', house: 'Casa', penthouse: 'Ático', townhouse: 'Adosado',
+    studio: 'Estudio', duplex: 'Dúplex', piso: 'Piso', terreno: 'Terreno',
+};
+
+const formatEur = (n: number) =>
+    new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
+
+/** Convierte los filtros guardados en un texto legible: "Murcia · hasta 1.000.000 €". */
+function describeFilters(filters: Record<string, unknown> | null | undefined): string {
+    if (!filters || typeof filters !== 'object') return '';
+    const f = filters as Record<string, any>;
+    const parts: string[] = [];
+    const term = typeof f.searchTerm === 'string' ? f.searchTerm.trim() : '';
+    if (term) parts.push(`"${term}"`);
+    if (f.location) parts.push(String(f.location));
+    if (f.type) parts.push(TYPE_LABELS[f.type] || String(f.type));
+    if (f.status) parts.push(getStatusLabel(String(f.status)));
+    const min = Number(f.minPrice) || 0;
+    const max = Number(f.maxPrice) || 0;
+    if (min > 0 && max > 0) parts.push(`${formatEur(min)} – ${formatEur(max)}`);
+    else if (min > 0) parts.push(`desde ${formatEur(min)}`);
+    else if (max > 0) parts.push(`hasta ${formatEur(max)}`);
+    const beds = Number(f.bedrooms) || 0;
+    if (beds > 0) parts.push(`${beds}+ ${beds === 1 ? 'habitación' : 'habitaciones'}`);
+    return parts.join(' · ');
+}
 
 interface SavedSearch {
     id: number;
@@ -46,7 +75,7 @@ export default function SavedSearchesPanel() {
     const handleRunSearch = (filters: any) => {
         // Convert filters to query params and navigate to properties page
         const params = new URLSearchParams();
-        Object.entries(filters).forEach(([key, value]) => {
+        Object.entries(filters || {}).forEach(([key, value]) => {
             if (value) params.append(key, String(value));
         });
         navigate(`/?${params.toString()}`);
@@ -110,15 +139,9 @@ export default function SavedSearchesPanel() {
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                                 {search.name || 'Búsqueda sin nombre'}
                             </h3>
-                            <div className="flex flex-wrap gap-2 mt-2">
-                                {Object.entries(search.filters).map(([key, value]) => (
-                                    value && value !== '' && (
-                                        <span key={key} className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-md">
-                                            {key}: {String(value)}
-                                        </span>
-                                    )
-                                ))}
-                            </div>
+                            <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                                {describeFilters(search.filters) || 'Todas las propiedades'}
+                            </p>
                         </div>
 
                         <div className="flex items-center space-x-2 mt-4 sm:mt-0 w-full sm:w-auto justify-end">
@@ -131,6 +154,7 @@ export default function SavedSearchesPanel() {
                             </button>
                             <button
                                 onClick={() => handleDeleteSearch(search.id)}
+                                aria-label="Eliminar búsqueda"
                                 className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                             >
                                 <TrashIcon className="h-5 w-5" />

@@ -1,25 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '../hooks/useLanguage';
 import LoginForm from '../components/auth/LoginForm';
 import RegisterForm from '../components/auth/RegisterForm';
-import { HomeIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 const AuthPage: React.FC = () => {
     const { t } = useLanguage();
     const navigate = useNavigate();
     const location = useLocation();
-    const [isLogin, setIsLogin] = useState(true);
-
-    // Sync state with URL
-    useEffect(() => {
-        if (location.pathname === '/register') {
-            setIsLogin(false);
-        } else {
-            setIsLogin(true);
-        }
-    }, [location.pathname]);
+    // El formulario visible depende solo de la URL: /register -> registro, /login -> acceso
+    const isLogin = !location.pathname.replace(/\/+$/, '').endsWith('/register');
 
     const toggleAuth = () => {
         if (isLogin) {

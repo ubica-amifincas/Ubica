@@ -494,16 +494,16 @@ export default function AIChatModal() {
                                     >
                                         <p className="text-sm font-medium text-violet-800 dark:text-violet-300">
                                             {isAuthenticated
-                                                ? "Has agotado tus consultas gratuitas. ¿Quieres pasar a un Plan Premium para uso ilimitado?"
+                                                ? "Has agotado tus consultas gratuitas. Si necesitas más, escríbenos y te ayudamos."
                                                 : "Para seguir usando nuestro asistente de IA gratis, por favor regístrate."}
                                         </p>
                                         <div className="flex gap-2 justify-center">
                                             {isAuthenticated ? (
                                                 <Link
-                                                    to="/pricing"
+                                                    to="/contact"
                                                     className="px-4 py-2 bg-violet-600 text-white text-xs font-bold rounded-lg hover:bg-violet-700 transition-colors"
                                                 >
-                                                    Ver Planes Premium
+                                                    Contactar
                                                 </Link>
                                             ) : (
                                                 <>

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import appService from '../services';
+import { getToken, getStoredUser, saveSession, saveUser, clearSession } from '../services/session';
 
 // Tipos para autenticación
 export interface User {
@@ -23,6 +24,8 @@ interface AuthContextType {
   logout: () => void;
   register: (userData: RegisterData) => Promise<void>;
   updateUser: (updates: Partial<User>) => void;
+  /** Guarda una sesión nueva (p. ej. el token que devuelve el cambio de contraseña). */
+  setSession: (token: string, user: User) => void;
   loading: boolean;
   isAuthenticated: boolean;
   hasRole: (roles: string | string[]) => boolean;
@@ -37,13 +40,6 @@ interface RegisterData {
   role?: string;
 }
 
-interface AuthResponse {
-  user: User;
-  access_token: string;
-  refresh_token: string;
-  token_type: string;
-}
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Hook para usar el contexto de autenticación
@@ -55,121 +51,62 @@ export const useAuth = () => {
   return context;
 };
 
-// Configuración de la API
-// Automatically use the Render backend in production if VITE_API_URL is not set
-const isProdContainer = window.location.hostname.includes('amifincas.es') || window.location.hostname.includes('vercel.app');
-const defaultApiUrl = isProdContainer ? 'https://ubica-backend.onrender.com/api' : 'http://localhost:8000/api';
-const API_BASE_URL = import.meta.env.VITE_API_URL || defaultApiUrl;
-
 interface AuthProviderProps {
   children: ReactNode;
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(() => (getToken() ? getStoredUser<User>() : null));
+  const [token, setToken] = useState<string | null>(() => getToken());
+  const [loading, setLoading] = useState(() => !!getToken());
 
-  // Inicializar autenticación desde localStorage
+  // Al arrancar, validar el token guardado contra el backend
   useEffect(() => {
-    const initializeAuth = () => {
-      try {
-        const storedToken = localStorage.getItem('access_token');
-        const storedUser = localStorage.getItem('user');
+    const storedToken = getToken();
+    if (!storedToken) {
+      clearSession(); // limpia restos de claves antiguas
+      setLoading(false);
+      return;
+    }
 
-        if (storedToken && storedUser) {
-          setToken(storedToken);
-          setUser(JSON.parse(storedUser));
+    let cancelled = false;
+    appService.getCurrentUser(true)
+      .then(freshUser => {
+        if (cancelled) return;
+        setUser(freshUser as User);
+        saveUser(freshUser);
+      })
+      .catch(error => {
+        if (cancelled) return;
+        // Solo cerramos sesión si el token ya no es válido; un fallo de red no debe echar al usuario
+        const message = error instanceof Error ? error.message : '';
+        const networkError = error instanceof TypeError || /failed to fetch|network/i.test(message);
+        if (!networkError) {
+          clearSession();
+          setToken(null);
+          setUser(null);
         }
-      } catch (error) {
-        console.error('Error inicializando autenticación:', error);
-        // Limpiar datos corruptos
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initializeAuth();
-  }, []);
-
-  // Función para realizar requests autenticados
-  const authenticatedFetch = async (url: string, options: RequestInit = {}) => {
-    const headers = {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    };
-
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const response = await fetch(url, {
-      ...options,
-      headers,
-    });
-
-    // Si el token ha expirado, intentar refrescarlo
-    if (response.status === 401) {
-      const refreshed = await refreshToken();
-      if (refreshed) {
-        // Reintentar la request con el nuevo token
-        headers['Authorization'] = `Bearer ${token}`;
-        return fetch(url, { ...options, headers });
-      } else {
-        // Si no se puede refrescar, desloguear
-        logout();
-        throw new Error('Sesión expirada');
-      }
-    }
-
-    return response;
-  };
-
-  // Función para refrescar el token
-  const refreshToken = async (): Promise<boolean> => {
-    try {
-      const refreshToken = localStorage.getItem('refresh_token');
-      if (!refreshToken) return false;
-
-      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ refresh_token: refreshToken }),
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setToken(data.access_token);
-        localStorage.setItem('access_token', data.access_token);
-        localStorage.setItem('refresh_token', data.refresh_token);
-        return true;
-      }
-    } catch (error) {
-      console.error('Error refrescando token:', error);
-    }
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-    return false;
+  const setSession = (newToken: string, newUser: User) => {
+    saveSession(newToken, newUser);
+    setToken(newToken);
+    setUser(newUser);
   };
 
-  // Función de login usando mock service
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
       const data = await appService.login({ email, password });
-
-      // Guardar datos en localStorage
-      localStorage.setItem('ubica_token', data.access_token);
-      localStorage.setItem('access_token', data.access_token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-
-      // Actualizar estado
-      setToken(data.access_token);
-      setUser(data.user);
+      setSession(data.access_token, data.user as User);
     } catch (error) {
       console.error('Error en login:', error);
       throw error;
@@ -183,8 +120,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       await appService.register(userData);
-      // Tras registrarse correctamente, no logueamos ni guardamos token todavía, 
-      // ya que el correo debe ser verificado primero.
+      // Tras registrarse no se inicia sesión: el correo debe verificarse primero.
     } catch (error) {
       console.error('Error en registro:', error);
       throw error;
@@ -193,15 +129,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Función de logout
   const logout = () => {
-    // Limpiar localStorage
-    localStorage.removeItem('ubica_token');
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
-
-    // Limpiar estado
+    clearSession();
     setToken(null);
     setUser(null);
   };
@@ -209,20 +138,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Verificar si el usuario tiene un rol específico
   const hasRole = (roles: string | string[]): boolean => {
     if (!user) return false;
-
     if (typeof roles === 'string') {
       return user.role === roles;
     }
-
     return roles.includes(user.role);
   };
 
-  // Actualizar datos del usuario
+  // Actualizar datos del usuario en memoria
   const updateUser = (updates: Partial<User>) => {
     if (!user) return;
     const updatedUser = { ...user, ...updates };
     setUser(updatedUser);
-    localStorage.setItem('user', JSON.stringify(updatedUser));
+    saveUser(updatedUser);
   };
 
   const isAuthenticated = !!user && !!token;
@@ -234,6 +161,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     register,
     updateUser,
+    setSession,
     loading,
     isAuthenticated,
     hasRole,
@@ -246,12 +174,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   );
 };
 
-// Hook personalizado para usar el mock API service
-export const useAuthenticatedFetch = () => {
-  const { logout } = useAuth();
-
-  // Retornar la API elegida dinámicamente según entorno
-  return appService;
-};
+/** Devuelve el cliente del backend (el token se añade automáticamente). */
+export const useAuthenticatedFetch = () => appService;
 
 export default AuthContext;

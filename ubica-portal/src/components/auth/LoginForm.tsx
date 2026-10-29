@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuthNotifications } from '../../hooks/useAuthNotifications';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../../hooks/useLanguage';
+import { getStoredUser } from '../../services/session';
 
 interface LoginFormProps {
   isEmbedded?: boolean;
@@ -19,8 +20,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ isEmbedded }) => {
   const { loginWithNotification } = useAuthNotifications();
   const navigate = useNavigate();
   const location = useLocation();
-
-  const from = location.state?.from?.pathname || '/dashboard';
+  const [searchParams] = useSearchParams();
+  const sessionExpired = searchParams.get('expired') === '1';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +30,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ isEmbedded }) => {
 
     try {
       await loginWithNotification(email, password);
-      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      const userData = getStoredUser<{ role?: string }>() || {};
       let redirectPath = '/dashboard';
 
       switch (userData.role) {
@@ -65,6 +66,14 @@ const LoginForm: React.FC<LoginFormProps> = ({ isEmbedded }) => {
       </div>
 
       <form className="mt-4 space-y-5" onSubmit={handleSubmit}>
+        {sessionExpired && !error && (
+          <div
+            role="status"
+            className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 px-4 py-3 rounded-xl text-sm"
+          >
+            Tu sesión ha caducado. Vuelve a iniciar sesión para continuar.
+          </div>
+        )}
         {error && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -117,7 +126,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ isEmbedded }) => {
         </div>
 
         <div className="flex items-center justify-end">
-          <Link to="#" className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline">
+          <Link to="/forgot-password" className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline">
             ¿Olvidaste tu contraseña?
           </Link>
         </div>
