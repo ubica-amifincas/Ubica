@@ -11,6 +11,25 @@ import models
 # Estados que se muestran en el portal público ("available" es el estado antiguo del panel de admin)
 PUBLIC_STATUSES = ("for-sale", "for-rent", "reserved", "available")
 
+# Todos los estados que puede tener un anuncio
+PROPERTY_STATUSES = ("for-sale", "for-rent", "reserved", "available", "sold", "rented",
+                     "under-renovation", "in-use", "pending", "draft")
+
+# Tipos en una sola forma (la que usan el filtro y las traducciones del frontend)
+PROPERTY_TYPES = ("villa", "apartment", "flat", "house", "penthouse", "townhouse", "studio", "duplex", "chalet", "land")
+TYPE_ALIASES = {
+    "apartamento": "apartment", "piso": "flat", "casa": "house", "atico": "penthouse", "ático": "penthouse",
+    "adosado": "townhouse", "casa adosada": "townhouse", "estudio": "studio", "dúplex": "duplex",
+    "terreno": "land", "parcela": "land", "solar": "land",
+}
+
+
+def normalize_property_type(value) -> str:
+    """'Apartamento', 'piso', 'Ático'... -> clave común; un tipo desconocido se guarda en minúsculas."""
+    key = str(value or "").strip().lower()
+    return TYPE_ALIASES.get(key, key)
+
+
 FLOAT_FIELDS = ("price", "area", "purchasePrice", "totalCost", "monthlyCost", "monthlyIncome")
 INT_FIELDS = ("bedrooms", "bathrooms", "yearBuilt")
 
@@ -33,6 +52,10 @@ def validate_property_payload(prop_data: dict) -> dict:
         raise HTTPException(status_code=422, detail="'coordinates' debe ser un objeto con lat y lng")
     if "images" in data and not isinstance(data["images"], list):
         raise HTTPException(status_code=422, detail="'images' debe ser una lista")
+    if "status" in data and data["status"] not in PROPERTY_STATUSES:
+        raise HTTPException(status_code=422, detail=f"Estado no válido: {data['status']}")
+    if data.get("type"):
+        data["type"] = normalize_property_type(data["type"])
     return data
 
 
@@ -41,7 +64,7 @@ def property_from_payload(prop_data: dict, owner_id: int, default_status: str) -
     return models.Property(
         title=prop_data.get('title', ''),
         price=prop_data.get('price', 0),
-        type=prop_data.get('type', 'Casa'),
+        type=prop_data.get('type', 'house'),
         status=prop_data.get('status', default_status),
         bedrooms=prop_data.get('bedrooms'),
         bathrooms=prop_data.get('bathrooms'),

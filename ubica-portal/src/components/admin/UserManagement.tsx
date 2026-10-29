@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   UserPlusIcon,
   PencilIcon,
@@ -277,10 +278,10 @@ const UserManagement: React.FC = () => {
         )}
       </Section>
 
-      {/* Modal for Create/Edit User */}
-      {showModal && (
+      {/* Modal for Create/Edit User (en un portal: dentro de PageStack heredaría su margen superior) */}
+      {showModal && createPortal(
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 p-4"
+          className="fixed inset-0 z-[10000] flex items-center justify-center bg-gray-900/50 p-4"
           onClick={() => setShowModal(false)}
         >
           <div
@@ -407,7 +408,8 @@ const UserManagement: React.FC = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </PageStack>
   );

@@ -11,7 +11,7 @@ import type { Property } from '../../types';
 import PropertyFormModal from '../common/PropertyFormModal';
 import { ImportPropertiesModal } from './ImportPropertiesModal';
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
-import { getStatusLabel } from '../../utils/propertyStatus';
+import { getTypeLabel, getStatusLabel } from '../../utils/propertyStatus';
 import {
   PageHeader,
   PageStack,
@@ -98,9 +98,10 @@ const PropertyManagement: React.FC = () => {
     fetchProperties();
   }, []);
 
-  const fetchProperties = async () => {
+  // silent: refresca la lista sin pasar por la pantalla de carga (que cerraría los diálogos abiertos)
+  const fetchProperties = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const propertiesData = await apiService.getAllPropertiesAdmin();
       setProperties(propertiesData);
     } catch (error) {
@@ -341,7 +342,7 @@ const PropertyManagement: React.FC = () => {
                   </p>
                   <h3 className="mt-1 font-medium text-gray-900 dark:text-white">{property.title}</h3>
                   <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    {property.location} - {property.type}
+                    {[property.location, getTypeLabel(property.type)].filter(Boolean).join(' · ')}
                   </p>
                   <div className="mt-2 flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                     <span>{property.bedrooms} hab.</span>
@@ -384,7 +385,7 @@ const PropertyManagement: React.FC = () => {
       <PropertyFormModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        onSave={fetchProperties}
+        onSave={() => fetchProperties(true)}
         initialData={editingProperty}
       />
 
@@ -392,7 +393,7 @@ const PropertyManagement: React.FC = () => {
       <ImportPropertiesModal
         isOpen={showImportModal}
         onClose={() => setShowImportModal(false)}
-        onSuccess={fetchProperties}
+        onSuccess={() => fetchProperties(true)}
       />
     </PageStack>
   );

@@ -33,6 +33,7 @@ import { useLanguage } from '../hooks/useLanguage';
 import appService from '../services';
 import type { Property, PropertyFilters } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import { PROPERTY_TYPES, normalizeType } from '../utils/propertyStatus';
 import { useAIChat } from '../contexts/AIChatContext';
 
 // Custom marker icon for properties with price
@@ -244,7 +245,8 @@ export default function Home() {
     let filtered = properties;
 
     if (filters.type) {
-      filtered = filtered.filter(p => p.type.toLowerCase().includes(filters.type.toLowerCase()));
+      // Las búsquedas guardadas pueden tener el tipo en su forma antigua ("piso", "estudio")
+      filtered = filtered.filter(p => normalizeType(p.type) === normalizeType(filters.type));
     }
 
     if (filters.location) {
@@ -715,20 +717,14 @@ export default function Home() {
                   {t('filters.propertyType')}
                 </label>
                 <select
-                  value={filters.type}
+                  value={normalizeType(filters.type)}
                   onChange={(e) => handleFilterChange('type', e.target.value)}
                   className="w-full px-3 py-2.5 bg-white dark:bg-gray-700 border border-emerald-200 dark:border-gray-600 rounded-xl text-sm text-gray-700 dark:text-white shadow-sm focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-all appearance-none cursor-pointer hover:border-emerald-300"
                 >
                   <option value="">{t('filters.allTypes')}</option>
-                  <option value="apartment">{t('property.apartment')}</option>
-                  <option value="piso">{t('property.flat')}</option>
-                  <option value="house">{t('property.house')}</option>
-                  <option value="villa">{t('property.villa')}</option>
-                  <option value="penthouse">{t('property.penthouse')}</option>
-                  <option value="chalet">{t('property.chalet')}</option>
-                  <option value="estudio">{t('property.studio')}</option>
-                  <option value="duplex">{t('property.duplex')}</option>
-                  <option value="terreno">{t('property.land')}</option>
+                  {PROPERTY_TYPES.map(type => (
+                    <option key={type.value} value={type.value}>{t(`property.${type.value}`, type.label)}</option>
+                  ))}
                 </select>
               </div>
 

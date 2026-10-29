@@ -1,5 +1,6 @@
 """Panel de administración: usuarios, propiedades e importación (solo rol admin)."""
 import io
+import re
 from datetime import datetime
 from typing import List
 
@@ -10,7 +11,8 @@ import models
 from database import get_session
 from schemas import AdminUserCreate, AdminUserUpdate, DashboardStats, User
 from security import hash_password, require_role
-from services.properties import apply_property_payload, assign_realtor, count_status_this_month, delete_property as delete_property_and_data, property_from_payload
+from services.properties import (PROPERTY_STATUSES, apply_property_payload, assign_realtor, count_status_this_month,
+                                 delete_property as delete_property_and_data, normalize_property_type, property_from_payload)
 from services.users import delete_user as delete_user_and_data
 
 router = APIRouter()
@@ -119,60 +121,98 @@ async def delete_user(user_id: int, current_user: models.User = Depends(require_
 async def get_all_properties_admin(current_user: models.User = Depends(require_role(["admin"])), session: Session = Depends(get_session)):
     return session.exec(select(models.Property)).all()
 
+IMPORT_MAX_BYTES = 10 * 1024 * 1024
+# La plantilla del panel usa los estados en español
+IMPORT_STATUS_ALIASES = {
+    "en venta": "for-sale", "venta": "for-sale", "en alquiler": "for-rent", "alquiler": "for-rent",
+    "reservado": "reserved", "reservada": "reserved", "vendido": "sold", "vendida": "sold",
+    "alquilado": "rented", "alquilada": "rented",
+}
+
+
 @router.post("/api/admin/properties/import")
 async def import_properties(file: UploadFile = File(...), current_user: models.User = Depends(require_role(["admin"])), session: Session = Depends(get_session)):
-    content = await file.read()
-    # ... (skipping dataframe parsing logic for brevity as it's the same) ...
-    # Simplified for the refactor snippet:
+    content = await file.read(IMPORT_MAX_BYTES + 1)
+    if len(content) > IMPORT_MAX_BYTES:
+        raise HTTPException(status_code=413, detail="El archivo puede ocupar como máximo 10 MB")
+    name = (file.filename or "").lower()
     try:
         import pandas as pd
-        if file.filename.endswith('.csv'):
-            df = pd.read_csv(io.BytesIO(content))
-        elif file.filename.endswith('.json'):
+        if name.endswith('.csv'):
+            # sep=None: detecta coma o punto y coma (Excel en español exporta con ';')
+            # dtype=str: los números se interpretan abajo ("150.000" es 150000 en España, no 150)
+            df = pd.read_csv(io.BytesIO(content), sep=None, engine="python", encoding="utf-8-sig", dtype=str)
+        elif name.endswith('.json'):
             df = pd.read_json(io.BytesIO(content))
         else:
-            raise HTTPException(status_code=400, detail="Formato no soportado")
+            raise HTTPException(status_code=400, detail="Formato no soportado: sube un CSV o un JSON")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error leyendo el archivo: {str(e)}")
 
-    df.columns = df.columns.str.lower().str.strip()
-    
+    df.columns = df.columns.astype(str).str.lower().str.strip()
+
     properties_added = 0
     errors = []
-    
+
     def cell(row, *names, default=None):
-        # Celdas vacías llegan como NaN: se tratan como ausentes
+        # Celdas vacías llegan como NaN: se tratan como ausentes. Se aceptan nombres en inglés y en español
         for name in names:
             value = row.get(name)
             if value is not None and pd.notna(value) and str(value).strip() != "":
                 return value
         return default
 
+    def number(row, *names, cast=float):
+        value = cell(row, *names)
+        if value is None:
+            return None
+        text = str(value).replace("€", "").replace(" ", "").strip()
+        if re.fullmatch(r"\d{1,3}(\.\d{3})+(,\d+)?", text):
+            text = text.replace(".", "").replace(",", ".")  # 150.000 / 1.250.000,50
+        else:
+            text = text.replace(",", ".")  # 85,5
+        try:
+            return cast(float(text))
+        except ValueError:
+            raise ValueError(f"'{value}' no es un número ({names[0]})")
+
     for index, row in df.iterrows():
         try:
-            price = cell(row, 'price')
-            if price is None:
+            price = number(row, 'price', 'precio')
+            if price is None or price <= 0:
                 raise ValueError("falta el precio")
+            status = str(cell(row, 'status', 'estado', default='for-sale')).strip()
+            status = IMPORT_STATUS_ALIASES.get(status.lower(), status)
+            if status not in PROPERTY_STATUSES:
+                raise ValueError(f"estado no válido '{status}'")
+            images = cell(row, 'images', 'imagenes', 'imágenes', 'fotos', default='')
+            image_urls = [u.strip() for u in str(images).replace('|', ',').split(',') if u.strip().startswith(('http://', 'https://'))]
+            lat, lng = number(row, 'latitude', 'latitud', 'lat'), number(row, 'longitude', 'longitud', 'lng')
+            # Lo que no viene en el archivo queda vacío: no se inventan habitaciones ni metros
             new_property = models.Property(
-                title=str(cell(row, 'title', default='Propiedad Importada')),
-                price=float(price),
-                type=str(cell(row, 'type', default='Casa')),
-                status=str(cell(row, 'status', default='for-sale')),
-                bedrooms=int(cell(row, 'bedrooms', default=2)),
-                bathrooms=int(cell(row, 'bathrooms', default=1)),
-                area=float(cell(row, 'area', default=80.0)),
-                city=str(cell(row, 'location', 'city', default='Murcia')),
-                address=str(cell(row, 'address', default='')),
-                description=str(cell(row, 'description', default='')),
+                title=str(cell(row, 'title', 'titulo', 'título', default='Propiedad importada'))[:200],
+                price=price,
+                type=normalize_property_type(cell(row, 'type', 'tipo', default='house')),
+                status=status,
+                bedrooms=number(row, 'bedrooms', 'habitaciones', 'dormitorios', cast=int),
+                bathrooms=number(row, 'bathrooms', 'baños', 'banos', cast=int),
+                area=number(row, 'area', 'superficie', 'metros', 'm2'),
+                city=str(cell(row, 'location', 'city', 'ciudad', 'municipio', 'localidad', default='')),
+                address=str(cell(row, 'address', 'direccion', 'dirección', default='')),
+                description=str(cell(row, 'description', 'descripcion', 'descripción', default='')),
+                latitude=lat,
+                longitude=lng,
                 region="Murcia",
-                images=[], # local_image_urls
+                images=image_urls,
                 owner_id=current_user.id
             )
             session.add(new_property)
             properties_added += 1
         except Exception as e:
             errors.append(f"Fila {index + 2}: {str(e)}")
-    
+
     session.commit()
     return {"message": "Importación completada", "properties_added": properties_added, "errors": len(errors), "error_details": errors[:20]}
 

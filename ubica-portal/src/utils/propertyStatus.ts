@@ -34,14 +34,40 @@ export function getStatusLabelPlural(status?: string | null): string {
   return STATUS_LABELS_PLURAL[status] ?? status;
 }
 
-/** Tipo de inmueble en español ("penthouse" → "Ático"). */
-const TYPE_LABELS: Record<string, string> = {
-  villa: 'Villa', apartment: 'Apartamento', house: 'Casa', penthouse: 'Ático', townhouse: 'Adosado',
-  studio: 'Estudio', estudio: 'Estudio', duplex: 'Dúplex', piso: 'Piso', flat: 'Piso',
-  terreno: 'Terreno', land: 'Terreno', chalet: 'Chalet',
+/** Tipos de inmueble: la misma clave que guarda el backend y que usan las traducciones (property.<clave>). */
+export const PROPERTY_TYPES = [
+  { value: 'flat', label: 'Piso' },
+  { value: 'apartment', label: 'Apartamento' },
+  { value: 'house', label: 'Casa' },
+  { value: 'townhouse', label: 'Adosado' },
+  { value: 'villa', label: 'Villa' },
+  { value: 'chalet', label: 'Chalet' },
+  { value: 'penthouse', label: 'Ático' },
+  { value: 'duplex', label: 'Dúplex' },
+  { value: 'studio', label: 'Estudio' },
+  { value: 'land', label: 'Terreno' },
+] as const;
+
+// Formas antiguas o en español que aún hay en la base de datos
+const TYPE_ALIASES: Record<string, string> = {
+  apartamento: 'apartment', piso: 'flat', casa: 'house', atico: 'penthouse', 'ático': 'penthouse',
+  adosado: 'townhouse', 'casa adosada': 'townhouse', estudio: 'studio', 'dúplex': 'duplex',
+  terreno: 'land', parcela: 'land', solar: 'land',
 };
 
+/** "Apartamento", "piso", "Ático"... -> la clave común ("apartment", "flat", "penthouse"). */
+export function normalizeType(type?: string | null): string {
+  const key = (type ?? '').trim().toLowerCase();
+  return TYPE_ALIASES[key] ?? key;
+}
+
+/** Tipo de inmueble en español ("penthouse" → "Ático"). */
 export function getTypeLabel(type?: string | null): string {
   if (!type) return '';
-  return TYPE_LABELS[type] ?? type;
+  const key = normalizeType(type);
+  return PROPERTY_TYPES.find(t => t.value === key)?.label ?? type;
 }
+
+/** Estados que se eligen en el formulario de un inmueble. */
+export const PROPERTY_STATUS_OPTIONS = ['for-sale', 'for-rent', 'reserved', 'sold', 'rented', 'under-renovation', 'in-use']
+  .map(value => ({ value, label: getStatusLabel(value) }));

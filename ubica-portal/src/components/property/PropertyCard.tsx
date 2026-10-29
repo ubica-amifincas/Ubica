@@ -9,6 +9,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import { useLanguage } from '../../hooks/useLanguage';
+import { getTypeLabel, normalizeType } from '../../utils/propertyStatus';
 import type { Property } from '../../types';
 
 interface PropertyCardProps {
@@ -239,7 +240,7 @@ export function PropertyCard({
         )}
         <div className="mt-2 flex flex-wrap items-center gap-y-1 text-xs md:text-sm text-gray-700 dark:text-gray-300 tabular-nums">
           {[
-            t(`property.${property.type.toLowerCase()}`, property.type),
+            t(`property.${normalizeType(property.type)}`, getTypeLabel(property.type)),
             property.bedrooms > 0 ? `${property.bedrooms} hab.` : null,
             property.bathrooms > 0 ? `${property.bathrooms} baños` : null,
             property.area > 0 ? `${property.area} m²` : null,

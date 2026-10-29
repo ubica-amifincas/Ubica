@@ -1150,8 +1150,19 @@ def test_admin_lifecycle(client, db):
     imported = {p.title: p for p in rows(models.Property, owner_id=admin.id)}
     assert set(imported) == {"Casa A", "Casa B"}
     a, b = imported["Casa A"], imported["Casa B"]
-    assert (a.price, a.type, a.bedrooms, a.bathrooms, a.area, a.city, a.status) == (100000, "casa", 3, 2, 120, "Lorca", "for-sale")
-    assert (b.bedrooms, b.bathrooms, b.area) == (2, 1, 80.0)  # valores por defecto
+    assert (a.price, a.type, a.bedrooms, a.bathrooms, a.area, a.city, a.status) == (100000, "house", 3, 2, 120, "Lorca", "for-sale")
+    assert (b.bedrooms, b.bathrooms, b.area) == (None, None, None)  # lo que falta queda vacío, no se inventa
+    # Columnas en español, separador ';' (Excel), estado no válido y fotos por URL
+    csv_es = ("titulo;precio;tipo;habitaciones;baños;superficie;municipio;estado;fotos\n"
+              "Piso C;150.000;Ático;2;1;70;Murcia;En alquiler;https://x.test/1.jpg|https://x.test/2.jpg\n"
+              "Piso D;90000;piso;1;1;40;Lorca;borrador;\n").encode()
+    r = client.post("/api/admin/properties/import", files={"file": ("lote.csv", csv_es, "text/csv")}, headers=h)
+    assert (r.json()["properties_added"], r.json()["errors"]) == (1, 1) and "estado no válido" in r.json()["error_details"][0]
+    [c] = rows(models.Property, title="Piso C")
+    assert (c.price, c.type, c.bedrooms, c.area, c.city, c.status) == (150000.0, "penthouse", 2, 70.0, "Murcia", "for-rent")
+    assert c.images == ["https://x.test/1.jpg", "https://x.test/2.jpg"]
+    too_big = b"title,price\n" + b"x" * (10 * 1024 * 1024)
+    assert client.post("/api/admin/properties/import", files={"file": ("big.csv", too_big, "text/csv")}, headers=h).status_code == 413
     # JSON también
     r = client.post("/api/admin/properties/import", files={"file": ("lote.json", b'[{"title": "Desde JSON", "price": 5}]', "application/json")}, headers=h)
     assert r.json()["properties_added"] == 1 and rows(models.Property, title="Desde JSON")
@@ -1161,10 +1172,10 @@ def test_admin_lifecycle(client, db):
     # Panel: los totales coinciden con la BD
     dash = client.get("/api/admin/dashboard", headers=h).json()
     assert dash["total_users"] == count(models.User) == 4
-    assert dash["total_properties"] == count(models.Property) == 3
+    assert dash["total_properties"] == count(models.Property) == 4
     assert len(client.get("/api/admin/users", headers=h).json()) == 4
-    assert len(client.get("/api/admin/properties", headers=h).json()) == 3
-    assert len(client.get("/api/user/properties", headers=h).json()) == 3  # el admin ve todas
+    assert len(client.get("/api/admin/properties", headers=h).json()) == 4
+    assert len(client.get("/api/user/properties", headers=h).json()) == 4  # el admin ve todas
 
 
 def test_realtor_lifecycle(client, db):
