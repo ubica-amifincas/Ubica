@@ -459,6 +459,15 @@ class ApiService {
     return this.handleResponse<any>(response);
   }
 
+  /** Inmuebles que gestiona la cuenta: los suyos y, si es inmobiliaria, también los que le asignó el admin. */
+  async getManagedProperties(role?: string): Promise<Property[]> {
+    const own = await this.getUserProperties();
+    if (role !== 'realtor') return own;
+    const byId = new Map(own.map(p => [p.id, p]));
+    (await this.getRealtorProperties()).forEach(p => { if (!byId.has(p.id)) byId.set(p.id, p); });
+    return [...byId.values()];
+  }
+
   async getRealtorProperties(): Promise<Property[]> {
     const response = await fetch(`${API_BASE_URL}/realtor/properties`, {
       headers: this.getAuthHeaders(),

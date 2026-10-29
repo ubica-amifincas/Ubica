@@ -59,15 +59,15 @@ const PageTransition = ({ t }: { t: any }) => (
           transition={{ delay: 0.6, duration: 0.8 }}
           className="space-y-4"
         >
-          <h2 className="text-sm md:text-base font-black tracking-[0.4em] uppercase text-emerald-600 dark:text-emerald-400">
+          <p className="text-sm md:text-base font-black tracking-[0.4em] uppercase text-emerald-600 dark:text-emerald-400">
             AMI Fincas
-          </h2>
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-slate-800 dark:text-white leading-tight">
+          </p>
+          <p className="font-display text-3xl md:text-5xl lg:text-6xl font-black text-slate-800 dark:text-white leading-tight">
             {t('ami.transition.p1')} <br className="hidden sm:block" />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#A2D18D] to-[#2D8A9D]">
               {t('ami.transition.p2')}
             </span>
-          </h1>
+          </p>
         </motion.div>
 
         {/* Loading Progress Bar Container */}
@@ -212,7 +212,8 @@ export default function AmiFincas() {
     <>
       <div className="hidden">
         {/* SEO Injector for AI Search Engines & Crawlers */}
-        <h1 className="sr-only">AMI Fincas - Administración de Fincas y Correduría de Seguros en Murcia</h1>
+        {/* Un solo h1 por página: el del bloque principal; esto queda como apoyo para lectores de pantalla */}
+        <p className="sr-only">AMI Fincas - Administración de fincas y correduría de seguros en Murcia</p>
         <p className="sr-only">Expertos en administración de comunidades, correduría de seguros y gestión integral inmobiliaria en la Región de Murcia. Transparencia, tecnología y profesionalidad garantizada.</p>
         <div itemScope itemType="https://schema.org/LocalBusiness">
           <span itemProp="name">AMI Fincas</span>

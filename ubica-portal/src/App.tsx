@@ -166,8 +166,8 @@ function AppRoutes() {
             }>
               <Route index element={<RealtorDashboard section="overview" />} />
               <Route path="propiedades" element={<RealtorDashboard section="properties" />} />
-              <Route path="alquileres" element={<RealtorDashboard section="rentals" />} />
-              <Route path="ventas" element={<RealtorDashboard section="sales" />} />
+              <Route path="alquileres" element={<DashboardRentals />} />
+              <Route path="ventas" element={<DashboardSales />} />
               <Route path="estadisticas" element={<RealtorDashboard section="analytics" />} />
               <Route path="properties" element={<Navigate to="/realtor/propiedades" replace />} />
               <Route path="rentals" element={<Navigate to="/realtor/alquileres" replace />} />

@@ -148,7 +148,7 @@ const InvestorDashboard: React.FC<{ section?: InvestorSection }> = ({ section = 
   if (section === 'wealth') return <WealthManagement />;
 
   const headers: Record<Exclude<InvestorSection, 'wealth'>, { title: string; description?: string }> = {
-    overview: { title: 'Panel de inversionista', description: `Bienvenido de vuelta, ${user?.full_name || 'inversor'}` },
+    overview: { title: 'Panel de inversor', description: `Bienvenido de vuelta, ${user?.full_name || 'inversor'}` },
     portfolio: { title: `Mi portfolio (${portfolio.length})`, description: 'Inversiones registradas a tu nombre' },
     opportunities: { title: 'Oportunidades en venta', description: 'Anuncios publicados actualmente en Ubica' },
   };

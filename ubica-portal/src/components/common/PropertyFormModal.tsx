@@ -79,13 +79,13 @@ const PROPERTY_TYPES = [
 ];
 
 const PROPERTY_STATUS = [
-    { value: 'for-sale', label: 'En Venta' },
-    { value: 'for-rent', label: 'En Alquiler' },
-    { value: 'sold', label: 'Vendido' },
-    { value: 'rented', label: 'Alquilado' },
-    { value: 'under-renovation', label: 'En Reforma' },
-    { value: 'in-use', label: 'En Uso' },
-    { value: 'reserved', label: 'Reservado' },
+    { value: 'for-sale', label: 'En venta' },
+    { value: 'for-rent', label: 'En alquiler' },
+    { value: 'sold', label: 'Vendida' },
+    { value: 'rented', label: 'Alquilada' },
+    { value: 'under-renovation', label: 'En reforma' },
+    { value: 'in-use', label: 'En uso' },
+    { value: 'reserved', label: 'Reservada' },
 ];
 
 const MURCIA_LOCATIONS = [

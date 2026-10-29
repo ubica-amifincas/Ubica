@@ -545,9 +545,9 @@ export default function Home() {
         <div className="page-container pt-8 pb-4">
           <div className="w-full rounded-3xl bg-emerald-600 shadow-xl px-4 py-5 sm:px-8 sm:py-6">
             <div className="mb-5 rounded-2xl bg-black/30 px-6 md:px-8 py-4 text-center">
-              <p className="text-sm sm:text-lg md:text-xl font-semibold text-white tracking-wide text-balance leading-snug">
+              <h1 className="font-sans text-sm sm:text-lg md:text-xl font-semibold text-white tracking-wide text-balance leading-snug">
                 {t('header.slogan')}
-              </p>
+              </h1>
             </div>
             <div ref={heroSearchRef}>{renderSearchRow(false)}</div>
           </div>

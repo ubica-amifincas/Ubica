@@ -5,15 +5,15 @@ import {
   Bars3Icon,
   XMarkIcon,
   HomeIcon,
-  BuildingOfficeIcon,
   ChartBarIcon,
+  BuildingOfficeIcon,
   UserCircleIcon,
   ArrowRightOnRectangleIcon,
-  CogIcon,
   KeyIcon,
   EnvelopeIcon,
   PuzzlePieceIcon
 } from '@heroicons/react/24/outline';
+import { panelHome } from '../../utils/panelHome';
 import { ThemeToggle } from '../common/ThemeToggle';
 import { LanguageSelector } from '../common/LanguageSelector';
 import { useLanguage } from '../../hooks/useLanguage';
@@ -114,17 +114,8 @@ export default function Navbar() {
 
     const dashboardNav = [...publicNav];
 
-    // Siempre añadir la opción de Dashboard General para usuarios registrados
-    dashboardNav.push({ name: t('nav.dashboard', 'Mi Área'), href: '/dashboard', icon: ChartBarIcon, external: false });
-
-    // Agregar navegación específica por rol
-    if (hasRole('admin')) {
-      dashboardNav.push({ name: t('nav.admin'), href: '/admin', icon: CogIcon, external: false });
-    } else if (hasRole('realtor')) {
-      dashboardNav.push({ name: t('nav.realtor'), href: '/realtor', icon: BuildingOfficeIcon, external: false });
-    } else if (hasRole('investor')) {
-      dashboardNav.push({ name: t('nav.investor', 'Inversor'), href: '/investor', icon: ChartBarIcon, external: false });
-    }
+    // Un solo acceso al panel: cada rol entra directamente en el suyo
+    dashboardNav.push({ name: t('nav.myPanel', 'Mi panel'), href: panelHome(user?.role), icon: ChartBarIcon, external: false });
 
     return dashboardNav;
   };
@@ -243,13 +234,13 @@ export default function Navbar() {
                         {user?.company && ` - ${user.company}`}
                       </div>
                       <Link
-                        to="/dashboard"
+                        to={panelHome(user?.role)}
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                         onClick={() => setIsUserMenuOpen(false)}
                       >
                         <div className="flex items-center space-x-2">
                           <ChartBarIcon className="h-4 w-4" />
-                          <span>{t('nav.dashboard')}</span>
+                          <span>{t('nav.myPanel')}</span>
                         </div>
                       </Link>
 

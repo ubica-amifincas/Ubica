@@ -33,6 +33,7 @@ import {
   iconButtonClass,
   propertyStatusTone,
 } from '../../components/dashboard/ui';
+import { getStatusLabel } from '../../utils/propertyStatus';
 
 export default function DashboardProperties() {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -88,18 +89,7 @@ export default function DashboardProperties() {
     return property.status === filter;
   });
 
-  const translateStatus = (status: string) => {
-    switch (status) {
-      case 'sold': return 'Vendida';
-      case 'rented': return 'Alquilada';
-      case 'for-sale': return 'En Venta';
-      case 'for-rent': return 'En Alquiler';
-      case 'under-renovation': return 'En Reforma';
-      case 'in-use': return 'En Uso';
-      case 'reserved': return 'Reservado';
-      default: return status;
-    }
-  };
+  const translateStatus = getStatusLabel;
 
   const header = (
     <PageHeader
@@ -165,7 +155,7 @@ export default function DashboardProperties() {
               { key: 'sold', label: 'Vendidas' },
               { key: 'rented', label: 'Alquiladas' },
               { key: 'in-use', label: 'En uso' },
-              { key: 'reserved', label: 'Reservado' }
+              { key: 'reserved', label: 'Reservadas' }
             ].map((item) => (
               <button
                 type="button"

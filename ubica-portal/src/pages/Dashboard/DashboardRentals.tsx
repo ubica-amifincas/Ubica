@@ -31,7 +31,7 @@ export default function DashboardRentals() {
       setLoading(true);
       setError('');
       try {
-        setProperties(await apiService.getUserProperties());
+        setProperties(await apiService.getManagedProperties(user?.role));
       } catch (err) {
         setError(err instanceof Error ? err.message : 'No se pudieron cargar tus alquileres.');
       } finally {

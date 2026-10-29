@@ -32,7 +32,7 @@ export default function DashboardSales() {
       setLoading(true);
       setError('');
       try {
-        const userProperties = await apiService.getUserProperties();
+        const userProperties = await apiService.getManagedProperties(user?.role);
         setSold(userProperties.filter(p => p.status === 'sold'));
         setForSale(userProperties.filter(p => p.status === 'for-sale').length);
       } catch (err) {

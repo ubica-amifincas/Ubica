@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, Navigate, useLocation } from 'react-router-dom';
+import { panelHome } from '../../utils/panelHome';
 import {
   BuildingOfficeIcon,
   BanknotesIcon,
@@ -282,6 +283,12 @@ export default function Dashboard() {
       </div>
     </PageStack>
   );
+
+  // Admin, inmobiliaria e inversor tienen su propio resumen; aquí solo entran a mensajes o historial IA
+  const home = panelHome(user?.role);
+  if (home !== '/dashboard' && !new URLSearchParams(location.search).get('view')) {
+    return <Navigate to={home} replace />;
+  }
 
   // Solo bloqueamos si estamos en la vista de resumen y todavía está cargando
   if (loading && activeView === 'dashboard') {

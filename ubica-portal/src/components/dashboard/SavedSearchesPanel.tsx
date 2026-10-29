@@ -2,13 +2,9 @@ import { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon, TrashIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { useAuthenticatedFetch } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { getStatusLabel } from '../../utils/propertyStatus';
+import { getStatusLabel, getTypeLabel } from '../../utils/propertyStatus';
 import { EmptyState, Card, buttonClass, iconButtonClass } from './ui';
 
-const TYPE_LABELS: Record<string, string> = {
-    villa: 'Villa', apartment: 'Apartamento', house: 'Casa', penthouse: 'Ático', townhouse: 'Adosado',
-    studio: 'Estudio', duplex: 'Dúplex', piso: 'Piso', terreno: 'Terreno',
-};
 
 const formatEur = (n: number) =>
     new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
@@ -21,7 +17,7 @@ function describeFilters(filters: Record<string, unknown> | null | undefined): s
     const term = typeof f.searchTerm === 'string' ? f.searchTerm.trim() : '';
     if (term) parts.push(`"${term}"`);
     if (f.location) parts.push(String(f.location));
-    if (f.type) parts.push(TYPE_LABELS[f.type] || String(f.type));
+    if (f.type) parts.push(getTypeLabel(String(f.type)));
     if (f.status) parts.push(getStatusLabel(String(f.status)));
     const min = Number(f.minPrice) || 0;
     const max = Number(f.maxPrice) || 0;

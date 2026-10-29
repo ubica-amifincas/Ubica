@@ -5,6 +5,7 @@ import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../../hooks/useLanguage';
 import { getStoredUser } from '../../services/session';
+import { panelHome } from '../../utils/panelHome';
 
 interface LoginFormProps {
   isEmbedded?: boolean;
@@ -31,14 +32,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ isEmbedded }) => {
     try {
       await loginWithNotification(email, password);
       const userData = getStoredUser<{ role?: string }>() || {};
-      let redirectPath = '/dashboard';
-
-      switch (userData.role) {
-        case 'admin': redirectPath = '/admin'; break;
-        case 'realtor': redirectPath = '/realtor'; break;
-        case 'investor': redirectPath = '/investor'; break;
-        default: redirectPath = '/dashboard';
-      }
+      const redirectPath = panelHome(userData.role);
 
       const finalPath = location.state?.from?.pathname || redirectPath;
       navigate(finalPath, { replace: true });

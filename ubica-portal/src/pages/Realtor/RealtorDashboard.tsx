@@ -6,14 +6,14 @@ import {
   CurrencyEuroIcon,
   PencilIcon,
   TrashIcon,
-  CalendarIcon,
+  KeyIcon,
   ArrowTrendingUpIcon,
   CheckCircleIcon,
-  DocumentTextIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiService } from '../../services/apiService';
 import PropertyFormModal from '../../components/common/PropertyFormModal';
+import { getStatusLabel, getTypeLabel } from '../../utils/propertyStatus';
 import type { Property as ApiProperty } from '../../types';
 import {
   PageHeader,
@@ -58,42 +58,17 @@ interface Property {
 // Estados que cuentan como "a la venta o alquiler" en el portal
 const AVAILABLE_STATUSES = ['for-sale', 'for-rent', 'available', 'reserved'];
 
-interface Transaction {
-  id: number;
-  propertyId: number;
-  propertyTitle: string;
-  type: 'sale' | 'rental';
-  amount: number;
-  commission: number;
-  date: string;
-  clientName: string;
-  status: 'completed' | 'pending' | 'cancelled';
-}
-
-interface RentalContract {
-  id: number;
-  propertyId: number;
-  propertyTitle: string;
-  tenantName: string;
-  monthlyRent: number;
-  startDate: string;
-  endDate: string;
-  status: 'active' | 'expired' | 'terminated';
-  nextPayment: string;
-}
-
-export type RealtorSection = 'overview' | 'properties' | 'rentals' | 'sales' | 'analytics';
+export type RealtorSection = 'overview' | 'properties' | 'analytics';
 
 const eur = formatEur;
 
 /**
  * Panel de la inmobiliaria. La sección activa la decide la ruta
- * (/realtor, /realtor/propiedades, /realtor/alquileres, /realtor/ventas, /realtor/estadisticas).
+ * (/realtor, /realtor/propiedades, /realtor/estadisticas). Alquileres y ventas usan las páginas
+ * comunes de /dashboard, que para la inmobiliaria incluyen también los inmuebles asignados.
  */
 const RealtorDashboardComplete: React.FC<{ section?: RealtorSection }> = ({ section = 'overview' }) => {
   const [properties, setProperties] = useState<Property[]>([]);
-  const [transactions] = useState<Transaction[]>([]);
-  const [rentals] = useState<RentalContract[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPropertyForm, setShowPropertyForm] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
@@ -141,8 +116,7 @@ const RealtorDashboardComplete: React.FC<{ section?: RealtorSection }> = ({ sect
     availableProperties: properties.filter(p => AVAILABLE_STATUSES.includes(p.status)).length,
     soldProperties: properties.filter(p => p.status === 'sold').length,
     rentedProperties: properties.filter(p => p.status === 'rented').length,
-    totalCommissions: transactions.reduce((sum, t) => sum + t.commission, 0),
-    monthlyRentalIncome: rentals.filter(r => r.status === 'active').reduce((sum, r) => sum + r.monthlyRent, 0),
+    portfolioValue: properties.filter(p => AVAILABLE_STATUSES.includes(p.status)).reduce((sum, p) => sum + p.price, 0),
     averagePropertyPrice: properties.length > 0 ? properties.reduce((sum, p) => sum + p.price, 0) / properties.length : 0
   };
 
@@ -161,18 +135,7 @@ const RealtorDashboardComplete: React.FC<{ section?: RealtorSection }> = ({ sect
     setShowPropertyForm(true);
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'available': return 'Disponible';
-      case 'for-sale': return 'En venta';
-      case 'for-rent': return 'En alquiler';
-      case 'reserved': return 'Reservada';
-      case 'sold': return 'Vendida';
-      case 'rented': return 'Alquilada';
-      case 'pending': return 'Pendiente';
-      default: return status;
-    }
-  };
+  const getStatusText = getStatusLabel;
 
   const addButton = (
     <button type="button" onClick={() => handleEditProperty(null)} className={buttonClass.primary}>
@@ -184,8 +147,6 @@ const RealtorDashboardComplete: React.FC<{ section?: RealtorSection }> = ({ sect
   const headers: Record<RealtorSection, { title: string; description?: string; actions?: React.ReactNode }> = {
     overview: { title: 'Panel de inmobiliaria', description: `Bienvenido de vuelta, ${user?.full_name || 'Inmobiliaria'}`, actions: addButton },
     properties: { title: `Cartera de inmuebles (${properties.length})`, description: 'Inmuebles propios y asignados por el administrador', actions: addButton },
-    rentals: { title: `Contratos de alquiler (${rentals.length})` },
-    sales: { title: `Ventas completadas (${transactions.filter(t => t.type === 'sale').length})` },
     analytics: { title: 'Estadísticas y análisis' },
   };
   const header = <PageHeader {...headers[section]} />;
@@ -208,31 +169,31 @@ const RealtorDashboardComplete: React.FC<{ section?: RealtorSection }> = ({ sect
           <StatGrid cols={4}>
             <StatCard label="Total propiedades" value={stats.totalProperties} icon={HomeIcon} />
             <StatCard label="Disponibles" value={stats.availableProperties} icon={CheckCircleIcon} />
-            <StatCard label="Comisiones totales" value={eur(stats.totalCommissions)} icon={CurrencyEuroIcon} tone="neutral" />
-            <StatCard label="Ingresos mensuales" value={eur(stats.monthlyRentalIncome)} icon={ArrowTrendingUpIcon} tone="neutral" />
+            <StatCard label="Vendidas" value={stats.soldProperties} icon={CurrencyEuroIcon} tone="neutral" />
+            <StatCard label="Alquiladas" value={stats.rentedProperties} icon={KeyIcon} tone="neutral" />
           </StatGrid>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <Section title="Transacciones recientes">
-              {transactions.length === 0 ? (
-                <p className="text-sm text-gray-500 dark:text-gray-400">Todavía no hay transacciones registradas.</p>
+            <Section title="Últimos inmuebles" flush>
+              {properties.length === 0 ? (
+                <p className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">Todavía no tienes inmuebles en cartera.</p>
               ) : (
-                <div className="space-y-4">
-                  {transactions.slice(0, 3).map((transaction) => (
-                    <div key={transaction.id} className="flex items-center justify-between gap-4">
+                <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {[...properties].sort((x, y) => y.dateAdded.localeCompare(x.dateAdded)).slice(0, 4).map((property) => (
+                    <li key={property.id} className="flex items-center justify-between gap-4 px-5 py-3">
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-gray-900 dark:text-white">{transaction.propertyTitle}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {transaction.type === 'sale' ? 'Venta' : 'Alquiler'} • {transaction.date}
-                        </p>
+                        <Link to={`/property/${property.id}`} className="block truncate text-sm font-medium text-gray-900 hover:text-emerald-700 dark:text-white dark:hover:text-emerald-300">
+                          {property.title}
+                        </Link>
+                        <p className="truncate text-xs text-gray-500 dark:text-gray-400">{property.location || getTypeLabel(property.type)}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">+{eur(transaction.commission)}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">comisión</p>
+                      <div className="flex flex-shrink-0 items-center gap-3">
+                        <span className="text-sm font-semibold tabular-nums text-gray-900 dark:text-white">{eur(property.price)}</span>
+                        <Badge tone={propertyStatusTone(property.status)}>{getStatusText(property.status)}</Badge>
                       </div>
-                    </div>
+                    </li>
                   ))}
-                </div>
+                </ul>
               )}
             </Section>
 
@@ -308,10 +269,6 @@ const RealtorDashboardComplete: React.FC<{ section?: RealtorSection }> = ({ sect
         )
       )}
 
-      {section === 'rentals' && <RentalsView rentals={rentals} />}
-
-      {section === 'sales' && <SalesView transactions={transactions.filter(t => t.type === 'sale')} />}
-
       {section === 'analytics' && <AnalyticsView stats={stats} properties={properties} />}
 
       <PropertyFormModal
@@ -324,72 +281,6 @@ const RealtorDashboardComplete: React.FC<{ section?: RealtorSection }> = ({ sect
   );
 };
 
-// Rentals View Component
-const RentalsView: React.FC<{ rentals: RentalContract[] }> = ({ rentals }) => (
-  <Section title="Contratos" flush>
-    {rentals.length === 0 ? (
-      <EmptyState bare icon={CalendarIcon} title="Todavía no hay contratos de alquiler registrados." />
-    ) : (
-      <Table>
-        <THead>
-          <tr>
-            <Th>Propiedad</Th>
-            <Th>Inquilino</Th>
-            <Th align="right">Renta mensual</Th>
-            <Th>Próximo pago</Th>
-            <Th>Estado</Th>
-          </tr>
-        </THead>
-        <TBody>
-          {rentals.map((rental) => (
-            <Tr key={rental.id}>
-              <Td className="font-medium text-gray-900 dark:text-white">{rental.propertyTitle}</Td>
-              <Td>{rental.tenantName}</Td>
-              <Td align="right" className="font-semibold tabular-nums text-gray-900 dark:text-white">{eur(rental.monthlyRent)}</Td>
-              <Td>{rental.nextPayment}</Td>
-              <Td>
-                <Badge tone={rental.status === 'active' ? 'brand' : 'neutral'}>{rental.status === 'active' ? 'Activo' : 'Inactivo'}</Badge>
-              </Td>
-            </Tr>
-          ))}
-        </TBody>
-      </Table>
-    )}
-  </Section>
-);
-
-// Sales View Component
-const SalesView: React.FC<{ transactions: Transaction[] }> = ({ transactions }) => (
-  <Section title="Operaciones" flush>
-    {transactions.length === 0 ? (
-      <EmptyState bare icon={DocumentTextIcon} title="Todavía no hay ventas registradas." />
-    ) : (
-      <Table>
-        <THead>
-          <tr>
-            <Th>Propiedad</Th>
-            <Th>Cliente</Th>
-            <Th align="right">Precio de venta</Th>
-            <Th align="right">Comisión</Th>
-            <Th>Fecha</Th>
-          </tr>
-        </THead>
-        <TBody>
-          {transactions.map((transaction) => (
-            <Tr key={transaction.id}>
-              <Td className="font-medium text-gray-900 dark:text-white">{transaction.propertyTitle}</Td>
-              <Td>{transaction.clientName}</Td>
-              <Td align="right" className="font-semibold tabular-nums text-gray-900 dark:text-white">{eur(transaction.amount)}</Td>
-              <Td align="right" className="font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">{eur(transaction.commission)}</Td>
-              <Td>{transaction.date}</Td>
-            </Tr>
-          ))}
-        </TBody>
-      </Table>
-    )}
-  </Section>
-);
-
 // Analytics View Component
 const AnalyticsView: React.FC<{
   stats: any;
@@ -397,7 +288,7 @@ const AnalyticsView: React.FC<{
 }> = ({ stats, properties }) => (
   <>
     <StatGrid cols={3}>
-      <StatCard label="Ingresos por comisiones" value={eur(stats.totalCommissions)} hint="Total acumulado" icon={CurrencyEuroIcon} />
+      <StatCard label="Valor en el mercado" value={eur(stats.portfolioValue)} hint="Disponibles, a precio publicado" icon={CurrencyEuroIcon} />
       <StatCard label="Precio promedio" value={eur(stats.averagePropertyPrice)} hint="Por propiedad" icon={HomeIcon} />
       <StatCard
         label="Tasa de conversión"

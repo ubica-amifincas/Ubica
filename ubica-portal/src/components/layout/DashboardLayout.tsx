@@ -17,8 +17,6 @@ import {
   SparklesIcon,
   MagnifyingGlassIcon,
   UsersIcon,
-  CalendarIcon,
-  CurrencyEuroIcon,
   PresentationChartLineIcon,
   BriefcaseIcon,
   LightBulbIcon,
@@ -54,7 +52,6 @@ function buildNavigation(role: string | undefined, t: TFn): NavGroup[] {
   const messages: NavItem = { label: t('panel.nav.messages', 'Mensajes'), href: '/dashboard?view=messages', icon: ChatBubbleLeftRightIcon };
   const aiHistory: NavItem = { label: t('panel.nav.aiHistory', 'Historial IA'), href: '/dashboard?view=ia_history', icon: SparklesIcon };
   const wealth: NavItem = { label: t('panel.nav.wealth', 'Patrimonio'), href: '/dashboard/wealth', icon: WalletIcon };
-  const financialOverview: NavItem = { label: t('panel.nav.financialOverview', 'Resumen financiero'), href: '/dashboard', icon: ChartBarIcon, exact: true };
   const myProperties: NavItem = { label: t('panel.nav.myProperties', 'Mis propiedades'), href: '/dashboard/properties', icon: BuildingOfficeIcon };
   const sales: NavItem = { label: t('panel.nav.sales', 'Ventas'), href: '/dashboard/sales', icon: BanknotesIcon };
   const rentals: NavItem = { label: t('panel.nav.rentals', 'Alquileres'), href: '/dashboard/rentals', icon: KeyIcon };
@@ -71,7 +68,8 @@ function buildNavigation(role: string | undefined, t: TFn): NavGroup[] {
             { label: t('panel.nav.properties', 'Propiedades'), href: '/admin/propiedades', icon: BuildingOfficeIcon },
           ],
         },
-        { label: mine, items: [financialOverview, myProperties, sales, rentals, investments, wealth, messages, aiHistory] },
+        // Su resumen y la gestión de todas las propiedades ya cubren lo que había en "Mi área"
+        { label: mine, items: [messages, aiHistory] },
       ];
     case 'realtor':
       return [
@@ -80,12 +78,13 @@ function buildNavigation(role: string | undefined, t: TFn): NavGroup[] {
           items: [
             { label: t('panel.nav.overview', 'Resumen'), href: '/realtor', icon: PresentationChartLineIcon, exact: true },
             { label: t('panel.nav.portfolioRealtor', 'Cartera de inmuebles'), href: '/realtor/propiedades', icon: HomeIcon },
-            { label: t('panel.nav.rentalContracts', 'Contratos de alquiler'), href: '/realtor/alquileres', icon: CalendarIcon },
-            { label: t('panel.nav.salesOps', 'Operaciones de venta'), href: '/realtor/ventas', icon: CurrencyEuroIcon },
+            { label: t('panel.nav.rentals', 'Alquileres'), href: '/realtor/alquileres', icon: KeyIcon },
+            { label: t('panel.nav.sales', 'Ventas'), href: '/realtor/ventas', icon: BanknotesIcon },
             { label: t('panel.nav.analytics', 'Estadísticas'), href: '/realtor/estadisticas', icon: ArrowTrendingUpIcon },
           ],
         },
-        { label: mine, items: [financialOverview, myProperties, sales, rentals, investments, wealth, messages, aiHistory] },
+        // Cartera, alquileres y ventas ya incluyen sus propios inmuebles: aquí solo lo que no se repite
+        { label: mine, items: [investments, wealth, messages, aiHistory] },
       ];
     case 'investor':
       return [
@@ -326,8 +325,9 @@ export default function DashboardLayout() {
   };
 
   const logo = (
-    <Link to="/" className="flex items-center" aria-label="Ubica, ir al portal">
-      <img src="/logo_ubica.png" alt="Ubica" className="h-10 w-auto object-contain" />
+    <Link to="/" className="flex items-center gap-3" aria-label="Ubica, ir al portal">
+      <img src="/logo_ubica.png" alt="" className="h-9 w-auto object-contain" />
+      <span className="font-display text-xl font-bold text-emerald-700 dark:text-emerald-400">Ubica</span>
     </Link>
   );
 
