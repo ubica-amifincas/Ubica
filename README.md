@@ -17,14 +17,20 @@ Portal inmobiliario con frontend React (Vite, desplegado en Vercel) y backend Fa
 ## Estructura del proyecto
 
 ```
-ubica_v2/
-├── ubica-backend/        # API FastAPI (Python)
-│   ├── main.py           # Servidor principal
-│   └── requirements.txt  # Dependencias Python
-├── ubica-portal/         # Frontend React + Vite (TypeScript)
-│   ├── package.json      # Dependencias Node (usa pnpm)
-│   ├── .env.local        # Variables de entorno del frontend
-│   └── src/              # Código fuente React
+Ubica/
+├── ubica-backend/          # API FastAPI (Python) — desplegada en Render
+│   ├── main.py             # Servidor y endpoints
+│   ├── models.py           # Modelos SQLModel (tablas de Supabase)
+│   ├── database.py         # Conexión a Postgres (DATABASE_URL)
+│   ├── mcp_server.py       # Herramientas del chat de IA
+│   ├── setup_cloud_db.sql  # Esquema inicial de la base de datos
+│   ├── enable_rls.sql      # Activa RLS en las tablas
+│   └── requirements.txt    # Dependencias (versiones fijadas)
+├── ubica-portal/           # Frontend React + Vite (TypeScript) — desplegado en Vercel
+│   ├── src/                # Código fuente
+│   └── public/             # Estáticos
+├── sample_import.csv       # Ejemplo para importar propiedades desde el panel de admin
+├── render.yaml             # Configuración del servicio en Render
 └── README.md
 ```
 
@@ -38,6 +44,8 @@ Se necesitan **dos terminales** (backend + frontend).
 
 ```bash
 cd ubica-backend
+python -m venv .venv
+.venv\Scripts\activate        # Windows (en Linux/macOS: source .venv/bin/activate)
 pip install -r requirements.txt
 ```
 
