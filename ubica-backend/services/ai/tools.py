@@ -221,7 +221,7 @@ async def mostrar_en_mapa(zona: str = "", tipo: str = "") -> str:
     url = f"/?{urlencode(params)}"
     return json.dumps({
         "url_mapa": url,
-        "mensaje_para_ia": f"Genera un enlace markdown clickable con texto 'Ver en Mapa →' apuntando a {url}. Dile al usuario que puede explorar visualmente las propiedades en el mapa interactivo."
+        "mensaje_para_ia": f"Genera un enlace markdown clickable con texto 'Ver en el mapa' apuntando a {url}. Dile al usuario que puede explorar visualmente las propiedades en el mapa interactivo."
     }, ensure_ascii=False)
 
 async def estadisticas_cartera(user_id: Optional[int], user_role: str) -> str:

@@ -77,12 +77,13 @@ def sanitize_links(text: str, user_id: Optional[int], user_role: str) -> str:
             return session.exec(stmt).first() is not None
 
     def fix(match: re.Match) -> str:
-        label, path = match.group(1), match.group(2)
+        # La web ya añade "→" a los enlaces internos; se quita el que ponga el modelo para no duplicarlo
+        label, path = match.group(1).rstrip(" →"), match.group(2)
         prop = re.fullmatch(r"/property/(\d+)(#[\w-]+)?", path)
         if prop:
-            return match.group(0) if visible(int(prop.group(1))) else label
+            return f"[{label}]({path})" if visible(int(prop.group(1))) else label
         if path == "/" or path.startswith(INTERNAL_LINK_PREFIXES):
-            return match.group(0)
+            return f"[{label}]({path})"
         return label
 
     return MARKDOWN_LINK.sub(fix, text)

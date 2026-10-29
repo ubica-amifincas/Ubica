@@ -175,7 +175,7 @@ def test_enlaces_inventados_se_quitan(make_property):
     real = make_property()
     draft = make_property(status="draft")
     text = (f"[Piso real](/property/{real.id}) [Inventado](/property/{real.id + 100}) [Borrador](/property/{draft.id}) "
-            f"[mapa](/mapa) [Ver en Mapa](/?view=map&location=Murcia) [Contacto](/property/{real.id}#contacto) [AMI](https://amifincas.es)")
+            f"[mapa](/mapa) [Ver en Mapa →](/?view=map&location=Murcia) [Contacto](/property/{real.id}#contacto) [AMI](https://amifincas.es)")
     out = chat.sanitize_links(text, None, "guest")
     assert out == (f"[Piso real](/property/{real.id}) Inventado Borrador mapa [Ver en Mapa](/?view=map&location=Murcia) "
                    f"[Contacto](/property/{real.id}#contacto) [AMI](https://amifincas.es)")
