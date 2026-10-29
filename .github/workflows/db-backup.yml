@@ -1,0 +1,82 @@
+# Copia diaria de la base de datos (esquema public) en un bucket privado de Supabase Storage.
+# Secretos del repositorio necesarios:
+#   SUPABASE_DB_URL      cadena de conexión del Session Pooler (puerto 5432), con la contraseña
+#   SUPABASE_SECRET_KEY  secret key de Supabase (sb_secret_...), Settings -> API Keys
+# El bucket "db-backups" debe existir y ser privado. Se conservan las copias de los últimos 30 días.
+name: Copia de seguridad de la base de datos
+
+on:
+  schedule:
+    - cron: "30 2 * * *"  # todos los días a las 02:30 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+env:
+  SUPABASE_URL: https://iklqjuiodvmeynbcimwq.supabase.co
+  BUCKET: db-backups
+  KEEP_DAYS: "30"
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Comprobar secretos
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ] || [ -z "$SUPABASE_SECRET_KEY" ]; then
+            echo "::error::Faltan los secretos SUPABASE_DB_URL o SUPABASE_SECRET_KEY"
+            exit 1
+          fi
+
+      - name: Instalar pg_dump
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y > /dev/null
+          # Un pg_dump más nuevo puede volcar servidores más antiguos
+          sudo apt-get install -y -qq postgresql-client-18 || sudo apt-get install -y -qq postgresql-client-17
+          pg_dump --version
+
+      - name: Volcar la base de datos
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          pg_dump "$SUPABASE_DB_URL" --schema=public --no-owner --no-privileges --format=custom --file=backup.dump
+          ls -l backup.dump
+
+      - name: Subir a Supabase Storage
+        env:
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: |
+          name="ubica-$(date -u +%Y-%m-%dT%H%M).dump"
+          curl --fail-with-body -sS -X POST "$SUPABASE_URL/storage/v1/object/$BUCKET/$name" \
+            -H "apikey: $SUPABASE_SECRET_KEY" \
+            -H "Content-Type: application/octet-stream" \
+            -H "x-upsert: true" \
+            --data-binary @backup.dump > /dev/null
+          echo "Copia subida: $name"
+
+      - name: Borrar copias antiguas
+        env:
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: |
+          cutoff=$(date -u -d "-$KEEP_DAYS days" +%Y-%m-%d)
+          old=$(curl --fail-with-body -sS -X POST "$SUPABASE_URL/storage/v1/object/list/$BUCKET" \
+              -H "apikey: $SUPABASE_SECRET_KEY" -H "Content-Type: application/json" \
+              -d '{"prefix":"","limit":1000,"sortBy":{"column":"name","order":"asc"}}' \
+            | jq -c --arg cutoff "$cutoff" '[.[] | select(.name | startswith("ubica-")) | select(.name[6:16] < $cutoff) | .name]')
+          echo "Copias anteriores a $cutoff: $(echo "$old" | jq length)"
+          if [ "$(echo "$old" | jq length)" -gt 0 ]; then
+            curl --fail-with-body -sS -X DELETE "$SUPABASE_URL/storage/v1/object/$BUCKET" \
+              -H "apikey: $SUPABASE_SECRET_KEY" -H "Content-Type: application/json" \
+              -d "{\"prefixes\": $old}" > /dev/null
+          fi

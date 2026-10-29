@@ -110,7 +110,9 @@ El frontend estará disponible en: `http://localhost:5173`
 | `DATABASE_URL` | Cadena de conexión de Supabase (Transaction Pooler, puerto 6543) |
 | `JWT_SECRET_KEY` | Secreto para firmar los tokens. **Obligatoria en Render**; en local se genera una temporal |
 | `RESEND_API_KEY` | API key de Resend para los correos. Vacía en local = no se envían correos |
-| `FRONTEND_URL` | URL pública del frontend (enlaces de verificación) |
+| `RESEND_SENDER` | Remitente de los correos. Debe ser una dirección de un dominio **verificado en Resend** (p. ej. `no-reply@amifincas.es`): con el valor por defecto `onboarding@resend.dev` Resend solo entrega al email del propietario de la cuenta |
+| `CONTACT_EMAIL` | Buzón que recibe el formulario de contacto (por defecto `info@amifincas.es`); la respuesta va directamente al remitente (`reply_to`) |
+| `FRONTEND_URL` | URL pública del frontend (enlaces de verificación, recuperación de contraseña y cambio de email) |
 | `GEMINI_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY` | Proveedores del chat de IA |
 | `OPENROUTER_MODEL`, `GROQ_MODEL` | Modelo de cada proveedor (opcional). Cámbialos aquí si un proveedor retira el modelo |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_STORAGE_BUCKET` | Imágenes en Supabase Storage (bucket público, por defecto `property-images`). La clave es la *secret key* (`sb_secret_...`) de Settings → API Keys, o la antigua `service_role`. Sin ellas se guardan en el disco, que en Render se borra en cada despliegue |
@@ -125,6 +127,25 @@ VITE_API_URL=http://localhost:8000/api
 Nunca subas credenciales al repositorio: los `.env` están en `.gitignore`.
 
 ---
+
+## Copias de seguridad
+
+El plan gratuito de Supabase no incluye copias, así que `.github/workflows/db-backup.yml` vuelca cada noche (02:30 UTC) el esquema `public` y lo guarda en el bucket **privado** `db-backups` de Supabase Storage. Se conservan 30 días. También se puede lanzar a mano desde GitHub → Actions → "Copia de seguridad de la base de datos" → Run workflow.
+
+Secretos del repositorio (GitHub → Settings → Secrets and variables → Actions):
+
+| Secreto | Valor |
+|---|---|
+| `SUPABASE_DB_URL` | Cadena del **Session pooler** (Supabase → Connect → Session pooler, puerto 5432), con la contraseña |
+| `SUPABASE_SECRET_KEY` | Secret key de Supabase (`sb_secret_...`), Settings → API Keys |
+
+Para restaurar: descarga el `.dump` desde Storage → db-backups y ejecuta
+
+```bash
+pg_restore --clean --if-exists --no-owner --schema=public -d "<cadena de conexión>" ubica-AAAA-MM-DDTHHMM.dump
+```
+
+Prueba antes la restauración en un proyecto de Supabase vacío.
 
 ## Usuarios
 
