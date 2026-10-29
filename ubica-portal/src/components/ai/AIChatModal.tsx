@@ -307,11 +307,13 @@ export default function AIChatModal() {
                                 ${window.innerWidth < 640 ? 'inset-0' : ''}
                                 ${isResizing ? 'select-none' : ''}`}
                             style={{ 
-                                touchAction: 'none',
+                                // En móvil se deja el gesto normal (desplazar mensajes); el arrastre es solo de escritorio
+                                touchAction: window.innerWidth < 640 ? 'auto' : 'none',
                                 x: dragX,
                                 y: dragY,
-                                width: (isFullScreen || window.innerWidth < 640) ? '100vw' : dimensions.width,
-                                height: (isFullScreen || window.innerWidth < 640) ? '100vh' : dimensions.height,
+                                // 100dvh = alto visible de verdad: 100vh en móvil incluye lo que tapan la barra del navegador y el teclado
+                                width: (isFullScreen || window.innerWidth < 640) ? '100%' : dimensions.width,
+                                height: (isFullScreen || window.innerWidth < 640) ? '100dvh' : dimensions.height,
                                 left: (isFullScreen || window.innerWidth < 640) ? 0 : undefined,
                                 top: (isFullScreen || window.innerWidth < 640) ? 0 : undefined,
                                 right: (isFullScreen || window.innerWidth < 640) ? 0 : '1.5rem',
@@ -529,7 +531,7 @@ export default function AIChatModal() {
 
 
                             {/* Input Area */}
-                            <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+                            <div className="px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
                                 <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-2 border border-gray-200 dark:border-gray-700 focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-100 dark:focus-within:ring-emerald-900 transition-all">
                                     <input
                                         ref={inputRef}
