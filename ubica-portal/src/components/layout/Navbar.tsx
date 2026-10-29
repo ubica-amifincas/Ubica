@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -28,80 +28,12 @@ import { useAuthNotifications } from '../../hooks/useAuthNotifications';
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [navHidden, setNavHidden] = useState(false);
-  const lastScrollYRef = useRef(0);
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { theme } = useTheme();
   const { user, isAuthenticated, hasRole, logoutWithNotification } = useAuthNotifications();
 
-  // La portada de AMI Fincas (raíz de amifincas.es) lleva la barra fija que se esconde al bajar
-  const isAmiFincasPage = isAmiSite && location.pathname === '/';
-
-  // Auto-hide navbar on scroll or hover (only on AMI Fincas page)
-  useEffect(() => {
-    if (!isAmiFincasPage) {
-      setNavHidden(false);
-      return;
-    }
-
-    // Set initially hidden dynamically when the component mounts or state resets
-    if (!isMenuOpen && !isUserMenuOpen && window.scrollY <= 10) {
-      setNavHidden(true);
-    }
-
-    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    let leaveTimeout: NodeJS.Timeout;
-
-    const handleScroll = () => {
-      // Prevent hiding when menus are active
-      if (isMenuOpen || isUserMenuOpen) return;
-      
-      const currentScrollY = window.scrollY;
-      const lastY = lastScrollYRef.current;
-
-      if (currentScrollY > lastY && currentScrollY > 80) {
-        setNavHidden(true);
-      } else if (currentScrollY < lastY) {
-        setNavHidden(false);
-      }
-
-      lastScrollYRef.current = currentScrollY;
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-      // Si menú móvil o de usuario está abierto, nunca auto-ocultar
-      if (isMenuOpen || isUserMenuOpen) {
-        setNavHidden(false);
-        return;
-      }
-
-      const navEl = document.querySelector('nav');
-      const isOverNav = navEl?.contains(e.target as Node);
-
-      // 90px es aproximadamente la altura del navbar garantizando que no desaparezca al posar
-      if (e.clientY <= 90 || isOverNav) {
-        clearTimeout(leaveTimeout);
-        setNavHidden(false);
-      } else if (!isTouch) {
-        // En desktop ratón, ocultamos si se aleja de la zona.
-        clearTimeout(leaveTimeout);
-        leaveTimeout = setTimeout(() => {
-          setNavHidden(true);
-        }, 150);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('mousemove', handleMouseMove);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('mousemove', handleMouseMove);
-      clearTimeout(leaveTimeout);
-    };
-  }, [isAmiFincasPage, isMenuOpen, isUserMenuOpen]);
 
   // Navegación basada en autenticación y rol
   const getNavigation = () => {
@@ -157,10 +89,11 @@ export default function Navbar() {
   }, [isUserMenuOpen, isMenuOpen]);
 
   // Determinar posicionamiento del Navbar
-  const navPosition = isAmiFincasPage ? 'fixed w-full' : isHomePage ? 'relative' : 'sticky';
+  // Siempre visible arriba; en la portada de Ubica no, porque allí aparece la barra de búsqueda fija
+  const navPosition = isHomePage && !isAmiSite ? 'relative' : 'sticky';
 
   return (
-    <nav className={`${navPosition} top-0 z-50 border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 shadow-sm transition-all duration-300 ease-in-out`} style={isAmiFincasPage && navHidden ? { transform: 'translateY(-100%)' } : undefined}>
+    <nav className={`${navPosition} top-0 z-50 border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 shadow-sm transition-all duration-300 ease-in-out`}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}

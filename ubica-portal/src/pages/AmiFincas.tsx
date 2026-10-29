@@ -262,7 +262,7 @@ export default function AmiFincas() {
 
       <div className="bg-slate-50 font-sans text-slate-900 dark:bg-[#0f172a] dark:text-white">
         {/* Portada */}
-        <section className="relative overflow-hidden pb-16 pt-24 md:pb-24 md:pt-28">
+        <section className="relative overflow-hidden pb-16 pt-10 md:pb-24 md:pt-16">
           <div className="pointer-events-none absolute -right-40 -top-40 h-[480px] w-[480px] rounded-full bg-[#A2D18D]/20 blur-3xl" aria-hidden="true" />
           <div className="page-container relative">
             <div className="flex flex-col items-center gap-12 lg:flex-row lg:gap-16">
