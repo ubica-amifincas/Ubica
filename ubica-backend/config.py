@@ -42,3 +42,11 @@ CORS_ORIGINS = [
 
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads"))
 AI_USAGE_FILE = os.getenv("AI_USAGE_FILE", "ai_usage.json")
+
+# URL pública del backend para las imágenes guardadas en disco (Render define RENDER_EXTERNAL_URL)
+BACKEND_PUBLIC_URL = os.getenv("BACKEND_PUBLIC_URL") or os.getenv("RENDER_EXTERNAL_URL")
+# El disco de Render se borra en cada despliegue: con estas variables las imágenes van a Supabase Storage
+SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+SUPABASE_STORAGE_BUCKET = os.getenv("SUPABASE_STORAGE_BUCKET", "property-images")
+MAX_UPLOAD_BYTES = 5 * 1024 * 1024

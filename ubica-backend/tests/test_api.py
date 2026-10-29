@@ -109,18 +109,19 @@ def test_admin_requires_admin_role(client, make_user):
 def test_admin_user_crud(client, make_user):
     admin = make_user(email="admin@example.com", role="admin")
     h = auth(admin)
-    r = client.post("/api/admin/users", json={"email": "b@example.com", "password": "pw", "role": "realtor"}, headers=h)
+    r = client.post("/api/admin/users", json={"email": "b@example.com", "password": "clave-segura", "role": "realtor"}, headers=h)
     assert r.status_code == 200 and "hashed_password" not in r.json()
     new_id = r.json()["id"]
-    assert client.post("/api/admin/users", json={"email": "b@example.com"}, headers=h).status_code == 400
+    assert client.post("/api/admin/users", json={"email": "b@example.com", "password": "clave-segura"}, headers=h).status_code == 400
+    assert client.post("/api/admin/users", json={"email": "c@example.com"}, headers=h).status_code == 422
 
     users = client.get("/api/admin/users", headers=h).json()
     assert {u["email"] for u in users} == {"admin@example.com", "b@example.com"}
     assert all("hashed_password" not in u for u in users)
 
-    r = client.put(f"/api/admin/users/{new_id}", json={"full_name": "Bea", "password": "nueva"}, headers=h)
+    r = client.put(f"/api/admin/users/{new_id}", json={"full_name": "Bea", "password": "nueva-clave"}, headers=h)
     assert r.json()["full_name"] == "Bea"
-    assert client.post("/api/auth/login", json={"email": "b@example.com", "password": "nueva"}).status_code == 200
+    assert client.post("/api/auth/login", json={"email": "b@example.com", "password": "nueva-clave"}).status_code == 200
     assert client.put("/api/admin/users/999", json={}, headers=h).status_code == 404
 
     assert client.delete(f"/api/admin/users/{admin.id}", headers=h).status_code == 400

@@ -11,6 +11,30 @@ const isProdContainer = window.location.hostname.includes('amifincas.es') || win
 const defaultApiUrl = isProdContainer ? 'https://ubica-backend.onrender.com/api' : 'http://localhost:8000/api';
 const API_BASE_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || defaultApiUrl;
 
+const FIELD_LABELS: Record<string, string> = {
+  email: 'Email', password: 'Contraseña', full_name: 'Nombre', role: 'Rol', message: 'Mensaje',
+  price: 'Precio', title: 'Título', is_active: 'Estado',
+};
+
+// FastAPI devuelve los errores de validación (422) como una lista de objetos, no como texto
+export function formatApiError(errorData: any, status: number): string {
+  const detail = errorData?.detail;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    return detail.map((d: any) => {
+      const field = Array.isArray(d.loc) ? String(d.loc[d.loc.length - 1]) : '';
+      const label = FIELD_LABELS[field] || field;
+      let msg = d.msg;
+      if (d.type === 'missing') msg = 'es obligatorio';
+      else if (d.type === 'string_too_short') msg = `debe tener al menos ${d.ctx?.min_length} caracteres`;
+      else if (d.type === 'string_too_long') msg = `no puede superar ${d.ctx?.max_length} caracteres`;
+      else if (field === 'email') msg = 'no es una dirección válida';
+      return label ? `${label}: ${msg}` : msg;
+    }).join('. ');
+  }
+  return errorData?.error || `Error ${status} en el servidor`;
+}
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -58,28 +82,16 @@ class ApiService {
     };
   }
 
+  // No se filtran rutas que no existan: el formulario de edición devuelve esta lista al guardar,
+  // así que quitar una aquí la borraría de la base de datos. Las tarjetas ocultan las que no cargan.
   private isImageValid(img: string): boolean {
-    if (!img || typeof img !== 'string') return false;
-    if (img.startsWith('http') || img.startsWith('data:image')) return true;
-
-    const KNOWN_LOCAL_IMAGES = [
-      '/images/apartamento-torre-pacheco.jpg',
-      '/images/atico.jpg',
-      '/images/casa-moderna.jpg',
-      '/images/gen_apt_ext.png',
-      '/images/gen_apt_int.png',
-      '/images/gen_house_ext.png',
-      '/images/gen_house_int.png',
-      '/images/gen_villa_ext.png',
-      '/images/gen_villa_int.png'
-    ];
-    return KNOWN_LOCAL_IMAGES.includes(img);
+    return typeof img === 'string' && img.trim() !== '';
   }
 
   private async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      const errorMessage = errorData.detail || errorData.error || `HTTP error! status: ${response.status}`;
+      const errorMessage = formatApiError(errorData, response.status);
       console.error('API Error:', errorMessage, 'at', response.url);
       throw new Error(errorMessage);
     }

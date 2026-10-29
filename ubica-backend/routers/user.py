@@ -8,7 +8,7 @@ from sqlmodel import Session, select
 import models
 from database import get_session
 from security import get_current_user
-from services.properties import apply_property_payload, property_from_payload
+from services.properties import apply_property_payload, can_view_property, delete_property, property_from_payload
 
 router = APIRouter()
 
@@ -50,17 +50,19 @@ async def delete_user_property(property_id: int, current_user: models.User = Dep
         raise HTTPException(status_code=404, detail="Propiedad no encontrada")
     if p.owner_id != current_user.id and current_user.role != "admin":
         raise HTTPException(status_code=403, detail="No tienes permiso para eliminar esta propiedad")
-    session.delete(p)
-    session.commit()
+    delete_property(session, p)
     return {"message": "Propiedad eliminada con éxito"}
 
 @router.get("/api/user/favorites", response_model=List[models.Property])
 async def get_favorites(current_user: models.User = Depends(get_current_user), session: Session = Depends(get_session)):
     statement = select(models.Property).join(models.Favorite).where(models.Favorite.user_id == current_user.id)
-    return session.exec(statement).all()
+    return [p for p in session.exec(statement).all() if can_view_property(p, current_user)]
 
 @router.post("/api/user/favorites/{property_id}")
 async def add_favorite(property_id: int, current_user: models.User = Depends(get_current_user), session: Session = Depends(get_session)):
+    prop = session.get(models.Property, property_id)
+    if prop is None or not can_view_property(prop, current_user):
+        raise HTTPException(status_code=404, detail="Propiedad no encontrada")
     existing = session.exec(select(models.Favorite).where(models.Favorite.property_id == property_id, models.Favorite.user_id == current_user.id)).first()
     if existing:
         return {"message": "Already in favorites"}
@@ -88,8 +90,8 @@ async def get_searches(current_user: models.User = Depends(get_current_user), se
 async def add_search(search_data: dict, current_user: models.User = Depends(get_current_user), session: Session = Depends(get_session)):
     new_search = models.SavedSearch(
         user_id=current_user.id,
-        name=search_data.get("name", "Búsqueda Guardada"),
-        filters=json.dumps(search_data.get("filters", {}))
+        name=str(search_data.get("name") or "Búsqueda Guardada")[:200],
+        filters=json.dumps(search_data.get("filters") or {})
     )
     session.add(new_search)
     session.commit()

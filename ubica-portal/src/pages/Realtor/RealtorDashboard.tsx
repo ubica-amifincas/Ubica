@@ -19,6 +19,9 @@ import {
 } from '@heroicons/react/24/outline';
 import { useLanguage } from '../../hooks/useLanguage';
 import { useAuth } from '../../contexts/AuthContext';
+import { apiService } from '../../services/apiService';
+import PropertyFormModal from '../../components/common/PropertyFormModal';
+import type { Property as ApiProperty } from '../../types';
 
 interface Property {
   id: number;
@@ -29,12 +32,17 @@ interface Property {
   area: number;
   bedrooms: number;
   bathrooms: number;
-  status: 'available' | 'sold' | 'rented' | 'pending';
+  status: string;
   dateAdded: string;
   images: string[];
   description: string;
   features: string[];
+  canEdit: boolean; // solo el propietario edita; las asignadas por el admin son de solo lectura
+  raw: ApiProperty;
 }
+
+// Estados que cuentan como "a la venta o alquiler" en el portal
+const AVAILABLE_STATUSES = ['for-sale', 'for-rent', 'available', 'reserved'];
 
 interface Transaction {
   id: number;
@@ -61,10 +69,10 @@ interface RentalContract {
 }
 
 const RealtorDashboardComplete: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'properties' | 'add-property' | 'rentals' | 'sales' | 'analytics'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'properties' | 'rentals' | 'sales' | 'analytics'>('overview');
   const [properties, setProperties] = useState<Property[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [rentals, setRentals] = useState<RentalContract[]>([]);
+  const [transactions] = useState<Transaction[]>([]);
+  const [rentals] = useState<RentalContract[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPropertyForm, setShowPropertyForm] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
@@ -72,105 +80,45 @@ const RealtorDashboardComplete: React.FC = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
 
-  // Mock data initialization
-  useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setProperties([
-        {
-          id: 1,
-          title: "Apartamento Moderno en Centro",
-          location: "Murcia Centro",
-          type: "apartment",
-          price: 185000,
-          area: 95,
-          bedrooms: 3,
-          bathrooms: 2,
-          status: "available",
-          dateAdded: "2024-06-01",
-          images: ["/images/apartamento-torre-pacheco.jpg"],
-          description: "Hermoso apartamento en el centro de Murcia",
-          features: ["Aire acondicionado", "Parking", "Terraza"]
-        },
-        {
-          id: 2,
-          title: "Casa Familiar con Jardín",
-          location: "Molina de Segura",
-          type: "house",
-          price: 275000,
-          area: 150,
-          bedrooms: 4,
-          bathrooms: 3,
-          status: "sold",
-          dateAdded: "2024-05-15",
-          images: ["/images/casa-moderna.jpg"],
-          description: "Perfecta casa familiar con amplios espacios",
-          features: ["Jardín", "Garaje", "Piscina"]
-        },
-        {
-          id: 3,
-          title: "Ático con Vistas Panorámicas",
-          location: "Cartagena",
-          type: "penthouse",
-          price: 1200,
-          area: 120,
-          bedrooms: 3,
-          bathrooms: 2,
-          status: "rented",
-          dateAdded: "2024-04-20",
-          images: ["/images/atico.jpg"],
-          description: "Ático exclusivo con vistas al mar",
-          features: ["Terraza", "Vistas al mar", "Ascensor"]
-        }
-      ]);
-
-      setTransactions([
-        {
-          id: 1,
-          propertyId: 2,
-          propertyTitle: "Casa Familiar con Jardín",
-          type: "sale",
-          amount: 275000,
-          commission: 8250,
-          date: "2024-06-08",
-          clientName: "Juan Pérez",
-          status: "completed"
-        },
-        {
-          id: 2,
-          propertyId: 3,
-          propertyTitle: "Ático con Vistas Panorámicas",
-          type: "rental",
-          amount: 1200,
-          commission: 120,
-          date: "2024-06-01",
-          clientName: "María García",
-          status: "completed"
-        }
-      ]);
-
-      setRentals([
-        {
-          id: 1,
-          propertyId: 3,
-          propertyTitle: "Ático con Vistas Panorámicas",
-          tenantName: "María García",
-          monthlyRent: 1200,
-          startDate: "2024-06-01",
-          endDate: "2025-06-01",
-          status: "active",
-          nextPayment: "2024-07-01"
-        }
-      ]);
-
+  const loadProperties = async () => {
+    try {
+      // Propias (las publica la inmobiliaria) y asignadas por el admin (realtor_id)
+      const [own, assigned] = await Promise.all([apiService.getUserProperties(), apiService.getRealtorProperties()]);
+      const byId = new Map<number, ApiProperty>();
+      [...own, ...assigned].forEach(p => byId.set(p.id, p));
+      setProperties([...byId.values()].map((p: any) => ({
+        id: p.id,
+        title: p.title,
+        location: p.location || p.city || '',
+        type: p.type,
+        price: p.price || 0,
+        area: p.area || 0,
+        bedrooms: p.bedrooms || 0,
+        bathrooms: p.bathrooms || 0,
+        status: p.status,
+        dateAdded: (p.created_at || '').split('T')[0],
+        images: p.images || [],
+        description: p.description || '',
+        features: p.features || [],
+        canEdit: p.owner_id === user?.id,
+        raw: p,
+      })));
+    } catch (error) {
+      console.error('Error loading realtor properties:', error);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
+  };
+
+  // Aún no hay modelo de transacciones ni contratos: esas secciones quedan vacías en vez de mostrar datos inventados
+  useEffect(() => {
+    loadProperties();
   }, []);
 
   // Statistics calculations
   const stats = {
     totalProperties: properties.length,
-    availableProperties: properties.filter(p => p.status === 'available').length,
+    availableProperties: properties.filter(p => AVAILABLE_STATUSES.includes(p.status)).length,
     soldProperties: properties.filter(p => p.status === 'sold').length,
     rentedProperties: properties.filter(p => p.status === 'rented').length,
     totalCommissions: transactions.reduce((sum, t) => sum + t.commission, 0),
@@ -178,20 +126,27 @@ const RealtorDashboardComplete: React.FC = () => {
     averagePropertyPrice: properties.length > 0 ? properties.reduce((sum, p) => sum + p.price, 0) / properties.length : 0
   };
 
-  const handleDeleteProperty = (id: number) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar esta propiedad?')) {
-      setProperties(properties.filter(p => p.id !== id));
+  const handleDeleteProperty = async (property: Property) => {
+    if (!window.confirm(`¿Estás seguro de que quieres eliminar "${property.title}"?`)) return;
+    try {
+      await apiService.deleteUserProperty(property.id);
+      await loadProperties();
+    } catch (error: any) {
+      alert(`Error: ${error.message}`);
     }
   };
 
-  const handleEditProperty = (property: Property) => {
+  const handleEditProperty = (property: Property | null) => {
     setEditingProperty(property);
     setShowPropertyForm(true);
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'available': return 'bg-green-100 text-green-800';
+      case 'available':
+      case 'for-sale':
+      case 'for-rent': return 'bg-green-100 text-green-800';
+      case 'reserved': return 'bg-orange-100 text-orange-800';
       case 'sold': return 'bg-blue-100 text-blue-800';
       case 'rented': return 'bg-yellow-100 text-yellow-800';
       case 'pending': return 'bg-gray-100 text-gray-800';
@@ -202,6 +157,9 @@ const RealtorDashboardComplete: React.FC = () => {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'available': return 'Disponible';
+      case 'for-sale': return 'En venta';
+      case 'for-rent': return 'En alquiler';
+      case 'reserved': return 'Reservada';
       case 'sold': return 'Vendida';
       case 'rented': return 'Alquilada';
       case 'pending': return 'Pendiente';
@@ -244,7 +202,7 @@ const RealtorDashboardComplete: React.FC = () => {
               ].map((tab) => (
                 <button
                   key={tab.key}
-                  onClick={() => setActiveTab(tab.key as any)}
+                  onClick={() => tab.key === 'add-property' ? handleEditProperty(null) : setActiveTab(tab.key as any)}
                   className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                     activeTab === tab.key
                       ? 'border-blue-500 text-blue-600 dark:text-blue-400'
@@ -360,6 +318,9 @@ const RealtorDashboardComplete: React.FC = () => {
                 </div>
                 <div className="p-6">
                   <div className="space-y-4">
+                    {transactions.length === 0 && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Todavía no hay transacciones registradas.</p>
+                    )}
                     {transactions.slice(0, 3).map((transaction) => (
                       <div key={transaction.id} className="flex items-center justify-between">
                         <div>
@@ -417,7 +378,7 @@ const RealtorDashboardComplete: React.FC = () => {
                 Mis Propiedades ({properties.length})
               </h2>
               <button
-                onClick={() => setActiveTab('add-property')}
+                onClick={() => handleEditProperty(null)}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200"
               >
                 <PlusIcon className="h-5 w-5 mr-2" />
@@ -456,7 +417,10 @@ const RealtorDashboardComplete: React.FC = () => {
                       <div>{property.bedrooms} hab.</div>
                       <div>{property.bathrooms} baños</div>
                     </div>
-                    <div className="flex space-x-2">
+                    {!property.canEdit && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Asignada por el administrador · solo lectura</p>
+                    )}
+                    {property.canEdit && <div className="flex space-x-2">
                       <button
                         onClick={() => handleEditProperty(property)}
                         className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200"
@@ -465,37 +429,18 @@ const RealtorDashboardComplete: React.FC = () => {
                         Editar
                       </button>
                       <button
-                        onClick={() => handleDeleteProperty(property.id)}
+                        onClick={() => handleDeleteProperty(property)}
                         className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 transition-colors duration-200"
                       >
                         <TrashIcon className="h-4 w-4 mr-1" />
                         Eliminar
                       </button>
-                    </div>
+                    </div>}
                   </div>
                 </motion.div>
               ))}
             </div>
           </div>
-        )}
-
-        {activeTab === 'add-property' && (
-          <PropertyForm 
-            property={editingProperty}
-            onSave={(property) => {
-              if (editingProperty) {
-                setProperties(properties.map(p => p.id === property.id ? property : p));
-              } else {
-                setProperties([...properties, { ...property, id: Date.now() }]);
-              }
-              setEditingProperty(null);
-              setActiveTab('properties');
-            }}
-            onCancel={() => {
-              setEditingProperty(null);
-              setActiveTab('properties');
-            }}
-          />
         )}
 
         {activeTab === 'rentals' && (
@@ -509,202 +454,14 @@ const RealtorDashboardComplete: React.FC = () => {
         {activeTab === 'analytics' && (
           <AnalyticsView stats={stats} properties={properties} transactions={transactions} />
         )}
+
+        <PropertyFormModal
+          isOpen={showPropertyForm}
+          onClose={() => { setShowPropertyForm(false); setEditingProperty(null); }}
+          onSave={() => { setShowPropertyForm(false); setEditingProperty(null); loadProperties(); }}
+          initialData={editingProperty?.raw ?? null}
+        />
       </div>
-    </div>
-  );
-};
-
-// Property Form Component
-const PropertyForm: React.FC<{
-  property?: Property | null;
-  onSave: (property: Property) => void;
-  onCancel: () => void;
-}> = ({ property, onSave, onCancel }) => {
-  const [formData, setFormData] = useState<Partial<Property>>({
-    title: '',
-    location: '',
-    type: 'apartment',
-    price: 0,
-    area: 0,
-    bedrooms: 1,
-    bathrooms: 1,
-    status: 'available',
-    description: '',
-    features: [],
-    images: ['/images/casa-moderna.jpg'],
-    dateAdded: new Date().toISOString().split('T')[0]
-  });
-
-  useEffect(() => {
-    if (property) {
-      setFormData(property);
-    }
-  }, [property]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formData as Property);
-  };
-
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          {property ? 'Editar Propiedad' : 'Añadir Nueva Propiedad'}
-        </h2>
-      </div>
-      
-      <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[600px] overflow-y-auto"> {/* Enhanced scroll */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Título *
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.title}
-              onChange={(e) => setFormData({...formData, title: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-              placeholder="Ej: Apartamento moderno en centro"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Ubicación *
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.location}
-              onChange={(e) => setFormData({...formData, location: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-              placeholder="Ej: Murcia Centro"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Tipo de Propiedad *
-            </label>
-            <select
-              value={formData.type}
-              onChange={(e) => setFormData({...formData, type: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-            >
-              <option value="apartment">Apartamento</option>
-              <option value="house">Casa</option>
-              <option value="villa">Villa</option>
-              <option value="penthouse">Ático</option>
-              <option value="commercial">Comercial</option>
-            </select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Precio (€) *
-            </label>
-            <input
-              type="number"
-              required
-              value={formData.price}
-              onChange={(e) => setFormData({...formData, price: parseInt(e.target.value)})}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-              placeholder="185000"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Área (m²) *
-            </label>
-            <input
-              type="number"
-              required
-              value={formData.area}
-              onChange={(e) => setFormData({...formData, area: parseInt(e.target.value)})}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-              placeholder="95"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Habitaciones *
-            </label>
-            <select
-              value={formData.bedrooms}
-              onChange={(e) => setFormData({...formData, bedrooms: parseInt(e.target.value)})}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-            >
-              {[1,2,3,4,5].map(num => (
-                <option key={num} value={num}>{num}</option>
-              ))}
-            </select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Baños *
-            </label>
-            <select
-              value={formData.bathrooms}
-              onChange={(e) => setFormData({...formData, bathrooms: parseInt(e.target.value)})}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-            >
-              {[1,2,3,4].map(num => (
-                <option key={num} value={num}>{num}</option>
-              ))}
-            </select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Estado
-            </label>
-            <select
-              value={formData.status}
-              onChange={(e) => setFormData({...formData, status: e.target.value as any})}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-            >
-              <option value="available">Disponible</option>
-              <option value="pending">Pendiente</option>
-              <option value="sold">Vendida</option>
-              <option value="rented">Alquilada</option>
-            </select>
-          </div>
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Descripción
-          </label>
-          <textarea
-            rows={4}
-            value={formData.description}
-            onChange={(e) => setFormData({...formData, description: e.target.value})}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-            placeholder="Describe las características principales de la propiedad..."
-          />
-        </div>
-        
-        <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200"
-          >
-            {property ? 'Actualizar' : 'Guardar'} Propiedad
-          </button>
-        </div>
-      </form>
     </div>
   );
 };

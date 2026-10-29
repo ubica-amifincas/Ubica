@@ -260,7 +260,7 @@ export default function DashboardProperties() {
                       >
                         <EyeIcon className="h-5 w-5" />
                       </motion.button>
-                      {(user?.role === 'admin' || user?.id === property.owner_id || user?.id === property.realtor_id) && (
+                      {(user?.role === 'admin' || user?.id === property.owner_id) && (
                         <>
                           <motion.button
                             onClick={() => handleEditProperty(property)}

@@ -12,7 +12,6 @@ Las expectativas salen del código:
 Los errores conocidos (y los nuevos encontrados) están marcados con
 xfail(strict=True): cuando se arreglen, el test pasará y pytest avisará para quitar la marca.
 """
-import io
 import json
 import os
 from datetime import datetime, timedelta
@@ -35,7 +34,7 @@ PASSWORD = "secret123"
 _HASH = bcrypt.hashpw(PASSWORD.encode(), bcrypt.gensalt(4)).decode()
 PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 32
 JPG = b"\xff\xd8\xff\xe0" + b"\x00" * 32
-PUBLIC_STATUSES = {"for-sale", "for-rent", "reserved"}  # routers/properties.py
+PUBLIC_STATUSES = {"for-sale", "for-rent", "reserved", "available"}  # services/properties.py
 
 
 def xfail_known(reason):
@@ -998,7 +997,7 @@ def test_admin_lifecycle(client, db):
         created[role] = u.id
         tok = login(client, f"{role}-new@example.com", "pw123456")
         assert tok.status_code == 200 and tok.json()["user"]["role"] == role
-    assert client.post("/api/admin/users", json={"email": "user-new@example.com", "password": "x"}, headers=h).status_code == 400
+    assert client.post("/api/admin/users", json={"email": "user-new@example.com", "password": "pw123456"}, headers=h).status_code == 400
 
     # Cambiar rol: el token existente adopta el nuevo rol (el rol se lee de la BD)
     uh = bearer(login(client, "user-new@example.com", "pw123456").json()["access_token"])
@@ -1032,12 +1031,12 @@ def test_admin_lifecycle(client, db):
     assert login(client, "investor-new@example.com", "pw123456").status_code == 401
     assert client.delete(f"/api/admin/users/{admin.id}", headers=h).status_code == 400  # a sí mismo no
 
-    # Propiedades: crear (estado por defecto 'available'), editar, borrar
+    # Propiedades: crear (estado por defecto 'for-sale', publicada), editar, borrar
     r = client.post("/api/admin/properties", json={"title": "Ático", "price": 300000, "type": "atico", "location": "Murcia", "bedrooms": 2, "features": ["terraza"]}, headers=h)
     assert r.status_code == 200
     pid = r.json()["id"]
     p = fetch(models.Property, pid)
-    assert (p.title, p.status, p.owner_id, p.city, p.features) == ("Ático", "available", admin.id, "Murcia", ["terraza"])
+    assert (p.title, p.status, p.owner_id, p.city, p.features) == ("Ático", "for-sale", admin.id, "Murcia", ["terraza"])
     r = client.put(f"/api/admin/properties/{pid}", json={"price": 280000, "status": "for-sale"}, headers=h)
     assert r.status_code == 200
     p = fetch(models.Property, pid)
@@ -1170,7 +1169,6 @@ def test_ai_conversations_keep_only_last_five(client, db):
 # 4. ERRORES CONOCIDOS (xfail estricto)
 # ==========================================================================
 
-@xfail_known("borrar una propiedad con favoritos -> 500 (Favorite.property_id NOT NULL/FK, sin cascada)")
 @pytest.mark.parametrize("endpoint", ["user", "admin"])
 def test_known_delete_property_with_favorites(endpoint, client, db):
     owner = new_user(db, "owner@example.com", role="admin")
@@ -1181,13 +1179,11 @@ def test_known_delete_property_with_favorites(endpoint, client, db):
     assert r.status_code == 200 and fetch(models.Property, prop.id) is None
 
 
-@xfail_known("favorito sobre una propiedad inexistente -> 500 (FK) en vez de 404")
 def test_known_favorite_nonexistent_property(client, db):
     r = client.post("/api/user/favorites/999", headers=auth(new_user(db, "u@example.com")))
     assert r.status_code == 404
 
 
-@xfail_known("GET /api/properties/{id} devuelve propiedades no públicas")
 @pytest.mark.parametrize("status", ["draft", "sold", "pending"])
 def test_known_detail_hides_non_public(status, client, db):
     prop = new_prop(db, status=status)
@@ -1201,7 +1197,6 @@ def test_known_public_listing_hides_private_fields(client, db):
     assert not {"purchase_price", "monthly_income", "total_cost", "monthly_cost", "owner_id"} & set(p)
 
 
-@xfail_known("el admin puede degradarse o desactivarse siendo el último admin")
 @pytest.mark.parametrize("payload", [{"role": "user"}, {"is_active": False}])
 def test_known_last_admin_protected(payload, client, db):
     admin = new_user(db, "admin@example.com", role="admin")
@@ -1211,7 +1206,6 @@ def test_known_last_admin_protected(payload, client, db):
     assert (a.role, a.is_active) == ("admin", True)
 
 
-@xfail_known("el admin puede asignar cadenas de rol arbitrarias")
 @pytest.mark.parametrize("method", ["POST", "PUT"])
 def test_known_arbitrary_role_rejected(method, client, db):
     admin = new_user(db, "admin@example.com", role="admin")
@@ -1224,14 +1218,12 @@ def test_known_arbitrary_role_rejected(method, client, db):
     assert not [u for u in rows(models.User) if u.role == "superuser"]
 
 
-@xfail_known("la subida no limita el tamaño")
 def test_known_upload_size_limit(client, db):
     big = b"\x89PNG" + b"\x00" * (15 * 1024 * 1024)
     r = client.post("/api/upload-images", files={"files": ("big.png", big, "image/png")}, headers=auth(new_user(db, "u@example.com")))
     assert r.status_code == 413
 
 
-@xfail_known("la subida devuelve URLs http://localhost:8000 fijas")
 def test_known_upload_url_not_localhost(client, db):
     r = client.post("/api/upload-images", files={"files": ("a.png", PNG, "image/png")}, headers=auth(new_user(db, "u@example.com")))
     assert r.status_code == 200 and not r.json()["urls"][0].startswith("http://localhost:8000")
@@ -1280,11 +1272,11 @@ def _user_with(kind, client, db):
 
 
 @pytest.mark.parametrize("kind", [
-    pytest.param("favorite", marks=xfail_known("borrar usuario con favoritos -> 500")),
-    pytest.param("saved_search", marks=xfail_new("admin.py:101 borrar usuario con búsquedas guardadas -> 500 (FK savedsearch.user_id, sin cascada)")),
-    pytest.param("game_score", marks=xfail_new("admin.py:101 borrar usuario con puntuaciones -> 500 (FK gamescore.user_id)")),
-    pytest.param("ai_conversation", marks=xfail_new("admin.py:101 borrar usuario con conversaciones IA -> 500 (FK aiconversation.user_id)")),
-    pytest.param("sent_message", marks=xfail_new("admin.py:101 borrar usuario que envió mensajes -> 500 (SQLAlchemy pone message.user_id=NULL, columna NOT NULL)")),
+    "favorite",
+    "saved_search",
+    "game_score",
+    "ai_conversation",
+    "sent_message",
     "received_message",
     "property",
 ])
@@ -1302,8 +1294,8 @@ def test_delete_user_with_dependents(kind, client, db):
 
 @pytest.mark.parametrize("endpoint", ["user", "admin"])
 @pytest.mark.parametrize("dependent", [
-    pytest.param("message", marks=xfail_new("user.py:53 / admin.py:179 borrar propiedad con mensajes -> 500 (FK message.property_id, sin cascada ni relación)")),
-    pytest.param("investment", marks=xfail_new("user.py:53 / admin.py:179 borrar propiedad con inversiones -> 500 (FK investment.property_id)")),
+    "message",
+    "investment",
 ])
 def test_delete_property_with_dependents(dependent, endpoint, client, db):
     owner = new_user(db, "owner@example.com", role="admin")
@@ -1318,7 +1310,6 @@ def test_delete_property_with_dependents(dependent, endpoint, client, db):
     assert fetch(models.Property, prop.id) is None
 
 
-@xfail_new("admin.py:44 crear usuario sin contraseña le asigna 'password123' (credencial por defecto conocida)")
 def test_new_admin_create_user_requires_password(client, db):
     admin = new_user(db, "admin@example.com", role="admin")
     r = client.post("/api/admin/users", json={"email": "sinclave@example.com"}, headers=auth(admin))
@@ -1326,20 +1317,17 @@ def test_new_admin_create_user_requires_password(client, db):
     assert login(client, "sinclave@example.com", "password123").status_code == 401
 
 
-@xfail_new("admin.py:47 POST /api/admin/users sin email -> 500 (IntegrityError NOT NULL user.email) en vez de 422")
 def test_new_admin_create_user_without_email(client, db):
     r = client.post("/api/admin/users", json={"password": "pw"}, headers=auth(new_user(db, "admin@example.com", role="admin")))
     assert r.status_code in (400, 422)
 
 
-@xfail_new("admin.py:47 POST /api/admin/users con email inválido guarda el usuario y responde 500 (ResponseValidationError de schemas.User)")
 def test_new_admin_create_user_invalid_email(client, db):
     r = client.post("/api/admin/users", json={"email": "no-es-email", "password": "pw"}, headers=auth(new_user(db, "admin@example.com", role="admin")))
     assert r.status_code in (400, 422)
     assert rows(models.User, email="no-es-email") == []
 
 
-@xfail_new("admin.py:80 PUT /api/admin/users/{id} con is_active no booleano -> 500 en vez de 422")
 def test_new_admin_update_user_bad_is_active(client, db):
     admin = new_user(db, "admin@example.com", role="admin")
     target = new_user(db, "t@example.com")
@@ -1348,23 +1336,19 @@ def test_new_admin_update_user_bad_is_active(client, db):
 
 
 @pytest.mark.parametrize("payload", [
-    pytest.param({"title": "x", "price": "abc", "type": "piso"}, id="price-no-numerico",
-                 marks=xfail_new("services/properties.py:13 price no numérico -> 500 (ValueError en el INSERT) en vez de 422")),
-    pytest.param({"title": "x", "price": 1, "type": "piso", "coordinates": None}, id="coordinates-null",
-                 marks=xfail_new("services/properties.py:19 coordinates=null -> 500 (AttributeError None.get) en vez de 422")),
+    pytest.param({"title": "x", "price": "abc", "type": "piso"}, id="price-no-numerico"),
+    pytest.param({"title": "x", "price": 1, "type": "piso", "coordinates": None}, id="coordinates-null"),
 ])
 def test_new_user_property_payload_validation(payload, client, db):
     r = client.post("/api/user/properties", json=payload, headers=auth(new_user(db, "u@example.com")))
     assert r.status_code in (400, 422)
 
 
-@xfail_new("user.py:91 POST /api/user/searches con name=null -> 500 (NOT NULL savedsearch.name)")
 def test_new_saved_search_null_name(client, db):
     r = client.post("/api/user/searches", json={"name": None, "filters": {}}, headers=auth(new_user(db, "u@example.com")))
     assert r.status_code in (200, 400, 422)
 
 
-@xfail_new("admin.py:134/150 CSV con una celda price vacía -> NaN -> 500 en el commit y no se importa ninguna fila")
 def test_new_import_csv_empty_price(client, db):
     h = auth(new_user(db, "admin@example.com", role="admin"))
     csv = b"title,price,location\nBuena,100000,Lorca\nSin precio,,Lorca\n"
@@ -1373,7 +1357,6 @@ def test_new_import_csv_empty_price(client, db):
     assert [p.title for p in rows(models.Property)] == ["Buena"]
 
 
-@xfail_new("admin.py:133,135,140 CSV con title/type/location vacíos guarda el texto literal 'nan'")
 def test_new_import_csv_empty_text_cells(client, db):
     h = auth(new_user(db, "admin@example.com", role="admin"))
     csv = b"title,price,type,location\n,5,,\n"
@@ -1382,8 +1365,6 @@ def test_new_import_csv_empty_text_cells(client, db):
     assert "nan" not in (p.title, p.type, p.city)
 
 
-@xfail_new("admin.py:155 el admin crea con estado por defecto 'available', que GET /api/properties (properties.py:16) no muestra; "
-           "además el buscador de la IA (services/properties.py:79, services/ai/tools.py:73) sí trata 'available' como público y no 'reserved'")
 def test_new_public_status_sets_consistent(client, db):
     h = auth(new_user(db, "admin@example.com", role="admin"))
     pid = client.post("/api/admin/properties", json={"title": "Del admin", "price": 1, "type": "piso"}, headers=h).json()["id"]
@@ -1395,7 +1376,6 @@ def test_new_public_status_sets_consistent(client, db):
     assert listing == ai_visible
 
 
-@xfail_new("user.py:68 se puede marcar como favorito un borrador ajeno y GET /api/user/favorites devuelve todos sus datos")
 def test_new_favorites_do_not_leak_non_public(client, db):
     owner = new_user(db, "owner@example.com")
     draft = new_prop(db, owner_id=owner.id, status="draft", title="Borrador privado", purchase_price=1)
@@ -1405,13 +1385,11 @@ def test_new_favorites_do_not_leak_non_public(client, db):
     assert client.get("/api/user/favorites", headers=h).json() == []
 
 
-@xfail_new("uploads.py:23 solo se comprueba la extensión: contenido que no es imagen con nombre .png se acepta")
 def test_new_upload_checks_content(client, db):
     r = client.post("/api/upload-images", files={"files": ("a.png", b"MZ\x90\x00 not an image", "image/png")}, headers=auth(new_user(db, "u@example.com")))
     assert r.status_code == 400
 
 
-@xfail_new("no hay endpoint que asigne realtor_id: services/properties.py ignora 'realtor_id' en create/update, el panel realtor solo se llena editando la BD")
 def test_new_admin_can_assign_realtor(client, db):
     h = auth(new_user(db, "admin@example.com", role="admin"))
     realtor = new_user(db, "r@example.com", role="realtor")

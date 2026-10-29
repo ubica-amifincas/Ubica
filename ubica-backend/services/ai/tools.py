@@ -7,7 +7,7 @@ from sqlmodel import Session, or_, select
 
 import models
 from database import engine
-from services.properties import get_allowed_properties_statement
+from services.properties import PUBLIC_STATUSES, get_allowed_properties_statement
 
 # El modelo suele pedir el estado en español; en la base de datos se guarda en inglés
 ESTADO_ALIASES = {"venta": "for-sale", "vend": "for-sale", "compra": "for-sale", "alquil": "for-rent", "renta": "for-rent", "reserv": "reserved", "disponible": "available"}
@@ -70,8 +70,7 @@ async def obtener_detalles(user_id: Optional[int], user_role: str, propiedad_id:
     with Session(engine) as session:
         p = session.get(models.Property, propiedad_id)
         if not p: return json.dumps({"error": f"No se encontró la propiedad con ID {propiedad_id}"})
-        public_statuses = ["available", "for-sale", "for-rent"]
-        if user_role == "admin" or p.status in public_statuses or (user_id is not None and (p.owner_id == user_id or p.realtor_id == user_id)):
+        if user_role == "admin" or p.status in PUBLIC_STATUSES or (user_id is not None and (p.owner_id == user_id or p.realtor_id == user_id)):
             return json.dumps(p.model_dump(), default=str, ensure_ascii=False)
     return json.dumps({"error": "No tienes permisos."})
 

@@ -1,8 +1,8 @@
 """Modelos Pydantic de entrada y salida de la API (los de base de datos están en models.py)."""
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, StrictBool, field_validator
 
 class UserBase(BaseModel):
     email: EmailStr
@@ -20,6 +20,27 @@ class User(UserBase):
     id: int
     created_at: datetime
     updated_at: datetime
+
+Role = Literal["user", "investor", "realtor", "admin"]
+MIN_PASSWORD_LENGTH = 8
+
+class AdminUserCreate(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=MIN_PASSWORD_LENGTH)
+    full_name: Optional[str] = None
+    role: Role = "user"
+    company: Optional[str] = None
+    phone: Optional[str] = None
+    is_active: StrictBool = True
+
+class AdminUserUpdate(BaseModel):
+    email: Optional[EmailStr] = None
+    password: Optional[str] = Field(default=None, min_length=MIN_PASSWORD_LENGTH)
+    full_name: Optional[str] = None
+    role: Optional[Role] = None
+    company: Optional[str] = None
+    phone: Optional[str] = None
+    is_active: Optional[StrictBool] = None
 
 class LoginRequest(BaseModel):
     email: EmailStr

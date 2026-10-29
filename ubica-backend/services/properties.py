@@ -1,13 +1,43 @@
-"""Utilidades de propiedades: conversión desde el formato del frontend y filtro de visibilidad por rol."""
+"""Utilidades de propiedades: conversión desde el formato del frontend, visibilidad por rol y borrado."""
 from datetime import datetime
 from typing import Optional
 
-from sqlmodel import or_, select
+from fastapi import HTTPException
+from sqlalchemy import delete, update
+from sqlmodel import Session, or_, select
 
 import models
 
+# Estados que se muestran en el portal público ("available" es el estado antiguo del panel de admin)
+PUBLIC_STATUSES = ("for-sale", "for-rent", "reserved", "available")
+
+FLOAT_FIELDS = ("price", "area", "purchasePrice", "totalCost", "monthlyCost", "monthlyIncome")
+INT_FIELDS = ("bedrooms", "bathrooms", "yearBuilt")
+
+
+def validate_property_payload(prop_data: dict) -> dict:
+    """Comprueba tipos y convierte números en texto; un dato mal formado es un 422, no un 500."""
+    data = dict(prop_data)
+    for field in FLOAT_FIELDS + INT_FIELDS:
+        value = data.get(field)
+        if value is None or value == "":
+            data.pop(field, None)
+            continue
+        try:
+            if isinstance(value, bool):
+                raise ValueError
+            data[field] = int(float(value)) if field in INT_FIELDS else float(value)
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=422, detail=f"El campo '{field}' debe ser un número")
+    if "coordinates" in data and not isinstance(data["coordinates"], dict):
+        raise HTTPException(status_code=422, detail="'coordinates' debe ser un objeto con lat y lng")
+    if "images" in data and not isinstance(data["images"], list):
+        raise HTTPException(status_code=422, detail="'images' debe ser una lista")
+    return data
+
 
 def property_from_payload(prop_data: dict, owner_id: int, default_status: str) -> models.Property:
+    prop_data = validate_property_payload(prop_data)
     return models.Property(
         title=prop_data.get('title', ''),
         price=prop_data.get('price', 0),
@@ -37,6 +67,7 @@ def property_from_payload(prop_data: dict, owner_id: int, default_status: str) -
 
 def apply_property_payload(p: models.Property, prop_data: dict) -> None:
     """Actualiza solo los campos presentes en prop_data."""
+    prop_data = validate_property_payload(prop_data)
     p.title = prop_data.get('title', p.title)
     p.price = prop_data.get('price', p.price)
     p.type = prop_data.get('type', p.type)
@@ -75,17 +106,38 @@ def get_allowed_properties_statement(user_id: Optional[int], user_role: Optional
     if user_role == "admin":
         return select(models.Property)
         
-    # Public statuses
-    public_statuses = ["available", "for-sale", "for-rent"]
-    
     if user_id is None:
-        return select(models.Property).where(models.Property.status.in_(public_statuses))
+        return select(models.Property).where(models.Property.status.in_(PUBLIC_STATUSES))
         
     # Authenticated user: sees public + their own
     return select(models.Property).where(
         or_(
-            models.Property.status.in_(public_statuses),
+            models.Property.status.in_(PUBLIC_STATUSES),
             models.Property.owner_id == user_id,
             models.Property.realtor_id == user_id
         )
     )
+
+
+def can_view_property(p: models.Property, user: Optional[models.User]) -> bool:
+    if p.status in PUBLIC_STATUSES:
+        return True
+    return user is not None and (user.role == "admin" or user.id in (p.owner_id, p.realtor_id))
+
+
+def assign_realtor(session: Session, p: models.Property, realtor_id: Optional[int]) -> None:
+    """Asigna (o quita, con None) la inmobiliaria que gestiona el anuncio. Solo lo usa el panel de admin."""
+    if realtor_id is not None:
+        realtor = session.get(models.User, realtor_id)
+        if realtor is None or realtor.role != "realtor":
+            raise HTTPException(status_code=422, detail="realtor_id debe ser un usuario con rol inmobiliaria")
+    p.realtor_id = realtor_id
+
+
+def delete_property(session: Session, p: models.Property) -> None:
+    """Borra el anuncio con sus favoritos e inversiones; los mensajes se conservan sin el enlace al anuncio."""
+    session.execute(delete(models.Favorite).where(models.Favorite.property_id == p.id))
+    session.execute(delete(models.Investment).where(models.Investment.property_id == p.id))
+    session.execute(update(models.Message).where(models.Message.property_id == p.id).values(property_id=None))
+    session.delete(p)
+    session.commit()

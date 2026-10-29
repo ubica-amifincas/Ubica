@@ -5,7 +5,7 @@ import { useDropzone } from 'react-dropzone';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useAuthenticatedFetch } from '../../contexts/AuthContext';
+import { useAuth, useAuthenticatedFetch } from '../../contexts/AuthContext';
 import type { Property } from '../../types';
 
 // Fix Leaflet default marker icon
@@ -136,8 +136,22 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
     const [existingImages, setExistingImages] = useState<string[]>([]);
     const [newFiles, setNewFiles] = useState<File[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    // Solo el admin asigna la inmobiliaria que gestiona el anuncio
+    const [realtorId, setRealtorId] = useState<number | ''>('');
+    const [realtors, setRealtors] = useState<{ id: number; label: string }[]>([]);
 
     const apiService = useAuthenticatedFetch();
+    const { user } = useAuth();
+    const isAdmin = user?.role === 'admin';
+
+    useEffect(() => {
+        if (!isOpen || !isAdmin) return;
+        apiService.getAllUsers()
+            .then(users => setRealtors(users
+                .filter(u => u.role === 'realtor')
+                .map(u => ({ id: u.id, label: u.company || u.full_name || u.email }))))
+            .catch(() => setRealtors([]));
+    }, [isOpen, isAdmin]);
 
     const onDrop = useCallback((acceptedFiles: File[]) => {
         setNewFiles(prev => [...prev, ...acceptedFiles]);
@@ -186,6 +200,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                 });
                 setFeaturesInput((initialData.features || []).join(', '));
                 setExistingImages(initialData.images || []);
+                setRealtorId((initialData as any).realtor_id ?? '');
                 setNewFiles([]);
             } else {
                 // Reset form
@@ -213,6 +228,7 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                     monthlyIncome: 0,
                 });
                 setFeaturesInput('');
+                setRealtorId('');
                 setExistingImages([]);
                 setNewFiles([]);
             }
@@ -262,7 +278,14 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                 images: finalImages.length > 0 ? finalImages : ['/images/casa-moderna.jpg'],
             };
 
-            if (initialData) {
+            if (isAdmin) {
+                const adminData = { ...propertyData, realtor_id: realtorId === '' ? null : realtorId };
+                if (initialData) {
+                    await apiService.updateProperty(initialData.id, adminData);
+                } else {
+                    await apiService.createProperty(adminData);
+                }
+            } else if (initialData) {
                 await apiService.updateUserProperty(initialData.id, propertyData);
             } else {
                 await apiService.createUserProperty(propertyData);
@@ -345,6 +368,22 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
                                 </select>
                             </div>
                         </div>
+
+                        {isAdmin && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Inmobiliaria asignada</label>
+                                <select
+                                    value={realtorId}
+                                    onChange={(e) => setRealtorId(e.target.value === '' ? '' : Number(e.target.value))}
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                >
+                                    <option value="">Sin asignar</option>
+                                    {realtors.map((r) => (
+                                        <option key={r.id} value={r.id}>{r.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
 
                         {/* Status and Location */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
