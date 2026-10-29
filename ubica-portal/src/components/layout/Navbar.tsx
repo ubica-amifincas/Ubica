@@ -167,7 +167,7 @@ export default function Navbar() {
           <div className="flex items-center">
             {isAmiSite ? (
               <Link to="/" className="flex items-center space-x-3">
-                <img src="/ami-fincas/favAMI.png" alt="" className="h-10 md:h-11 w-auto object-contain" />
+                <img src="/ami-fincas/logo-480.webp" alt="" width={48} height={46} className="h-10 md:h-11 w-auto object-contain" />
                 <span className="text-xl md:text-2xl font-bold text-[#23707f] dark:text-[#8fd0c3]">AMI Fincas</span>
               </Link>
             ) : (
@@ -221,7 +221,7 @@ export default function Navbar() {
 
             {isAmiSite ? (
               <a
-                href="/#contacto"
+                href="/#presupuesto"
                 className="flex items-center space-x-2 rounded-lg bg-[#23707f] h-10 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors duration-200 hover:bg-[#1b5a66] focus:outline-none focus:ring-2 focus:ring-[#23707f] focus:ring-offset-2"
               >
                 <PhoneIcon className="h-4 w-4" />
@@ -413,7 +413,7 @@ export default function Navbar() {
 
                     {isAmiSite ? (
                       <a
-                        href="/#contacto"
+                        href="/#presupuesto"
                         onClick={() => setIsMenuOpen(false)}
                         className="flex items-center justify-center space-x-2 w-full rounded-xl bg-[#23707f] py-4 text-base font-bold text-white shadow-lg transition-colors duration-200 hover:bg-[#1b5a66]"
                       >

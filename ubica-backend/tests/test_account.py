@@ -304,6 +304,13 @@ def test_contact_sends_escaped_email(client, sent, monkeypatch):
     assert "600 000 000" in mail["html"]
 
 
+def test_contact_from_ami_fincas_is_labelled(client, sent):
+    body = {"name": "Ana", "email": "ana@example.com", "subject": "Presupuesto: comunidad", "message": "Somos 24 viviendas en Murcia", "source": "ami"}
+    assert client.post("/api/contact", json=body).status_code == 200
+    assert sent[0]["subject"].startswith("[AMI Fincas] Presupuesto: comunidad")
+    assert client.post("/api/contact", json={**body, "source": "otra"}).status_code == 422
+
+
 def test_contact_validation(client, sent):
     ok = {"name": "Ana", "email": "ana@example.com", "message": "Mensaje suficientemente largo"}
     assert client.post("/api/contact", json=ok).status_code == 200  # teléfono y asunto opcionales

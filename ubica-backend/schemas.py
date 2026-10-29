@@ -74,6 +74,8 @@ class ContactRequest(BaseModel):
     phone: Optional[str] = Field(default=None, max_length=50)
     subject: Optional[str] = Field(default=None, max_length=200)
     message: str = Field(min_length=10, max_length=5000)
+    # Desde qué web llega: el buzón distingue las consultas de Ubica de los presupuestos de AMI Fincas
+    source: Literal["ubica", "ami"] = "ubica"
 
 class Token(BaseModel):
     access_token: str

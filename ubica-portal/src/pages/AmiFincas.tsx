@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform, useInView, animate } from 'framer-motion';
+import { useState, useEffect, useId } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   BuildingOfficeIcon,
   WrenchScrewdriverIcon,
@@ -12,16 +12,26 @@ import {
   MapPinIcon,
   ClockIcon,
   ShieldCheckIcon,
-  SparklesIcon
+  HomeModernIcon,
+  ChatBubbleLeftRightIcon,
+  ChevronDownIcon,
+  ArrowRightIcon,
 } from '@heroicons/react/24/outline';
+import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
+import { Link } from 'react-router-dom';
 import { useLanguage } from '../hooks/useLanguage';
 import ConsentMap from '../components/common/ConsentMap';
+import { apiService } from '../services/apiService';
 import { ubicaHref } from '../utils/site';
 
-const AMIGreen = '#A2D18D';
-const AMITeal = '#2D8A9D';
-
 const INTRO_KEY = 'ami-intro-seen';
+const FOUNDED = 2014;
+
+// Datos de contacto (los mismos que la ficha de Google Maps de cada sede)
+const MAIN_PHONE = '609 00 88 64';
+const WHATSAPP_NUMBER = '34609008864';
+const EMAIL = 'info@amifincas.es';
+const GOOGLE_PROFILE = 'https://maps.google.com/?cid=4566582778045489499';
 
 /** La animación de entrada solo la primera vez en la sesión y sin "reducir movimiento". */
 const shouldPlayIntro = () => {
@@ -33,694 +43,465 @@ const shouldPlayIntro = () => {
   }
 };
 
-const PageTransition = ({ t }: { t: any }) => (
+const tel = (phone: string) => `tel:+34${phone.replace(/\s+/g, '')}`;
+
+const PageTransition = ({ t }: { t: (key: string) => string }) => (
   <motion.div
     initial={{ opacity: 1 }}
     exit={{ opacity: 0 }}
-    transition={{ duration: 0.8, ease: "easeInOut" }}
-    className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-50 dark:bg-[#0f172a] overflow-hidden"
+    transition={{ duration: 0.6, ease: 'easeInOut' }}
+    className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-50 dark:bg-[#0f172a]"
   >
-    {/* Cinematic Background Blurs */}
-    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(16,185,129,0.05)_0%,transparent_100%)]" />
-    <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-emerald-500/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
-    <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-emerald-500/20 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2" />
-
-    <div className="relative z-10 w-full max-w-2xl px-6 flex flex-col items-center justify-center">
-      {/* Glassmorphic Container for Loading Content */}
-      <motion.div
-        initial={{ y: 20, opacity: 0, scale: 0.95 }}
-        animate={{ y: 0, opacity: 1, scale: 1 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-        className="relative bg-white/40 dark:bg-white/5 backdrop-blur-2xl border border-white/20 dark:border-white/10 shadow-2xl rounded-[3rem] p-8 md:p-16 text-center w-full"
-      >
+    <motion.div
+      initial={{ y: 16, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.6, ease: 'easeOut' }}
+      className="px-6 text-center"
+    >
+      <img src="/ami-fincas/logo-480.webp" alt="" className="mx-auto mb-8 h-28 w-auto md:h-40" />
+      <p className="text-sm font-black uppercase tracking-[0.4em] text-[#23707f] dark:text-[#8fd0c3]">AMI Fincas</p>
+      <p className="mt-3 font-display text-3xl font-black leading-tight text-slate-800 dark:text-white md:text-5xl">
+        {t('ami.transition.p1')}{' '}
+        <span className="bg-gradient-to-r from-[#7fbf6a] to-[#2D8A9D] bg-clip-text text-transparent">{t('ami.transition.p2')}</span>
+      </p>
+      <div className="relative mx-auto mt-10 h-1.5 w-64 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
         <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.8, type: "spring" }}
-          className="mb-8"
-        >
-          <img
-            src="/ami-fincas/favAMI.png"
-            alt="AMI Fincas Loading"
-            className="h-32 md:h-48 mx-auto object-contain drop-shadow-[0_20px_20px_rgba(16,185,129,0.3)] dark:brightness-110"
-          />
-        </motion.div>
-
-        <motion.div
-          initial={{ y: 10, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.6, duration: 0.8 }}
-          className="space-y-4"
-        >
-          <p className="text-sm md:text-base font-black tracking-[0.4em] uppercase text-emerald-600 dark:text-emerald-400">
-            AMI Fincas
-          </p>
-          <p className="font-display text-3xl md:text-5xl lg:text-6xl font-black text-slate-800 dark:text-white leading-tight">
-            {t('ami.transition.p1')} <br className="hidden sm:block" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#A2D18D] to-[#2D8A9D]">
-              {t('ami.transition.p2')}
-            </span>
-          </p>
-        </motion.div>
-
-        {/* Loading Progress Bar Container */}
-        <div className="mt-12 max-w-xs mx-auto w-full relative h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-          <motion.div
-            initial={{ width: "0%" }}
-            animate={{ width: "100%" }}
-            transition={{ delay: 0.8, duration: 1.5, ease: "easeInOut" }}
-            className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#A2D18D] to-[#2D8A9D] rounded-full"
-          />
-        </div>
-      </motion.div>
-    </div>
+          initial={{ width: '0%' }}
+          animate={{ width: '100%' }}
+          transition={{ delay: 0.4, duration: 1.6, ease: 'easeInOut' }}
+          className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[#A2D18D] to-[#2D8A9D]"
+        />
+      </div>
+    </motion.div>
   </motion.div>
 );
+
+function SectionHeading({ eyebrow, title, description, center = true }: { eyebrow?: string; title: string; description?: string; center?: boolean }) {
+  return (
+    <div className={center ? 'mx-auto mb-12 max-w-3xl text-center' : 'mb-10'}>
+      {eyebrow && <p className="mb-3 text-sm font-black uppercase tracking-[0.2em] text-[#23707f] dark:text-[#8fd0c3]">{eyebrow}</p>}
+      <h2 className="text-3xl font-black leading-tight text-slate-900 dark:text-white md:text-5xl">{title}</h2>
+      {description && <p className="mt-4 text-lg leading-relaxed text-slate-600 dark:text-slate-400">{description}</p>}
+    </div>
+  );
+}
+
+const fieldClass =
+  'block w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-[#2D8A9D] focus:outline-none focus:ring-2 focus:ring-[#2D8A9D]/40 dark:border-white/10 dark:bg-slate-900 dark:text-white';
+
+/** Formulario de presupuesto: llega a info@amifincas.es como "[AMI Fincas] Presupuesto: …". */
+function QuoteForm() {
+  const { t } = useLanguage();
+  const id = useId();
+  const [form, setForm] = useState({ name: '', phone: '', email: '', service: 'community', homes: '', town: '', message: '' });
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [error, setError] = useState('');
+
+  const services = ['community', 'rental', 'insurance', 'other'] as const;
+  const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+    setForm(prev => ({ ...prev, [key]: e.target.value }));
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name.trim() || form.phone.replace(/\D/g, '').length < 9 || !/^\S+@\S+\.\S+$/.test(form.email)) {
+      setError(t('ami.quote.required'));
+      return;
+    }
+    setError('');
+    setStatus('sending');
+    const serviceLabel = t(`ami.quote.service.${form.service}`);
+    const lines = [
+      `${t('ami.quote.service')}: ${serviceLabel}`,
+      form.homes && `${t('ami.quote.homes')}: ${form.homes}`,
+      form.town && `${t('ami.quote.town')}: ${form.town}`,
+      form.message && `\n${form.message}`,
+    ].filter(Boolean);
+    try {
+      await apiService.sendContact({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+        subject: `Presupuesto: ${serviceLabel}`,
+        message: lines.join('\n'),
+        source: 'ami',
+      });
+      setStatus('sent');
+    } catch (err) {
+      setStatus('error');
+      setError(err instanceof Error ? err.message : t('ami.quote.error'));
+    }
+  };
+
+  if (status === 'sent') {
+    return (
+      <div role="status" className="flex flex-col items-center justify-center rounded-3xl border border-[#2D8A9D]/30 bg-white p-10 text-center shadow-sm dark:bg-white/5">
+        <CheckCircleIcon className="h-14 w-14 text-[#2D8A9D]" aria-hidden="true" />
+        <p className="mt-4 text-lg font-semibold text-slate-900 dark:text-white">{t('ami.quote.success')}</p>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={submit} noValidate className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/5 md:p-8">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="sm:col-span-2">
+          <label htmlFor={`${id}-name`} className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">{t('ami.quote.name')} *</label>
+          <input id={`${id}-name`} value={form.name} onChange={set('name')} autoComplete="name" className={fieldClass} required />
+        </div>
+        <div>
+          <label htmlFor={`${id}-phone`} className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">{t('ami.quote.phone')} *</label>
+          <input id={`${id}-phone`} type="tel" inputMode="tel" value={form.phone} onChange={set('phone')} autoComplete="tel" className={fieldClass} required />
+        </div>
+        <div>
+          <label htmlFor={`${id}-email`} className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">{t('ami.quote.email')} *</label>
+          <input id={`${id}-email`} type="email" inputMode="email" value={form.email} onChange={set('email')} autoComplete="email" className={fieldClass} required />
+        </div>
+        <div className="sm:col-span-2">
+          <label htmlFor={`${id}-service`} className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">{t('ami.quote.service')}</label>
+          <select id={`${id}-service`} value={form.service} onChange={set('service')} className={fieldClass}>
+            {services.map(s => <option key={s} value={s}>{t(`ami.quote.service.${s}`)}</option>)}
+          </select>
+        </div>
+        <div>
+          <label htmlFor={`${id}-homes`} className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">{t('ami.quote.homes')}</label>
+          <input id={`${id}-homes`} type="number" inputMode="numeric" min="1" value={form.homes} onChange={set('homes')} className={fieldClass} />
+        </div>
+        <div>
+          <label htmlFor={`${id}-town`} className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">{t('ami.quote.town')}</label>
+          <input id={`${id}-town`} value={form.town} onChange={set('town')} autoComplete="address-level2" className={fieldClass} />
+        </div>
+        <div className="sm:col-span-2">
+          <label htmlFor={`${id}-message`} className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">{t('ami.quote.message')}</label>
+          <textarea id={`${id}-message`} value={form.message} onChange={set('message')} rows={3} maxLength={3000} className={fieldClass} />
+        </div>
+      </div>
+
+      <div className="rounded-xl bg-slate-50 p-4 text-xs leading-relaxed text-slate-600 dark:bg-white/5 dark:text-slate-400">
+        <p className="font-semibold text-slate-800 dark:text-slate-200">Protección de datos personales</p>
+        <p className="mt-1">
+          Utilizaremos sus datos para responder consultas y realizar análisis estadísticos. Para más información sobre el
+          tratamiento y sus derechos, consulte la{' '}
+          <Link to="/privacy" className="font-medium text-[#23707f] underline dark:text-[#8fd0c3]">política de privacidad</Link>.
+        </p>
+      </div>
+
+      {error && <p role="alert" className="text-sm font-medium text-red-600 dark:text-red-400">{error}</p>}
+
+      <button type="submit" disabled={status === 'sending'}
+        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#23707f] px-6 py-4 text-base font-bold text-white shadow-sm transition-colors hover:bg-[#1b5a66] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#23707f] focus-visible:ring-offset-2 disabled:opacity-60">
+        {status === 'sending' ? t('ami.quote.sending') : t('ami.quote.submit')}
+      </button>
+    </form>
+  );
+}
 
 export default function AmiFincas() {
   const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(shouldPlayIntro);
-  const [playedIntro] = useState(isLoading);
-  
-  // Parallax configuration hooks
-  const { scrollYProgress } = useScroll();
-  const yParallaxHeavy = useTransform(scrollYProgress, [0, 1], [0, -250]);
-  const yParallaxMedium = useTransform(scrollYProgress, [0, 1], [0, -150]);
-  const yParallaxLight = useTransform(scrollYProgress, [0, 1], [0, -80]);
+  const years = new Date().getFullYear() - FOUNDED;
+  const whatsappHref = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(t('ami.whatsapp.text'))}`;
 
-  // Framer-motion counter logic component
-  const Counter = ({ from, to, duration = 2 }: { from: number; to: number; duration?: number }) => {
-    const nodeRef = useRef<HTMLSpanElement>(null);
-    const inView = useInView(nodeRef, { once: true, margin: "-100px" });
-
-    useEffect(() => {
-      const node = nodeRef.current;
-      if (node && inView) {
-        const controls = animate(from, to, {
-          duration: duration,
-          ease: "easeOut",
-          onUpdate(value) {
-            node.textContent = Math.round(value).toString();
-          },
-        });
-        return () => controls.stop();
-      }
-    }, [from, to, duration, inView]);
-
-    return <span ref={nodeRef} />;
-  };
-
-  // La animación de entrada se ve una vez por sesión (y nunca con "reducir movimiento")
   useEffect(() => {
     if (!isLoading) return;
     try { sessionStorage.setItem(INTRO_KEY, '1'); } catch { /* sin almacenamiento: se vuelve a ver */ }
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2500);
+    const timer = setTimeout(() => setIsLoading(false), 2200);
     return () => clearTimeout(timer);
   }, [isLoading]);
 
+  // La barra fija de "Llamar / WhatsApp" en móvil no debe tapar el final de la página
+  useEffect(() => {
+    document.body.classList.add('has-bottom-cta');
+    return () => document.body.classList.remove('has-bottom-cta');
+  }, []);
+
   const services = [
-    {
-      icon: BuildingOfficeIcon,
-      title: t('ami.services.item1.title'),
-      description: t('ami.services.item1.desc')
-    },
-    {
-      icon: BuildingOfficeIcon,
-      title: t('ami.services.item2.title'),
-      description: t('ami.services.item2.desc')
-    },
-    {
-      icon: WrenchScrewdriverIcon,
-      title: t('ami.services.item3.title'),
-      description: t('ami.services.item3.desc')
-    },
-    {
-      icon: UserGroupIcon,
-      title: t('ami.services.item4.title'),
-      description: t('ami.services.item4.desc')
-    },
-    {
-      icon: DocumentChartBarIcon,
-      title: t('ami.services.item5.title'),
-      description: t('ami.services.item5.desc')
-    },
-    {
-      icon: ShieldCheckIcon,
-      title: t('ami.services.item6.title'),
-      description: t('ami.services.item6.desc'),
-      highlight: true
-    }
+    { icon: BuildingOfficeIcon, title: t('ami.services.item1.title'), description: t('ami.services.item1.desc') },
+    { icon: HomeModernIcon, title: t('ami.services.item2.title'), description: t('ami.services.item2.desc') },
+    { icon: WrenchScrewdriverIcon, title: t('ami.services.item3.title'), description: t('ami.services.item3.desc') },
+    { icon: UserGroupIcon, title: t('ami.services.item4.title'), description: t('ami.services.item4.desc') },
+    { icon: DocumentChartBarIcon, title: t('ami.services.item5.title'), description: t('ami.services.item5.desc') },
+    { icon: ShieldCheckIcon, title: t('ami.services.item6.title'), description: t('ami.services.item6.desc'), badge: t('ami.services.ownBroker') },
   ];
 
-  const benefits = [
-    t('ami.benefits.item1'),
-    t('ami.benefits.item2'),
-    t('ami.benefits.item3'),
-    t('ami.benefits.item4'),
-    t('ami.benefits.item5'),
-    t('ami.benefits.item6')
-  ];
+  const benefits = [1, 2, 3, 4, 5, 6].map(i => t(`ami.benefits.item${i}`));
+  const steps = [1, 2, 3].map(i => ({ title: t(`ami.switch.step${i}.title`), description: t(`ami.switch.step${i}.desc`) }));
+  const faqs = [1, 2, 3, 4, 5, 6].map(i => ({ q: t(`ami.faq.q${i}`), a: t(`ami.faq.a${i}`) }));
 
   const offices = [
     {
       city: t('ami.offices.murcia'),
       address: 'Calle Ángeles, 41, 30007 Murcia',
-      phones: ['+34 676 62 69 33', '+34 609 00 88 64'],
+      phones: ['676 62 69 33', '609 00 88 64'],
       schedule: t('ami.offices.schedule.murcia'),
-      mapUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3143.9!2d-1.08!3d37.99!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd638!2sCalle%20Angeles%2C%2041%2C%2030007%20Murcia!5e0!3m2!1ses!2ses!4v1620000000000!5m2!1ses!2ses'
+      directions: 'https://maps.google.com/?cid=4566582778045489499',
+      mapUrl: 'https://www.google.com/maps?q=AMI+Fincas,+Calle+%C3%81ngeles+41,+30007+Murcia&output=embed',
     },
     {
       city: t('ami.offices.sanpedro'),
-      address: 'C. Panamá, 2A, 30740 San Pedro del Pinatar, Murcia',
-      phones: ['+34 968 17 91 80', '+34 609 00 88 64'],
+      address: 'Calle Panamá, 2A, 30740 San Pedro del Pinatar (Murcia)',
+      phones: ['968 17 91 80', '609 00 88 64'],
       schedule: t('ami.offices.schedule.sanpedro'),
-      mapUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3143.9!2d-0.78!3d37.83!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd63!2sC.%20Panam%C3%A1%2C%202A%2C%2030740%20San%20Pedro%20del%20Pinatar!5e0!3m2!1ses!2ses!4v1620000000000!5m2!1ses!2ses'
-    }
+      directions: 'https://maps.google.com/?cid=16413795408017082990',
+      photo: '/ami-fincas/sede-san-pedro.webp',
+    },
   ];
 
+  const facts = [
+    { value: t('ami.facts.since'), label: t('ami.facts.sinceSub', { years }) },
+    { value: t('ami.facts.offices'), label: t('ami.facts.officesSub') },
+    { value: t('ami.facts.rating'), label: t('ami.facts.ratingSub'), href: GOOGLE_PROFILE },
+    { value: t('ami.facts.area'), label: t('ami.facts.areaSub') },
+  ];
 
   return (
     <>
-      <div className="hidden">
-        {/* SEO Injector for AI Search Engines & Crawlers */}
-        {/* Un solo h1 por página: el del bloque principal; esto queda como apoyo para lectores de pantalla */}
-        <p className="sr-only">AMI Fincas - Administración de fincas y correduría de seguros en Murcia</p>
-        <p className="sr-only">Expertos en administración de comunidades, correduría de seguros y gestión integral inmobiliaria en la Región de Murcia. Transparencia, tecnología y profesionalidad garantizada.</p>
-        <div itemScope itemType="https://schema.org/LocalBusiness">
-          <span itemProp="name">AMI Fincas</span>
-          <span itemProp="description">Administración de fincas y correduría de seguros experta en Murcia. Gestionamos tu comunidad y protegemos tu inversión inmobiliaria mediante seguros especializados.</span>
-          <div itemProp="address" itemScope itemType="https://schema.org/PostalAddress">
-            <span itemProp="streetAddress">Calle Ángeles, 41</span>
-            <span itemProp="addressLocality">Murcia</span>
-            <span itemProp="postalCode">30007</span>
-            <span itemProp="addressCountry">ES</span>
-          </div>
-          <span itemProp="telephone">+34 968 17 91 80</span>
-        </div>
-      </div>
-
       <AnimatePresence>
         {isLoading && <PageTransition t={t} />}
       </AnimatePresence>
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: playedIntro ? 1 : 0.3, delay: playedIntro ? 2.2 : 0 }}
-        className="min-h-screen bg-slate-50 dark:bg-[#0f172a] text-slate-900 dark:text-white transition-colors duration-300 overflow-hidden font-sans selection:bg-emerald-500/30"
-      >
-        {/* Hero Section */}
-        <div className="relative pt-12 pb-24 md:pt-16 md:pb-40">
-          {/* Cinematic gradient background */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(16,185,129,0.05)_0%,transparent_100%)]" />
-          <div className="absolute top-0 right-0 w-[600px] md:w-[1000px] h-[600px] md:h-[1000px] bg-emerald-500/10 rounded-full blur-[80px] md:blur-[120px] -translate-y-1/2 translate-x-1/2" />
-
-          <div className="page-container relative z-10">
-            <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
-              {/* Left Column: Content */}
+      <div className="bg-slate-50 font-sans text-slate-900 dark:bg-[#0f172a] dark:text-white">
+        {/* Portada */}
+        <section className="relative overflow-hidden pb-16 pt-24 md:pb-24 md:pt-28">
+          <div className="pointer-events-none absolute -right-40 -top-40 h-[480px] w-[480px] rounded-full bg-[#A2D18D]/20 blur-3xl" aria-hidden="true" />
+          <div className="page-container relative">
+            <div className="flex flex-col items-center gap-12 lg:flex-row lg:gap-16">
               <div className="flex-1 text-center lg:text-left">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.8 }}
-                  className="mb-6 inline-block"
-                >
-                  <img
-                    src="/ami-fincas/favAMI.png"
-                    alt="AMI Fincas Logo"
-                    className="h-32 md:h-48 w-auto object-contain font-black brightness-110 drop-shadow-xl"
-                  />
-                </motion.div>
+                <img src="/ami-fincas/logo-480.webp" alt="AMI Fincas" width={480} height={457} className="mx-auto mb-6 h-20 w-auto md:h-24 lg:mx-0" />
 
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2, duration: 0.8 }}
-                >
-                  <div className="inline-flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/20 px-4 py-1.5 rounded-full text-emerald-400 font-bold text-xs uppercase tracking-widest mb-8">
-                    <StarIcon className="w-4 h-4 text-yellow-500 fill-current" />
-                    <span>{t('ami.hero.certified')}</span>
-                  </div>
+                <a href={GOOGLE_PROFILE} target="_blank" rel="noopener noreferrer"
+                  className="mb-6 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-sm font-semibold text-slate-700 shadow-sm hover:border-[#2D8A9D] dark:border-white/10 dark:bg-white/5 dark:text-slate-200">
+                  <span className="flex text-amber-500" aria-hidden="true">
+                    {[0, 1, 2, 3, 4].map(i => <StarSolidIcon key={i} className="h-4 w-4" />)}
+                  </span>
+                  {t('ami.hero.rating')}
+                </a>
 
-                  <h1 className="text-4xl md:text-6xl lg:text-7xl font-black leading-tight md:leading-[1.1] mb-8">
-                    {t('ami.hero.title1')} <br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#A2D18D] to-[#2D8A9D]">{t('ami.hero.title2')}</span> <br />
-                    {t('ami.hero.title3')}
-                  </h1>
+                <h1 className="font-display text-4xl font-black leading-[1.1] md:text-6xl">
+                  <span className="bg-gradient-to-r from-[#5fa64a] to-[#2D8A9D] bg-clip-text text-transparent">{t('ami.hero.title1')}</span>
+                  <br />
+                  {t('ami.hero.title2')}
+                </h1>
 
-                  <p className="text-xl text-slate-600 dark:text-slate-400 mb-10 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-medium">
-                    {t('ami.hero.description')}
-                  </p>
+                <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-slate-600 dark:text-slate-400 md:text-xl lg:mx-0">
+                  {t('ami.hero.description')}
+                </p>
 
-                  <div className="flex flex-col sm:flex-row gap-6 justify-center lg:justify-start">
-                    <motion.a
-                      href="#contacto"
-                      whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(16,185,129,0.3)' }}
-                      whileTap={{ scale: 0.98 }}
-                      className="px-10 py-5 rounded-2xl bg-gradient-to-r from-[#A2D18D] to-[#2D8A9D] text-white font-black text-lg shadow-2xl transition-all duration-300"
-                    >
-                      {t('ami.hero.cta.contact')}
-                    </motion.a>
-                    <motion.a
-                      href="#servicios"
-                      whileHover={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
-                      className="px-10 py-5 rounded-2xl bg-slate-200/50 dark:bg-white/5 border border-slate-300 dark:border-white/10 backdrop-blur-md text-slate-900 dark:text-white font-black text-lg hover:shadow-xl transition-all duration-300"
-                    >
-                      {t('ami.hero.cta.services')}
-                    </motion.a>
-                  </div>
-                </motion.div>
-              </div>
-
-              {/* Right Column: The "Warm" 3D Image */}
-              <motion.div
-                initial={{ opacity: 0, rotate: 5, scale: 0.8 }}
-                animate={{ opacity: 1, rotate: 0, scale: 1 }}
-                transition={{ delay: 0.4, duration: 1, type: 'spring' }}
-                style={{ y: yParallaxLight }}
-                className="flex-1 relative group"
-              >
-                <div className="relative z-10 w-full max-w-[550px] mx-auto">
-                  <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-[80px] group-hover:bg-emerald-500/30 transition-all duration-700" />
-
-                  <img
-                    src="/ami-fincas/3d_warm.jpg"
-                    alt="3D Floating Real Estate Island"
-                    className="w-full h-auto drop-shadow-[0_45px_45px_rgba(0,0,0,0.6)] group-hover:rotate-2 group-hover:scale-105 group-hover:drop-shadow-[0_55px_55px_rgba(16,185,129,0.3)] transition-all duration-700 pointer-events-auto rounded-[3rem]"
-                  />
-
-                  <motion.div
-                    animate={{ y: [0, -10, 0] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                    className="absolute -top-10 -right-4 bg-[#1e293b]/80 backdrop-blur-xl p-4 rounded-2xl border border-white/10 shadow-2xl"
-                  >
-                    <p className="text-xs font-bold text-emerald-200 uppercase tracking-wider">{t('ami.hero.id')}</p>
-                  </motion.div>
+                <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+                  <a href="#presupuesto" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#23707f] px-7 py-4 text-base font-bold text-white shadow-sm transition-colors hover:bg-[#1b5a66]">
+                    {t('ami.hero.cta.quote')}
+                    <ArrowRightIcon className="h-5 w-5" aria-hidden="true" />
+                  </a>
+                  <a href={tel(MAIN_PHONE)} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-7 py-4 text-base font-bold text-slate-900 transition-colors hover:border-[#2D8A9D] dark:border-white/15 dark:bg-white/5 dark:text-white">
+                    <PhoneIcon className="h-5 w-5 text-[#23707f] dark:text-[#8fd0c3]" aria-hidden="true" />
+                    {t('ami.hero.cta.call')} {MAIN_PHONE}
+                  </a>
                 </div>
-              </motion.div>
-            </div>
-          </div>
-        </div>
-
-        {/* Stats/Ticker Section */}
-        <div className="py-12 bg-slate-100 dark:bg-white/5 border-y border-slate-200 dark:border-white/5 backdrop-blur-sm relative z-20 shadow-[-10px_-20px_40px_rgba(0,0,0,0.1)]">
-          <div className="page-container overflow-hidden">
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-12 md:gap-24 opacity-80 transition-all">
-              <div className="flex items-center space-x-3 group">
-                <span className="text-4xl font-black text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
-                  +<Counter from={0} to={10} duration={2.5} />
-                </span>
-                <span className="text-xs font-bold uppercase tracking-widest leading-tight text-slate-500 dark:text-slate-400">{t('ami.stats.years').split(' ').map((word: string, i: number) => <span key={i}>{word}{i === 1 ? <br /> : ' '}</span>)}</span>
               </div>
-              <div className="flex items-center space-x-3 group">
-                <span className="text-4xl font-black text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
-                  <Counter from={0} to={2} duration={1.5} />
-                </span>
-                <span className="text-xs font-bold uppercase tracking-widest leading-tight text-slate-500 dark:text-slate-400">{t('ami.stats.offices').split(' ').map((word: string, i: number) => <span key={i}>{word}{i === 0 ? <br /> : ' '}</span>)}</span>
+
+              <div className="w-full max-w-md flex-1 lg:max-w-none">
+                <img src="/ami-fincas/3d_warm.webp" alt="" width={1024} height={941}
+                  className="mx-auto w-full max-w-[520px] rounded-[2.5rem] shadow-2xl shadow-slate-900/20" />
               </div>
-              <div className="flex items-center space-x-3 group">
-                <span className="text-4xl font-black text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
-                  <Counter from={0} to={100} duration={3} />%
-                </span>
-                <span className="text-xs font-bold uppercase tracking-widest leading-tight text-slate-500 dark:text-slate-400">{t('ami.stats.digital').split(' ').map((word: string, i: number) => <span key={i}>{word}{i === 0 ? <br /> : ' '}</span>)}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Services Section with Gears Image */}
-        <section id="servicios" className="py-32 relative">
-          <div className="absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-[100px]" />
-
-          <div className="page-container">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-center mb-16 relative z-20"
-            >
-              <h2 className="text-emerald-500 font-black tracking-[0.2em] uppercase text-sm mb-4">{t('ami.services.badge')}</h2>
-              <h3 className="text-4xl md:text-5xl font-black mb-6">{t('ami.services.title')}</h3>
-              <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed max-w-3xl mx-auto">
-                {t('ami.services.description')}
-              </p>
-            </motion.div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 relative z-20">
-              
-              {/* Image Bento Item */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                className="col-span-1 md:col-span-2 md:row-span-2 relative group rounded-[2rem] overflow-hidden shadow-sm border border-slate-200 dark:border-white/5 bg-slate-100 dark:bg-slate-800/50 min-h-[350px] md:min-h-0"
-              >
-                <div className="absolute inset-0 bg-emerald-500/10 blur-3xl group-hover:bg-emerald-500/20 transition-all duration-700 z-0" />
-                <img
-                  src="/ami-fincas/3d_gears.jpg"
-                  alt="3D Property Mechanics"
-                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 relative z-10"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-20 pointer-events-none" />
-                <div className="absolute bottom-8 left-8 right-8 z-30 pointer-events-none">
-                  <span className="text-white/80 font-bold uppercase tracking-widest text-xs mb-2 block">El Motor de tu Inversión</span>
-                  <span className="text-white font-black text-2xl md:text-3xl drop-shadow-lg leading-tight">La maquinaria de gestión perfecta.</span>
-                </div>
-              </motion.div>
-
-              {/* Service Cards */}
-              {services.map((service, index) => {
-                let bentoClass = "";
-                if (index === 0) bentoClass = "col-span-1";
-                else if (index === 1) bentoClass = "col-span-1 md:row-span-2";
-                else if (index === 2) bentoClass = "col-span-1";
-                else if (index === 3) bentoClass = "col-span-1";
-                else if (index === 4) bentoClass = "col-span-1";
-                else if (index === 5) bentoClass = "col-span-1 md:col-span-2";
-
-                return (
-                  <motion.div
-                    key={service.title}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.1 }}
-                    className={`
-                      p-6 md:p-8 flex flex-col rounded-[2rem] border shadow-sm transition-all duration-300 group overflow-hidden relative
-                      ${bentoClass}
-                      ${service.highlight 
-                        ? 'bg-gradient-to-br from-white to-emerald-50 dark:from-slate-800 dark:to-slate-900 border-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.15)] hover:shadow-[0_0_40px_rgba(16,185,129,0.3)] hover:-translate-y-1' 
-                        : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/10 hover:border-emerald-500/50 dark:shadow-none hover:-translate-y-1'
-                      }
-                    `}
-                  >
-                    {/* Glow effect that tracks the mouse - approximated with CSS center radial gradient */}
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.1)_0%,transparent_70%)] pointer-events-none" />
-
-                    <div className="flex items-center justify-between mb-4 mt-auto md:max-w-[70%] lg:max-w-full">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-lg shrink-0 ${service.highlight ? 'bg-gradient-to-br from-emerald-500 to-emerald-600' : 'bg-gradient-to-br from-[#A2D18D] to-[#2D8A9D]'}`}>
-                        <service.icon className="w-6 h-6" />
-                      </div>
-                      {service.highlight && (
-                        <div className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xs font-black uppercase rounded-full shadow-inner flex items-center space-x-1 animate-pulse shrink-0">
-                          <SparklesIcon className="w-3 h-3" />
-                          <span>Nuevo</span>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div>
-                      <h4 className="text-xl font-bold mb-3 mt-4">{service.title}</h4>
-                      <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base leading-relaxed">{service.description}</p>
-                    </div>
-                  </motion.div>
-                );
-              })}
             </div>
           </div>
         </section>
 
-        {/* About Section with Circular/Arrow Image */}
-        <section className="py-24 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-emerald-500/5 to-transparent" />
+        {/* Datos de la empresa: solo los que se pueden comprobar */}
+        <section aria-label="AMI Fincas en cifras" className="border-y border-slate-200 bg-white dark:border-white/5 dark:bg-white/5">
+          <div className="page-container">
+            <dl className="grid grid-cols-2 divide-slate-200 py-8 dark:divide-white/10 md:grid-cols-4 md:divide-x">
+              {facts.map(fact => (
+                <div key={fact.value} className="px-4 py-3 text-center">
+                  <dt className="sr-only">{fact.label}</dt>
+                  <dd className="font-display text-xl font-black text-[#23707f] dark:text-[#8fd0c3] md:text-2xl">
+                    {fact.href ? (
+                      <a href={fact.href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:underline">
+                        <StarIcon className="h-5 w-5" aria-hidden="true" /> {fact.value}
+                      </a>
+                    ) : fact.value}
+                  </dd>
+                  <dd className="mt-1 text-sm text-slate-500 dark:text-slate-400">{fact.label}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </section>
 
-          <div className="page-container relative z-10">
-            <div className="flex flex-col lg:flex-row items-center gap-16">
+        {/* Servicios */}
+        <section id="servicios" className="scroll-mt-20 py-16 md:py-24">
+          <div className="page-container">
+            <SectionHeading eyebrow={t('ami.services.badge')} title={t('ami.services.title')} description={t('ami.services.description')} />
+            <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {services.map(service => (
+                <li key={service.title} className="relative flex flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/5 md:p-8">
+                  <div className="mb-5 flex items-center justify-between gap-3">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#A2D18D] to-[#2D8A9D] text-white shadow-sm">
+                      <service.icon className="h-6 w-6" aria-hidden="true" />
+                    </span>
+                    {service.badge && (
+                      <span className="rounded-full bg-[#2D8A9D]/10 px-3 py-1 text-xs font-bold text-[#23707f] dark:text-[#8fd0c3]">{service.badge}</span>
+                    )}
+                  </div>
+                  <h3 className="text-xl font-bold">{service.title}</h3>
+                  <p className="mt-2 leading-relaxed text-slate-600 dark:text-slate-400">{service.description}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        {/* Por qué AMI Fincas */}
+        <section className="bg-white py-16 dark:bg-white/[0.03] md:py-24">
+          <div className="page-container">
+            <div className="flex flex-col items-center gap-12 lg:flex-row lg:gap-16">
               <div className="flex-1">
-                <motion.div
-                  initial={{ opacity: 0, y: 40 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                >
-                  <h2 className="text-4xl md:text-6xl font-black mb-10 leading-tight">
-                    {t('ami.benefits.title').split(' ').map((word: string, i: number) => {
-                      const isGray = i >= 3;
-                      return (
-                        <span key={i} className={isGray ? 'text-slate-500' : ''}>{word} </span>
-                      );
-                    })}
-                  </h2>
-                  <p className="text-xl text-slate-600 dark:text-slate-400 mb-12 leading-relaxed">
-                    {t('ami.benefits.description')}
-                  </p>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {benefits.map((benefit) => (
-                      <div key={benefit} className="flex items-center space-x-4 group">
-                        <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500 transition-colors">
-                          <CheckCircleIcon className="w-5 h-5 text-emerald-400 group-hover:text-white" />
-                        </div>
-                        <span className="font-bold text-slate-700 dark:text-slate-300 group-hover:text-emerald-600 dark:group-hover:text-white transition-colors">{benefit}</span>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
+                <SectionHeading title={t('ami.benefits.title')} description={t('ami.benefits.description')} center={false} />
+                <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {benefits.map(benefit => (
+                    <li key={benefit} className="flex items-center gap-3 font-semibold text-slate-700 dark:text-slate-300">
+                      <CheckCircleIcon className="h-6 w-6 shrink-0 text-[#2D8A9D]" aria-hidden="true" />
+                      {benefit}
+                    </li>
+                  ))}
+                </ul>
               </div>
-
-              <div className="flex-1 relative z-20">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
-                  whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-                  viewport={{ once: true }}
-                  style={{ y: yParallaxHeavy }}
-                  className="group"
-                >
-                  <img
-                    src="/ami-fincas/3d_circular.jpg"
-                    alt="Success Growth 3D"
-                    className="w-full max-w-[500px] mx-auto drop-shadow-[0_40px_40px_rgba(16,185,129,0.2)] rounded-[3rem] group-hover:-rotate-3 group-hover:scale-105 transition-all duration-1000"
-                  />
-                </motion.div>
+              <div className="w-full max-w-md flex-1 lg:max-w-none">
+                <img src="/ami-fincas/3d_circular.webp" alt="" width={1024} height={940} loading="lazy"
+                  className="mx-auto w-full max-w-[460px] rounded-[2.5rem] shadow-xl shadow-slate-900/15" />
               </div>
             </div>
           </div>
         </section>
 
-        {/* Offices Section with Maps */}
-        <section id="contacto" className="py-32 bg-slate-50 dark:bg-[#0a0f1c] transition-colors">
+        {/* Cambiar de administrador */}
+        <section id="cambiar" className="scroll-mt-20 py-16 md:py-24">
           <div className="page-container">
-            <div className="text-center mb-20">
-              <h2 className="text-emerald-500 font-black tracking-widest uppercase text-xs mb-4">{t('ami.offices.badge')}</h2>
-              <h3 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white mb-6">{t('ami.offices.title')}</h3>
-              <p className="text-slate-600 dark:text-slate-500 text-xl max-w-2xl mx-auto">{t('ami.offices.description')}</p>
+            <SectionHeading title={t('ami.switch.title')} description={t('ami.switch.description')} />
+            <ol className="grid grid-cols-1 gap-5 md:grid-cols-3">
+              {steps.map((step, i) => (
+                <li key={step.title} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/5 md:p-8">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#23707f] font-display text-lg font-black text-white" aria-hidden="true">{i + 1}</span>
+                  <h3 className="mt-4 text-xl font-bold">{step.title}</h3>
+                  <p className="mt-2 leading-relaxed text-slate-600 dark:text-slate-400">{step.description}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        {/* Presupuesto */}
+        <section id="presupuesto" className="scroll-mt-20 bg-white py-16 dark:bg-white/[0.03] md:py-24">
+          <div className="page-container">
+            <div className="grid grid-cols-1 gap-10 lg:grid-cols-5 lg:gap-16">
+              <div className="lg:col-span-2">
+                <SectionHeading title={t('ami.quote.title')} description={t('ami.quote.description')} center={false} />
+                <div className="space-y-4 rounded-3xl bg-slate-50 p-6 dark:bg-white/5">
+                  <p className="font-bold text-slate-900 dark:text-white">{t('ami.quote.talk')}</p>
+                  <p className="text-slate-600 dark:text-slate-400">{t('ami.quote.talkSub')}</p>
+                  <a href={tel(MAIN_PHONE)} className="flex items-center gap-3 text-lg font-bold text-slate-900 hover:text-[#23707f] dark:text-white">
+                    <PhoneIcon className="h-5 w-5 text-[#2D8A9D]" aria-hidden="true" /> {MAIN_PHONE}
+                  </a>
+                  <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-lg font-bold text-slate-900 hover:text-[#23707f] dark:text-white">
+                    <ChatBubbleLeftRightIcon className="h-5 w-5 text-[#2D8A9D]" aria-hidden="true" /> WhatsApp
+                  </a>
+                  <a href={`mailto:${EMAIL}`} className="flex items-center gap-3 text-lg font-bold text-slate-900 hover:text-[#23707f] dark:text-white">
+                    <EnvelopeIcon className="h-5 w-5 text-[#2D8A9D]" aria-hidden="true" /> {EMAIL}
+                  </a>
+                </div>
+              </div>
+              <div className="lg:col-span-3">
+                <QuoteForm />
+              </div>
             </div>
+          </div>
+        </section>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
-              {offices.map((office, idx) => (
-                <motion.div
-                  key={office.city}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.2 }}
-                  className="group relative bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-[3rem] overflow-hidden hover:border-emerald-500/50 transition-all duration-500 shadow-xl dark:shadow-2xl"
-                >
-                  <div className="h-64 md:h-80 relative overflow-hidden bg-slate-100 dark:bg-slate-800">
-                    <ConsentMap src={office.mapUrl} address={office.address} title={`Mapa de la oficina de ${office.city}`} />
-                    <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-[#0a0f1c] via-transparent to-transparent pointer-events-none z-20" />
-                  </div>
-
-                  <div className="p-10 relative">
-                    <div className="inline-block px-4 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase tracking-tighter mb-6">
-                      {t('ami.offices.sede')} {office.city}
-                    </div>
-                    <h4 className="text-3xl font-black mb-8">{office.city}</h4>
-
-                    <div className="space-y-6">
-                      <div className="flex items-start space-x-4">
-                        <div className="p-3 bg-white/5 rounded-2xl group-hover:bg-emerald-500/20 transition-colors">
-                          <MapPinIcon className="w-6 h-6 text-[#A2D18D]" />
-                        </div>
-                        <span className="text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors mt-2">{office.address}</span>
-                      </div>
-                      {office.phones.map((phone, pIdx) => (
-                        <div key={pIdx} className="flex items-center space-x-4">
-                          <div className="p-3 bg-white/5 rounded-2xl group-hover:bg-emerald-500/20 transition-colors">
-                            <PhoneIcon className="w-6 h-6 text-[#A2D18D]" />
-                          </div>
-                          <a href={`tel:${phone.replace(/\s+/g, '')}`} className="text-2xl font-black text-slate-900 dark:text-white hover:text-emerald-500 transition-colors">
-                            {phone}
-                          </a>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
+        {/* Preguntas frecuentes */}
+        <section id="preguntas" className="scroll-mt-20 py-16 md:py-24">
+          <div className="page-container">
+            <SectionHeading title={t('ami.faq.title')} />
+            <div className="mx-auto max-w-3xl space-y-3">
+              {faqs.map(faq => (
+                <details key={faq.q} className="group rounded-2xl border border-slate-200 bg-white px-6 py-4 shadow-sm open:shadow-md dark:border-white/10 dark:bg-white/5">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-bold [&::-webkit-details-marker]:hidden">
+                    {faq.q}
+                    <ChevronDownIcon className="h-5 w-5 shrink-0 text-slate-400 transition-transform group-open:rotate-180" aria-hidden="true" />
+                  </summary>
+                  <p className="mt-3 leading-relaxed text-slate-600 dark:text-slate-400">{faq.a}</p>
+                </details>
               ))}
             </div>
-
-            {/* Fun Fact Section */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-              className="mt-24 max-w-4xl mx-auto"
-            >
-              <div className="relative p-8 md:p-10 rounded-[2.5rem] bg-gradient-to-r from-emerald-500/10 to-emerald-500/10 border border-emerald-500/20 dark:border-emerald-400/10 backdrop-blur-xl overflow-hidden flex flex-col md:flex-row items-center gap-8 group">
-                <div className="absolute inset-0 bg-white/40 dark:bg-black/20 pointer-events-none" />
-                
-                {/* Decorative glowing blob */}
-                <div className="absolute -left-20 -top-20 w-40 h-40 bg-emerald-400/20 blur-[50px] rounded-full group-hover:bg-emerald-400/30 transition-colors duration-700 pointer-events-none" />
-
-                <div className="relative z-10 w-16 h-16 shrink-0 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-lg border border-emerald-100 dark:border-slate-700/50 rotate-3 group-hover:rotate-6 transition-transform">
-                  <span className="text-3xl">💡</span>
-                </div>
-
-                <div className="relative z-10 flex-1 text-center md:text-left">
-                  <h4 className="text-lg font-black text-emerald-800 dark:text-emerald-400 uppercase tracking-widest mb-2">
-                    Dato Curioso
-                  </h4>
-                  <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
-                    ¿Te has fijado en los pequeños logos triangulares que aparecen sobre las islas y los edificios en las imágenes 3D de esta página? Son el sello de <strong className="text-emerald-600 dark:text-emerald-400">Ubica</strong>. AMI Fincas forma parte integral del sólido ecosistema tecnológico de nuestro portal inmobiliario. 
-                    <a 
-                      href={ubicaHref('/about')}
-                      className="inline-flex items-center ml-2 text-emerald-600 dark:text-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-300 font-bold underline decoration-emerald-500/30 hover:decoration-emerald-500 transition-all underline-offset-4"
-                    >
-                      Descubre más sobre Ubica aquí
-                      <span className="ml-1">→</span>
-                    </a>
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Enhanced Large CTA - Asymmetric Glassmorphism Design */}
-            <motion.div
-              initial={{ opacity: 0, y: 100 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="mt-32 relative group"
-            >
-              <div className="relative rounded-[3rem] md:rounded-[4rem] bg-gradient-to-br from-white to-slate-50 dark:from-[#111827] dark:to-[#0f172a] border border-slate-200 dark:border-white/10 overflow-hidden shadow-2xl group-hover:shadow-[0_40px_100px_rgba(16,185,129,0.15)] transition-all duration-700">
-                {/* Asymmetric Background Elements */}
-                <div className="absolute -top-40 -right-40 w-96 h-96 bg-emerald-500/20 rounded-full blur-[100px] pointer-events-none group-hover:scale-150 transition-transform duration-1000" />
-                <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-emerald-500/20 rounded-full blur-[100px] pointer-events-none group-hover:scale-150 transition-transform duration-1000" />
-                
-                <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMDAnIGhlaWdodD0nMTAwJz48cmVjdCB3aWR0aD0nMTAwJz0gaGVpZ2h0PScxMDAnIGZpbGw9J25vbmUnIHN0cm9rZT0nIzBmMHdpZHRoPScwLjUnLz48L3N2Zz4=')] bg-[length:40px_40px]" />
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-0 h-full">
-                  {/* Text & Interaction Column */}
-                  <div className="p-12 md:p-20 flex flex-col justify-center relative z-10">
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      whileInView={{ scale: 1 }}
-                      className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl flex items-center justify-center mb-10 shadow-lg"
-                    >
-                      <BuildingOfficeIcon className="w-8 h-8 text-white" />
-                    </motion.div>
-
-                    <h3 className="text-4xl md:text-6xl font-black mb-6 leading-tight text-slate-900 dark:text-white">
-                      {t('ami.cta.title')}
-                    </h3>
-                    
-                    <p className="text-xl text-slate-600 dark:text-slate-400 mb-12 font-medium">
-                      Conecta con nosotros hoy mismo. Únete a las administraciones que confían en AMI Fincas para proteger su inversión y su comunidad.
-                    </p>
-
-                    <div className="space-y-6">
-                      <motion.a
-                        whileHover={{ x: 10, scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        href="mailto:info@amifincas.es"
-                        className="w-full sm:w-auto inline-flex items-center justify-between px-8 py-5 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black text-lg shadow-[0_20px_40px_rgba(0,0,0,0.1)] transition-all"
-                      >
-                        <span className="flex items-center space-x-3">
-                          <EnvelopeIcon className="w-6 h-6" />
-                          <span>{t('ami.cta.button')}</span>
-                        </span>
-                        <div className="w-8 h-8 rounded-full bg-white/20 dark:bg-black/10 flex items-center justify-center ml-6">
-                          →
-                        </div>
-                      </motion.a>
-
-                      <div className="pt-8 border-t border-slate-200 dark:border-white/10 flex flex-col sm:flex-row gap-8 items-start sm:items-center">
-                        <div>
-                          <span className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Líneas Directas</span>
-                          <div className="flex flex-col gap-2">
-                            <a href="tel:+34676626933" className="text-lg font-bold text-slate-700 dark:text-slate-300 hover:text-emerald-500 transition-colors flex items-center gap-2">
-                              <PhoneIcon className="w-4 h-4 text-emerald-500" />
-                              <span className="font-mono">676 62 69 33</span>
-                            </a>
-                            <a href="tel:+34968179180" className="text-lg font-bold text-slate-700 dark:text-slate-300 hover:text-emerald-500 transition-colors flex items-center gap-2">
-                              <PhoneIcon className="w-4 h-4 text-emerald-500" />
-                              <span className="font-mono">968 17 91 80</span>
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 3D Image Showcase Column */}
-                  <div className="relative h-96 lg:h-auto min-h-[400px] bg-emerald-50/50 dark:bg-[#151f32] p-8 overflow-hidden flex items-center justify-center">
-                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-100/50 dark:to-black/30 pointer-events-none" />
-                    
-                    <motion.div
-                      animate={{
-                        y: [0, -15, 0],
-                        rotate: [0, -1, 1, 0]
-                      }}
-                      transition={{
-                        duration: 8,
-                        repeat: Infinity,
-                        ease: 'easeInOut'
-                      }}
-                      className="relative z-10"
-                    >
-                      <div className="absolute inset-0 bg-emerald-400/20 blur-[60px] rounded-full" />
-                      <img
-                        src="/ami-fincas/3d_islands.jpg"
-                        alt="Ami Network"
-                        className="w-full max-w-[450px] object-contain relative z-20 drop-shadow-[0_45px_45px_rgba(0,0,0,0.5)] rounded-[3rem] border-8 border-white/5"
-                      />
-                    </motion.div>
-                    
-                    {/* Floating Info Badges */}
-                    <motion.div
-                      animate={{ y: [0, 10, 0] }}
-                      transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-                      className="absolute top-12 left-12 px-4 py-3 bg-white/90 dark:bg-slate-800/90 backdrop-blur shadow-xl rounded-2xl flex items-center gap-3 border border-slate-200 dark:border-slate-700 z-30"
-                    >
-                      <ShieldCheckIcon className="w-6 h-6 text-emerald-500" />
-                      <div className="text-left leading-tight">
-                        <span className="block text-xs text-slate-500 font-bold uppercase">Seguros</span>
-                        <span className="block text-sm text-slate-900 dark:text-white font-black">+500 Pólizas</span>
-                      </div>
-                    </motion.div>
-
-                    <motion.div
-                      animate={{ y: [0, -10, 0] }}
-                      transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-                      className="absolute bottom-12 right-12 px-4 py-3 bg-white/90 dark:bg-slate-800/90 backdrop-blur shadow-xl rounded-2xl flex items-center gap-3 border border-slate-200 dark:border-slate-700 z-30"
-                    >
-                      <BuildingOfficeIcon className="w-6 h-6 text-emerald-500" />
-                      <div className="text-left leading-tight">
-                        <span className="block text-xs text-slate-500 font-bold uppercase">Gestión</span>
-                        <span className="block text-sm text-slate-900 dark:text-white font-black">+2000 Propietarios</span>
-                      </div>
-                    </motion.div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
           </div>
         </section>
 
+        {/* Sedes */}
+        <section id="contacto" className="scroll-mt-20 bg-white py-16 dark:bg-white/[0.03] md:py-24">
+          <div className="page-container">
+            <SectionHeading eyebrow={t('ami.offices.badge')} title={t('ami.offices.title')} description={t('ami.offices.description')} />
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+              {offices.map(office => (
+                <article key={office.city} className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-white/5">
+                  <div className="relative h-60 bg-slate-100 dark:bg-slate-800 md:h-72">
+                    {office.photo ? (
+                      <img src={office.photo} alt={t('ami.offices.photo')} width={1200} height={900} loading="lazy" className="h-full w-full object-cover" />
+                    ) : (
+                      <ConsentMap src={office.mapUrl!} address={office.address} title={`Mapa de la oficina de ${office.city}`} />
+                    )}
+                  </div>
+                  <div className="space-y-4 p-6 md:p-8">
+                    <h3 className="text-2xl font-black">{office.city}</h3>
+                    <p className="flex items-start gap-3 text-slate-600 dark:text-slate-300">
+                      <MapPinIcon className="mt-0.5 h-5 w-5 shrink-0 text-[#2D8A9D]" aria-hidden="true" /> {office.address}
+                    </p>
+                    <p className="flex items-start gap-3 text-slate-600 dark:text-slate-300">
+                      <ClockIcon className="mt-0.5 h-5 w-5 shrink-0 text-[#2D8A9D]" aria-hidden="true" />
+                      <span><span className="sr-only">{t('ami.offices.hours')}: </span>{office.schedule}</span>
+                    </p>
+                    <div className="flex flex-wrap gap-x-6 gap-y-2">
+                      {office.phones.map(phone => (
+                        <a key={phone} href={tel(phone)} className="flex items-center gap-2 text-lg font-bold text-slate-900 hover:text-[#23707f] dark:text-white">
+                          <PhoneIcon className="h-5 w-5 text-[#2D8A9D]" aria-hidden="true" /> {phone}
+                        </a>
+                      ))}
+                    </div>
+                    <a href={office.directions} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold text-[#23707f] hover:underline dark:text-[#8fd0c3]">
+                      {t('ami.offices.directions')} <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
+                    </a>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
 
-      </motion.div>
+        {/* Ubica, el portal inmobiliario del grupo */}
+        <section className="py-16 md:py-24">
+          <div className="page-container">
+            <div className="flex flex-col items-center gap-8 overflow-hidden rounded-[2.5rem] bg-slate-900 p-8 text-white md:flex-row md:p-12">
+              <div className="flex-1 text-center md:text-left">
+                <h2 className="text-3xl font-black md:text-4xl">{t('ami.ubica.title')}</h2>
+                <p className="mt-4 max-w-xl text-lg text-slate-300">{t('ami.ubica.description')}</p>
+                <a href={ubicaHref('/')} className="mt-8 inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 font-bold text-slate-900 transition-colors hover:bg-slate-100">
+                  {t('ami.ubica.cta')} <ArrowRightIcon className="h-5 w-5" aria-hidden="true" />
+                </a>
+              </div>
+              <img src="/ami-fincas/3d_islands.webp" alt="" width={1024} height={940} loading="lazy" className="w-full max-w-xs rounded-3xl md:max-w-sm" />
+            </div>
+          </div>
+        </section>
+      </div>
 
-      <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-20px); }
-        }
-        .animate-float {
-          animation: float 6s ease-in-out infinite;
-        }
-      `}</style>
+      {/* Llamar / WhatsApp siempre a mano en móvil y tablet */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur dark:border-white/10 dark:bg-slate-900/95 lg:hidden" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}>
+        <div className="mx-auto flex max-w-md gap-3">
+          <a href={tel(MAIN_PHONE)} className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#23707f] py-3 font-bold text-white">
+            <PhoneIcon className="h-5 w-5" aria-hidden="true" /> {t('ami.mobile.call')}
+          </a>
+          <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-300 py-3 font-bold text-slate-900 dark:border-white/15 dark:text-white">
+            <ChatBubbleLeftRightIcon className="h-5 w-5 text-[#25D366]" aria-hidden="true" /> {t('ami.mobile.whatsapp')}
+          </a>
+        </div>
+      </div>
     </>
   );
 }

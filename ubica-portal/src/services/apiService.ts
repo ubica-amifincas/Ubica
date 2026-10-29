@@ -98,6 +98,8 @@ export interface ContactRequest {
   phone?: string;
   subject?: string;
   message: string;
+  /** Web de origen: los presupuestos de AMI Fincas llegan marcados en el asunto. */
+  source?: 'ubica' | 'ami';
 }
 
 /** Error de la API con el código HTTP, para distinguir p. ej. 429 (demasiados intentos). */

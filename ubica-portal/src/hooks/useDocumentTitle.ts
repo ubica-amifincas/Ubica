@@ -9,9 +9,9 @@ import { AMI_ORIGIN, UBICA_ORIGIN, isAmiSite } from '../utils/site';
  */
 const DEFAULT_TITLE = 'Ubica - Portal inmobiliario';
 const UBICA_DESCRIPTION = 'Ubica - Menos búsquedas, más precisión. Portal inmobiliario de AMI Fincas en la Región de Murcia: pisos, casas y locales en venta y alquiler.';
-const AMI_TITLE = 'AMI Fincas | Administración de fincas en Murcia';
-const AMI_DESCRIPTION = 'AMI Fincas: administración de comunidades, gestión de alquileres y correduría de seguros en Murcia y San Pedro del Pinatar.';
-const AMI_ICON = '/ami-fincas/favAMI.png';
+const AMI_TITLE = 'AMI Fincas | Administración de fincas en Murcia y Alicante';
+const AMI_DESCRIPTION = 'AMI Fincas: administración de comunidades de propietarios, gestión de alquileres y correduría de seguros en la Región de Murcia y Alicante. Presupuesto sin compromiso.';
+const AMI_ICON = '/ami-fincas/favicon-64.png';
 const UBICA_ICON = '/logo_ubica.png';
 
 const ROUTE_TITLES: Record<string, string> = {
