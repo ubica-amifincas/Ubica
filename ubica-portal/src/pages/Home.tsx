@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMap, Polygon } from 'react-leaflet';
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
@@ -34,7 +34,6 @@ import appService from '../services';
 import type { Property, PropertyFilters } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useAIChat } from '../contexts/AIChatContext';
-import { useTheme } from '../hooks/useTheme';
 
 // Custom marker icon for properties with price
 const createPriceMarker = (price: number, isSelected: boolean = false) => {
@@ -107,49 +106,30 @@ export default function Home() {
   const [hasDrawnArea, setHasDrawnArea] = useState(false);
   const [showMapToast, setShowMapToast] = useState(false);
   const { t } = useLanguage();
-  const { theme } = useTheme();
   const { openChat } = useAIChat();
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
-  // Scroll-linked animations for the header (STRICTLY TOP LEVEL)
-  const { scrollY } = useScroll();
+  // Barra compacta: aparece fija arriba cuando la búsqueda grande sale de la pantalla.
+  // Va fuera del flujo y solo se mueve con transform, así no desplaza el contenido al hacer scroll.
+  const [showCompactSearch, setShowCompactSearch] = useState(false);
+  const heroSearchRef = useRef<HTMLDivElement>(null);
 
-  // Header background & shadow
-  const headerOpacity = useTransform(scrollY, [0, 100], [0, 0.95]);
-  const headerShadow = useTransform(scrollY, [0, 100], ['none', '0 10px 15px -3px rgb(0 0 0 / 0.1)']);
-  const headerBgColor = useTransform(
-    scrollY,
-    [0, 100],
-    [
-      theme === 'dark' ? 'rgba(17, 24, 39, 0)' : 'rgba(255, 255, 255, 0)',
-      theme === 'dark' ? 'rgba(17, 24, 39, 0.95)' : 'rgba(255, 255, 255, 0.95)'
-    ]
-  );
-  const headerBlur = useTransform(scrollY, [0, 100], ['blur(0px)', 'blur(12px)']);
-
-  // Hero container transforms
-  const heroPadding = useTransform(scrollY, [0, 150], ['2rem 1rem', '0.625rem 0.75rem']);
-  const heroMaxWidth = useTransform(scrollY, [0, 150], ['100%', '100%']);
-
-  // Gradient box transforms
-  const boxPadding = useTransform(scrollY, [0, 150], ['1.5rem 2rem', '0.5rem 0.625rem']);
-  const boxRadius = useTransform(scrollY, [0, 150], ['1.5rem', '2rem']);
-
-  // Use a constant for the breakpoint to avoid inconsistencies during SSR/Hydration if applicable
-  const boxRadiusFinal = useTransform(scrollY, [0, 150], ['1.5rem', '1.5rem']);
-
-  // Slogan transforms
-  const sloganHeight = useTransform(scrollY, [0, 100], ['auto', '0px']);
-  const sloganOpacity = useTransform(scrollY, [0, 80], [1, 0]);
-  const sloganMargin = useTransform(scrollY, [0, 100], ['1.5rem', '0rem']);
-
-  // Search input transforms
-  const inputPadding = useTransform(scrollY, [0, 150], ['1rem', '0.5rem']);
-  const inputFontSize = useTransform(scrollY, [0, 150], ['1rem', '0.875rem']);
-  const iconSize = useTransform(scrollY, [0, 150], ['1.25rem', '1rem']);
-
-  // AI Button transforms
-  const aiButtonPadding = useTransform(scrollY, [0, 150], ['0.875rem 1.25rem', '0.5rem 0.75rem']);
+  // Muestra la barra compacta cuando la búsqueda grande pasa por debajo de ella (64px).
+  // Se mide en cada evento de scroll (una lectura barata; React ignora el estado si no cambia) en lugar de con
+  // IntersectionObserver, que dentro de iframes y algunos navegadores móviles mide contra otra ventana.
+  useEffect(() => {
+    const update = () => {
+      const el = heroSearchRef.current;
+      setShowCompactSearch(!!el && el.getBoundingClientRect().bottom < 64);
+    };
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    return () => {
+      window.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+    };
+  }, [isDrawingEnabled, viewMode, loading]);
 
   const { user } = useAuth();
   const [favorites, setFavorites] = useState<number[]>([]);
@@ -520,135 +500,74 @@ export default function Home() {
 
 
 
+  const renderSearchRow = (compact: boolean) => (
+    <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex-1 min-w-0 bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+        <div className="relative">
+          <MagnifyingGlassIcon className={`pointer-events-none absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 ${compact ? 'h-4 w-4' : 'h-5 w-5'}`} />
+          <input
+            type="text"
+            aria-label={t('header.mainSearchPlaceholder')}
+            placeholder={t('header.mainSearchPlaceholder')}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            tabIndex={compact && !showCompactSearch ? -1 : undefined}
+            className={`w-full pl-10 sm:pl-12 pr-4 text-gray-900 dark:text-white bg-white dark:bg-gray-800 border-0 focus:ring-2 focus:ring-emerald-500 focus:outline-none rounded-xl ${compact ? 'py-2 text-sm' : 'py-4 text-base'}`}
+          />
+        </div>
+      </div>
+
+      {/* Modo IA */}
+      <button
+        type="button"
+        onClick={() => openChat(searchTerm)}
+        tabIndex={compact && !showCompactSearch ? -1 : undefined}
+        className="relative group flex-shrink-0 transition-transform hover:scale-105 active:scale-95"
+      >
+        <div className="absolute -inset-[2px] rounded-xl opacity-75 group-hover:opacity-100 transition-opacity duration-300 bg-emerald-200" />
+        <div className={`relative bg-white dark:bg-gray-800 rounded-xl flex items-center gap-2 shadow-sm ${compact ? 'px-3 py-2' : 'px-5 py-3.5'}`}>
+          <svg className={compact ? 'h-4 w-4' : 'h-5 w-5'} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 2L13.09 8.26L18 6L14.74 10.91L21 12L14.74 13.09L18 18L13.09 15.74L12 22L10.91 15.74L6 18L9.26 13.09L3 12L9.26 10.91L6 6L10.91 8.26L12 2Z"
+              className="fill-emerald-600 dark:fill-emerald-400" />
+          </svg>
+          <span className={`font-semibold text-emerald-700 dark:text-emerald-300 whitespace-nowrap hidden sm:inline ${compact ? 'text-sm' : 'text-base'}`}>
+            {t('view.ia_mode')}
+          </span>
+        </div>
+      </button>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Sticky Header Wrapper */}
-      <motion.div
-        className="sticky top-0 z-40 bg-white/0 dark:bg-gray-900/0 backdrop-blur-none"
-        style={{
-          backgroundColor: headerBgColor,
-          backdropFilter: headerBlur,
-          boxShadow: headerShadow
-        }}
-      >
-        {/* Hero Section - Modern Search Box with Adaptive Background */}
-        {!isDrawingEnabled && viewMode !== 'map' && (
-          <motion.div
-            className="mx-auto max-w-7xl w-full"
-            style={{ padding: heroPadding }}
-          >
-            {/* Gradient Box Container */}
-            <motion.div
-              className="w-full bg-gradient-to-br from-emerald-600 via-emerald-500 to-emerald-500 shadow-xl overflow-hidden"
-              style={{
-                padding: boxPadding,
-                borderRadius: boxRadiusFinal
-              }}
-            >
-              {/* Eslogan Section */}
-              <motion.div
-                className="bg-black/40 backdrop-blur-sm px-6 md:px-8 rounded-2xl text-center overflow-hidden"
-                style={{
-                  height: sloganHeight,
-                  opacity: sloganOpacity,
-                  marginBottom: sloganMargin
-                }}
-              >
-                <div className="py-4 px-2 sm:px-0">
-                  <p className="text-sm sm:text-lg md:text-xl font-semibold text-white tracking-wide text-balance leading-snug">
-                    {t('header.slogan')}
-                  </p>
-                </div>
-              </motion.div>
+      {/* Portada: eslogan y búsqueda, en el flujo normal de la página */}
+      {!isDrawingEnabled && viewMode !== 'map' && (
+        <div className="mx-auto max-w-7xl w-full px-4 pt-8 pb-4">
+          <div className="w-full rounded-3xl bg-emerald-600 shadow-xl px-4 py-5 sm:px-8 sm:py-6">
+            <div className="mb-5 rounded-2xl bg-black/30 px-6 md:px-8 py-4 text-center">
+              <p className="text-sm sm:text-lg md:text-xl font-semibold text-white tracking-wide text-balance leading-snug">
+                {t('header.slogan')}
+              </p>
+            </div>
+            <div ref={heroSearchRef}>{renderSearchRow(false)}</div>
+          </div>
+        </div>
+      )}
 
-              {/* Search Bar - White Modern Box with AI Button */}
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="flex-1 bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-                  <div className="relative">
-                    <motion.div
-                      className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                      style={{ height: iconSize, width: iconSize }}
-                    >
-                      <MagnifyingGlassIcon className="h-full w-full" />
-                    </motion.div>
-                    <motion.input
-                      type="text"
-                      placeholder={t('header.mainSearchPlaceholder')}
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 sm:pl-12 pr-4 text-gray-900 dark:text-white bg-white dark:bg-gray-800 border-0 focus:ring-2 focus:ring-emerald-500 focus:outline-none rounded-xl"
-                      style={{
-                        paddingTop: inputPadding,
-                        paddingBottom: inputPadding,
-                        fontSize: inputFontSize
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Modo IA Button — Google-style with animated gradient */}
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => openChat(searchTerm)}
-                  className="relative group flex-shrink-0"
-                >
-                  {/* Animated gradient border */}
-                  <div className="absolute -inset-[2px] rounded-xl opacity-75 group-hover:opacity-100 transition-opacity duration-300"
-                    style={{
-                      background: 'conic-gradient(from var(--ai-angle, 0deg), #10b981, #06b6d4, #8b5cf6, #ec4899, #f59e0b, #10b981)',
-                      animation: 'aiGradientSpin 3s linear infinite',
-                    }}
-                  />
-                  <motion.div
-                    className="relative bg-white dark:bg-gray-800 rounded-xl flex items-center gap-2 shadow-sm"
-                    style={{ padding: aiButtonPadding }}
-                  >
-                    <motion.svg
-                      className="text-transparent"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      style={{
-                        height: iconSize,
-                        width: iconSize,
-                        filter: 'drop-shadow(0 0 4px rgba(139, 92, 246, 0.3))'
-                      }}
-                    >
-                      <defs>
-                        <linearGradient id="aiSparkleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#8b5cf6" />
-                          <stop offset="50%" stopColor="#06b6d4" />
-                          <stop offset="100%" stopColor="#10b981" />
-                        </linearGradient>
-                      </defs>
-                      <path d="M12 2L13.09 8.26L18 6L14.74 10.91L21 12L14.74 13.09L18 18L13.09 15.74L12 22L10.91 15.74L6 18L9.26 13.09L3 12L9.26 10.91L6 6L10.91 8.26L12 2Z"
-                        fill="url(#aiSparkleGrad)" stroke="url(#aiSparkleGrad)" strokeWidth="0.5" />
-                    </motion.svg>
-                    <motion.span
-                      className="font-semibold bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-500 bg-clip-text text-transparent whitespace-nowrap hidden sm:inline"
-                      style={{ fontSize: inputFontSize }}
-                    >
-                      {t('view.ia_mode')}
-                    </motion.span>
-                  </motion.div>
-                </motion.button>
-
-                {/* Keyframes for the rotating gradient */}
-                <style>{`
-                  @property --ai-angle {
-                    syntax: '<angle>';
-                    initial-value: 0deg;
-                    inherits: false;
-                  }
-                  @keyframes aiGradientSpin {
-                    to { --ai-angle: 360deg; }
-                  }
-                `}</style>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </motion.div> {/* Closes Sticky Header Wrapper */}
+      {/* Barra compacta fija (no ocupa sitio en la página) */}
+      {!isDrawingEnabled && viewMode !== 'map' && (
+        <div
+          aria-hidden={!showCompactSearch}
+          className={`fixed inset-x-0 top-0 z-40 transition-transform duration-200 ease-out motion-reduce:transition-none ${showCompactSearch ? 'translate-y-0' : '-translate-y-full pointer-events-none'}`}
+          style={{ paddingTop: 'env(safe-area-inset-top)' }}
+        >
+          <div className="mx-auto max-w-7xl w-full px-3 pt-2.5">
+            <div className="rounded-3xl bg-emerald-600 shadow-lg px-2.5 py-2">
+              {renderSearchRow(true)}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Map Controls Bar - Sticky in Map Mode */}
       <div
