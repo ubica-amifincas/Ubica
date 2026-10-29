@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 from sqlmodel import SQLModel, Field, Relationship, JSON, Column
-from pydantic import EmailStr
+from pydantic import EmailStr, NaiveDatetime
 
 class UserBase(SQLModel):
     email: EmailStr = Field(index=True, unique=True)
@@ -15,8 +15,8 @@ class UserBase(SQLModel):
 class User(UserBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     hashed_password: str
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: NaiveDatetime = Field(default_factory=datetime.now)
+    updated_at: NaiveDatetime = Field(default_factory=datetime.now)
     
     properties: List["Property"] = Relationship(back_populates="owner")
     messages_sent: List["Message"] = Relationship(back_populates="sender")
@@ -51,8 +51,8 @@ class Property(PropertyBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     owner_id: Optional[int] = Field(default=None, foreign_key="user.id")
     realtor_id: Optional[int] = None # For simplicity, keeping as ID for now
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: NaiveDatetime = Field(default_factory=datetime.now)
+    updated_at: NaiveDatetime = Field(default_factory=datetime.now)
     
     owner: Optional[User] = Relationship(back_populates="properties")
     favorited_by: List["Favorite"] = Relationship(back_populates="property")
@@ -67,7 +67,7 @@ class Message(SQLModel, table=True):
     property_title: Optional[str] = None
     content: str
     status: str = "pending"
-    created_at: datetime = Field(default_factory=datetime.now)
+    created_at: NaiveDatetime = Field(default_factory=datetime.now)
     
     sender: User = Relationship(back_populates="messages_sent")
 
@@ -75,7 +75,7 @@ class Favorite(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id")
     property_id: int = Field(foreign_key="property.id")
-    created_at: datetime = Field(default_factory=datetime.now)
+    created_at: NaiveDatetime = Field(default_factory=datetime.now)
     
     user: User = Relationship(back_populates="favorites")
     property: Property = Relationship(back_populates="favorited_by")
@@ -85,7 +85,7 @@ class SavedSearch(SQLModel, table=True):
     user_id: int = Field(foreign_key="user.id")
     name: str
     filters: str # JSON string
-    created_at: datetime = Field(default_factory=datetime.now)
+    created_at: NaiveDatetime = Field(default_factory=datetime.now)
 
 class Investment(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -94,12 +94,11 @@ class Investment(SQLModel, table=True):
     investment_amount: float
     current_value: float
     purchase_price: float
-    purchase_date: datetime
+    purchase_date: NaiveDatetime
     roi_percentage: float
     annual_rental_income: float
     rental_yield: float
     appreciation_rate: float
-    holding_period_months: int
     holding_period_months: int
     status: str = "active"
 
@@ -108,7 +107,7 @@ class GameScore(SQLModel, table=True):
     user_id: int = Field(foreign_key="user.id")
     game_name: str = Field(index=True)
     score: int = Field(index=True)
-    created_at: datetime = Field(default_factory=datetime.now)
+    created_at: NaiveDatetime = Field(default_factory=datetime.now)
     
     user: User = Relationship()
 
@@ -117,6 +116,6 @@ class AIConversation(SQLModel, table=True):
     user_id: int = Field(foreign_key="user.id")
     title: str = Field(max_length=150)
     messages: List[Dict[str, Any]] = Field(default=[], sa_column=Column(JSON))
-    updated_at: datetime = Field(default_factory=datetime.now)
+    updated_at: NaiveDatetime = Field(default_factory=datetime.now)
     
     user: User = Relationship()
