@@ -7,8 +7,8 @@ import {
     CalculatorIcon,
     ChartBarIcon
 } from '@heroicons/react/24/outline';
-import { motion } from 'framer-motion';
 import { useAuthenticatedFetch } from '../../contexts/AuthContext';
+import { PageHeader, StatCard, StatGrid, Section, EmptyState, buttonClass, iconButtonClass, formatEur } from '../../components/dashboard/ui';
 
 interface WealthItem {
     id: string;
@@ -129,72 +129,34 @@ export default function WealthManagement() {
     };
 
     return (
-        <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {/* Header */}
-            <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="flex justify-between items-center"
-            >
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                        Gestión de Patrimonio
-                    </h1>
-                    <p className="text-gray-600 dark:text-gray-400">
-                        Añade activos y pasivos libremente para auto-calcular tu patrimonio real.
-                    </p>
-                </div>
-                <button
-                    onClick={() => setShowSimulator(!showSimulator)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all ${showSimulator
-                        ? 'bg-emerald-600 text-white shadow-lg'
-                        : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50'
-                        }`}
-                >
-                    <CalculatorIcon className="h-5 w-5" />
-                    Simulador
-                </button>
-            </motion.div>
+        <div className="space-y-6">
+            <PageHeader
+                title="Gestión de patrimonio"
+                description="Añade activos y pasivos libremente para auto-calcular tu patrimonio real."
+                actions={
+                    <button
+                        type="button"
+                        onClick={() => setShowSimulator(!showSimulator)}
+                        aria-pressed={showSimulator}
+                        className={showSimulator ? buttonClass.primary : buttonClass.secondary}
+                    >
+                        <CalculatorIcon className="h-5 w-5" />
+                        Simulador
+                    </button>
+                }
+            />
 
             {/* Summary Cards */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-                className="grid grid-cols-1 md:grid-cols-3 gap-6"
-            >
-                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 text-center flex flex-col items-center justify-center">
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Activos Totales</p>
-                    <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">€{totalAssets.toLocaleString()}</p>
-                </div>
-                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 text-center flex flex-col items-center justify-center">
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Pasivos Totales</p>
-                    <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">€{totalLiabilities.toLocaleString()}</p>
-                </div>
-                <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-lg p-6 shadow-lg text-center transform md:scale-105 transition-transform duration-300 flex flex-col items-center justify-center border border-emerald-500">
-                    <p className="text-sm font-medium text-emerald-100 uppercase tracking-wide">Patrimonio Neto (Net Worth)</p>
-                    <p className="text-4xl font-extrabold text-white mt-2">€{netWorth.toLocaleString()}</p>
-                </div>
-            </motion.div>
+            <StatGrid cols={3}>
+                <StatCard label="Activos totales" value={formatEur(totalAssets)} icon={ArrowTrendingUpIcon} tone="neutral" />
+                <StatCard label="Pasivos totales" value={formatEur(totalLiabilities)} icon={ArrowTrendingDownIcon} tone="neutral" />
+                <StatCard label="Patrimonio neto (net worth)" value={formatEur(netWorth)} icon={ChartBarIcon} hint="Activos menos pasivos" />
+            </StatGrid>
 
             {/* Simulator Section */}
             {showSimulator && (
-                <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden"
-                >
-                    <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-emerald-50 to-emerald-50 dark:from-emerald-900/20 dark:to-emerald-900/20">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                            <ChartBarIcon className="h-5 w-5 text-emerald-600" />
-                            Simulador Financiero
-                        </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Proyecta tu patrimonio futuro con datos mensuales y anuales</p>
-                    </div>
-
-                    <div className="p-6">
+                <Section title="Simulador financiero" description="Proyecta tu patrimonio futuro con datos mensuales y anuales">
+                    <div>
                         {/* Input grid */}
                         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
                             <div>
@@ -253,31 +215,31 @@ export default function WealthManagement() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Monthly breakdown */}
                             <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-5">
-                                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-4">📅 Resumen Mensual</h4>
+                                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-4">Resumen mensual</h4>
                                 <div className="space-y-3">
                                     <div className="flex justify-between">
                                         <span className="text-sm text-gray-600 dark:text-gray-400">Ingresos</span>
-                                        <span className="text-sm font-semibold text-emerald-600">+€{monthlyIncome.toLocaleString()}</span>
+                                        <span className="text-sm font-semibold text-emerald-600">+{formatEur(monthlyIncome)}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-sm text-gray-600 dark:text-gray-400">Gastos</span>
-                                        <span className="text-sm font-semibold text-red-500">-€{monthlyExpenses.toLocaleString()}</span>
+                                        <span className="text-sm font-semibold text-red-500">-{formatEur(monthlyExpenses)}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-sm text-gray-600 dark:text-gray-400">Inversión</span>
-                                        <span className="text-sm font-semibold text-emerald-600">€{monthlyInvestment.toLocaleString()}</span>
+                                        <span className="text-sm font-semibold text-emerald-600">{formatEur(monthlyInvestment)}</span>
                                     </div>
                                     <hr className="border-gray-200 dark:border-gray-600" />
                                     <div className="flex justify-between">
                                         <span className="text-sm font-medium text-gray-900 dark:text-white">Ahorro disponible</span>
                                         <span className={`text-lg font-bold ${monthlySavings >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                            €{monthlySavings.toLocaleString()}
+                                            {formatEur(monthlySavings)}
                                         </span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-sm text-gray-600 dark:text-gray-400">Ahorro tras inversión</span>
                                         <span className={`text-sm font-semibold ${(monthlySavings - monthlyInvestment) >= 0 ? 'text-gray-700 dark:text-gray-300' : 'text-red-500'}`}>
-                                            €{(monthlySavings - monthlyInvestment).toLocaleString()}
+                                            {formatEur((monthlySavings - monthlyInvestment))}
                                         </span>
                                     </div>
                                 </div>
@@ -285,52 +247,45 @@ export default function WealthManagement() {
 
                             {/* Annual projection */}
                             <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-5">
-                                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-4">📊 Proyección a {years} {years === 1 ? 'año' : 'años'}</h4>
+                                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-4">Proyección a {years} {years === 1 ? 'año' : 'años'}</h4>
                                 <div className="space-y-3">
                                     <div className="flex justify-between">
                                         <span className="text-sm text-gray-600 dark:text-gray-400">Ahorro anual</span>
-                                        <span className="text-sm font-semibold text-emerald-600">€{annualSavings.toLocaleString()}</span>
+                                        <span className="text-sm font-semibold text-emerald-600">{formatEur(annualSavings)}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-sm text-gray-600 dark:text-gray-400">Inversión anual</span>
-                                        <span className="text-sm font-semibold text-emerald-600">€{annualInvestment.toLocaleString()}</span>
+                                        <span className="text-sm font-semibold text-emerald-600">{formatEur(annualInvestment)}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-sm text-gray-600 dark:text-gray-400">Total aportado ({years}a)</span>
-                                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">€{totalContributions.toLocaleString()}</span>
+                                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{formatEur(totalContributions)}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-sm text-gray-600 dark:text-gray-400">Rendimiento compuesto</span>
-                                        <span className="text-sm font-semibold text-emerald-600">+€{Math.round(investmentGains).toLocaleString()}</span>
+                                        <span className="text-sm font-semibold text-emerald-600">+{formatEur(investmentGains)}</span>
                                     </div>
                                     <hr className="border-gray-200 dark:border-gray-600" />
                                     <div className="flex justify-between">
                                         <span className="text-sm text-gray-600 dark:text-gray-400">Valor inversiones</span>
-                                        <span className="text-lg font-bold text-emerald-600">€{Math.round(futureInvestmentValue).toLocaleString()}</span>
+                                        <span className="text-lg font-bold text-emerald-600">{formatEur(futureInvestmentValue)}</span>
                                     </div>
                                     <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-600">
                                         <span className="text-sm font-medium text-gray-900 dark:text-white">Patrimonio neto proyectado</span>
                                         <span className={`text-lg font-bold ${projectedNetWorth >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                            €{Math.round(projectedNetWorth).toLocaleString()}
+                                            {formatEur(projectedNetWorth)}
                                         </span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </motion.div>
+                </Section>
             )}
 
             {/* Add Item Form */}
             {newItemType && (
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-emerald-200 dark:border-emerald-800"
-                >
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
-                        Añadir Nuevo {newItemType === 'asset' ? 'Activo' : 'Pasivo'}
-                    </h3>
+                <Section title={`Añadir nuevo ${newItemType === 'asset' ? 'activo' : 'pasivo'}`}>
                     <form onSubmit={handleAddItem} className="space-y-4 md:space-y-0 md:flex md:gap-4 items-end">
                         <div className="flex-1">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</label>
@@ -340,7 +295,7 @@ export default function WealthManagement() {
                                 value={newItemName}
                                 onChange={e => setNewItemName(e.target.value)}
                                 placeholder={newItemType === 'asset' ? "Ej. Cuenta Ahorro BBVA" : "Ej. Hipoteca Vivienda"}
-                                className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             />
                         </div>
                         <div className="flex-1">
@@ -350,7 +305,7 @@ export default function WealthManagement() {
                                 value={newItemDesc}
                                 onChange={e => setNewItemDesc(e.target.value)}
                                 placeholder="Opcional..."
-                                className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             />
                         </div>
                         <div className="w-full md:w-48">
@@ -361,51 +316,41 @@ export default function WealthManagement() {
                                 value={newItemAmount}
                                 onChange={e => setNewItemAmount(e.target.value)}
                                 placeholder="10000"
-                                className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             />
                         </div>
                         <div className="flex gap-2 w-full md:w-auto mt-4 md:mt-0">
                             <button
                                 type="submit"
-                                className="flex-1 md:flex-none justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700"
+                                className={`${buttonClass.primary} flex-1 md:flex-none`}
                             >
                                 Añadir
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setNewItemType(null)}
-                                className="flex-1 md:flex-none justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
+                                className={`${buttonClass.secondary} flex-1 md:flex-none`}
                             >
                                 Cancelar
                             </button>
                         </div>
                     </form>
-                </motion.div>
+                </Section>
             )}
 
             {/* Assets & Liabilities */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Assets Column */}
-                <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
-                    className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 h-full flex flex-col"
-                >
-                    <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-                            <ArrowTrendingUpIcon className="h-6 w-6 mr-2 text-emerald-500" />
-                            Mis Activos (Assets)
-                        </h3>
-                        <button
-                            onClick={() => setNewItemType('asset')}
-                            className="text-sm flex items-center text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 font-medium bg-emerald-50 dark:bg-emerald-900/30 px-3 py-1.5 rounded-md"
-                        >
-                            <PlusIcon className="h-4 w-4 mr-1" /> Nuevo Activo
+                <Section
+                    title="Mis activos (assets)"
+                    actions={
+                        <button type="button" onClick={() => setNewItemType('asset')} className={`${buttonClass.secondary} px-3 py-1.5`}>
+                            <PlusIcon className="h-4 w-4" /> Nuevo activo
                         </button>
-                    </div>
-
-                    <div className="p-6 space-y-4 flex-grow">
+                    }
+                    className="h-full"
+                >
+                    <div className="space-y-4">
                         {/* Auto property value */}
                         {propertiesValue > 0 && (
                             <div className="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 pb-4">
@@ -413,32 +358,28 @@ export default function WealthManagement() {
                                     <p className="font-medium text-gray-900 dark:text-white text-lg">Portafolio Inmobiliario</p>
                                     <p className="text-sm text-gray-500 mt-0.5">Valor de propiedades en Ubica (Automático)</p>
                                 </div>
-                                <p className="text-xl font-bold text-gray-900 dark:text-white whitespace-nowrap">
-                                    €{propertiesValue.toLocaleString()}
+                                <p className="font-display text-xl font-semibold tabular-nums text-gray-900 dark:text-white whitespace-nowrap">
+                                    {formatEur(propertiesValue)}
                                 </p>
                             </div>
                         )}
 
                         {assets.length === 0 && propertiesValue === 0 ? (
-                            <div className="text-center py-10">
-                                <ArrowTrendingUpIcon className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
-                                <p className="text-gray-500 dark:text-gray-400 mb-1">No tienes activos registrados</p>
-                                <p className="text-sm text-gray-400 dark:text-gray-500">Pulsa "Nuevo Activo" para añadir cuentas, inversiones, etc.</p>
-                            </div>
+                            <EmptyState bare icon={ArrowTrendingUpIcon} title="No tienes activos registrados" description='Pulsa "Nuevo activo" para añadir cuentas, inversiones, etc.' />
                         ) : (
                             assets.map(asset => (
-                                <div key={asset.id} className="flex justify-between items-start border-b border-gray-50 dark:border-gray-750 pb-4 group">
+                                <div key={asset.id} className="flex justify-between items-start border-b border-gray-50 dark:border-gray-700 pb-4 group">
                                     <div className="flex-1 pr-4">
                                         <p className="font-medium text-gray-900 dark:text-white">{asset.name}</p>
                                         <p className="text-sm text-gray-500 mt-0.5">{asset.description}</p>
                                     </div>
                                     <div className="flex items-center gap-4">
-                                        <p className="text-lg font-bold text-gray-900 dark:text-white whitespace-nowrap">
-                                            €{asset.amount.toLocaleString()}
+                                        <p className="text-lg font-semibold tabular-nums text-gray-900 dark:text-white whitespace-nowrap">
+                                            {formatEur(asset.amount)}
                                         </p>
                                         <button
                                             onClick={() => handleDeleteItem('asset', asset.id)}
-                                            className="text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                            className={`${iconButtonClass.danger} sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100`}
                                             title="Eliminar activo"
                                         >
                                             <TrashIcon className="h-5 w-5" />
@@ -448,49 +389,35 @@ export default function WealthManagement() {
                             ))
                         )}
                     </div>
-                </motion.div>
+                </Section>
 
                 {/* Liabilities Column */}
-                <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.5, delay: 0.3 }}
-                    className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 h-full flex flex-col"
-                >
-                    <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-                            <ArrowTrendingDownIcon className="h-6 w-6 mr-2 text-red-500" />
-                            Mis Pasivos (Liabilities)
-                        </h3>
-                        <button
-                            onClick={() => setNewItemType('liability')}
-                            className="text-sm flex items-center text-red-600 hover:text-red-700 dark:text-red-400 font-medium bg-red-50 dark:bg-red-900/30 px-3 py-1.5 rounded-md"
-                        >
-                            <PlusIcon className="h-4 w-4 mr-1" /> Nuevo Pasivo
+                <Section
+                    title="Mis pasivos (liabilities)"
+                    actions={
+                        <button type="button" onClick={() => setNewItemType('liability')} className={`${buttonClass.secondary} px-3 py-1.5`}>
+                            <PlusIcon className="h-4 w-4" /> Nuevo pasivo
                         </button>
-                    </div>
-
-                    <div className="p-6 space-y-4 flex-grow">
+                    }
+                    className="h-full"
+                >
+                    <div className="space-y-4">
                         {liabilities.length === 0 ? (
-                            <div className="text-center py-10">
-                                <ArrowTrendingDownIcon className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
-                                <p className="text-gray-500 dark:text-gray-400 mb-1">No tienes pasivos registrados</p>
-                                <p className="text-sm text-gray-400 dark:text-gray-500">Pulsa "Nuevo Pasivo" para añadir hipotecas, préstamos, etc.</p>
-                            </div>
+                            <EmptyState bare icon={ArrowTrendingDownIcon} title="No tienes pasivos registrados" description='Pulsa "Nuevo pasivo" para añadir hipotecas, préstamos, etc.' />
                         ) : (
                             liabilities.map(liability => (
-                                <div key={liability.id} className="flex justify-between items-start border-b border-gray-50 dark:border-gray-750 pb-4 group">
+                                <div key={liability.id} className="flex justify-between items-start border-b border-gray-50 dark:border-gray-700 pb-4 group">
                                     <div className="flex-1 pr-4">
                                         <p className="font-medium text-gray-900 dark:text-white">{liability.name}</p>
                                         <p className="text-sm text-gray-500 mt-0.5">{liability.description}</p>
                                     </div>
                                     <div className="flex items-center gap-4">
-                                        <p className="text-lg font-bold text-gray-900 dark:text-white whitespace-nowrap">
-                                            €{liability.amount.toLocaleString()}
+                                        <p className="text-lg font-semibold tabular-nums text-gray-900 dark:text-white whitespace-nowrap">
+                                            {formatEur(liability.amount)}
                                         </p>
                                         <button
                                             onClick={() => handleDeleteItem('liability', liability.id)}
-                                            className="text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                            className={`${iconButtonClass.danger} sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100`}
                                             title="Eliminar pasivo"
                                         >
                                             <TrashIcon className="h-5 w-5" />
@@ -500,7 +427,7 @@ export default function WealthManagement() {
                             ))
                         )}
                     </div>
-                </motion.div>
+                </Section>
             </div>
         </div>
     );

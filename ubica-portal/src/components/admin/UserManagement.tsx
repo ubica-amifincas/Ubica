@@ -1,16 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   UserPlusIcon,
   PencilIcon,
   TrashIcon,
-  EyeIcon,
   XMarkIcon,
-  CheckIcon
+  UsersIcon,
 } from '@heroicons/react/24/outline';
 import { useAuthenticatedFetch } from '../../contexts/AuthContext';
 import type { CreateUserRequest, UpdateUserRequest } from '../../services/apiService';
 import type { User } from '../../services/apiService';
+import {
+  PageHeader,
+  PageStack,
+  Section,
+  EmptyState,
+  LoadingState,
+  Badge,
+  Table,
+  THead,
+  TBody,
+  Th,
+  Tr,
+  Td,
+  buttonClass,
+  iconButtonClass,
+  type BadgeTone,
+} from '../dashboard/ui';
 
 interface UserFormData {
   email: string;
@@ -21,12 +36,15 @@ interface UserFormData {
   phone: string;
 }
 
-const ROLES = [
-  { value: 'admin', label: 'Administrador', color: 'bg-red-100 text-red-800' },
-  { value: 'realtor', label: 'Inmobiliaria', color: 'bg-emerald-100 text-emerald-800' },
-  { value: 'investor', label: 'Inversionista', color: 'bg-emerald-100 text-emerald-800' },
-  { value: 'user', label: 'Usuario', color: 'bg-gray-100 text-gray-800' },
+const ROLES: { value: string; label: string; tone: BadgeTone }[] = [
+  { value: 'admin', label: 'Administrador', tone: 'warning' },
+  { value: 'realtor', label: 'Inmobiliaria', tone: 'brand' },
+  { value: 'investor', label: 'Inversionista', tone: 'brand' },
+  { value: 'user', label: 'Usuario', tone: 'neutral' },
 ];
+
+const inputClass =
+  'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white';
 
 const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -165,264 +183,233 @@ const UserManagement: React.FC = () => {
     return ROLES.find(r => r.value === role) || ROLES[3];
   };
 
+  const header = (
+    <PageHeader
+      title="Usuarios"
+      description="Administra los accesos y roles de la plataforma"
+      actions={
+        <button type="button" onClick={handleCreateUser} className={buttonClass.primary}>
+          <UserPlusIcon className="h-5 w-5" />
+          Nuevo usuario
+        </button>
+      }
+    />
+  );
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
-      </div>
+      <PageStack>
+        {header}
+        <LoadingState />
+      </PageStack>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Gestión de Usuarios
-          </h2>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Administra los accesos y roles de la plataforma
-          </p>
-        </div>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleCreateUser}
-          className="flex items-center space-x-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
-        >
-          <UserPlusIcon className="h-5 w-5" />
-          <span>Nuevo Usuario</span>
-        </motion.button>
-      </div>
+    <PageStack>
+      {header}
 
-      {/* Users Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-100 dark:divide-gray-700">
-            <thead className="bg-gray-50/50 dark:bg-gray-800/50">
+      <Section
+        title="Cuentas"
+        actions={
+          <span className="text-sm tabular-nums text-gray-500 dark:text-gray-400">
+            {users.length} {users.length === 1 ? 'usuario' : 'usuarios'}
+          </span>
+        }
+        flush
+      >
+        {users.length === 0 ? (
+          <EmptyState bare icon={UsersIcon} title="Todavía no hay usuarios registrados." />
+        ) : (
+          <Table>
+            <THead>
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Usuario
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Rol
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Empresa
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Estado
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider items-center justify-end">
-                  Acciones
-                </th>
+                <Th>Usuario</Th>
+                <Th>Rol</Th>
+                <Th>Empresa</Th>
+                <Th>Estado</Th>
+                <Th align="right">Acciones</Th>
               </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
+            </THead>
+            <TBody>
               {users.map((user) => {
                 const roleInfo = getRoleInfo(user.role);
                 return (
-                  <motion.tr
-                    key={user.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          {user.full_name}
-                        </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {user.email}
-                        </div>
+                  <Tr key={user.id}>
+                    <Td>
+                      <div className="font-medium text-gray-900 dark:text-white">{user.full_name}</div>
+                      <div className="text-gray-500 dark:text-gray-400">{user.email}</div>
+                    </Td>
+                    <Td>
+                      <Badge tone={roleInfo.tone}>{roleInfo.label}</Badge>
+                    </Td>
+                    <Td>{user.company || 'N/A'}</Td>
+                    <Td>
+                      <Badge tone={user.is_active ? 'brand' : 'danger'}>{user.is_active ? 'Activo' : 'Inactivo'}</Badge>
+                    </Td>
+                    <Td align="right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handleEditUser(user)}
+                          className={iconButtonClass.brand}
+                          title="Editar"
+                          aria-label={`Editar a ${user.full_name}`}
+                        >
+                          <PencilIcon className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteUser(user)}
+                          className={iconButtonClass.danger}
+                          title="Eliminar"
+                          aria-label={`Eliminar a ${user.full_name}`}
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${roleInfo.color}`}>
-                        {roleInfo.label}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {user.company || 'N/A'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
-                        }`}>
-                        {user.is_active ? 'Activo' : 'Inactivo'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                      <button
-                        onClick={() => handleEditUser(user)}
-                        className="text-emerald-600 hover:text-emerald-900 dark:text-emerald-400"
-                      >
-                        <PencilIcon className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteUser(user)}
-                        className="text-red-600 hover:text-red-900 dark:text-red-400"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
-                    </td>
-                  </motion.tr>
+                    </Td>
+                  </Tr>
                 );
               })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            </TBody>
+          </Table>
+        )}
+      </Section>
 
       {/* Modal for Create/Edit User */}
-      <AnimatePresence>
-        {showModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-            onClick={() => setShowModal(false)}
+      {showModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 p-4"
+          onClick={() => setShowModal(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={editingUser ? 'Editar usuario' : 'Crear usuario'}
+            className="max-h-[calc(100vh-2rem)] w-full max-w-md overflow-y-auto rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800"
+            onClick={(e) => e.stopPropagation()}
           >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {editingUser ? 'Editar Usuario' : 'Crear Usuario'}
-                </h3>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <XMarkIcon className="h-6 w-6" />
-                </button>
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-display text-lg font-semibold text-gray-900 dark:text-white">
+                {editingUser ? 'Editar usuario' : 'Crear usuario'}
+              </h3>
+              <button type="button" onClick={() => setShowModal(false)} aria-label="Cerrar" className={iconButtonClass.neutral}>
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Email */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className={inputClass}
+                  placeholder="usuario@ejemplo.com"
+                />
+                {errors.email && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.email}</p>}
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Email */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Email *
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
-                    placeholder="usuario@ejemplo.com"
-                  />
-                  {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-                </div>
+              {/* Password (obligatorio al crear, opcional al editar) */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {editingUser ? 'Nueva contraseña (dejar en blanco para no cambiar)' : 'Contraseña *'}
+                </label>
+                <input
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className={inputClass}
+                  placeholder="••••••••"
+                />
+                {errors.password && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.password}</p>}
+              </div>
 
-                {/* Password (obligatorio al crear, opcional al editar) */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    {editingUser ? 'Nueva Contraseña (dejar en blanco para no cambiar)' : 'Contraseña *'}
-                  </label>
-                  <input
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
-                    placeholder={editingUser ? '••••••••' : '••••••••'}
-                  />
-                  {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
-                </div>
+              {/* Full Name */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Nombre completo *
+                </label>
+                <input
+                  type="text"
+                  value={formData.full_name}
+                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                  className={inputClass}
+                  placeholder="Juan Pérez"
+                />
+                {errors.full_name && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.full_name}</p>}
+              </div>
 
-                {/* Full Name */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Nombre Completo *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.full_name}
-                    onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
-                    placeholder="Juan Pérez"
-                  />
-                  {errors.full_name && <p className="text-red-500 text-xs mt-1">{errors.full_name}</p>}
-                </div>
+              {/* Role */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Rol *
+                </label>
+                <select
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
+                  className={inputClass}
+                >
+                  {ROLES.map((role) => (
+                    <option key={role.value} value={role.value}>
+                      {role.label}
+                    </option>
+                  ))}
+                </select>
+                {errors.role && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.role}</p>}
+              </div>
 
-                {/* Role */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Rol *
-                  </label>
-                  <select
-                    value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
-                  >
-                    {ROLES.map((role) => (
-                      <option key={role.value} value={role.value}>
-                        {role.label}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.role && <p className="text-red-500 text-xs mt-1">{errors.role}</p>}
-                </div>
+              {/* Company */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Empresa
+                </label>
+                <input
+                  type="text"
+                  value={formData.company}
+                  onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                  className={inputClass}
+                  placeholder="Empresa S.L."
+                />
+              </div>
 
-                {/* Company */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Empresa
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.company}
-                    onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
-                    placeholder="Empresa S.L."
-                  />
-                </div>
+              {/* Phone */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Teléfono
+                </label>
+                <input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className={inputClass}
+                  placeholder="+34 xxx xxx xxx"
+                />
+              </div>
 
-                {/* Phone */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Teléfono
-                  </label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white"
-                    placeholder="+34 xxx xxx xxx"
-                  />
-                </div>
+              {errors.submit && (
+                <p className="text-sm text-red-600 dark:text-red-400">{errors.submit}</p>
+              )}
 
-                {errors.submit && (
-                  <p className="text-red-500 text-sm">{errors.submit}</p>
-                )}
-
-                {/* Buttons */}
-                <div className="flex space-x-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors"
-                  >
-                    {editingUser ? 'Actualizar' : 'Crear'}
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+              {/* Buttons */}
+              <div className="flex gap-3 pt-4">
+                <button type="button" onClick={() => setShowModal(false)} className={`${buttonClass.secondary} flex-1`}>
+                  Cancelar
+                </button>
+                <button type="submit" className={`${buttonClass.primary} flex-1`}>
+                  {editingUser ? 'Actualizar' : 'Crear'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </PageStack>
   );
 };
 

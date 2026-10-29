@@ -1,5 +1,5 @@
 import { useEffect, lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './hooks/useTheme';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
@@ -137,19 +137,25 @@ function AppRoutes() {
               <Route path="investments" element={<DashboardInvestments />} />
               <Route path="wealth" element={<WealthManagement />} />
               <Route path="settings">
+                <Route index element={<Navigate to="profile" replace />} />
                 <Route path="email" element={<SettingsEmail />} />
                 <Route path="password" element={<SettingsPassword />} />
                 <Route path="profile" element={<ProfileSettings />} />
               </Route>
             </Route>
 
-            {/* Admin Routes */}
+            {/* Admin Routes: mismo armazón que el resto de paneles; cada sección tiene su URL */}
             <Route path="/admin" element={
               <ProtectedRoute requiredRoles="admin">
-                <MainLayout />
+                <DashboardLayout />
               </ProtectedRoute>
             }>
-              <Route index element={<AdminDashboard />} />
+              <Route index element={<AdminDashboard section="overview" />} />
+              <Route path="usuarios" element={<AdminDashboard section="users" />} />
+              <Route path="propiedades" element={<AdminDashboard section="properties" />} />
+              <Route path="users" element={<Navigate to="/admin/usuarios" replace />} />
+              <Route path="properties" element={<Navigate to="/admin/propiedades" replace />} />
+              <Route path="*" element={<Navigate to="/admin" replace />} />
             </Route>
 
             {/* Realtor Routes */}
@@ -158,7 +164,16 @@ function AppRoutes() {
                 <DashboardLayout />
               </ProtectedRoute>
             }>
-              <Route index element={<RealtorDashboard />} />
+              <Route index element={<RealtorDashboard section="overview" />} />
+              <Route path="propiedades" element={<RealtorDashboard section="properties" />} />
+              <Route path="alquileres" element={<RealtorDashboard section="rentals" />} />
+              <Route path="ventas" element={<RealtorDashboard section="sales" />} />
+              <Route path="estadisticas" element={<RealtorDashboard section="analytics" />} />
+              <Route path="properties" element={<Navigate to="/realtor/propiedades" replace />} />
+              <Route path="rentals" element={<Navigate to="/realtor/alquileres" replace />} />
+              <Route path="sales" element={<Navigate to="/realtor/ventas" replace />} />
+              <Route path="analytics" element={<Navigate to="/realtor/estadisticas" replace />} />
+              <Route path="*" element={<Navigate to="/realtor" replace />} />
             </Route>
 
             {/* Investor Routes */}
@@ -167,7 +182,13 @@ function AppRoutes() {
                 <DashboardLayout />
               </ProtectedRoute>
             }>
-              <Route index element={<InvestorDashboard />} />
+              <Route index element={<InvestorDashboard section="overview" />} />
+              <Route path="portfolio" element={<InvestorDashboard section="portfolio" />} />
+              <Route path="oportunidades" element={<InvestorDashboard section="opportunities" />} />
+              <Route path="patrimonio" element={<InvestorDashboard section="wealth" />} />
+              <Route path="opportunities" element={<Navigate to="/investor/oportunidades" replace />} />
+              <Route path="wealth" element={<Navigate to="/investor/patrimonio" replace />} />
+              <Route path="*" element={<Navigate to="/investor" replace />} />
             </Route>
           </Routes>
         </Suspense>

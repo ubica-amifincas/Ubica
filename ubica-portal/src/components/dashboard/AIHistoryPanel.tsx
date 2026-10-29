@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { EmptyState, LoadingState, ErrorAlert, buttonClass } from './ui';
 import { 
   SparklesIcon, 
   ChatBubbleLeftRightIcon, 
-  TrashIcon,
   ClockIcon,
   ChevronRightIcon
 } from '@heroicons/react/24/outline';
@@ -62,102 +61,77 @@ export const AIHistoryPanel: React.FC = () => {
     };
 
     if (loading) {
-        return (
-            <div className="flex justify-center items-center h-64 bg-white dark:bg-gray-900 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary dark:border-primary/80"></div>
-            </div>
-        );
+        return <LoadingState />;
     }
 
     return (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 focus:outline-none p-6 md:p-8">
-            <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                        <SparklesIcon className="w-6 h-6 text-primary" />
-                    </div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                        Historial de IA
-                    </h2>
-                </div>
-            </div>
-
-            <p className="text-gray-600 dark:text-gray-400 mb-8">
-                Aquí puedes retomar cualquiera de tus últimas 5 consultas con el asistente de Ubica.
-            </p>
-
-            {error && (
-                <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg">
-                    {error}
-                </div>
-            )}
+        <div className="space-y-4">
+            {error && <ErrorAlert onRetry={loadHistory}>{error}</ErrorAlert>}
 
             {conversations.length === 0 && !error ? (
-                <div className="text-center py-16 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
-                    <ChatBubbleLeftRightIcon className="w-12 h-12 text-gray-300 dark:text-gray-500 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                        Aún no tienes conversaciones
-                    </h3>
-                    <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-6">
-                        Comienza a chatear con nuestra IA haciendo clic en el botón flotante inferior derecho.
-                    </p>
-                    <button
-                        onClick={() => openChat()}
-                        className="px-6 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg transition-colors font-medium shadow-sm hover:shadow-md"
-                    >
-                        Iniciar un Chat
-                    </button>
-                </div>
+                <EmptyState
+                    icon={ChatBubbleLeftRightIcon}
+                    title="Aún no tienes conversaciones"
+                    description="Comienza a chatear con nuestra IA haciendo clic en el botón flotante inferior derecho."
+                    action={
+                        <button type="button" onClick={() => openChat()} className={buttonClass.primary}>
+                            <SparklesIcon className="h-4 w-4" />
+                            Iniciar un chat
+                        </button>
+                    }
+                />
             ) : (
                 <div className="grid gap-4">
-                    {conversations.map((conv, idx) => (
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: idx * 0.1 }}
+                    {conversations.map((conv) => (
+                        <div
                             key={conv.id}
+                            role="button"
+                            tabIndex={0}
                             onClick={() => handleOpenConversation(conv.id)}
-                            className="group flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:border-primary/30 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] hover:-translate-y-1 transition-all cursor-pointer relative overflow-hidden"
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    handleOpenConversation(conv.id);
+                                }
+                            }}
+                            className="group flex cursor-pointer flex-col items-start justify-between gap-4 rounded-xl border border-gray-200 bg-white p-5 transition-colors hover:border-emerald-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 sm:flex-row sm:items-center dark:border-gray-700 dark:bg-gray-800 dark:hover:border-emerald-400"
                         >
-                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary transform scale-y-0 group-hover:scale-y-100 transition-transform origin-bottom"></div>
-                            
-                            <div className="flex items-start space-x-4 mb-4 sm:mb-0">
-                                <div className="mt-1 flex-shrink-0">
-                                    <ChatBubbleLeftRightIcon className="w-6 h-6 text-gray-400 group-hover:text-primary transition-colors" />
+                            <div className="flex min-w-0 items-start gap-4">
+                                <div className="mt-0.5 flex-shrink-0">
+                                    <ChatBubbleLeftRightIcon className="h-6 w-6 text-gray-400 transition-colors group-hover:text-emerald-700 dark:group-hover:text-emerald-300" />
                                 </div>
-                                <div>
-                                    <h3 className="text-base font-semibold text-gray-900 dark:text-white group-hover:text-primary dark:group-hover:text-primary-light transition-colors line-clamp-1">
+                                <div className="min-w-0">
+                                    <h3 className="line-clamp-1 text-base font-semibold text-gray-900 dark:text-white">
                                         {conv.title}
                                     </h3>
-                                    <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500 dark:text-gray-400">
-                                        <div className="flex items-center space-x-1">
-                                            <ClockIcon className="w-4 h-4" />
+                                    <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
+                                        <div className="flex items-center gap-1">
+                                            <ClockIcon className="h-4 w-4" />
                                             <span>
-                                                {new Date(conv.updated_at).toLocaleDateString('es-ES', { 
-                                                    day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'
+                                                {new Date(conv.updated_at).toLocaleDateString('es-ES', {
+                                                    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
                                                 })}
                                             </span>
                                         </div>
-                                        <div>
+                                        <div className="tabular-nums">
                                             {conv.message_count} {conv.message_count === 1 ? 'mensaje' : 'mensajes'}
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="flex items-center space-x-4 ml-auto sm:ml-4">
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleOpenConversation(conv.id);
-                                    }}
-                                    className="px-4 py-2 bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-light hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white rounded-lg transition-colors font-medium text-sm flex items-center space-x-2 whitespace-nowrap"
-                                >
-                                    <span>Continuar</span>
-                                    <ChevronRightIcon className="w-4 h-4" />
-                                </button>
-                            </div>
-                        </motion.div>
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenConversation(conv.id);
+                                }}
+                                className={`${buttonClass.secondary} ml-auto whitespace-nowrap sm:ml-4`}
+                            >
+                                <span>Continuar</span>
+                                <ChevronRightIcon className="h-4 w-4" />
+                            </button>
+                        </div>
                     ))}
                 </div>
             )}

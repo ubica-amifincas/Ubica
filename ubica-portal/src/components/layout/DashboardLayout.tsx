@@ -1,7 +1,5 @@
-import { useState, Suspense } from 'react';
-import RouteFallback from '../common/RouteFallback';
+import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bars3Icon,
   XMarkIcon,
@@ -17,307 +15,401 @@ import {
   WalletIcon,
   HeartIcon,
   SparklesIcon,
-  MagnifyingGlassIcon
+  MagnifyingGlassIcon,
+  UsersIcon,
+  CalendarIcon,
+  CurrencyEuroIcon,
+  PresentationChartLineIcon,
+  BriefcaseIcon,
+  LightBulbIcon,
+  ChevronDownIcon,
+  ChatBubbleLeftRightIcon,
 } from '@heroicons/react/24/outline';
+import RouteFallback from '../common/RouteFallback';
 import { ThemeToggle } from '../common/ThemeToggle';
 import { LanguageSelector } from '../common/LanguageSelector';
 import { useLanguage } from '../../hooks/useLanguage';
 import { useAuth } from '../../contexts/AuthContext';
 
+type IconType = React.ComponentType<{ className?: string }>;
+
+interface NavItem {
+  label: string;
+  href: string;
+  icon: IconType;
+  /** Solo activo con la ruta exacta (páginas índice). */
+  exact?: boolean;
+}
+
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+type TFn = (key: string, fallback?: string) => string;
+
+/** Navegación del panel según el rol. Es el único sitio desde el que se cambia de sección. */
+function buildNavigation(role: string | undefined, t: TFn): NavGroup[] {
+  const mine = t('panel.group.mine', 'Mi área');
+  const messages: NavItem = { label: t('panel.nav.messages', 'Mensajes'), href: '/dashboard?view=messages', icon: ChatBubbleLeftRightIcon };
+  const aiHistory: NavItem = { label: t('panel.nav.aiHistory', 'Historial IA'), href: '/dashboard?view=ia_history', icon: SparklesIcon };
+  const wealth: NavItem = { label: t('panel.nav.wealth', 'Patrimonio'), href: '/dashboard/wealth', icon: WalletIcon };
+  const financialOverview: NavItem = { label: t('panel.nav.financialOverview', 'Resumen financiero'), href: '/dashboard', icon: ChartBarIcon, exact: true };
+  const myProperties: NavItem = { label: t('panel.nav.myProperties', 'Mis propiedades'), href: '/dashboard/properties', icon: BuildingOfficeIcon };
+  const sales: NavItem = { label: t('panel.nav.sales', 'Ventas'), href: '/dashboard/sales', icon: BanknotesIcon };
+  const rentals: NavItem = { label: t('panel.nav.rentals', 'Alquileres'), href: '/dashboard/rentals', icon: KeyIcon };
+  const investments: NavItem = { label: t('panel.nav.investments', 'Inversiones'), href: '/dashboard/investments', icon: ArrowTrendingUpIcon };
+
+  switch (role) {
+    case 'admin':
+      return [
+        {
+          label: t('panel.group.admin', 'Administración'),
+          items: [
+            { label: t('panel.nav.overview', 'Resumen'), href: '/admin', icon: PresentationChartLineIcon, exact: true },
+            { label: t('panel.nav.users', 'Usuarios'), href: '/admin/usuarios', icon: UsersIcon },
+            { label: t('panel.nav.properties', 'Propiedades'), href: '/admin/propiedades', icon: BuildingOfficeIcon },
+          ],
+        },
+        { label: mine, items: [financialOverview, myProperties, sales, rentals, investments, wealth, messages, aiHistory] },
+      ];
+    case 'realtor':
+      return [
+        {
+          label: t('panel.group.realtor', 'Inmobiliaria'),
+          items: [
+            { label: t('panel.nav.overview', 'Resumen'), href: '/realtor', icon: PresentationChartLineIcon, exact: true },
+            { label: t('panel.nav.portfolioRealtor', 'Cartera de inmuebles'), href: '/realtor/propiedades', icon: HomeIcon },
+            { label: t('panel.nav.rentalContracts', 'Contratos de alquiler'), href: '/realtor/alquileres', icon: CalendarIcon },
+            { label: t('panel.nav.salesOps', 'Operaciones de venta'), href: '/realtor/ventas', icon: CurrencyEuroIcon },
+            { label: t('panel.nav.analytics', 'Estadísticas'), href: '/realtor/estadisticas', icon: ArrowTrendingUpIcon },
+          ],
+        },
+        { label: mine, items: [financialOverview, myProperties, sales, rentals, investments, wealth, messages, aiHistory] },
+      ];
+    case 'investor':
+      return [
+        {
+          label: t('panel.group.investor', 'Inversor'),
+          items: [
+            { label: t('panel.nav.overview', 'Resumen'), href: '/investor', icon: PresentationChartLineIcon, exact: true },
+            { label: t('panel.nav.portfolio', 'Mi portfolio'), href: '/investor/portfolio', icon: BriefcaseIcon },
+            { label: t('panel.nav.opportunities', 'Oportunidades'), href: '/investor/oportunidades', icon: LightBulbIcon },
+            { label: t('panel.nav.wealth', 'Patrimonio'), href: '/investor/patrimonio', icon: WalletIcon },
+          ],
+        },
+        { label: mine, items: [myProperties, sales, rentals, messages, aiHistory] },
+      ];
+    default:
+      return [
+        {
+          label: mine,
+          items: [
+            { label: t('panel.nav.overview', 'Resumen'), href: '/dashboard', icon: ChartBarIcon, exact: true },
+            myProperties,
+            wealth,
+            messages,
+            aiHistory,
+            { label: t('panel.nav.favorites', 'Favoritos'), href: '/dashboard?view=favorites', icon: HeartIcon },
+            { label: t('panel.nav.searches', 'Búsquedas'), href: '/dashboard?view=searches', icon: MagnifyingGlassIcon },
+          ],
+        },
+      ];
+  }
+}
+
+function useIsActive() {
+  const location = useLocation();
+  return (item: NavItem) => {
+    const [path, query] = item.href.split('?');
+    const view = new URLSearchParams(location.search).get('view');
+    if (query) {
+      return location.pathname === path && view === new URLSearchParams(query).get('view');
+    }
+    if (item.exact) {
+      const samePath = location.pathname.replace(/\/+$/, '') === path;
+      // /dashboard con ?view=... es otra sección (Mensajes, Favoritos...)
+      return samePath && (path !== '/dashboard' || !view || view === 'dashboard');
+    }
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  };
+}
+
+function Avatar({ name, src, size = 'md' }: { name?: string; src?: string; size?: 'sm' | 'md' }) {
+  const dim = size === 'sm' ? 'h-8 w-8 text-xs' : 'h-9 w-9 text-sm';
+  if (src) return <img src={src} alt="" className={`${dim} flex-shrink-0 rounded-full object-cover`} />;
+  return (
+    <span className={`${dim} flex flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 font-semibold text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300`}>
+      {name?.trim().charAt(0).toUpperCase() || 'U'}
+    </span>
+  );
+}
+
+function SidebarContent({
+  groups,
+  settings,
+  onNavigate,
+  onLogout,
+}: {
+  groups: NavGroup[];
+  settings: NavGroup;
+  onNavigate?: () => void;
+  onLogout: () => void;
+}) {
+  const isActive = useIsActive();
+  const { user } = useAuth();
+  const { t } = useLanguage();
+
+  const renderItem = (item: NavItem) => {
+    const active = isActive(item);
+    return (
+      <Link
+        key={item.href}
+        to={item.href}
+        onClick={onNavigate}
+        aria-current={active ? 'page' : undefined}
+        className={`group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+          active
+            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700/60 dark:hover:text-white'
+        }`}
+      >
+        <item.icon
+          className={`h-5 w-5 flex-shrink-0 ${
+            active ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-400 group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-300'
+          }`}
+        />
+        <span className="truncate">{item.label}</span>
+      </Link>
+    );
+  };
+
+  const renderGroup = (group: NavGroup) => (
+    <div key={group.label}>
+      <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{group.label}</p>
+      <div className="space-y-0.5">{group.items.map(renderItem)}</div>
+    </div>
+  );
+
+  return (
+    <div className="flex h-full flex-col">
+      <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5" aria-label={t('panel.navLabel', 'Secciones del panel')}>
+        {groups.map(renderGroup)}
+        {renderGroup(settings)}
+      </nav>
+
+      <div className="flex items-center gap-3 border-t border-gray-200 px-4 py-4 dark:border-gray-700">
+        <Link to="/dashboard/settings/profile" onClick={onNavigate} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg">
+          <Avatar name={user?.full_name} src={user?.avatar} />
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-medium text-gray-900 dark:text-white">{user?.full_name || user?.email || t('roles.user')}</span>
+            <span className="block truncate text-xs text-gray-500 dark:text-gray-400">{t(`roles.${user?.role || 'user'}`)}</span>
+          </span>
+        </Link>
+        <button
+          type="button"
+          onClick={onLogout}
+          title={t('dashboard.logout')}
+          aria-label={t('dashboard.logout')}
+          className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+        >
+          <ArrowLeftOnRectangleIcon className="h-5 w-5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function UserMenu({ onLogout }: { onLogout: () => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
+  const { t } = useLanguage();
+  const location = useLocation();
+
+  useEffect(() => setOpen(false), [location.pathname, location.search]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('mousedown', onClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  const itemClass =
+    'flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700';
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={t('panel.userMenu', 'Menú de usuario')}
+        className="flex h-10 items-center gap-1 rounded-lg pl-1 pr-1.5 transition-colors hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:hover:bg-gray-700"
+      >
+        <Avatar name={user?.full_name} src={user?.avatar} size="sm" />
+        <ChevronDownIcon className="hidden h-4 w-4 text-gray-500 sm:block dark:text-gray-400" />
+      </button>
+      {open && (
+        <div role="menu" className="absolute right-0 z-50 mt-2 w-60 overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+          <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+            <p className="truncate text-sm font-medium text-gray-900 dark:text-white">{user?.full_name || t('roles.user')}</p>
+            <p className="truncate text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
+          </div>
+          <Link role="menuitem" to="/dashboard/settings/profile" className={itemClass}>
+            <UserCircleIcon className="h-4 w-4 text-gray-400" /> {t('panel.nav.profile', 'Mi perfil')}
+          </Link>
+          <Link role="menuitem" to="/" className={itemClass}>
+            <HomeIcon className="h-4 w-4 text-gray-400" /> {t('panel.goToPortal', 'Ir al portal')}
+          </Link>
+          <button role="menuitem" type="button" onClick={onLogout} className={`${itemClass} border-t border-gray-200 dark:border-gray-700`}>
+            <ArrowLeftOnRectangleIcon className="h-4 w-4 text-gray-400" /> {t('dashboard.logout')}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function DashboardLayout() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { user, logout } = useAuth();
+  const isActive = useIsActive();
 
-  const isInvestor = user?.role === 'investor';
-  const isRealtor = user?.role === 'realtor';
-  const isStandardUser = user?.role === 'user';
+  const groups = useMemo(() => buildNavigation(user?.role, t as TFn), [user?.role, t]);
+  const settings: NavGroup = useMemo(
+    () => ({
+      label: t('panel.group.settings', 'Configuración'),
+      items: [
+        { label: t('panel.nav.profile', 'Mi perfil'), href: '/dashboard/settings/profile', icon: UserCircleIcon },
+        { label: t('panel.nav.changeEmail', 'Cambiar email'), href: '/dashboard/settings/email', icon: EnvelopeIcon },
+        { label: t('panel.nav.changePassword', 'Cambiar contraseña'), href: '/dashboard/settings/password', icon: KeyIcon },
+      ],
+    }),
+    [t],
+  );
 
-  const navigation = [
-    ...(isInvestor
-      ? [{ name: 'Panel de Inversionista', href: '/investor', icon: ArrowTrendingUpIcon }]
-      : [{ name: t('dashboard.overview'), href: '/dashboard', icon: ChartBarIcon }]
-    ),
-    ...(isRealtor ? [{ name: 'Panel Inmobiliaria', href: '/realtor', icon: BuildingOfficeIcon }] : []),
-    ...(isStandardUser ? [{ name: 'Mis propiedades', href: '/dashboard/properties', icon: BuildingOfficeIcon }] : []),
-    ...(!isStandardUser ? [
-      { name: t('dashboard.properties'), href: '/dashboard/properties', icon: BuildingOfficeIcon },
-      { name: t('dashboard.sales'), href: '/dashboard/sales', icon: BanknotesIcon },
-      { name: t('dashboard.rentals'), href: '/dashboard/rentals', icon: KeyIcon },
-    ] : []),
-    ...(!isInvestor && !isStandardUser ? [{ name: t('dashboard.investments'), href: '/dashboard/investments', icon: ArrowTrendingUpIcon }] : []),
-    { name: 'Patrimonio', href: '/dashboard/wealth', icon: WalletIcon },
-    { name: 'Mensajes', href: '/dashboard?view=messages', icon: EnvelopeIcon },
-    { name: 'Historial IA', href: '/dashboard?view=ia_history', icon: SparklesIcon },
-    ...(isStandardUser ? [
-      { name: 'Favoritos', href: '/dashboard?view=favorites', icon: HeartIcon },
-      { name: 'Búsquedas', href: '/dashboard?view=searches', icon: MagnifyingGlassIcon },
-    ] : []),
-  ];
+  // Título de la barra superior: grupo + sección activa
+  const current = [...groups, settings]
+    .flatMap(g => g.items.map(item => ({ group: g.label, item })))
+    .find(({ item }) => isActive(item));
 
-  const settingsNavigation = [
-    { name: 'Mi Perfil', href: '/dashboard/settings/profile', icon: UserCircleIcon },
-    { name: 'Cambiar Email', href: '/dashboard/settings/email', icon: EnvelopeIcon },
-    { name: 'Cambiar Contraseña', href: '/dashboard/settings/password', icon: KeyIcon },
-  ];
-
-  const isActive = (href: string) => {
-    const currentPath = location.pathname + location.search;
-    
-    // Explicit match including query parameters (like ?view=ia_history)
-    if (currentPath === href) {
-        return true;
-    }
-
-    // Exact paths without query string
-    if (href === '/dashboard') {
-      return location.pathname === '/dashboard' && (!location.search || location.search === '?view=dashboard');
-    }
-    
-    // For other paths that are pure paths (like '/dashboard/investments' or '/investor')
-    if (!href.includes('?')) {
-        if (href === '/investor' || href === '/realtor') return location.pathname === href;
-        return location.pathname.startsWith(href);
-    }
-
-    return false;
-  };
+  // El cajón se cierra al navegar y con Escape; mientras está abierto, la página no hace scroll
+  useEffect(() => setIsDrawerOpen(false), [location.pathname, location.search]);
+  useEffect(() => {
+    if (!isDrawerOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setIsDrawerOpen(false);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [isDrawerOpen]);
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
 
+  const logo = (
+    <Link to="/" className="flex items-center" aria-label="Ubica, ir al portal">
+      <img src="/logo_ubica.png" alt="Ubica" className="h-10 w-auto object-contain" />
+    </Link>
+  );
+
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Sidebar */}
-      <div className="hidden md:flex md:w-64 md:flex-col">
-        <div className="flex flex-col flex-grow pt-5 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
-          {/* Logo */}
-          <div className="flex items-center flex-shrink-0 px-4">
-            <Link to="/" className="flex items-center justify-center w-full">
-              <img
-                src="/logo_ubica.png"
-                alt="Ubica"
-                className="h-12 md:h-14 w-auto object-contain"
-              />
-            </Link>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Barra lateral fija (lg+) */}
+      <aside className="hidden lg:fixed lg:inset-y-0 lg:z-30 lg:flex lg:w-64 lg:flex-col border-r border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+        <div className="flex h-16 flex-shrink-0 items-center border-b border-gray-200 px-5 dark:border-gray-700">{logo}</div>
+        <div className="min-h-0 flex-1">
+          <SidebarContent groups={groups} settings={settings} onLogout={handleLogout} />
+        </div>
+      </aside>
+
+      {/* Cajón lateral (< lg) */}
+      <div className="lg:hidden">
+        {isDrawerOpen && (
+          <div className="fixed inset-0 z-40 bg-gray-900/50" aria-hidden="true" onClick={() => setIsDrawerOpen(false)} />
+        )}
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('panel.navLabel', 'Secciones del panel')}
+          aria-hidden={!isDrawerOpen}
+          className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col bg-white shadow-xl transition-transform duration-200 ease-out dark:bg-gray-800 ${
+            isDrawerOpen ? 'translate-x-0' : 'invisible -translate-x-full'
+          }`}
+        >
+          <div className="flex h-16 flex-shrink-0 items-center justify-between border-b border-gray-200 px-4 dark:border-gray-700">
+            {logo}
+            <button
+              type="button"
+              onClick={() => setIsDrawerOpen(false)}
+              aria-label={t('panel.closeMenu', 'Cerrar menú')}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+            >
+              <XMarkIcon className="h-6 w-6" />
+            </button>
           </div>
-
-          {/* Navigation */}
-          <div className="mt-8 flex-grow flex flex-col">
-            <nav className="flex-1 px-4 space-y-1">
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`
-                    group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all duration-200
-                    ${isActive(item.href)
-                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'
-                    }
-                  `}
-                >
-                  <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
-                  {item.name}
-                </Link>
-              ))}
-
-              <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700 space-y-1">
-                <p className="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                  Configuración
-                </p>
-                {settingsNavigation.map((item) => (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className={`
-                      group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all duration-200
-                      ${isActive(item.href)
-                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'
-                      }
-                    `}
-                  >
-                    <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
-                    {item.name}
-                  </Link>
-                ))}
-              </div>
-            </nav>
-
-            {/* User Section */}
-            <div className="flex-shrink-0 p-4 border-t border-gray-200 dark:border-gray-700">
-              <Link to="/dashboard/settings/profile" className="flex items-center space-x-3 group cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 -mx-2 px-2 py-1.5 rounded-lg transition-colors">
-                <div className="flex-shrink-0">
-                  {user?.avatar ? (
-                    <img src={user.avatar} alt="Avatar" className="h-8 w-8 rounded-full object-cover" />
-                  ) : (
-                    <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                      <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                        {user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                    {user?.full_name || 'Usuario'}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                    {user?.email || ''}
-                  </p>
-                </div>
-              </Link>
-
-              <motion.button
-                onClick={handleLogout}
-                className="mt-3 w-full flex items-center justify-center px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <ArrowLeftOnRectangleIcon className="mr-2 h-4 w-4" />
-                {t('dashboard.logout')}
-              </motion.button>
-            </div>
+          <div className="min-h-0 flex-1">
+            <SidebarContent groups={groups} settings={settings} onNavigate={() => setIsDrawerOpen(false)} onLogout={handleLogout} />
           </div>
         </div>
       </div>
 
-      {/* Mobile sidebar */}
-      <AnimatePresence>
-        {isSidebarOpen && (
-          <>
-            <motion.div
-              className="fixed inset-0 z-40 md:hidden"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <div
-                className="absolute inset-0 bg-gray-600 opacity-75"
-                onClick={() => setIsSidebarOpen(false)}
-              />
-            </motion.div>
+      <div className="flex min-h-screen flex-col lg:pl-64">
+        {/* Barra superior */}
+        <header className="sticky top-0 z-20 flex h-16 flex-shrink-0 items-center gap-3 border-b border-gray-200 bg-white px-4 dark:border-gray-700 dark:bg-gray-800 sm:px-6 lg:px-8">
+          <button
+            type="button"
+            onClick={() => setIsDrawerOpen(true)}
+            aria-label={t('panel.openMenu', 'Abrir menú')}
+            aria-expanded={isDrawerOpen}
+            className="-ml-2 inline-flex h-10 w-10 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 lg:hidden dark:text-gray-400 dark:hover:bg-gray-700"
+          >
+            <Bars3Icon className="h-6 w-6" />
+          </button>
 
-            <motion.div
-              className="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 md:hidden flex flex-col"
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            >
-              <div className="flex items-center justify-between flex-shrink-0 px-4 pt-5">
-                <Link to="/" className="flex items-center">
-                  <img
-                    src="/logo_ubica.png"
-                    alt="Ubica"
-                    className="h-10 w-auto object-contain"
-                  />
-                </Link>
-                <button
-                  className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-                  onClick={() => setIsSidebarOpen(false)}
-                >
-                  <XMarkIcon className="h-6 w-6 text-gray-600 dark:text-gray-300" />
-                </button>
-              </div>
-
-              <div className="mt-5 flex-1 h-0 overflow-y-auto">
-                <nav className="px-4 space-y-1">
-                  {navigation.map((item) => (
-                    <Link
-                      key={item.name}
-                      to={item.href}
-                      className={`
-                        group flex items-center px-2 py-2 text-base font-medium rounded-md transition-all duration-200
-                        ${isActive(item.href)
-                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                          : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'
-                        }
-                      `}
-                      onClick={() => setIsSidebarOpen(false)}
-                    >
-                      <item.icon className="mr-4 h-6 w-6 flex-shrink-0" />
-                      {item.name}
-                    </Link>
-                  ))}
-
-                  <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700 space-y-1">
-                    <p className="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                      Configuración
-                    </p>
-                    {settingsNavigation.map((item) => (
-                      <Link
-                        key={item.name}
-                        to={item.href}
-                        className={`
-                          group flex items-center px-2 py-2 text-base font-medium rounded-md transition-all duration-200
-                          ${isActive(item.href)
-                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'
-                          }
-                        `}
-                        onClick={() => setIsSidebarOpen(false)}
-                      >
-                        <item.icon className="mr-4 h-6 w-6 flex-shrink-0" />
-                        {item.name}
-                      </Link>
-                    ))}
-                  </div>
-                </nav>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* Main content */}
-      <div className="flex-1 overflow-hidden flex flex-col">
-        {/* Top bar */}
-        <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 h-16">
-            <div className="flex items-center">
-              <button
-                type="button"
-                className="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500 dark:hover:bg-gray-700"
-                onClick={() => setIsSidebarOpen(true)}
-              >
-                <Bars3Icon className="h-6 w-6" />
-              </button>
-              <h1 className="ml-2 text-2xl font-semibold text-gray-900 dark:text-white md:ml-0">
-                {t('dashboard.title')}
-              </h1>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Link
-                to="/"
-                className="flex items-center space-x-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all duration-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-              >
-                <HomeIcon className="h-4 w-4" />
-                <span className="hidden sm:block">{t('nav.home')}</span>
-              </Link>
-              <ThemeToggle />
-              <LanguageSelector />
-            </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm text-gray-500 dark:text-gray-400">
+              <span className="hidden sm:inline">{current ? current.group : t('panel.group.mine', 'Mi área')}</span>
+              {current && <span className="hidden sm:inline" aria-hidden="true"> / </span>}
+              {current && <span className="font-semibold text-gray-900 dark:text-white">{current.item.label}</span>}
+              {!current && <span className="font-semibold text-gray-900 dark:text-white sm:hidden">{t('panel.group.mine', 'Mi área')}</span>}
+            </p>
           </div>
-        </div>
 
-        {/* Page content */}
-        <main className="flex-1 relative overflow-y-auto focus:outline-none">
-          <div className="py-6">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-              <Suspense fallback={<RouteFallback />}>
-                <Outlet />
-              </Suspense>
-            </div>
+          <div className="flex flex-shrink-0 items-center gap-2">
+            <ThemeToggle />
+            <LanguageSelector />
+            <UserMenu onLogout={handleLogout} />
+          </div>
+        </header>
+
+        {/* Contenido: mismo ancho y relleno en todos los paneles */}
+        <main className="flex-1 focus:outline-none">
+          <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+            <Suspense fallback={<RouteFallback />}>
+              <Outlet />
+            </Suspense>
           </div>
         </main>
       </div>
-    </div >
+    </div>
   );
 }

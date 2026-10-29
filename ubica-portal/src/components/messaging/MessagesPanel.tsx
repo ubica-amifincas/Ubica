@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
     ChatBubbleLeftRightIcon,
     PaperAirplaneIcon,
@@ -133,11 +132,9 @@ export default function MessagesPanel() {
     // Chat view when a conversation is selected
     if (selectedConv) {
         return (
-            <motion.div
-                className="bg-white dark:bg-gray-800 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 flex flex-col"
+            <div
+                className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col"
                 style={{ height: '500px' }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
             >
                 {/* Header */}
                 <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
@@ -161,11 +158,9 @@ export default function MessagesPanel() {
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
                     {selectedConv.messages.map((msg) => (
-                        <motion.div
+                        <div
                             key={msg.id}
                             className={`flex ${msg.is_mine ? 'justify-end' : 'justify-start'}`}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
                         >
                             <div
                                 className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${msg.is_mine
@@ -178,7 +173,7 @@ export default function MessagesPanel() {
                                     {formatDate(msg.created_at)}
                                 </p>
                             </div>
-                        </motion.div>
+                        </div>
                     ))}
                     <div ref={messagesEndRef} />
                 </div>
@@ -204,21 +199,17 @@ export default function MessagesPanel() {
                         </button>
                     </div>
                 </div>
-            </motion.div>
+            </div>
         );
     }
 
     // Conversation list
     return (
-        <motion.div
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 overflow-hidden"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-        >
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center gap-2">
-                    <ChatBubbleLeftRightIcon className="w-5 h-5 text-emerald-500" />
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Mis Mensajes</h3>
+                    <ChatBubbleLeftRightIcon className="w-5 h-5 text-emerald-700 dark:text-emerald-300" />
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">Mis mensajes</h3>
                     {conversations.length > 0 && (
                         <span className="ml-auto text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 px-2 py-0.5 rounded-full">
                             {conversations.length} conversación{conversations.length !== 1 ? 'es' : ''}
@@ -239,18 +230,15 @@ export default function MessagesPanel() {
                 </div>
             ) : (
                 <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                    <AnimatePresence>
-                        {conversations.map((conv, idx) => (
-                            <motion.button
+                        {conversations.map((conv) => (
+                            <button
+                                type="button"
                                 key={`${conv.property_id}_${conv.other_user_id}`}
                                 onClick={() => setSelectedConv(conv)}
-                                className="w-full px-5 py-4 flex items-start gap-3 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors text-left"
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: idx * 0.05 }}
+                                className="w-full px-5 py-4 flex items-start gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors text-left"
                             >
                                 {/* Avatar */}
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                                <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-800 dark:text-emerald-300 text-sm font-bold flex-shrink-0">
                                     {conv.other_user_name.charAt(0).toUpperCase()}
                                 </div>
 
@@ -268,7 +256,7 @@ export default function MessagesPanel() {
                                         {conv.other_user_name}
                                     </p>
                                     <div className="flex items-center justify-between">
-                                        <p className="text-xs text-gray-400 truncate max-w-[200px]">
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate min-w-0">
                                             {conv.last_message?.is_mine ? 'Tú: ' : ''}{conv.last_message?.content}
                                         </p>
                                         {getStatusBadge(conv)}
@@ -277,15 +265,14 @@ export default function MessagesPanel() {
 
                                 {/* Unread badge */}
                                 {conv.unread_count > 0 && (
-                                    <span className="bg-emerald-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <span className="bg-emerald-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0">
                                         {conv.unread_count}
                                     </span>
                                 )}
-                            </motion.button>
+                            </button>
                         ))}
-                    </AnimatePresence>
                 </div>
             )}
-        </motion.div>
+        </div>
     );
 }

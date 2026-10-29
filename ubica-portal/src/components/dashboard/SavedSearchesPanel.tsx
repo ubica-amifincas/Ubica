@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { MagnifyingGlassIcon, TrashIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { useAuthenticatedFetch } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getStatusLabel } from '../../utils/propertyStatus';
+import { EmptyState, Card, buttonClass, iconButtonClass } from './ui';
 
 const TYPE_LABELS: Record<string, string> = {
     villa: 'Villa', apartment: 'Apartamento', house: 'Casa', penthouse: 'Ático', townhouse: 'Adosado',
@@ -85,7 +85,7 @@ export default function SavedSearchesPanel() {
         return (
             <div className="space-y-4">
                 {[1, 2, 3].map((n) => (
-                    <div key={n} className="h-24 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-xl" />
+                    <div key={n} className="h-24 rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800" />
                 ))}
             </div>
         );
@@ -93,50 +93,33 @@ export default function SavedSearchesPanel() {
 
     if (searches.length === 0) {
         return (
-            <motion.div
-                className="flex flex-col items-center justify-center py-20 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-            >
-                <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-full mb-4">
-                    <MagnifyingGlassIcon className="h-10 w-10 text-emerald-500" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                    No tienes búsquedas guardadas
-                </h3>
-                <p className="text-gray-500 dark:text-gray-400 text-center max-w-sm px-4">
-                    Guarda tus criterios de búsqueda favoritos para acceder a ellos rápidamente.
-                </p>
-                <button
-                    onClick={() => navigate('/')}
-                    className="mt-6 bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
-                >
-                    Ir a Propiedades
-                </button>
-            </motion.div>
+            <EmptyState
+                icon={MagnifyingGlassIcon}
+                title="No tienes búsquedas guardadas"
+                description="Guarda tus criterios de búsqueda favoritos para acceder a ellos rápidamente."
+                action={
+                    <button type="button" onClick={() => navigate('/')} className={buttonClass.primary}>
+                        Ir a propiedades
+                    </button>
+                }
+            />
         );
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    Mis Búsquedas Guardadas
-                </h2>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                    {searches.length} {searches.length === 1 ? 'búsqueda' : 'búsquedas'}
-                </span>
-            </div>
+        <div className="space-y-4">
+            <p className="text-sm tabular-nums text-gray-500 dark:text-gray-400">
+                {searches.length} {searches.length === 1 ? 'búsqueda' : 'búsquedas'}
+            </p>
 
             <div className="grid gap-4">
                 {searches.map((search) => (
-                    <motion.div
+                    <Card
                         key={search.id}
-                        className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] transition-all duration-300"
-                        whileHover={{ x: 5 }}
+                        className="flex flex-col items-start justify-between gap-4 p-5 sm:flex-row sm:items-center"
                     >
-                        <div className="flex-1">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        <div className="min-w-0 flex-1">
+                            <h3 className="text-base font-semibold text-gray-900 dark:text-white">
                                 {search.name || 'Búsqueda sin nombre'}
                             </h3>
                             <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
@@ -144,23 +127,26 @@ export default function SavedSearchesPanel() {
                             </p>
                         </div>
 
-                        <div className="flex items-center space-x-2 mt-4 sm:mt-0 w-full sm:w-auto justify-end">
+                        <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
                             <button
+                                type="button"
                                 onClick={() => handleRunSearch(search.filters)}
-                                className="flex items-center space-x-1 px-4 py-2 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 rounded-lg hover:bg-emerald-200 dark:hover:bg-emerald-900/60 transition-colors"
+                                className={buttonClass.secondary}
                             >
                                 <ArrowPathIcon className="h-4 w-4" />
                                 <span>Ejecutar</span>
                             </button>
                             <button
+                                type="button"
                                 onClick={() => handleDeleteSearch(search.id)}
                                 aria-label="Eliminar búsqueda"
-                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                title="Eliminar búsqueda"
+                                className={iconButtonClass.danger}
                             >
                                 <TrashIcon className="h-5 w-5" />
                             </button>
                         </div>
-                    </motion.div>
+                    </Card>
                 ))}
             </div>
         </div>

@@ -1,17 +1,38 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
   EyeIcon,
-  FunnelIcon
+  FunnelIcon,
+  BanknotesIcon,
+  KeyIcon,
+  BuildingOfficeIcon,
 } from '@heroicons/react/24/outline';
 import { useLanguage } from '../../hooks/useLanguage';
 import { useAuthenticatedFetch, useAuth } from '../../contexts/AuthContext';
 import type { Property } from '../../types';
 import PropertyFormModal from '../../components/common/PropertyFormModal';
+import {
+  PageHeader,
+  PageStack,
+  Section,
+  StatCard,
+  StatGrid,
+  EmptyState,
+  LoadingState,
+  Badge,
+  Table,
+  THead,
+  TBody,
+  Th,
+  Tr,
+  Td,
+  buttonClass,
+  iconButtonClass,
+  propertyStatusTone,
+} from '../../components/dashboard/ui';
 
 export default function DashboardProperties() {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -67,27 +88,6 @@ export default function DashboardProperties() {
     return property.status === filter;
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'sold':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300';
-      case 'rented':
-        return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300';
-      case 'for-sale':
-        return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300';
-      case 'for-rent':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300';
-      case 'under-renovation':
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-300';
-      case 'in-use':
-        return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300';
-      case 'reserved':
-        return 'bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300';
-    }
-  };
-
   const translateStatus = (status: string) => {
     switch (status) {
       case 'sold': return 'Vendida';
@@ -101,239 +101,174 @@ export default function DashboardProperties() {
     }
   };
 
+  const header = (
+    <PageHeader
+      title={t('dashboard.properties')}
+      description="Gestiona tu portafolio de propiedades"
+      actions={
+        <button type="button" onClick={handleCreateProperty} className={buttonClass.primary}>
+          <PlusIcon className="h-5 w-5" />
+          Agregar propiedad
+        </button>
+      }
+    />
+  );
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
-      </div>
+      <PageStack>
+        {header}
+        <LoadingState />
+      </PageStack>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <motion.div
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {t('dashboard.properties')}
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Gestiona tu portafolio de propiedades
-          </p>
-        </div>
+    <PageStack>
+      {header}
 
-        <motion.button
-          onClick={handleCreateProperty}
-          className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <PlusIcon className="h-5 w-5 mr-2" />
-          Agregar Propiedad
-        </motion.button>
-      </motion.div>
-
-      {/* Filters */}
-      <motion.div
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-      >
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center space-x-2">
-            <FunnelIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Filtrar por estado:
-            </span>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {[
-              { key: 'all', label: 'Todas' },
-              { key: 'for-sale', label: 'En Venta' },
-              { key: 'for-rent', label: 'En Alquiler' },
-              { key: 'sold', label: 'Vendidas' },
-              { key: 'rented', label: 'Alquiladas' },
-              { key: 'in-use', label: 'En Uso' },
-              { key: 'reserved', label: 'Reservado' }
-            ].map((item) => (
-              <motion.button
-                key={item.key}
-                onClick={() => setFilter(item.key)}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${filter === item.key
-                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-                  }`}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {item.label}
-              </motion.button>
-            ))}
-          </div>
-        </div>
-      </motion.div>
+      {/* Stats Summary */}
+      <StatGrid cols={3}>
+        <StatCard
+          label="Propiedades vendidas"
+          value={properties.filter(p => p.status === 'sold').length}
+          hint="Total de ventas realizadas"
+          icon={BanknotesIcon}
+          tone="neutral"
+        />
+        <StatCard
+          label="Propiedades alquiladas"
+          value={properties.filter(p => p.status === 'rented').length}
+          hint="Generando ingresos mensuales"
+          icon={KeyIcon}
+          tone="neutral"
+        />
+        <StatCard
+          label="Propiedades en venta"
+          value={properties.filter(p => p.status === 'for-sale' || p.status === 'for-rent').length}
+          hint="Listas para venta o alquiler"
+          icon={BuildingOfficeIcon}
+        />
+      </StatGrid>
 
       {/* Properties Table */}
-      <motion.div
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
+      <Section
+        title="Listado"
+        flush
+        actions={
+          <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrar por estado">
+            <FunnelIcon className="h-4 w-4 text-gray-400" aria-hidden="true" />
+            {[
+              { key: 'all', label: 'Todas' },
+              { key: 'for-sale', label: 'En venta' },
+              { key: 'for-rent', label: 'En alquiler' },
+              { key: 'sold', label: 'Vendidas' },
+              { key: 'rented', label: 'Alquiladas' },
+              { key: 'in-use', label: 'En uso' },
+              { key: 'reserved', label: 'Reservado' }
+            ].map((item) => (
+              <button
+                type="button"
+                key={item.key}
+                onClick={() => setFilter(item.key)}
+                aria-pressed={filter === item.key}
+                className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${filter === item.key
+                  ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/30 dark:bg-emerald-900/40 dark:text-emerald-300'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                  }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        }
       >
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-700">
+        {filteredProperties.length === 0 ? (
+          <EmptyState
+            bare
+            icon={BuildingOfficeIcon}
+            title={properties.length === 0 ? 'Todavía no has añadido ninguna propiedad.' : 'Ninguna propiedad con este estado.'}
+            action={properties.length === 0 ? (
+              <button type="button" onClick={handleCreateProperty} className={buttonClass.primary}>
+                <PlusIcon className="h-5 w-5" />
+                Agregar propiedad
+              </button>
+            ) : undefined}
+          />
+        ) : (
+          <Table>
+            <THead>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Propiedad
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Ubicación
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Precio
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Estado
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Fecha
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Acciones
-                </th>
+                <Th>Propiedad</Th>
+                <Th>Ubicación</Th>
+                <Th align="right">Precio</Th>
+                <Th>Estado</Th>
+                <Th>Fecha</Th>
+                <Th align="right">Acciones</Th>
               </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {filteredProperties.map((property, index) => (
-                <motion.tr
-                  key={property.id}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 * index }}
-                >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        {property.title}
-                      </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        {property.type}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                    {property.location}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900 dark:text-white">
-                      {new Intl.NumberFormat('es-ES', {
-                        style: 'currency',
-                        currency: 'EUR',
-                        minimumFractionDigits: 0
-                      }).format(property.price)}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(property.status)}`}>
-                      {translateStatus(property.status)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+            </THead>
+            <TBody>
+              {filteredProperties.map((property) => (
+                <Tr key={property.id}>
+                  <Td>
+                    <div className="font-medium text-gray-900 dark:text-white">{property.title}</div>
+                    <div className="text-gray-500 dark:text-gray-400">{property.type}</div>
+                  </Td>
+                  <Td>{property.location}</Td>
+                  <Td align="right" className="font-semibold tabular-nums text-gray-900 dark:text-white">
+                    {new Intl.NumberFormat('es-ES', {
+                      style: 'currency',
+                      currency: 'EUR',
+                      minimumFractionDigits: 0
+                    }).format(property.price)}
+                  </Td>
+                  <Td>
+                    <Badge tone={propertyStatusTone(property.status)}>{translateStatus(property.status)}</Badge>
+                  </Td>
+                  <Td className="tabular-nums">
                     {property.created_at ? new Date(property.created_at).toLocaleDateString('es-ES') : ''}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center justify-end space-x-2">
-                      <motion.button
+                  </Td>
+                  <Td align="right">
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        type="button"
                         onClick={() => navigate(`/property/${property.id}`)}
                         title="Ver en web"
-                        className="text-emerald-600 hover:text-emerald-900 dark:text-emerald-400 dark:hover:text-emerald-300"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
+                        aria-label={`Ver ${property.title} en la web`}
+                        className={iconButtonClass.brand}
                       >
                         <EyeIcon className="h-5 w-5" />
-                      </motion.button>
+                      </button>
                       {(user?.role === 'admin' || user?.id === property.owner_id) && (
                         <>
-                          <motion.button
+                          <button
+                            type="button"
                             onClick={() => handleEditProperty(property)}
                             title="Editar"
-                            className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
+                            aria-label={`Editar ${property.title}`}
+                            className={iconButtonClass.neutral}
                           >
                             <PencilIcon className="h-5 w-5" />
-                          </motion.button>
-                          <motion.button
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => handleDeleteProperty(property)}
                             title="Eliminar"
-                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
+                            aria-label={`Eliminar ${property.title}`}
+                            className={iconButtonClass.danger}
                           >
                             <TrashIcon className="h-5 w-5" />
-                          </motion.button>
+                          </button>
                         </>
                       )}
                     </div>
-                  </td>
-                </motion.tr>
+                  </Td>
+                </Tr>
               ))}
-            </tbody>
-          </table>
-        </div>
-      </motion.div>
-
-      {/* Stats Summary */}
-      <motion.div
-        className="grid grid-cols-1 md:grid-cols-3 gap-6"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-red-900 dark:text-red-300 mb-2">
-            Propiedades Vendidas
-          </h3>
-          <p className="text-3xl font-bold text-red-600 dark:text-red-400">
-            {properties.filter(p => p.status === 'sold').length}
-          </p>
-          <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-            Total de ventas realizadas
-          </p>
-        </div>
-
-        <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-emerald-900 dark:text-emerald-300 mb-2">
-            Propiedades Alquiladas
-          </h3>
-          <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
-            {properties.filter(p => p.status === 'rented').length}
-          </p>
-          <p className="text-sm text-emerald-700 dark:text-emerald-300 mt-1">
-            Generando ingresos mensuales
-          </p>
-        </div>
-
-        <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-emerald-900 dark:text-emerald-300 mb-2">
-            Propiedades En Venta
-          </h3>
-          <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
-            {properties.filter(p => p.status === 'for-sale' || p.status === 'for-rent').length}
-          </p>
-          <p className="text-sm text-emerald-700 dark:text-emerald-300 mt-1">
-            Listas para venta o alquiler
-          </p>
-        </div>
-      </motion.div>
+            </TBody>
+          </Table>
+        )}
+      </Section>
 
       {/* Property Modal */}
       <PropertyFormModal
@@ -342,6 +277,6 @@ export default function DashboardProperties() {
         onSave={loadProperties}
         initialData={editingProperty}
       />
-    </div>
+    </PageStack>
   );
 }

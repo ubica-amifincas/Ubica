@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
-  EyeIcon,
-  XMarkIcon,
-  PhotoIcon
+  PhotoIcon,
+  BuildingOfficeIcon,
 } from '@heroicons/react/24/outline';
 import { useAuthenticatedFetch } from '../../contexts/AuthContext';
 import type { Property } from '../../types';
@@ -14,6 +12,17 @@ import PropertyFormModal from '../common/PropertyFormModal';
 import { ImportPropertiesModal } from './ImportPropertiesModal';
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { getStatusLabel } from '../../utils/propertyStatus';
+import {
+  PageHeader,
+  PageStack,
+  Card,
+  EmptyState,
+  LoadingState,
+  Badge,
+  buttonClass,
+  iconButtonClass,
+  propertyStatusTone,
+} from '../dashboard/ui';
 
 interface PropertyFormData {
   title: string;
@@ -43,15 +52,6 @@ const PROPERTY_TYPES = [
   { value: 'chalet', label: 'Chalet' },
   { value: 'estudio', label: 'Estudio' },
 ];
-
-const STATUS_COLORS: Record<string, string> = {
-  'for-sale': 'bg-emerald-100 text-emerald-800',
-  'for-rent': 'bg-emerald-100 text-emerald-800',
-  available: 'bg-emerald-100 text-emerald-800',
-  reserved: 'bg-yellow-100 text-yellow-800',
-  sold: 'bg-red-100 text-red-800',
-  rented: 'bg-emerald-100 text-emerald-800',
-};
 
 const MURCIA_LOCATIONS = [
   'Cartagena', 'Murcia', 'Lorca', 'Águilas', 'San Pedro del Pinatar',
@@ -251,7 +251,7 @@ const PropertyManagement: React.FC = () => {
   const getStatusInfo = (status: string) => {
     return {
       label: getStatusLabel(status),
-      color: STATUS_COLORS[status] || 'bg-gray-100 text-gray-800',
+      tone: propertyStatusTone(status),
     };
   };
 
@@ -263,126 +263,122 @@ const PropertyManagement: React.FC = () => {
     }).format(price);
   };
 
+  const header = (
+    <PageHeader
+      title="Propiedades"
+      description="Administra el catálogo de propiedades del sistema"
+      actions={
+        <>
+          <button type="button" onClick={() => setShowImportModal(true)} className={buttonClass.secondary}>
+            <ArrowDownTrayIcon className="h-5 w-5" />
+            Importar CSV/JSON
+          </button>
+          <button type="button" onClick={handleCreateProperty} className={buttonClass.primary}>
+            <PlusIcon className="h-5 w-5" />
+            Nueva propiedad
+          </button>
+        </>
+      }
+    />
+  );
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
-      </div>
+      <PageStack>
+        {header}
+        <LoadingState />
+      </PageStack>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Gestión de Propiedades
-          </h2>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Administra el catálogo de propiedades del sistema
-          </p>
-        </div>
-        <div className="flex gap-3 mt-3 sm:mt-0 items-center justify-end w-full sm:w-auto">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowImportModal(true)}
-            className="flex items-center justify-center space-x-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors w-full sm:w-auto"
-          >
-            <ArrowDownTrayIcon className="h-5 w-5" />
-            <span>Importar CSV/JSON</span>
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleCreateProperty}
-            className="flex items-center justify-center space-x-2 bg-emerald-600 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-emerald-700 transition-colors w-full sm:w-auto"
-          >
-            <PlusIcon className="h-5 w-5" />
-            <span>Nueva Propiedad</span>
-          </motion.button>
-        </div>
-      </div>
+    <PageStack>
+      {header}
 
-      {/* Properties Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {properties.map((property) => {
-          const statusInfo = getStatusInfo(property.status);
-          return (
-            <motion.div
-              key={property.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-all duration-300 group flex flex-col"
-            >
-              {/* Property Image */}
-              <div className="h-48 bg-gray-200 dark:bg-gray-700 relative">
-                {property.images && property.images[0] ? (
-                  <img
-                    src={property.images[0]}
-                    alt={property.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/images/casa-moderna.jpg';
-                    }}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <PhotoIcon className="h-12 w-12 text-gray-400" />
+      {properties.length === 0 ? (
+        <EmptyState
+          icon={BuildingOfficeIcon}
+          title="Todavía no hay propiedades en el catálogo."
+          action={
+            <button type="button" onClick={handleCreateProperty} className={buttonClass.primary}>
+              <PlusIcon className="h-5 w-5" />
+              Nueva propiedad
+            </button>
+          }
+        />
+      ) : (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {properties.map((property) => {
+            const statusInfo = getStatusInfo(property.status);
+            return (
+              <Card key={property.id} className="flex flex-col overflow-hidden">
+                {/* Property Image */}
+                <div className="relative h-44 bg-gray-100 dark:bg-gray-700">
+                  {property.images && property.images[0] ? (
+                    <img
+                      src={property.images[0]}
+                      alt={property.title}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/images/casa-moderna.jpg';
+                      }}
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                      <PhotoIcon className="h-10 w-10 text-gray-400" />
+                    </div>
+                  )}
+                  <div className="absolute right-2 top-2">
+                    <Badge tone={statusInfo.tone}>{statusInfo.label}</Badge>
                   </div>
-                )}
-                <div className="absolute top-2 right-2">
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusInfo.color}`}>
-                    {statusInfo.label}
-                  </span>
-                </div>
-              </div>
-
-              {/* Property Info */}
-              <div className="p-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  {property.title}
-                </h3>
-                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mb-2">
-                  {formatPrice(property.price)}
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                  {property.location} - {property.type}
-                </p>
-                <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400 mb-4">
-                  <span>{property.bedrooms} hab.</span>
-                  <span>{property.bathrooms} baños</span>
-                  <span>{property.area} m²</span>
                 </div>
 
-                {/* Actions */}
-                <div className="flex justify-between items-center">
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleEditProperty(property)}
-                      className="p-2 text-emerald-600 hover:text-emerald-800 dark:text-emerald-400"
-                      title="Editar"
-                    >
-                      <PencilIcon className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteProperty(property)}
-                      className="p-2 text-red-600 hover:text-red-800 dark:text-red-400"
-                      title="Eliminar"
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </button>
+                {/* Property Info */}
+                <div className="flex flex-1 flex-col p-5">
+                  <p className="font-display text-xl font-semibold tabular-nums text-gray-900 dark:text-white">
+                    {formatPrice(property.price)}
+                  </p>
+                  <h3 className="mt-1 font-medium text-gray-900 dark:text-white">{property.title}</h3>
+                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    {property.location} - {property.type}
+                  </p>
+                  <div className="mt-2 flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                    <span>{property.bedrooms} hab.</span>
+                    <span>{property.bathrooms} {property.bathrooms === 1 ? 'baño' : 'baños'}</span>
+                    <span>{property.area} m²</span>
                   </div>
-                  <span className="text-xs text-gray-400">
-                    ID: {property.id}
-                  </span>
+
+                  {/* Actions */}
+                  <div className="mt-auto flex items-center justify-between border-t border-gray-200 pt-3 dark:border-gray-700">
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleEditProperty(property)}
+                        className={iconButtonClass.brand}
+                        title="Editar"
+                        aria-label={`Editar ${property.title}`}
+                      >
+                        <PencilIcon className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteProperty(property)}
+                        className={iconButtonClass.danger}
+                        title="Eliminar"
+                        aria-label={`Eliminar ${property.title}`}
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <span className="text-xs tabular-nums text-gray-400">ID: {property.id}</span>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       {/* Modal for Create/Edit Property */}
       <PropertyFormModal
@@ -398,7 +394,7 @@ const PropertyManagement: React.FC = () => {
         onClose={() => setShowImportModal(false)}
         onSuccess={fetchProperties}
       />
-    </div>
+    </PageStack>
   );
 };
 
