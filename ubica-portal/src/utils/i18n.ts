@@ -31,6 +31,18 @@ const resources = {
       "header.mainSearchPlaceholder": "Busca por ubicación, tipo de propiedad...",
       "header.searchButton": "Buscar",
 
+      // Home hero
+      "home.hero_kicker": "Inmobiliaria de AMI Fincas",
+      "home.hero_title": "Encuentra casa en la Región de Murcia",
+      "home.hero_subtitle": "Busca por municipio o pregunta a nuestro asistente en lenguaje natural.",
+      "home.quick_filters": "Filtros rápidos",
+      "home.chip_for_sale": "En venta",
+      "home.chip_for_rent": "En alquiler",
+      "home.facts_published_one": "{{count}} inmueble publicado",
+      "home.facts_published_other": "{{count}} inmuebles publicados",
+      "home.facts_avg_price": "Precio medio de venta",
+      "home.facts_managed": "Gestionado por AMI Fincas",
+
       // Property types
       "property.villa": "Villa",
       "property.apartment": "Apartamento",
@@ -633,6 +645,19 @@ const resources = {
       "details.writeMessage": "Escribe tu consulta aquí...",
       "details.messageSent": "✓ Mensaje enviado. Ver en Dashboard",
       "details.contact_login": "Inicia sesión para contactar con esta propiedad y gestionar tus mensajes.",
+      "details.sendError": "Error al enviar el mensaje.",
+      "details.per_month": "/mes",
+      "details.spec_bedrooms": "hab.",
+      "details.spec_bathrooms": "baños",
+      "details.spec_year": "año",
+      "details.share": "Compartir",
+      "details.link_copied": "Enlace copiado",
+      "details.favorite_add": "Guardar en favoritos",
+      "details.favorite_remove": "Quitar de favoritos",
+      "details.summary": "Resumen del inmueble",
+      "details.photo_prev": "Foto anterior",
+      "details.photo_next": "Foto siguiente",
+      "details.photo_n": "Foto {{n}}",
       // Common
       "common.any": "Cualquiera",
       "common.month": "mes",
@@ -683,6 +708,18 @@ const resources = {
       "header.searchPlaceholder": "Search properties in Murcia...",
       "header.mainSearchPlaceholder": "Search by location, property type...",
       "header.searchButton": "Search",
+
+      // Home hero
+      "home.hero_kicker": "AMI Fincas real estate",
+      "home.hero_title": "Find a home in the Region of Murcia",
+      "home.hero_subtitle": "Search by town or ask our assistant in plain language.",
+      "home.quick_filters": "Quick filters",
+      "home.chip_for_sale": "For sale",
+      "home.chip_for_rent": "For rent",
+      "home.facts_published_one": "{{count}} listing published",
+      "home.facts_published_other": "{{count}} listings published",
+      "home.facts_avg_price": "Average sale price",
+      "home.facts_managed": "Managed by AMI Fincas",
 
       // Property types
       "property.villa": "Villa",
@@ -818,7 +855,7 @@ const resources = {
       "view.list": "List",
       "view.map": "Map",
       "view.properties_one": "{{count}} property",
-      "view.properties_other": "properties",
+      "view.properties_other": "{{count}} properties",
       "view.propertiesInArea_one": "{{count}} property in area",
       "view.propertiesInArea_other": "{{count}} properties in area",
 
@@ -1300,6 +1337,19 @@ const resources = {
       "details.writeMessage": "Write your inquiry here...",
       "details.messageSent": "✓ Message sent. View in Dashboard",
       "details.contact_login": "Sign in to contact this property and manage your messages.",
+      "details.sendError": "Error sending the message.",
+      "details.per_month": "/month",
+      "details.spec_bedrooms": "beds",
+      "details.spec_bathrooms": "baths",
+      "details.spec_year": "built",
+      "details.share": "Share",
+      "details.link_copied": "Link copied",
+      "details.favorite_add": "Save to favourites",
+      "details.favorite_remove": "Remove from favourites",
+      "details.summary": "Listing summary",
+      "details.photo_prev": "Previous photo",
+      "details.photo_next": "Next photo",
+      "details.photo_n": "Photo {{n}}",
 
       // Common
       "common.any": "Any",

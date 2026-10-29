@@ -1,28 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeftIcon,
   MapPinIcon,
-  BanknotesIcon,
   HomeIcon,
-  CalendarIcon,
-  FireIcon,
   StarIcon,
   ShareIcon,
   HeartIcon,
   PhoneIcon,
   EnvelopeIcon,
-  PaperAirplaneIcon
+  PaperAirplaneIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
 } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { PropertyCard } from '../components/property/PropertyCard';
-import { PageLoader } from '../components/common/LoadingSpinner';
 import { useLanguage } from '../hooks/useLanguage';
-import { useTheme } from '../hooks/useTheme';
 import { useAuth } from '../contexts/AuthContext';
 import appService from '../services';
 import type { Property } from '../types';
@@ -32,76 +28,29 @@ export function PropertyDetailSkeleton() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 animate-pulse">
       {/* Header Skeleton */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between">
-          <div className="h-6 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
-          <div className="flex space-x-2">
-            <div className="h-9 w-9 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-            <div className="h-9 w-9 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-          </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <div className="h-9 w-40 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content Skeleton */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Image Skeleton */}
-            <div className="aspect-video bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-
-            {/* Info Skeleton */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 space-y-6">
-              <div className="flex justify-between items-start">
-                <div className="space-y-3 flex-1">
-                  <div className="h-8 w-3/4 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                  <div className="h-5 w-1/2 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                </div>
-                <div className="space-y-3 text-right">
-                  <div className="h-8 w-32 bg-gray-200 dark:bg-gray-700 rounded ml-auto"></div>
-                  <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 rounded-full ml-auto"></div>
-                </div>
-              </div>
-
-              {/* Stats Grid Skeleton */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-6 border-y border-gray-200 dark:border-gray-700">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="flex flex-col items-center space-y-2">
-                    <div className="h-8 w-12 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Description Skeleton */}
-              <div className="space-y-3">
-                <div className="h-6 w-40 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
-                <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded"></div>
-                <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded"></div>
-                <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded"></div>
-              </div>
-            </div>
-
-            {/* Map Skeleton */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 h-[400px]">
-              <div className="h-6 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-6"></div>
-              <div className="h-[300px] w-full bg-gray-200 dark:bg-gray-700 rounded"></div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+          <div className="lg:col-span-7 space-y-6">
+            <div className="aspect-[4/3] sm:aspect-video bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-3">
+              <div className="h-6 w-40 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+              <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded"></div>
+              <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded"></div>
+              <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded"></div>
             </div>
           </div>
-
-          {/* Sidebar Skeleton */}
-          <div className="lg:col-span-1 space-y-8">
-            {/* Contact Form Skeleton */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 space-y-4">
-              <div className="h-6 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-6"></div>
-              <div className="h-12 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-              <div className="h-12 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-            </div>
-
-            {/* Similar Properties Skeleton */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 space-y-4">
-              <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-6"></div>
-              {[...Array(2)].map((_, i) => (
-                <div key={i} className="h-64 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-              ))}
+          <div className="lg:col-span-5">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-4">
+              <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
+              <div className="h-10 w-48 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              <div className="h-6 w-3/4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              <div className="h-16 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+              <div className="h-12 w-full bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
             </div>
           </div>
         </div>
@@ -109,15 +58,29 @@ export function PropertyDetailSkeleton() {
     </div>
   );
 }
+
+// Mismo criterio de color que la tarjeta: ofertas en verde, reservada en ámbar, cerradas en gris
+const statusChipClass = (status: string) => {
+  switch (status) {
+    case 'for-sale':
+    case 'for-rent':
+      return 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200';
+    case 'reserved':
+      return 'bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
+    default:
+      return 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200';
+  }
+};
+
+const specGridCols: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3', 4: 'grid-cols-4' };
+
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { theme } = useTheme();
 
   const [property, setProperty] = useState<Property | null>(null);
   const [similarProperties, setSimilarProperties] = useState<Property[]>([]);
-  const [allProperties, setAllProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [validImages, setValidImages] = useState<string[]>([]);
@@ -125,6 +88,13 @@ export default function PropertyDetail() {
   const [showContactForm, setShowContactForm] = useState(false);
   const [messageForm, setMessageForm] = useState({ name: '', email: '', message: '' });
   const [messageStatus, setMessageStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [shareCopied, setShareCopied] = useState(false);
+
+  // "Contactar" (panel lateral y barra inferior) lleva a la sección de contacto y pone el foco en ella
+  const contactSectionRef = useRef<HTMLElement>(null);
+  const messageInputRef = useRef<HTMLTextAreaElement>(null);
+  const loginLinkRef = useRef<HTMLAnchorElement>(null);
+  const [focusContactPending, setFocusContactPending] = useState(false);
 
   // Touch/swipe state for carousel
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -174,12 +144,12 @@ export default function PropertyDetail() {
         setCurrentImageIndex(0);
 
         const allData = await appService.getProperties(0, 100);
-        setAllProperties(allData);
 
         const similar = allData
           .filter(
             (p: Property) =>
               p.id !== foundProperty.id &&
+              p.status !== 'in-use' &&
               (p.type === foundProperty.type || p.location === foundProperty.location)
           )
           .slice(0, 3);
@@ -204,6 +174,21 @@ export default function PropertyDetail() {
     }
   }, [id]);
 
+  // La barra fija inferior (móvil/tablet) reserva su alto al final del body para no tapar contenido ni pie
+  useEffect(() => {
+    if (!property) return;
+    document.body.classList.add('has-bottom-cta');
+    return () => document.body.classList.remove('has-bottom-cta');
+  }, [property]);
+
+  // Foco tras abrir el formulario (necesita que el textarea ya esté montado)
+  useEffect(() => {
+    if (!focusContactPending) return;
+    const target = user ? messageInputRef.current : loginLinkRef.current;
+    target?.focus({ preventScroll: true });
+    setFocusContactPending(false);
+  }, [focusContactPending, showContactForm, user]);
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-ES', {
       style: 'currency',
@@ -218,7 +203,10 @@ export default function PropertyDetail() {
   };
 
   const toggleFavorite = async () => {
-    if (!user) return;
+    if (!user) {
+      navigate('/login');
+      return;
+    }
     try {
       if (isFavorite) {
         await appService.removeFavorite(Number(id));
@@ -230,6 +218,32 @@ export default function PropertyDetail() {
     } catch (e) {
       console.error(e);
     }
+  };
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: property?.title, url });
+      } catch {
+        // El usuario canceló el diálogo de compartir
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2500);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const goToContact = () => {
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    contactSectionRef.current?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+    if (user) setShowContactForm(true);
+    setFocusContactPending(true);
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -260,74 +274,68 @@ export default function PropertyDetail() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            Propiedad no encontrada
+            {t('details.notFound')}
           </h1>
           <Link
             to="/"
-            className="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300"
+            className="text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200"
           >
-            Volver al inicio
+            {t('details.backHome')}
           </Link>
         </div>
       </div>
     );
   }
 
+  const isRent = property.status === 'for-rent';
+  const pricePerM2 = !isRent && property.area > 0 && property.price > 0 ? Math.round(property.price / property.area) : null;
+  const locationText = [property.address, property.location]
+    .map(s => s?.trim())
+    .filter((s, i, arr): s is string => !!s && !(i === 1 && arr[0]?.toLowerCase().includes(s.toLowerCase())))
+    .join(', ');
 
+  const specs = [
+    property.bedrooms > 0 ? { value: property.bedrooms, label: t('details.spec_bedrooms') } : null,
+    property.bathrooms > 0 ? { value: property.bathrooms, label: t('details.spec_bathrooms') } : null,
+    property.area > 0 ? { value: property.area, label: 'm²' } : null,
+    property.yearBuilt ? { value: property.yearBuilt, label: t('details.spec_year') } : null,
+  ].filter((s): s is { value: number; label: string } => s !== null);
+
+  const priceNode = (
+    <>
+      {formatPrice(property.price)}
+      {isRent && <span className="ml-0.5 font-sans text-base font-medium text-gray-500 dark:text-gray-400">{t('details.per_month')}</span>}
+    </>
+  );
+
+  const iconButtonClass = 'inline-flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700';
+  const cardClass = 'rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800';
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-white via-white to-emerald-50 dark:bg-gradient-to-r dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <motion.button
-              onClick={() => navigate('/')}
-              className="flex items-center space-x-2 px-6 py-2.5 bg-gray-900/10 dark:bg-white/10 backdrop-blur-md rounded-full border border-gray-900/10 dark:border-white/10 text-gray-900 dark:text-white hover:bg-gray-900/20 dark:hover:bg-white/20 transition-all font-bold text-sm shadow-sm"
-              whileHover={{ x: -4 }}
-            >
-              <ArrowLeftIcon className="h-4 w-4 stroke-[3]" />
-              <span>{t('details.backToSearch')}</span>
-            </motion.button>
-
-            <div className="flex items-center space-x-2">
-              <motion.button
-                onClick={toggleFavorite}
-                className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors duration-200"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {isFavorite ? (
-                  <HeartSolidIcon className="h-5 w-5 text-red-500" />
-                ) : (
-                  <HeartIcon className="h-5 w-5 text-gray-600 dark:text-gray-300" />
-                )}
-              </motion.button>
-
-              <motion.button
-                className="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors duration-200"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <ShareIcon className="h-5 w-5 text-gray-600 dark:text-gray-300" />
-              </motion.button>
-            </div>
-          </div>
+      {/* Cabecera: volver */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="-ml-2 inline-flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
+          >
+            <ArrowLeftIcon className="h-4 w-4" />
+            <span>{t('details.backToSearch')}</span>
+          </button>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2">
-            {/* Image Gallery */}
-            <motion.div
-              className="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden mb-8"
-              initial={false}
-              animate={{ opacity: 1, y: 0 }}
-            >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        {/* Móvil: galería, resumen y contenido en ese orden. lg+: galería y contenido a la izquierda (7/12),
+            resumen fijo a la derecha (5/12) ocupando las dos filas para que el sticky tenga recorrido. */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
+          {/* Galería */}
+          <div className="min-w-0 lg:col-span-7 lg:row-start-1">
+            <div className={`${cardClass} overflow-hidden`}>
               <div
-                className="aspect-video relative"
+                className="relative aspect-[4/3] sm:aspect-video bg-gray-100 dark:bg-gray-700"
                 onTouchStart={onTouchStart}
                 onTouchMove={onTouchMove}
                 onTouchEnd={onTouchEnd}
@@ -341,11 +349,11 @@ export default function PropertyDetail() {
                     onError={handleImageError}
                   />
                 ) : (
-                  <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-emerald-50 via-emerald-50 to-emerald-50 dark:from-gray-700 dark:via-gray-750 dark:to-gray-800">
-                    <div className="rounded-full bg-white/60 dark:bg-gray-600/40 p-6 mb-3 shadow-inner">
-                      <HomeIcon className="h-16 w-16 text-emerald-400 dark:text-emerald-500" />
+                  <div className="flex h-full w-full flex-col items-center justify-center bg-emerald-50 dark:bg-gray-700">
+                    <div className="rounded-full bg-white/60 dark:bg-gray-600/40 p-6 mb-3">
+                      <HomeIcon className="h-16 w-16 text-emerald-500 dark:text-emerald-300" />
                     </div>
-                    <span className="text-sm font-medium text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-wider">
+                    <span className="text-sm font-medium text-emerald-800 dark:text-emerald-200 uppercase tracking-wider">
                       Sin imagen
                     </span>
                   </div>
@@ -354,182 +362,274 @@ export default function PropertyDetail() {
                 {validImages.length > 1 && (
                   <>
                     <button
-                      onClick={() => setCurrentImageIndex(prev =>
-                        prev === 0 ? validImages.length - 1 : prev - 1
-                      )}
-                      className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
+                      type="button"
+                      aria-label={t('details.photo_prev')}
+                      onClick={() => setCurrentImageIndex(prev => prev === 0 ? validImages.length - 1 : prev - 1)}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-800 shadow hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                     >
-                      ←
+                      <ChevronLeftIcon className="h-5 w-5" />
                     </button>
                     <button
-                      onClick={() => setCurrentImageIndex(prev =>
-                        prev === validImages.length - 1 ? 0 : prev + 1
-                      )}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
+                      type="button"
+                      aria-label={t('details.photo_next')}
+                      onClick={() => setCurrentImageIndex(prev => prev === validImages.length - 1 ? 0 : prev + 1)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-gray-800 shadow hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                     >
-                      →
+                      <ChevronRightIcon className="h-5 w-5" />
                     </button>
+                    <span className="absolute bottom-3 right-3 rounded-md bg-black/60 px-2 py-0.5 text-xs font-medium text-white tabular-nums">
+                      {currentImageIndex + 1} / {validImages.length}
+                    </span>
                   </>
                 )}
+              </div>
 
-                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                  {validImages.map((_, index) => (
+              {/* Miniaturas */}
+              {validImages.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto p-2">
+                  {validImages.map((img, index) => (
                     <button
-                      key={index}
+                      key={img + index}
+                      type="button"
+                      aria-label={t('details.photo_n', { n: index + 1 })}
+                      aria-current={index === currentImageIndex}
                       onClick={() => setCurrentImageIndex(index)}
-                      className={`w-2 h-2 rounded-full transition-colors ${index === currentImageIndex ? 'bg-white' : 'bg-white/50'
-                        }`}
-                    />
+                      className={`h-14 w-20 flex-shrink-0 overflow-hidden rounded-md border-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${index === currentImageIndex ? 'border-emerald-600' : 'border-transparent opacity-80 hover:opacity-100'}`}
+                    >
+                      <img src={img} alt="" className="h-full w-full object-cover" loading="lazy" />
+                    </button>
                   ))}
                 </div>
-              </div>
-            </motion.div>
+              )}
+            </div>
+          </div>
 
-            {/* Property Information */}
-            <motion.div
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-8"
-              initial={false}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-                <div className="flex-1 w-full">
-                  <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white mb-2 leading-tight">
-                    {property.title}
-                  </h1>
-                  <a 
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property.address)}`}
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors group"
+          {/* Resumen: precio, qué es, dónde y contacto */}
+          <aside className="min-w-0 lg:col-span-5 lg:col-start-8 lg:row-span-2 lg:row-start-1">
+            {/* top: 64px de la barra de navegación (sticky) + 24px de aire */}
+            <section aria-label={t('details.summary')} className={`${cardClass} p-5 sm:p-6 lg:sticky lg:top-[88px]`}>
+              <div className="flex items-start justify-between gap-3">
+                <span className={`rounded-md px-2 py-1 text-xs font-semibold ${statusChipClass(property.status)}`}>
+                  {t(`status.${property.status}`)}
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={toggleFavorite}
+                    aria-pressed={isFavorite}
+                    aria-label={isFavorite ? t('details.favorite_remove') : t('details.favorite_add')}
+                    title={isFavorite ? t('details.favorite_remove') : t('details.favorite_add')}
+                    className={iconButtonClass}
                   >
-                    <MapPinIcon className="h-4 w-4 mr-1.5 text-emerald-500 group-hover:animate-bounce" />
-                    <span className="text-sm md:text-base font-medium underline decoration-transparent group-hover:decoration-emerald-500/50 underline-offset-4 transition-all">{property.address}</span>
-                  </a>
-                </div>
-                <div className="w-full md:w-auto flex flex-row md:flex-col justify-between items-center md:items-end gap-2 bg-emerald-50/50 dark:bg-emerald-900/10 p-3 md:p-0 rounded-2xl md:bg-transparent">
-                  <div className="text-2xl md:text-3xl font-black bg-gradient-to-r from-emerald-600 to-emerald-500 bg-clip-text text-transparent">
-                    {formatPrice(property.price)}
-                  </div>
-                  <span className="inline-block px-3 py-1 bg- emerald-100/50 text-emerald-700 text-xs font-bold rounded-full dark:bg-emerald-900/30 dark:text-emerald-400 uppercase tracking-wider">
-                    {t(`status.${property.status}`)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Property Stats */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-6 border-y border-gray-200 dark:border-gray-700">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {property.bedrooms}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    {t('details.bedrooms')}
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {property.bathrooms}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    {t('details.bathrooms')}
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {property.area}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    m²
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {property.yearBuilt}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    {t('details.yearBuilt')}
-                  </div>
+                    {isFavorite ? <HeartSolidIcon className="h-5 w-5 text-red-500" /> : <HeartIcon className="h-5 w-5" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleShare}
+                    aria-label={t('details.share')}
+                    title={t('details.share')}
+                    className={iconButtonClass}
+                  >
+                    <ShareIcon className="h-5 w-5" />
+                  </button>
                 </div>
               </div>
 
-              {/* Description */}
-              <div className="mt-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
-                  {t('details.description')}
-                </h2>
-                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                  {property.description}
+              <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <p className="font-display text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white tabular-nums">
+                  {priceNode}
                 </p>
+                {pricePerM2 && (
+                  <span className="text-sm text-gray-500 dark:text-gray-400 tabular-nums">{formatPrice(pricePerM2)}/m²</span>
+                )}
               </div>
 
-              {/* Features */}
-              <div className="mt-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
-                  {t('details.features')}
-                </h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {property.features.map((feature, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center space-x-2 text-gray-600 dark:text-gray-400"
-                    >
-                      <StarIcon className="h-4 w-4 text-emerald-600" />
-                      <span className="text-sm">{feature}</span>
+              <h1 className="mt-2 font-display text-xl sm:text-2xl font-semibold leading-snug text-gray-900 dark:text-white text-balance">
+                {property.title}
+              </h1>
+
+              {locationText && (
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationText)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-start gap-1.5 text-sm text-gray-600 underline-offset-4 hover:text-emerald-700 hover:underline dark:text-gray-300 dark:hover:text-emerald-300"
+                >
+                  <MapPinIcon className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                  <span>{locationText}</span>
+                </a>
+              )}
+
+              {specs.length > 0 && (
+                <dl className={`mt-5 grid ${specGridCols[specs.length]} divide-x divide-gray-200 rounded-lg border border-gray-200 dark:divide-gray-700 dark:border-gray-700`}>
+                  {specs.map(spec => (
+                    <div key={spec.label} className="flex flex-col-reverse items-center px-2 py-3 text-center">
+                      <dt className="text-xs text-gray-500 dark:text-gray-400">{spec.label}</dt>
+                      <dd className="font-display text-lg font-semibold text-gray-900 dark:text-white tabular-nums">{spec.value}</dd>
                     </div>
                   ))}
-                </div>
-              </div>
+                </dl>
+              )}
+
+              <button
+                type="button"
+                onClick={goToContact}
+                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
+              >
+                <EnvelopeIcon className="h-5 w-5" />
+                {t('details.contact')}
+              </button>
+
+              <p role="status" className="mt-2 empty:mt-0 text-center text-xs text-emerald-700 dark:text-emerald-300">
+                {shareCopied ? t('details.link_copied') : ''}
+              </p>
+            </section>
+          </aside>
+
+          {/* Contenido */}
+          <div className="min-w-0 space-y-6 lg:col-span-7 lg:row-start-2">
+            <div className={`${cardClass} p-5 sm:p-6`}>
+              {property.description?.trim() && (
+                <section>
+                  <h2 className="font-display text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                    {t('details.description')}
+                  </h2>
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
+                    {property.description}
+                  </p>
+                </section>
+              )}
+
+              {property.features?.length > 0 && (
+                <section className={property.description?.trim() ? 'mt-6' : ''}>
+                  <h2 className="font-display text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                    {t('details.features')}
+                  </h2>
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {property.features.map((feature, index) => (
+                      <li key={index} className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                        <StarIcon className="h-4 w-4 flex-shrink-0 text-emerald-600 dark:text-emerald-300" />
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
 
               {/* Investment Data */}
               {property.investmentData && (
-                <div className="mt-6 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
-                    Datos de Inversión
+                <section className="mt-6 rounded-lg bg-emerald-50 p-4 dark:bg-emerald-950">
+                  <h2 className="font-display text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                    {t('details.investment')}
                   </h2>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div>
-                      <div className="text-lg font-bold text-emerald-600">
-                        {property.investmentData.roi}%
+                  <dl className="grid grid-cols-3 gap-4">
+                    {[
+                      { value: `${property.investmentData.roi}%`, label: t('details.roi') },
+                      { value: `${property.investmentData.rentalYield}%`, label: t('details.yield') },
+                      { value: property.investmentData.monthsOnMarket, label: t('details.timeOnMarket') },
+                    ].map(item => (
+                      <div key={item.label} className="flex flex-col-reverse">
+                        <dt className="text-sm text-gray-600 dark:text-gray-300">{item.label}</dt>
+                        <dd className="text-lg font-bold text-emerald-800 dark:text-emerald-200 tabular-nums">{item.value}</dd>
                       </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                        ROI Anual
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-lg font-bold text-emerald-600">
-                        {property.investmentData.rentalYield}%
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                        Rentabilidad
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-lg font-bold text-emerald-600">
-                        {property.investmentData.monthsOnMarket}
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                        Meses en mercado
-                      </div>
-                    </div>
+                    ))}
+                  </dl>
+                </section>
+              )}
+            </div>
+
+            {/* Contacto: destino del botón "Contactar" */}
+            <section
+              id="contacto"
+              ref={contactSectionRef}
+              aria-labelledby="contact-title"
+              className={`${cardClass} scroll-mt-24 p-5 sm:p-6`}
+            >
+              <h2 id="contact-title" className="font-display text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                {t('details.contact')}
+              </h2>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 px-4 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+                >
+                  <PhoneIcon className="h-5 w-5" />
+                  <span>{t('details.callNow')}</span>
+                </button>
+
+                {user ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowContactForm(!showContactForm)}
+                    aria-expanded={showContactForm}
+                    aria-controls="contact-form"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-emerald-700"
+                  >
+                    <EnvelopeIcon className="h-5 w-5" />
+                    <span>{showContactForm ? t('details.closeChat') : t('details.sendMessage')}</span>
+                  </button>
+                ) : null}
+              </div>
+
+              {user ? (
+                showContactForm && (
+                  <div id="contact-form" className="mt-4">
+                    <form onSubmit={handleSendMessage} className="relative">
+                      <label htmlFor="contact-message" className="sr-only">{t('details.writeMessage')}</label>
+                      <textarea
+                        id="contact-message"
+                        ref={messageInputRef}
+                        placeholder={t('details.writeMessage')}
+                        rows={3}
+                        required
+                        value={messageForm.message}
+                        onChange={e => setMessageForm(f => ({ ...f, message: e.target.value }))}
+                        className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 resize-none"
+                      />
+                      <button
+                        type="submit"
+                        aria-label={t('details.sendMessage')}
+                        disabled={messageStatus === 'sending' || !messageForm.message.trim()}
+                        className="absolute right-2 bottom-3 p-2 text-emerald-700 hover:text-emerald-800 disabled:text-gray-400 dark:text-emerald-300 transition-colors"
+                      >
+                        <PaperAirplaneIcon className={`h-6 w-6 ${messageStatus === 'sending' ? 'animate-pulse' : ''}`} />
+                      </button>
+                    </form>
+                    {messageStatus === 'success' && (
+                      <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-2 text-center font-medium">
+                        {t('details.messageSent')}
+                      </p>
+                    )}
+                    {messageStatus === 'error' && (
+                      <p className="text-xs text-red-600 dark:text-red-400 mt-2 text-center">{t('details.sendError')}</p>
+                    )}
                   </div>
+                )
+              ) : (
+                <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50 p-4 text-center dark:border-emerald-800 dark:bg-emerald-950">
+                  <p className="text-sm text-emerald-800 dark:text-emerald-200 mb-3">
+                    {t('details.contact_login')}
+                  </p>
+                  <Link
+                    ref={loginLinkRef}
+                    to="/login"
+                    className="inline-block rounded-lg bg-emerald-600 px-6 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
+                  >
+                    {t('nav.login')}
+                  </Link>
                 </div>
               )}
-            </motion.div>
+            </section>
 
             {/* Map */}
-            <motion.div
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden"
-              initial={false}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  Ubicación
+            <section aria-labelledby="map-title" className={`${cardClass} overflow-hidden`}>
+              <div className="px-5 py-4 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+                <h2 id="map-title" className="font-display text-lg font-semibold text-gray-900 dark:text-white">
+                  {t('details.location_title')}
                 </h2>
               </div>
-              <div className="h-[400px]">
+              <div className="h-[320px] sm:h-[400px]">
                 <MapContainer
                   center={[property.coordinates.lat, property.coordinates.lng]}
                   zoom={15}
@@ -554,131 +654,55 @@ export default function PropertyDetail() {
                     <Popup>
                       <div className="p-2">
                         <h3 className="font-bold">{property.title}</h3>
-                        <p className="text-sm">{property.location}</p>
+                        <p className="text-sm">{locationText}</p>
                       </div>
                     </Popup>
                   </Marker>
                 </MapContainer>
               </div>
-            </motion.div>
+            </section>
           </div>
+        </div>
 
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            {/* Contact Form */}
-            <motion.div
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-8"
-              initial={false}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                {t('details.contact')}
-              </h2>
+        {/* Similar Properties */}
+        {similarProperties.length > 0 && (
+          <section aria-labelledby="similar-title" className="mt-10">
+            <h2 id="similar-title" className="font-display text-2xl font-bold text-gray-900 dark:text-white mb-5">
+              {t('propertyDetail.similar_title')}
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              {similarProperties.map((similarProperty) => (
+                <PropertyCard
+                  key={similarProperty.id}
+                  property={similarProperty}
+                  onViewDetails={handleViewDetails}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
 
-              <div className="space-y-4">
-                <motion.button
-                  className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-emerald-600 to-emerald-600 text-white px-4 py-3 rounded-lg hover:from-emerald-700 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl"
-                  whileHover={{ scale: 1.02, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <PhoneIcon className="h-5 w-5" />
-                  <span>{t('details.callNow')}</span>
-                </motion.button>
-
-                {user ? (
-                  <>
-                    <motion.button
-                      onClick={() => setShowContactForm(!showContactForm)}
-                      className="w-full flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors duration-200"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <EnvelopeIcon className="h-5 w-5" />
-                      <span>{showContactForm ? 'Cerrar chat' : 'Enviar mensaje'}</span>
-                    </motion.button>
-
-                    <AnimatePresence>
-                      {showContactForm && (
-                        <motion.div
-                          className="mt-4"
-                          initial={false}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
-                        >
-                          <form onSubmit={handleSendMessage} className="relative">
-                            <textarea
-                              placeholder="Escribe tu consulta aquí..."
-                              rows={3}
-                              required
-                              value={messageForm.message}
-                              onChange={e => setMessageForm(f => ({ ...f, message: e.target.value }))}
-                              className="w-full px-4 py-3 pr-12 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white resize-none transition-all duration-200"
-                            />
-                            <button
-                              type="submit"
-                              disabled={messageStatus === 'sending' || !messageForm.message.trim()}
-                              className="absolute right-2 bottom-3 p-2 text-emerald-600 hover:text-emerald-700 disabled:text-gray-400 transition-colors"
-                            >
-                              <PaperAirplaneIcon className={`h-6 w-6 ${messageStatus === 'sending' ? 'animate-pulse' : ''}`} />
-                            </button>
-                          </form>
-                          {messageStatus === 'success' && (
-                            <motion.p
-                              initial={false}
-                              animate={{ opacity: 1, y: 0 }}
-                              className="text-xs text-emerald-600 mt-2 text-center font-medium"
-                            >
-                              ✓ Mensaje enviado. Ver en Dashboard
-                            </motion.p>
-                          )}
-                          {messageStatus === 'error' && (
-                            <p className="text-xs text-red-600 mt-2 text-center">Error al enviar el mensaje.</p>
-                          )}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </>
-                ) : (
-                  <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-xl p-4 text-center">
-                    <p className="text-sm text-emerald-800 dark:text-emerald-300 mb-3">
-                      Inicia sesión para contactar con esta propiedad y gestionar tus mensajes.
-                    </p>
-                    <Link
-                      to="/login"
-                      className="inline-block bg-emerald-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors shadow-sm"
-                    >
-                      Iniciar Sesión
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-
-            {/* Similar Properties */}
-            {similarProperties.length > 0 && (
-              <motion.div
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6"
-                initial={false}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 flex items-center gap-3">
-                  <div className="h-8 w-1 bg-emerald-500 rounded-full" />
-                  {t('propertyDetail.similar_title')}
-                </h2>
-                <div className="space-y-4">
-                  {similarProperties.map((similarProperty) => (
-                    <PropertyCard
-                      key={similarProperty.id}
-                      property={similarProperty}
-                      onViewDetails={handleViewDetails}
-                    />
-                  ))}
-                </div>
-              </motion.div>
-            )}
+      {/* Móvil/tablet: precio y "Contactar" siempre a mano. Oculta en lg+, donde está el panel lateral. */}
+      <div
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white shadow-[0_-4px_16px_rgba(0,0,0,0.06)] lg:hidden dark:border-gray-700 dark:bg-gray-800"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <div className="min-w-0">
+            <p className="font-display text-xl font-bold leading-tight text-gray-900 dark:text-white tabular-nums">
+              {priceNode}
+            </p>
+            <p className="truncate text-xs text-gray-600 dark:text-gray-300">{property.title}</p>
           </div>
+          <button
+            type="button"
+            onClick={goToContact}
+            className="inline-flex flex-shrink-0 items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition-colors hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
+          >
+            <EnvelopeIcon className="h-5 w-5" />
+            {t('details.contact')}
+          </button>
         </div>
       </div>
     </div>

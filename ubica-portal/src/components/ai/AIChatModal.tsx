@@ -235,7 +235,7 @@ export default function AIChatModal() {
                         exit={{ scale: 0, opacity: 0 }}
                         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                         onClick={maximizeChat}
-                        className="fixed bottom-6 right-6 z-[9999] group"
+                        className="ai-chat-bubble fixed bottom-6 right-6 z-[9999] group"
                     >
                         <div className="relative">
                             {/* Animated gradient ring */}

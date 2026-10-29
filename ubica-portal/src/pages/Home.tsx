@@ -70,6 +70,16 @@ const isPointInPolygon = (point: L.LatLng, vs: L.LatLng[]) => {
   return inside;
 };
 
+// Municipio de un anuncio: el campo `location` (ciudad) o, si viene vacío, el último tramo de la dirección
+// ("Avenida de América, Cartagena" -> "Cartagena"), descartando tramos con números (portal, CP...)
+const getMunicipality = (p: Property): string => {
+  const loc = p.location?.trim();
+  if (loc) return loc;
+  const parts = (p.address || '').split(',').map(s => s.trim()).filter(Boolean);
+  const last = parts.length > 1 ? parts[parts.length - 1] : '';
+  return last.length >= 3 && !/\d/.test(last) ? last : '';
+};
+
 // Map controller component with fullscreen support
 function MapController({ zoom, isFullscreen }: { zoom: number; isFullscreen: boolean }) {
   const map = useMap();
@@ -248,7 +258,11 @@ export default function Home() {
     }
 
     if (filters.location) {
-      filtered = filtered.filter(p => p.location.toLowerCase().includes(filters.location.toLowerCase()));
+      // Muchos anuncios no traen municipio en `location` y solo lo tienen al final de la dirección
+      const loc = filters.location.toLowerCase();
+      filtered = filtered.filter(p =>
+        p.location.toLowerCase().includes(loc) || (p.address || '').toLowerCase().includes(loc)
+      );
     }
 
     if (filters.status) {
@@ -283,6 +297,37 @@ export default function Home() {
 
     setFilteredProperties(filtered);
   }, [filters, properties, searchTerm, hasDrawnArea, drawnArea]);
+
+  // Municipios más frecuentes del catálogo cargado, para los filtros rápidos de la portada
+  const municipalityChips = useMemo(() => {
+    const counts = new Map<string, { label: string; count: number }>();
+    properties.forEach(p => {
+      const label = getMunicipality(p);
+      if (!label) return;
+      const key = label.toLowerCase();
+      const entry = counts.get(key);
+      if (entry) entry.count += 1;
+      else counts.set(key, { label, count: 1 });
+    });
+    // sort es estable: en empate queda el orden de aparición
+    return [...counts.entries()]
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, 5)
+      .map(([value, { label }]) => ({ value, label }));
+  }, [properties]);
+
+  // Cifras reales del catálogo publicado (sin filtros). El precio medio solo cuenta las ventas:
+  // mezclar alquileres mensuales con precios de venta daría una cifra sin sentido.
+  const catalogueFacts = useMemo(() => {
+    const forSale = properties.filter(p => p.status === 'for-sale' && p.price > 0);
+    const avgSalePrice = forSale.length
+      ? Math.round(forSale.reduce((sum, p) => sum + p.price, 0) / forSale.length)
+      : null;
+    return { count: properties.length, avgSalePrice };
+  }, [properties]);
+
+  const formatEuros = (value: number) =>
+    new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
 
   const handleFilterChange = (key: keyof PropertyFilters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -487,7 +532,7 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="container mx-auto px-4 py-8">
-          <div className="mb-8 h-32 rounded-2xl bg-gray-200 dark:bg-gray-700 animate-pulse" />
+          <div className="mb-8 h-80 sm:h-72 rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 animate-pulse" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
               <PropertyCardSkeleton key={i} />
@@ -500,9 +545,24 @@ export default function Home() {
 
 
 
+  const toggleFilter = (key: 'status' | 'location', value: string) => {
+    setFilters(prev => ({ ...prev, [key]: prev[key] === value ? '' : value }));
+  };
+
+  const quickChips = [
+    { key: 'for-sale', label: t('home.chip_for_sale'), active: filters.status === 'for-sale', onToggle: () => toggleFilter('status', 'for-sale') },
+    { key: 'for-rent', label: t('home.chip_for_rent'), active: filters.status === 'for-rent', onToggle: () => toggleFilter('status', 'for-rent') },
+    ...municipalityChips.map(m => ({
+      key: `loc-${m.value}`,
+      label: m.label,
+      active: filters.location === m.value,
+      onToggle: () => toggleFilter('location', m.value),
+    })),
+  ];
+
   const renderSearchRow = (compact: boolean) => (
     <div className="flex items-center gap-2 sm:gap-3">
-      <div className="flex-1 min-w-0 bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+      <div className="flex-1 min-w-0 bg-white dark:bg-gray-900 rounded-xl border border-gray-300 dark:border-gray-600 shadow-sm overflow-hidden">
         <div className="relative">
           <MagnifyingGlassIcon className={`pointer-events-none absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 ${compact ? 'h-4 w-4' : 'h-5 w-5'}`} />
           <input
@@ -512,7 +572,7 @@ export default function Home() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             tabIndex={compact && !showCompactSearch ? -1 : undefined}
-            className={`w-full pl-10 sm:pl-12 pr-4 text-gray-900 dark:text-white bg-white dark:bg-gray-800 border-0 focus:ring-2 focus:ring-emerald-500 focus:outline-none rounded-xl ${compact ? 'py-2 text-sm' : 'py-4 text-base'}`}
+            className={`w-full pl-10 sm:pl-12 pr-4 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 bg-white dark:bg-gray-900 border-0 focus:ring-2 focus:ring-emerald-500 focus:outline-none rounded-xl ${compact ? 'py-2 text-sm' : 'py-4 text-base'}`}
           />
         </div>
       </div>
@@ -525,7 +585,7 @@ export default function Home() {
         className="relative group flex-shrink-0 transition-transform hover:scale-105 active:scale-95"
       >
         <div className="absolute -inset-[2px] rounded-xl opacity-75 group-hover:opacity-100 transition-opacity duration-300 bg-emerald-200" />
-        <div className={`relative bg-white dark:bg-gray-800 rounded-xl flex items-center gap-2 shadow-sm ${compact ? 'px-3 py-2' : 'px-5 py-3.5'}`}>
+        <div className={`relative bg-white dark:bg-gray-900 rounded-xl flex items-center gap-2 shadow-sm ${compact ? 'px-3 py-2' : 'px-5 py-3.5'}`}>
           <svg className={compact ? 'h-4 w-4' : 'h-5 w-5'} viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M12 2L13.09 8.26L18 6L14.74 10.91L21 12L14.74 13.09L18 18L13.09 15.74L12 22L10.91 15.74L6 18L9.26 13.09L3 12L9.26 10.91L6 6L10.91 8.26L12 2Z"
               className="fill-emerald-600 dark:fill-emerald-400" />
@@ -540,17 +600,66 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Portada: eslogan y búsqueda, en el flujo normal de la página */}
+      {/* Portada: titular, búsqueda, filtros rápidos y cifras, en el flujo normal de la página.
+          Nada aquí cambia de alto al hacer scroll: la barra compacta va aparte, fija y con transform. */}
       {!isDrawingEnabled && viewMode !== 'map' && (
-        <div className="mx-auto max-w-7xl w-full px-4 pt-8 pb-4">
-          <div className="w-full rounded-3xl bg-emerald-600 shadow-xl px-4 py-5 sm:px-8 sm:py-6">
-            <div className="mb-5 rounded-2xl bg-black/30 px-6 md:px-8 py-4 text-center">
-              <p className="text-sm sm:text-lg md:text-xl font-semibold text-white tracking-wide text-balance leading-snug">
-                {t('header.slogan')}
-              </p>
+        <div className="mx-auto max-w-7xl w-full px-4 pt-6 sm:pt-8 pb-4">
+          <section
+            aria-labelledby="home-hero-title"
+            className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-6 shadow-sm sm:px-8 sm:py-8 dark:border-gray-700 dark:bg-gray-800"
+          >
+            <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+              {t('home.hero_kicker')}
+            </p>
+            <h1
+              id="home-hero-title"
+              className="mt-2 font-display text-3xl font-bold leading-tight tracking-tight text-gray-900 text-balance sm:text-4xl lg:text-5xl dark:text-white"
+            >
+              {t('home.hero_title')}
+            </h1>
+            <p className="mt-3 max-w-2xl text-base text-gray-600 sm:text-lg dark:text-gray-300">
+              {t('home.hero_subtitle')}
+            </p>
+
+            <div ref={heroSearchRef} className="mt-6">{renderSearchRow(false)}</div>
+
+            {/* Filtros rápidos: escriben en los mismos filtros que el panel "Filtros" */}
+            <div role="group" aria-label={t('home.quick_filters')} className="mt-4 flex flex-wrap gap-2">
+              {quickChips.map(chip => (
+                <button
+                  key={chip.key}
+                  type="button"
+                  aria-pressed={chip.active}
+                  onClick={chip.onToggle}
+                  className={`inline-flex items-center gap-1 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${chip.active
+                    ? 'border-emerald-600 bg-emerald-50 text-emerald-800 dark:border-emerald-400 dark:bg-emerald-950 dark:text-emerald-200'
+                    : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:border-gray-500 dark:hover:bg-gray-700'
+                    }`}
+                >
+                  {chip.active && <CheckIcon className="h-4 w-4 -ml-0.5" aria-hidden="true" />}
+                  {chip.label}
+                </button>
+              ))}
             </div>
-            <div ref={heroSearchRef}>{renderSearchRow(false)}</div>
-          </div>
+
+            {/* Cifras del catálogo publicado */}
+            {!loading && catalogueFacts.count > 0 && (
+              <p className="mt-5 flex flex-col gap-y-1 sm:flex-row sm:flex-wrap sm:items-center border-t border-gray-200 pt-4 text-sm text-gray-600 tabular-nums dark:border-gray-700 dark:text-gray-300">
+                {[
+                  <>{t('home.facts_published', { count: catalogueFacts.count })}</>,
+                  catalogueFacts.avgSalePrice !== null
+                    ? <>{t('home.facts_avg_price')} <span className="font-semibold text-gray-900 dark:text-white">{formatEuros(catalogueFacts.avgSalePrice)}</span></>
+                    : null,
+                  <>{t('home.facts_managed')}</>,
+                ].filter(Boolean).map((item, i) => (
+                  <span key={i} className="whitespace-nowrap">
+                    {i > 0 && <span className="mx-2 hidden text-gray-300 sm:inline dark:text-gray-600" aria-hidden="true">·</span>}
+                    {item}
+                  </span>
+                ))}
+              </p>
+            )}
+          </section>
         </div>
       )}
 
@@ -562,7 +671,7 @@ export default function Home() {
           style={{ paddingTop: 'env(safe-area-inset-top)' }}
         >
           <div className="mx-auto max-w-7xl w-full px-3 pt-2.5">
-            <div className="rounded-3xl bg-emerald-600 shadow-lg px-2.5 py-2">
+            <div className="rounded-2xl border border-gray-200 bg-white px-2.5 py-2 shadow-lg dark:border-gray-700 dark:bg-gray-800">
               {renderSearchRow(true)}
             </div>
           </div>

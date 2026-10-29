@@ -37,6 +37,17 @@
   }
 }
 
+/* Ficha de inmueble: la barra fija inferior (por debajo de lg) no debe tapar el contenido ni el pie */
+@media (max-width: 1023.98px) {
+  body.has-bottom-cta {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
+  /* La burbuja del chat minimizado sube por encima de la barra */
+  body.has-bottom-cta .ai-chat-bubble {
+    bottom: calc(6rem + env(safe-area-inset-bottom));
+  }
+}
+
 /* Map Mode Full Screen Override */
 body.map-mode-active {
   overflow: hidden !important;
