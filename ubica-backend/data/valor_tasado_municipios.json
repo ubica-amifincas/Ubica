@@ -1,0 +1,1844 @@
+{
+ "fuente": "Ministerio de Vivienda y Agenda Urbana. Estadística de valor tasado de vivienda, tabla 4: valor tasado medio de vivienda libre en municipios de más de 25.000 habitantes",
+ "url": "https://apps.fomento.gob.es/BoletinOnline2/sedal/35103500.XLS",
+ "periodo": "2.º trimestre de 2026",
+ "unidad": "euros por m² (total, vivienda libre)",
+ "municipios": [
+  {
+   "provincia": "Almería",
+   "municipio": "Almería",
+   "eur_m2": 1796,
+   "tasaciones": 723
+  },
+  {
+   "provincia": "Almería",
+   "municipio": "Nijar",
+   "eur_m2": 1329,
+   "tasaciones": 80
+  },
+  {
+   "provincia": "Almería",
+   "municipio": "Roquetas de Mar",
+   "eur_m2": 1706,
+   "tasaciones": 552
+  },
+  {
+   "provincia": "Almería",
+   "municipio": "Ejido (El)",
+   "eur_m2": 1372,
+   "tasaciones": 372
+  },
+  {
+   "provincia": "Cádiz",
+   "municipio": "Algeciras",
+   "eur_m2": 1595,
+   "tasaciones": 413
+  },
+  {
+   "provincia": "Cádiz",
+   "municipio": "Arcos de la frontera",
+   "eur_m2": 1326,
+   "tasaciones": 117
+  },
+  {
+   "provincia": "Cádiz",
+   "municipio": "Cádiz",
+   "eur_m2": 3021,
+   "tasaciones": 339
+  },
+  {
+   "provincia": "Cádiz",
+   "municipio": "Chiclana de la Frontera",
+   "eur_m2": 2229,
+   "tasaciones": 389
+  },
+  {
+   "provincia": "Cádiz",
+   "municipio": "Jerez de la Frontera",
+   "eur_m2": 1815,
+   "tasaciones": 847
+  },
+  {
+   "provincia": "Cádiz",
+   "municipio": "Línea de la Concepción (La)",
+   "eur_m2": 1624,
+   "tasaciones": 249
+  },
+  {
+   "provincia": "Cádiz",
+   "municipio": "Puerto de Santa María",
+   "eur_m2": 2559,
+   "tasaciones": 336
+  },
+  {
+   "provincia": "Cádiz",
+   "municipio": "Puerto Real",
+   "eur_m2": 1934,
+   "tasaciones": 142
+  },
+  {
+   "provincia": "Cádiz",
+   "municipio": "Rota",
+   "eur_m2": 2878,
+   "tasaciones": 129
+  },
+  {
+   "provincia": "Cádiz",
+   "municipio": "San Fernando",
+   "eur_m2": 1962,
+   "tasaciones": 331
+  },
+  {
+   "provincia": "Cádiz",
+   "municipio": "Sanlúcar de Barrameda",
+   "eur_m2": 2065,
+   "tasaciones": 213
+  },
+  {
+   "provincia": "Cádiz",
+   "municipio": "San Roque",
+   "eur_m2": 2569,
+   "tasaciones": 175
+  },
+  {
+   "provincia": "Córdoba",
+   "municipio": "Córdoba",
+   "eur_m2": 1784,
+   "tasaciones": 1202
+  },
+  {
+   "provincia": "Córdoba",
+   "municipio": "Lucena",
+   "eur_m2": 1094,
+   "tasaciones": 142
+  },
+  {
+   "provincia": "Córdoba",
+   "municipio": "Puente Génil",
+   "eur_m2": 986,
+   "tasaciones": 91
+  },
+  {
+   "provincia": "Córdoba",
+   "municipio": "Almuñecar",
+   "eur_m2": 3016,
+   "tasaciones": 144
+  },
+  {
+   "provincia": "Granada",
+   "municipio": "Granada",
+   "eur_m2": 2446,
+   "tasaciones": 789
+  },
+  {
+   "provincia": "Granada",
+   "municipio": "Motril",
+   "eur_m2": 1623,
+   "tasaciones": 219
+  },
+  {
+   "provincia": "Huelva",
+   "municipio": "Huelva",
+   "eur_m2": 1658,
+   "tasaciones": 546
+  },
+  {
+   "provincia": "Huelva",
+   "municipio": "Lepe",
+   "eur_m2": 1859,
+   "tasaciones": 174
+  },
+  {
+   "provincia": "Jaén",
+   "municipio": "Andújar",
+   "eur_m2": 819,
+   "tasaciones": 119
+  },
+  {
+   "provincia": "Jaén",
+   "municipio": "Jaén",
+   "eur_m2": 1469,
+   "tasaciones": 459
+  },
+  {
+   "provincia": "Jaén",
+   "municipio": "Linares",
+   "eur_m2": 889,
+   "tasaciones": 232
+  },
+  {
+   "provincia": "Jaén",
+   "municipio": "Úbeda",
+   "eur_m2": 1013,
+   "tasaciones": 120
+  },
+  {
+   "provincia": "Málaga",
+   "municipio": "Alhaurín de la Torre",
+   "eur_m2": 2753,
+   "tasaciones": 167
+  },
+  {
+   "provincia": "Málaga",
+   "municipio": "Antequera",
+   "eur_m2": 1532,
+   "tasaciones": 137
+  },
+  {
+   "provincia": "Málaga",
+   "municipio": "Benalmádena",
+   "eur_m2": 3783,
+   "tasaciones": 402
+  },
+  {
+   "provincia": "Málaga",
+   "municipio": "Estepona",
+   "eur_m2": 3518,
+   "tasaciones": 470
+  },
+  {
+   "provincia": "Málaga",
+   "municipio": "Fuengirola",
+   "eur_m2": 3758,
+   "tasaciones": 423
+  },
+  {
+   "provincia": "Málaga",
+   "municipio": "Málaga",
+   "eur_m2": 3320,
+   "tasaciones": 1722
+  },
+  {
+   "provincia": "Málaga",
+   "municipio": "Marbella",
+   "eur_m2": 4528,
+   "tasaciones": 748
+  },
+  {
+   "provincia": "Málaga",
+   "municipio": "Mijas",
+   "eur_m2": 3365,
+   "tasaciones": 675
+  },
+  {
+   "provincia": "Málaga",
+   "municipio": "Rincón de la Victoria",
+   "eur_m2": 3506,
+   "tasaciones": 201
+  },
+  {
+   "provincia": "Málaga",
+   "municipio": "Ronda",
+   "eur_m2": 1743,
+   "tasaciones": 133
+  },
+  {
+   "provincia": "Málaga",
+   "municipio": "Vélez Málaga",
+   "eur_m2": 2788,
+   "tasaciones": 303
+  },
+  {
+   "provincia": "Málaga",
+   "municipio": "Torremolinos",
+   "eur_m2": 3758,
+   "tasaciones": 326
+  },
+  {
+   "provincia": "Sevilla",
+   "municipio": "Alcalá de Guadaíra",
+   "eur_m2": 1701,
+   "tasaciones": 279
+  },
+  {
+   "provincia": "Sevilla",
+   "municipio": "Camas",
+   "eur_m2": 1769,
+   "tasaciones": 122
+  },
+  {
+   "provincia": "Sevilla",
+   "municipio": "Carmona",
+   "eur_m2": 1426,
+   "tasaciones": 105
+  },
+  {
+   "provincia": "Sevilla",
+   "municipio": "Coria del Río",
+   "eur_m2": 1405,
+   "tasaciones": 130
+  },
+  {
+   "provincia": "Sevilla",
+   "municipio": "Dos Hermanas",
+   "eur_m2": 1993,
+   "tasaciones": 528
+  },
+  {
+   "provincia": "Sevilla",
+   "municipio": "Écija",
+   "eur_m2": 1232,
+   "tasaciones": 99
+  },
+  {
+   "provincia": "Sevilla",
+   "municipio": "Lebrija",
+   "eur_m2": 1118,
+   "tasaciones": 64
+  },
+  {
+   "provincia": "Sevilla",
+   "municipio": "Mairena del Aljarafe",
+   "eur_m2": 2136,
+   "tasaciones": 178
+  },
+  {
+   "provincia": "Sevilla",
+   "municipio": "Morón de la Frontera",
+   "eur_m2": 1062,
+   "tasaciones": 86
+  },
+  {
+   "provincia": "Sevilla",
+   "municipio": "Palacios y Villafranca (Los)",
+   "eur_m2": 1312,
+   "tasaciones": 61
+  },
+  {
+   "provincia": "Sevilla",
+   "municipio": "Rinconada (La)",
+   "eur_m2": 1673,
+   "tasaciones": 188
+  },
+  {
+   "provincia": "Sevilla",
+   "municipio": "Sevilla",
+   "eur_m2": 2652,
+   "tasaciones": 2543
+  },
+  {
+   "provincia": "Sevilla",
+   "municipio": "Utrera",
+   "eur_m2": 1511,
+   "tasaciones": 182
+  },
+  {
+   "provincia": "Huesca",
+   "municipio": "Huesca",
+   "eur_m2": 1810,
+   "tasaciones": 132
+  },
+  {
+   "provincia": "Teruel",
+   "municipio": "Teruel",
+   "eur_m2": 1807,
+   "tasaciones": 97
+  },
+  {
+   "provincia": "Zaragoza",
+   "municipio": "Zaragoza",
+   "eur_m2": 2240,
+   "tasaciones": 1940
+  },
+  {
+   "provincia": "ASTURIAS",
+   "municipio": "Avilés",
+   "eur_m2": 1553,
+   "tasaciones": 264
+  },
+  {
+   "provincia": "ASTURIAS",
+   "municipio": "Gijón",
+   "eur_m2": 2343,
+   "tasaciones": 790
+  },
+  {
+   "provincia": "ASTURIAS",
+   "municipio": "Langreo",
+   "eur_m2": 1052,
+   "tasaciones": 168
+  },
+  {
+   "provincia": "ASTURIAS",
+   "municipio": "Mieres",
+   "eur_m2": 1096,
+   "tasaciones": 129
+  },
+  {
+   "provincia": "ASTURIAS",
+   "municipio": "Oviedo",
+   "eur_m2": 2215,
+   "tasaciones": 724
+  },
+  {
+   "provincia": "ASTURIAS",
+   "municipio": "Siero",
+   "eur_m2": 1564,
+   "tasaciones": 195
+  },
+  {
+   "provincia": "ILLES BALEARS",
+   "municipio": "Calvià",
+   "eur_m2": 5502,
+   "tasaciones": 191
+  },
+  {
+   "provincia": "ILLES BALEARS",
+   "municipio": "Ciutadella de Menorca",
+   "eur_m2": 4074,
+   "tasaciones": 105
+  },
+  {
+   "provincia": "ILLES BALEARS",
+   "municipio": "Eivissa",
+   "eur_m2": 5473,
+   "tasaciones": 121
+  },
+  {
+   "provincia": "ILLES BALEARS",
+   "municipio": "Inca",
+   "eur_m2": 2650,
+   "tasaciones": 138
+  },
+  {
+   "provincia": "ILLES BALEARS",
+   "municipio": "Llucmajor",
+   "eur_m2": 3908,
+   "tasaciones": 130
+  },
+  {
+   "provincia": "ILLES BALEARS",
+   "municipio": "Mahón",
+   "eur_m2": 2991,
+   "tasaciones": 87
+  },
+  {
+   "provincia": "ILLES BALEARS",
+   "municipio": "Manacor",
+   "eur_m2": 3031,
+   "tasaciones": 117
+  },
+  {
+   "provincia": "ILLES BALEARS",
+   "municipio": "Marratxí",
+   "eur_m2": 3782,
+   "tasaciones": 113
+  },
+  {
+   "provincia": "ILLES BALEARS",
+   "municipio": "Palma de Mallorca",
+   "eur_m2": 3814,
+   "tasaciones": 1274
+  },
+  {
+   "provincia": "ILLES BALEARS",
+   "municipio": "Santa Eulalia del Río",
+   "eur_m2": 6844,
+   "tasaciones": 123
+  },
+  {
+   "provincia": "Las Palmas",
+   "municipio": "Agüimes",
+   "eur_m2": 1865,
+   "tasaciones": 78
+  },
+  {
+   "provincia": "Las Palmas",
+   "municipio": "Arrecife",
+   "eur_m2": 2016,
+   "tasaciones": 208
+  },
+  {
+   "provincia": "Las Palmas",
+   "municipio": "Arucas",
+   "eur_m2": 1629,
+   "tasaciones": 126
+  },
+  {
+   "provincia": "Las Palmas",
+   "municipio": "Ingenio",
+   "eur_m2": 1420,
+   "tasaciones": 106
+  },
+  {
+   "provincia": "Las Palmas",
+   "municipio": "Oliva, La",
+   "eur_m2": 3300,
+   "tasaciones": 176
+  },
+  {
+   "provincia": "Las Palmas",
+   "municipio": "Palmas de Gran Canaria (Las)",
+   "eur_m2": 2337,
+   "tasaciones": 1058
+  },
+  {
+   "provincia": "Las Palmas",
+   "municipio": "Puerto del Rosario",
+   "eur_m2": 1959,
+   "tasaciones": 134
+  },
+  {
+   "provincia": "Las Palmas",
+   "municipio": "San Bartolomé de Tirajana",
+   "eur_m2": 3286,
+   "tasaciones": 144
+  },
+  {
+   "provincia": "Las Palmas",
+   "municipio": "Santa Lucía de Tirajana",
+   "eur_m2": 1761,
+   "tasaciones": 212
+  },
+  {
+   "provincia": "Las Palmas",
+   "municipio": "Telde",
+   "eur_m2": 1796,
+   "tasaciones": 253
+  },
+  {
+   "provincia": "Santa Cruz de",
+   "municipio": "Adeje",
+   "eur_m2": 3776,
+   "tasaciones": 199
+  },
+  {
+   "provincia": "Tenerife",
+   "municipio": "Arona",
+   "eur_m2": 2946,
+   "tasaciones": 268
+  },
+  {
+   "provincia": "Tenerife",
+   "municipio": "Candelaria",
+   "eur_m2": 2735,
+   "tasaciones": 101
+  },
+  {
+   "provincia": "Tenerife",
+   "municipio": "Granadilla de Abona",
+   "eur_m2": 2502,
+   "tasaciones": 196
+  },
+  {
+   "provincia": "Tenerife",
+   "municipio": "San Cristóbal Laguna",
+   "eur_m2": 2042,
+   "tasaciones": 415
+  },
+  {
+   "provincia": "Tenerife",
+   "municipio": "Orotava (La)",
+   "eur_m2": 1729,
+   "tasaciones": 94
+  },
+  {
+   "provincia": "Tenerife",
+   "municipio": "Puerto de la Cruz",
+   "eur_m2": 3092,
+   "tasaciones": 94
+  },
+  {
+   "provincia": "Tenerife",
+   "municipio": "Realejos (Los)",
+   "eur_m2": 1906,
+   "tasaciones": 72
+  },
+  {
+   "provincia": "Tenerife",
+   "municipio": "Santa Cruz deTenerife",
+   "eur_m2": 2330,
+   "tasaciones": 648
+  },
+  {
+   "provincia": "Cantabría",
+   "municipio": "Camargo",
+   "eur_m2": 2127,
+   "tasaciones": 94
+  },
+  {
+   "provincia": "Cantabría",
+   "municipio": "Castro-Urdiales",
+   "eur_m2": 2814,
+   "tasaciones": 151
+  },
+  {
+   "provincia": "Cantabría",
+   "municipio": "Santander",
+   "eur_m2": 2662,
+   "tasaciones": 514
+  },
+  {
+   "provincia": "Cantabría",
+   "municipio": "Torrelavega",
+   "eur_m2": 1702,
+   "tasaciones": 166
+  },
+  {
+   "provincia": "Ávila",
+   "municipio": "Ávila",
+   "eur_m2": 1637,
+   "tasaciones": 228
+  },
+  {
+   "provincia": "Burgos",
+   "municipio": "Aranda de Duero",
+   "eur_m2": 1431,
+   "tasaciones": 86
+  },
+  {
+   "provincia": "Burgos",
+   "municipio": "Burgos",
+   "eur_m2": 2060,
+   "tasaciones": 451
+  },
+  {
+   "provincia": "Burgos",
+   "municipio": "Miranda de Ebro",
+   "eur_m2": 1441,
+   "tasaciones": 134
+  },
+  {
+   "provincia": "León",
+   "municipio": "León",
+   "eur_m2": 1647,
+   "tasaciones": 415
+  },
+  {
+   "provincia": "León",
+   "municipio": "Ponferrada",
+   "eur_m2": 923,
+   "tasaciones": 188
+  },
+  {
+   "provincia": "León",
+   "municipio": "San Andrés  del Rabanedo",
+   "eur_m2": 1277,
+   "tasaciones": 102
+  },
+  {
+   "provincia": "Palencia",
+   "municipio": "Palencia",
+   "eur_m2": 1471,
+   "tasaciones": 228
+  },
+  {
+   "provincia": "Salamanca",
+   "municipio": "Salamanca",
+   "eur_m2": 2135,
+   "tasaciones": 414
+  },
+  {
+   "provincia": "Segovia",
+   "municipio": "Segovia",
+   "eur_m2": 2179,
+   "tasaciones": 155
+  },
+  {
+   "provincia": "Soria",
+   "municipio": "Soria",
+   "eur_m2": 1735,
+   "tasaciones": 70
+  },
+  {
+   "provincia": "Valladodid",
+   "municipio": "Valladolid",
+   "eur_m2": 1946,
+   "tasaciones": 819
+  },
+  {
+   "provincia": "Zamora",
+   "municipio": "Zamora",
+   "eur_m2": 1436,
+   "tasaciones": 177
+  },
+  {
+   "provincia": "Albacete",
+   "municipio": "Albacete",
+   "eur_m2": 1804,
+   "tasaciones": 588
+  },
+  {
+   "provincia": "Albacete",
+   "municipio": "Almansa",
+   "eur_m2": 803,
+   "tasaciones": 96
+  },
+  {
+   "provincia": "Albacete",
+   "municipio": "Hellín",
+   "eur_m2": 780,
+   "tasaciones": 68
+  },
+  {
+   "provincia": "Albacete",
+   "municipio": "Villarrobledo",
+   "eur_m2": 666,
+   "tasaciones": 55
+  },
+  {
+   "provincia": "Ciudad Real",
+   "municipio": "Alcázar de San Juan",
+   "eur_m2": 1044,
+   "tasaciones": 109
+  },
+  {
+   "provincia": "Ciudad Real",
+   "municipio": "Ciudad Real",
+   "eur_m2": 1520,
+   "tasaciones": 215
+  },
+  {
+   "provincia": "Ciudad Real",
+   "municipio": "Puertollano",
+   "eur_m2": 686,
+   "tasaciones": 124
+  },
+  {
+   "provincia": "Ciudad Real",
+   "municipio": "Tomelloso",
+   "eur_m2": 767,
+   "tasaciones": 160
+  },
+  {
+   "provincia": "Ciudad Real",
+   "municipio": "Valdepeñas",
+   "eur_m2": 864,
+   "tasaciones": 94
+  },
+  {
+   "provincia": "Cuenca",
+   "municipio": "Cuenca",
+   "eur_m2": 1583,
+   "tasaciones": 162
+  },
+  {
+   "provincia": "Cuenca",
+   "municipio": "Azuqueca de Henares",
+   "eur_m2": 2117,
+   "tasaciones": 130
+  },
+  {
+   "provincia": "Guadalajara",
+   "municipio": "Guadalajara",
+   "eur_m2": 2136,
+   "tasaciones": 222
+  },
+  {
+   "provincia": "Guadalajara",
+   "municipio": "Illescas",
+   "eur_m2": 1826,
+   "tasaciones": 156
+  },
+  {
+   "provincia": "Toledo",
+   "municipio": "Talavera de la Reina",
+   "eur_m2": 1241,
+   "tasaciones": 337
+  },
+  {
+   "provincia": "Toledo",
+   "municipio": "Toledo",
+   "eur_m2": 2114,
+   "tasaciones": 255
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Badalona",
+   "eur_m2": 2824,
+   "tasaciones": 1113
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Barcelona",
+   "eur_m2": 4602,
+   "tasaciones": 5519
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Castelldefels",
+   "eur_m2": 4337,
+   "tasaciones": 264
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Cornellà de Llobregat",
+   "eur_m2": 3142,
+   "tasaciones": 309
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Esplugues de Llobregat",
+   "eur_m2": 3722,
+   "tasaciones": 172
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Gavà",
+   "eur_m2": 3465,
+   "tasaciones": 193
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Granollers",
+   "eur_m2": 2408,
+   "tasaciones": 253
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Hospitalet de Llobregat (L')",
+   "eur_m2": 3094,
+   "tasaciones": 1114
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Igualada",
+   "eur_m2": 1828,
+   "tasaciones": 156
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Manresa",
+   "eur_m2": 1531,
+   "tasaciones": 324
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Martorell",
+   "eur_m2": 2266,
+   "tasaciones": 91
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Mataró",
+   "eur_m2": 2549,
+   "tasaciones": 480
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Mollet del Vallès",
+   "eur_m2": 2525,
+   "tasaciones": 218
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Montcada i Reixac",
+   "eur_m2": 2505,
+   "tasaciones": 196
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Pineda de Mar",
+   "eur_m2": 2240,
+   "tasaciones": 119
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Prat de Llobregat (El)",
+   "eur_m2": 3008,
+   "tasaciones": 207
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Premià de Mar",
+   "eur_m2": 2814,
+   "tasaciones": 121
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Ripollet",
+   "eur_m2": 2448,
+   "tasaciones": 188
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Rubí",
+   "eur_m2": 2479,
+   "tasaciones": 396
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Sabadell",
+   "eur_m2": 2397,
+   "tasaciones": 1095
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Sant Adrià de Besòs",
+   "eur_m2": 2766,
+   "tasaciones": 171
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Sant Andreu de la Barca",
+   "eur_m2": 2619,
+   "tasaciones": 121
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Sant Boi de Llobregat",
+   "eur_m2": 2801,
+   "tasaciones": 405
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Sant Cugat del Vallès",
+   "eur_m2": 5017,
+   "tasaciones": 328
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Sant Feliu de Llobregat",
+   "eur_m2": 3330,
+   "tasaciones": 156
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Sant Joan Despí",
+   "eur_m2": 3707,
+   "tasaciones": 119
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Sant Pere de Ribes",
+   "eur_m2": 2673,
+   "tasaciones": 202
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Santa Coloma Gramanet",
+   "eur_m2": 2586,
+   "tasaciones": 486
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Barberà del Vallès",
+   "eur_m2": 2682,
+   "tasaciones": 183
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Santa Perpètua de Mogoda",
+   "eur_m2": 2393,
+   "tasaciones": 111
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Sant Vicenç dels Horts",
+   "eur_m2": 2450,
+   "tasaciones": 129
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Cerdanyola del Vallès",
+   "eur_m2": 2964,
+   "tasaciones": 220
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Sitges",
+   "eur_m2": 4932,
+   "tasaciones": 151
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Terrassa",
+   "eur_m2": 2272,
+   "tasaciones": 1244
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Vic",
+   "eur_m2": 1991,
+   "tasaciones": 146
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Viladecans",
+   "eur_m2": 3119,
+   "tasaciones": 402
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Vilafranca del Penedès",
+   "eur_m2": 2035,
+   "tasaciones": 155
+  },
+  {
+   "provincia": "Barcelona",
+   "municipio": "Vilanova i la Geltrú",
+   "eur_m2": 2738,
+   "tasaciones": 336
+  },
+  {
+   "provincia": "Girona",
+   "municipio": "Blanes",
+   "eur_m2": 2222,
+   "tasaciones": 206
+  },
+  {
+   "provincia": "Girona",
+   "municipio": "Figueres",
+   "eur_m2": 1391,
+   "tasaciones": 195
+  },
+  {
+   "provincia": "Girona",
+   "municipio": "Girona",
+   "eur_m2": 2316,
+   "tasaciones": 366
+  },
+  {
+   "provincia": "Girona",
+   "municipio": "Lloret de Mar",
+   "eur_m2": 2392,
+   "tasaciones": 194
+  },
+  {
+   "provincia": "Girona",
+   "municipio": "Olot",
+   "eur_m2": 1639,
+   "tasaciones": 125
+  },
+  {
+   "provincia": "Girona",
+   "municipio": "Salt",
+   "eur_m2": 1314,
+   "tasaciones": 185
+  },
+  {
+   "provincia": "Lleida",
+   "municipio": "Lleida",
+   "eur_m2": 1369,
+   "tasaciones": 450
+  },
+  {
+   "provincia": "Tarragona",
+   "municipio": "Cambrils",
+   "eur_m2": 2426,
+   "tasaciones": 245
+  },
+  {
+   "provincia": "Tarragona",
+   "municipio": "Reus",
+   "eur_m2": 1592,
+   "tasaciones": 463
+  },
+  {
+   "provincia": "Tarragona",
+   "municipio": "Tarragona",
+   "eur_m2": 1851,
+   "tasaciones": 547
+  },
+  {
+   "provincia": "Tarragona",
+   "municipio": "Tortosa",
+   "eur_m2": 1110,
+   "tasaciones": 117
+  },
+  {
+   "provincia": "Tarragona",
+   "municipio": "Vendrell (El)",
+   "eur_m2": 2003,
+   "tasaciones": 289
+  },
+  {
+   "provincia": "Tarragona",
+   "municipio": "Salou",
+   "eur_m2": 2569,
+   "tasaciones": 229
+  },
+  {
+   "provincia": "Alicante",
+   "municipio": "Alcoy/Alcoi",
+   "eur_m2": 1132,
+   "tasaciones": 224
+  },
+  {
+   "provincia": "Alicante",
+   "municipio": "Alicante/Alacant",
+   "eur_m2": 2279,
+   "tasaciones": 1213
+  },
+  {
+   "provincia": "Alicante",
+   "municipio": "Benidorm",
+   "eur_m2": 3216,
+   "tasaciones": 288
+  },
+  {
+   "provincia": "Alicante",
+   "municipio": "Calpe/Calp",
+   "eur_m2": 3268,
+   "tasaciones": 133
+  },
+  {
+   "provincia": "Alicante",
+   "municipio": "Campello, el",
+   "eur_m2": 2836,
+   "tasaciones": 169
+  },
+  {
+   "provincia": "Alicante",
+   "municipio": "Crevillent",
+   "eur_m2": 1044,
+   "tasaciones": 88
+  },
+  {
+   "provincia": "Alicante",
+   "municipio": "Dénia",
+   "eur_m2": 2985,
+   "tasaciones": 282
+  },
+  {
+   "provincia": "Alicante",
+   "municipio": "Elche/Elx",
+   "eur_m2": 1635,
+   "tasaciones": 790
+  },
+  {
+   "provincia": "Alicante",
+   "municipio": "Elda",
+   "eur_m2": 1013,
+   "tasaciones": 230
+  },
+  {
+   "provincia": "Alicante",
+   "municipio": "Jávea/Xábia",
+   "eur_m2": 3507,
+   "tasaciones": 170
+  },
+  {
+   "provincia": "Alicante",
+   "municipio": "Novelda",
+   "eur_m2": 1015,
+   "tasaciones": 97
+  },
+  {
+   "provincia": "Alicante",
+   "municipio": "Orihuela",
+   "eur_m2": 2080,
+   "tasaciones": 538
+  },
+  {
+   "provincia": "Alicante",
+   "municipio": "Petrer",
+   "eur_m2": 1113,
+   "tasaciones": 121
+  },
+  {
+   "provincia": "Alicante",
+   "municipio": "Santa Pola",
+   "eur_m2": 2614,
+   "tasaciones": 259
+  },
+  {
+   "provincia": "Alicante",
+   "municipio": "San Vicente del Raspeig",
+   "eur_m2": 1974,
+   "tasaciones": 201
+  },
+  {
+   "provincia": "Alicante",
+   "municipio": "Torrevieja",
+   "eur_m2": 2254,
+   "tasaciones": 716
+  },
+  {
+   "provincia": "Alicante",
+   "municipio": "Villajoyosa/Vila Joiosa (La)",
+   "eur_m2": 2222,
+   "tasaciones": 187
+  },
+  {
+   "provincia": "Alicante",
+   "municipio": "Villena",
+   "eur_m2": 994,
+   "tasaciones": 129
+  },
+  {
+   "provincia": "Alicante",
+   "municipio": "Almazora/Almassora",
+   "eur_m2": 1193,
+   "tasaciones": 158
+  },
+  {
+   "provincia": "Alicante",
+   "municipio": "Benicarló",
+   "eur_m2": 1403,
+   "tasaciones": 97
+  },
+  {
+   "provincia": "Castellón/Castelló",
+   "municipio": "Burriana",
+   "eur_m2": 1144,
+   "tasaciones": 180
+  },
+  {
+   "provincia": "Castellón/Castelló",
+   "municipio": "Castellón de la Plana",
+   "eur_m2": 1516,
+   "tasaciones": 658
+  },
+  {
+   "provincia": "Castellón/Castelló",
+   "municipio": "Onda",
+   "eur_m2": 1028,
+   "tasaciones": 119
+  },
+  {
+   "provincia": "Castellón/Castelló",
+   "municipio": "Vall d'Uixó (la)",
+   "eur_m2": 996,
+   "tasaciones": 121
+  },
+  {
+   "provincia": "Castellón/Castelló",
+   "municipio": "Villarreal/Vila-real",
+   "eur_m2": 1201,
+   "tasaciones": 196
+  },
+  {
+   "provincia": "Castellón/Castelló",
+   "municipio": "Vinaròs",
+   "eur_m2": 1499,
+   "tasaciones": 104
+  },
+  {
+   "provincia": "Valencia",
+   "municipio": "Alaquàs",
+   "eur_m2": 1679,
+   "tasaciones": 117
+  },
+  {
+   "provincia": "Valencia",
+   "municipio": "Alzira",
+   "eur_m2": 1221,
+   "tasaciones": 210
+  },
+  {
+   "provincia": "Valencia",
+   "municipio": "Aldaia",
+   "eur_m2": 1645,
+   "tasaciones": 124
+  },
+  {
+   "provincia": "Valencia",
+   "municipio": "Algemesí",
+   "eur_m2": 1070,
+   "tasaciones": 107
+  },
+  {
+   "provincia": "Valencia",
+   "municipio": "Burjassot",
+   "eur_m2": 1978,
+   "tasaciones": 125
+  },
+  {
+   "provincia": "Valencia",
+   "municipio": "Catarroja",
+   "eur_m2": 1668,
+   "tasaciones": 114
+  },
+  {
+   "provincia": "Valencia",
+   "municipio": "Quart de Poblet",
+   "eur_m2": 1924,
+   "tasaciones": 119
+  },
+  {
+   "provincia": "Valencia",
+   "municipio": "Xirivella",
+   "eur_m2": 1790,
+   "tasaciones": 127
+  },
+  {
+   "provincia": "Valencia",
+   "municipio": "Gandia",
+   "eur_m2": 1757,
+   "tasaciones": 372
+  },
+  {
+   "provincia": "Valencia",
+   "municipio": "Xàtiva",
+   "eur_m2": 1209,
+   "tasaciones": 115
+  },
+  {
+   "provincia": "Valencia",
+   "municipio": "Manises",
+   "eur_m2": 1866,
+   "tasaciones": 157
+  },
+  {
+   "provincia": "Valencia",
+   "municipio": "Mislata",
+   "eur_m2": 2314,
+   "tasaciones": 138
+  },
+  {
+   "provincia": "Valencia",
+   "municipio": "Oliva",
+   "eur_m2": 1504,
+   "tasaciones": 120
+  },
+  {
+   "provincia": "Valencia",
+   "municipio": "Ontinyent",
+   "eur_m2": 1138,
+   "tasaciones": 136
+  },
+  {
+   "provincia": "Valencia",
+   "municipio": "Paterna",
+   "eur_m2": 2295,
+   "tasaciones": 285
+  },
+  {
+   "provincia": "Valencia",
+   "municipio": "Sagunto/Sagunt",
+   "eur_m2": 1629,
+   "tasaciones": 366
+  },
+  {
+   "provincia": "Valencia",
+   "municipio": "Sueca",
+   "eur_m2": 1462,
+   "tasaciones": 298
+  },
+  {
+   "provincia": "Valencia",
+   "municipio": "Torrent",
+   "eur_m2": 1904,
+   "tasaciones": 366
+  },
+  {
+   "provincia": "Valencia",
+   "municipio": "Valencia",
+   "eur_m2": 2973,
+   "tasaciones": 2735
+  },
+  {
+   "provincia": "Badajoz",
+   "municipio": "Almendralejo",
+   "eur_m2": 933,
+   "tasaciones": 125
+  },
+  {
+   "provincia": "Badajoz",
+   "municipio": "Badajoz",
+   "eur_m2": 1580,
+   "tasaciones": 530
+  },
+  {
+   "provincia": "Badajoz",
+   "municipio": "Don Benito",
+   "eur_m2": 1029,
+   "tasaciones": 132
+  },
+  {
+   "provincia": "Badajoz",
+   "municipio": "Mérida",
+   "eur_m2": 1130,
+   "tasaciones": 234
+  },
+  {
+   "provincia": "Badajoz",
+   "municipio": "Villanueva de la Serena",
+   "eur_m2": 802,
+   "tasaciones": 75
+  },
+  {
+   "provincia": "Cáceres",
+   "municipio": "Cáceres",
+   "eur_m2": 1543,
+   "tasaciones": 323
+  },
+  {
+   "provincia": "Cáceres",
+   "municipio": "Plasencia",
+   "eur_m2": 1182,
+   "tasaciones": 140
+  },
+  {
+   "provincia": "Cáceres",
+   "municipio": "Ames",
+   "eur_m2": 1835,
+   "tasaciones": 82
+  },
+  {
+   "provincia": "La Coruña",
+   "municipio": "Arteixo",
+   "eur_m2": 1650,
+   "tasaciones": 114
+  },
+  {
+   "provincia": "La Coruña",
+   "municipio": "Carballo",
+   "eur_m2": 1162,
+   "tasaciones": 78
+  },
+  {
+   "provincia": "La Coruña",
+   "municipio": "Coruña (A)",
+   "eur_m2": 2775,
+   "tasaciones": 583
+  },
+  {
+   "provincia": "La Coruña",
+   "municipio": "Culleredo",
+   "eur_m2": 1907,
+   "tasaciones": 103
+  },
+  {
+   "provincia": "La Coruña",
+   "municipio": "Ferrol",
+   "eur_m2": 1212,
+   "tasaciones": 233
+  },
+  {
+   "provincia": "La Coruña",
+   "municipio": "Narón",
+   "eur_m2": 1207,
+   "tasaciones": 120
+  },
+  {
+   "provincia": "La Coruña",
+   "municipio": "Oleiros",
+   "eur_m2": 2304,
+   "tasaciones": 108
+  },
+  {
+   "provincia": "La Coruña",
+   "municipio": "Ribeira",
+   "eur_m2": 1437,
+   "tasaciones": 70
+  },
+  {
+   "provincia": "La Coruña",
+   "municipio": "Santiago de Compostela",
+   "eur_m2": 2339,
+   "tasaciones": 186
+  },
+  {
+   "provincia": "Lugo",
+   "municipio": "Lugo",
+   "eur_m2": 1404,
+   "tasaciones": 250
+  },
+  {
+   "provincia": "Ourense",
+   "municipio": "Ourense",
+   "eur_m2": 1445,
+   "tasaciones": 243
+  },
+  {
+   "provincia": "Ourense",
+   "municipio": "Cangas",
+   "eur_m2": 1778,
+   "tasaciones": 70
+  },
+  {
+   "provincia": "Pontevedra",
+   "municipio": "Marín",
+   "eur_m2": 1473,
+   "tasaciones": 51
+  },
+  {
+   "provincia": "Pontevedra",
+   "municipio": "Pontevedra",
+   "eur_m2": 2060,
+   "tasaciones": 218
+  },
+  {
+   "provincia": "Pontevedra",
+   "municipio": "Redondela",
+   "eur_m2": 1378,
+   "tasaciones": 59
+  },
+  {
+   "provincia": "Pontevedra",
+   "municipio": "Vigo",
+   "eur_m2": 2346,
+   "tasaciones": 692
+  },
+  {
+   "provincia": "Pontevedra",
+   "municipio": "Vilagarcía de Arousa",
+   "eur_m2": 1530,
+   "tasaciones": 110
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "Alcalá de Henares",
+   "eur_m2": 2942,
+   "tasaciones": 587
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "Alcobendas",
+   "eur_m2": 4914,
+   "tasaciones": 322
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "Alcorcón",
+   "eur_m2": 3562,
+   "tasaciones": 405
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "Aranjuez",
+   "eur_m2": 2185,
+   "tasaciones": 234
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "Arganda del Rey",
+   "eur_m2": 2704,
+   "tasaciones": 225
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "Boadilla del Monte",
+   "eur_m2": 4304,
+   "tasaciones": 296
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "Colmenar Viejo",
+   "eur_m2": 3115,
+   "tasaciones": 210
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "Collado Villalba",
+   "eur_m2": 2994,
+   "tasaciones": 233
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "Coslada",
+   "eur_m2": 3299,
+   "tasaciones": 229
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "Fuenlabrada",
+   "eur_m2": 2922,
+   "tasaciones": 523
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "Galapagar",
+   "eur_m2": 2850,
+   "tasaciones": 140
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "Getafe",
+   "eur_m2": 3272,
+   "tasaciones": 453
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "Leganés",
+   "eur_m2": 3254,
+   "tasaciones": 467
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "Madrid",
+   "eur_m2": 5418,
+   "tasaciones": 11686
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "Majadahonda",
+   "eur_m2": 5006,
+   "tasaciones": 193
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "Móstoles",
+   "eur_m2": 3074,
+   "tasaciones": 579
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "Navalcarnero",
+   "eur_m2": 2487,
+   "tasaciones": 120
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "Parla",
+   "eur_m2": 2410,
+   "tasaciones": 437
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "Pinto",
+   "eur_m2": 2952,
+   "tasaciones": 151
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "Pozuelo de Alarcón",
+   "eur_m2": 5206,
+   "tasaciones": 324
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "Rivas-Vaciamadrid",
+   "eur_m2": 3521,
+   "tasaciones": 238
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "Rozas de Madrid (Las)",
+   "eur_m2": 4486,
+   "tasaciones": 348
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "San Fernando de Henares",
+   "eur_m2": 2929,
+   "tasaciones": 102
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "San Sebastián de los Reyes",
+   "eur_m2": 4041,
+   "tasaciones": 262
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "Torrejón de Ardoz",
+   "eur_m2": 3043,
+   "tasaciones": 428
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "Valdemoro",
+   "eur_m2": 2681,
+   "tasaciones": 367
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "Villaviciosa de Odón",
+   "eur_m2": 3524,
+   "tasaciones": 114
+  },
+  {
+   "provincia": "Madrid",
+   "municipio": "Tres Cantos",
+   "eur_m2": 4391,
+   "tasaciones": 152
+  },
+  {
+   "provincia": "Murcia",
+   "municipio": "Águilas",
+   "eur_m2": 1454,
+   "tasaciones": 181
+  },
+  {
+   "provincia": "Murcia",
+   "municipio": "Alcantarilla",
+   "eur_m2": 1070,
+   "tasaciones": 198
+  },
+  {
+   "provincia": "Murcia",
+   "municipio": "Caravaca de la Cruz",
+   "eur_m2": 903,
+   "tasaciones": 100
+  },
+  {
+   "provincia": "Murcia",
+   "municipio": "Cartagena",
+   "eur_m2": 1486,
+   "tasaciones": 934
+  },
+  {
+   "provincia": "Murcia",
+   "municipio": "Cieza",
+   "eur_m2": 954,
+   "tasaciones": 98
+  },
+  {
+   "provincia": "Murcia",
+   "municipio": "Jumilla",
+   "eur_m2": 829,
+   "tasaciones": 77
+  },
+  {
+   "provincia": "Murcia",
+   "municipio": "Lorca",
+   "eur_m2": 1170,
+   "tasaciones": 280
+  },
+  {
+   "provincia": "Murcia",
+   "municipio": "Mazarrón",
+   "eur_m2": 1584,
+   "tasaciones": 187
+  },
+  {
+   "provincia": "Murcia",
+   "municipio": "Molina de Segura",
+   "eur_m2": 1325,
+   "tasaciones": 375
+  },
+  {
+   "provincia": "Murcia",
+   "municipio": "Murcia",
+   "eur_m2": 1580,
+   "tasaciones": 2035
+  },
+  {
+   "provincia": "Murcia",
+   "municipio": "San Javier",
+   "eur_m2": 1953,
+   "tasaciones": 291
+  },
+  {
+   "provincia": "Murcia",
+   "municipio": "Torre-Pacheco",
+   "eur_m2": 1378,
+   "tasaciones": 192
+  },
+  {
+   "provincia": "Murcia",
+   "municipio": "Totana",
+   "eur_m2": 968,
+   "tasaciones": 85
+  },
+  {
+   "provincia": "Murcia",
+   "municipio": "Yecla",
+   "eur_m2": 882,
+   "tasaciones": 123
+  },
+  {
+   "provincia": "Navarra",
+   "municipio": "Pamplona/Iruña",
+   "eur_m2": 2695,
+   "tasaciones": 388
+  },
+  {
+   "provincia": "Navarra",
+   "municipio": "Tudela",
+   "eur_m2": 1620,
+   "tasaciones": 90
+  },
+  {
+   "provincia": "Araba/Alava",
+   "municipio": "Vitoria",
+   "eur_m2": 2681,
+   "tasaciones": 537
+  },
+  {
+   "provincia": "Gipuzkoa",
+   "municipio": "Eibar",
+   "eur_m2": 2047,
+   "tasaciones": 65
+  },
+  {
+   "provincia": "Gipuzkoa",
+   "municipio": "Irun",
+   "eur_m2": 3075,
+   "tasaciones": 146
+  },
+  {
+   "provincia": "Gipuzkoa",
+   "municipio": "Errenteria",
+   "eur_m2": 3296,
+   "tasaciones": 75
+  },
+  {
+   "provincia": "Gipuzkoa",
+   "municipio": "San Sebastián/Donostia",
+   "eur_m2": 5208,
+   "tasaciones": 424
+  },
+  {
+   "provincia": "Bizkaia",
+   "municipio": "Barakaldo",
+   "eur_m2": 2875,
+   "tasaciones": 343
+  },
+  {
+   "provincia": "Bizkaia",
+   "municipio": "Basauri",
+   "eur_m2": 2789,
+   "tasaciones": 107
+  },
+  {
+   "provincia": "Bizkaia",
+   "municipio": "Bilbao",
+   "eur_m2": 3529,
+   "tasaciones": 956
+  },
+  {
+   "provincia": "Bizkaia",
+   "municipio": "Durango",
+   "eur_m2": 2639,
+   "tasaciones": 100
+  },
+  {
+   "provincia": "Bizkaia",
+   "municipio": "Galdakao",
+   "eur_m2": 2861,
+   "tasaciones": 78
+  },
+  {
+   "provincia": "Bizkaia",
+   "municipio": "Getxo",
+   "eur_m2": 4138,
+   "tasaciones": 206
+  },
+  {
+   "provincia": "Bizkaia",
+   "municipio": "Leioa",
+   "eur_m2": 3616,
+   "tasaciones": 89
+  },
+  {
+   "provincia": "Bizkaia",
+   "municipio": "Portugalete",
+   "eur_m2": 2894,
+   "tasaciones": 131
+  },
+  {
+   "provincia": "Bizkaia",
+   "municipio": "Santurtzi",
+   "eur_m2": 2777,
+   "tasaciones": 138
+  },
+  {
+   "provincia": "Bizkaia",
+   "municipio": "Sestao",
+   "eur_m2": 2389,
+   "tasaciones": 107
+  },
+  {
+   "provincia": "La Rioja",
+   "municipio": "Logroño",
+   "eur_m2": 1902,
+   "tasaciones": 393
+  },
+  {
+   "provincia": "Ceuta",
+   "municipio": "Ceuta",
+   "eur_m2": 2215,
+   "tasaciones": 170
+  },
+  {
+   "provincia": "Melilla",
+   "municipio": "Melilla",
+   "eur_m2": 2164,
+   "tasaciones": 198
+  }
+ ]
+}

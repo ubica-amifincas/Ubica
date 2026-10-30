@@ -1,406 +1,450 @@
-import { useState, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeftIcon, CalculatorIcon, MapPinIcon, HomeIcon, ArrowsPointingOutIcon, CheckCircleIcon, XCircleIcon, ClockIcon } from '@heroicons/react/24/outline';
+import {
+    ChevronLeftIcon, ChevronRightIcon, CalculatorIcon, MapPinIcon, HomeIcon, ArrowsPointingOutIcon,
+    ClockIcon, ShareIcon, TrophyIcon, BuildingLibraryIcon, CheckIcon,
+} from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { apiService } from '../../services/apiService';
-import type { Property } from '../../types';
+import { apiService, type TasadorDaily, type TasadorRankingEntry, type TasadorReveal, type TasadorRound } from '../../services/apiService';
 
-type GameState = 'intro' | 'loading' | 'playing' | 'round-result' | 'game-over';
+// Reto diario: las mismas 5 tasaciones para todos durante el día. El servidor guarda las respuestas de quien
+// tiene cuenta (ranking del mes); sin cuenta se recuerdan en este navegador.
+
+type Answers = Record<number, TasadorReveal>;
+
+const SHARE_URL = 'https://ubica.amifincas.es/entretenimiento/tasador';
+const euros = (n: number) => new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 }).format(n);
+const withUnit = (n: number, unit: string) => (unit === '€' ? `${euros(n)} €` : `${euros(n)} €/m²`);
+
+// Escala logarítmica: el mismo gesto mueve lo mismo en un piso de 80.000 € que en una villa de 900.000 €
+const RANGES: Record<string, [number, number, number]> = { '€': [20_000, 2_000_000, 150_000], '€/m²': [400, 7_000, 1_500] };
+const STEPS = 1000;
+const toPos = (v: number, [min, max]: [number, number, number]) => Math.round((Math.log(v / min) / Math.log(max / min)) * STEPS);
+const fromPos = (p: number, [min, max]: [number, number, number]) => min * Math.pow(max / min, p / STEPS);
+const roundNice = (v: number, unit: string) => {
+    const step = unit === '€' ? (v < 100_000 ? 1_000 : 5_000) : 10;
+    return Math.round(v / step) * step;
+};
+
+const square = (pts: number) => (pts >= 90 ? '🟩' : pts >= 60 ? '🟨' : pts >= 30 ? '🟧' : '🟥');
+const verdict = (pts: number) =>
+    pts >= 90 ? '¡Ojo de tasador!' : pts >= 60 ? 'Muy cerca' : pts >= 30 ? 'Te has desviado un poco' : 'Lejos del precio real';
+
+function storageKey(day: string) {
+    return `tasador-${day}`;
+}
+function loadLocal(day: string): Answers {
+    try {
+        return JSON.parse(localStorage.getItem(storageKey(day)) || '{}');
+    } catch {
+        return {};
+    }
+}
+function saveLocal(day: string, answers: Answers) {
+    try {
+        localStorage.setItem(storageKey(day), JSON.stringify(answers));
+    } catch { /* modo privado: la partida sigue, solo no se recuerda */ }
+}
+
+function countdown(seconds: number) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    return `${h} h ${String(m).padStart(2, '0')} min`;
+}
 
 export default function TasadorExpress() {
     const { user } = useAuth();
+    const [daily, setDaily] = useState<TasadorDaily | null>(null);
+    const [error, setError] = useState('');
+    const [answers, setAnswers] = useState<Answers>({});
+    const [current, setCurrent] = useState<number | null>(null); // ronda abierta; null = portada o resumen
+    const [sending, setSending] = useState(false);
+    const [ranking, setRanking] = useState<TasadorRankingEntry[] | null>(null);
+    const [secondsLeft, setSecondsLeft] = useState(0);
 
-    const [gameState, setGameState] = useState<GameState>('intro');
-    const [properties, setProperties] = useState<Property[]>([]);
-    const [currentRound, setCurrentRound] = useState(0);
-    const [score, setScore] = useState(0);
-    const [timeLeft, setTimeLeft] = useState(10);
-    const [options, setOptions] = useState<number[]>([]);
-    const [selectedOption, setSelectedOption] = useState<number | null>(null);
-
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-    const ROUNDS_LIMIT = user ? 10 : 3;
-
-    const startGame = async () => {
-        setGameState('loading');
-        setScore(0);
-        setCurrentRound(0);
-
-        try {
-            // Pedimos bastantes para poder barajarlas
-            const fetchedProperties = await apiService.getProperties(0, 50);
-
-            // Filtrar las que tengan precio y fotos
-            let validProperties = fetchedProperties.filter(p => p.price > 0 && p.images && p.images.length > 0);
-
-            // Barajar aleatoriamente (Fisher-Yates)
-            for (let i = validProperties.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [validProperties[i], validProperties[j]] = [validProperties[j], validProperties[i]];
-            }
-
-            // Seleccionar las N necesarias
-            const gameProperties = validProperties.slice(0, ROUNDS_LIMIT);
-
-            if (gameProperties.length === 0) {
-                alert("No hay suficientes propiedades para jugar. Inténtalo más tarde.");
-                setGameState('intro');
-                return;
-            }
-
-            setProperties(gameProperties);
-            prepareRound(gameProperties[0]);
-
-        } catch (error) {
-            console.error("Error cargando propiedades para el juego", error);
-            alert("Hubo un error al preparar el juego. Revisa tu conexión.");
-            setGameState('intro');
-        }
-    };
-
-    const prepareRound = (property: Property) => {
-        const realPrice = property.price;
-
-        // Generar opciones falsas lógicas (+/- 5% a 25%)
-        const generateFakePrice = (multiplier: number) => {
-            // Redondear a miles más cercanos para que parezcan precios reales
-            return Math.round((realPrice * multiplier) / 1000) * 1000;
-        };
-
-        const fake1 = generateFakePrice(0.85); // 15% menos
-        const fake2 = generateFakePrice(1.10); // 10% más
-        const fake3 = generateFakePrice(1.25); // 25% más
-
-        // Evitar duplicados por redondeo
-        let newOptions = Array.from(new Set([realPrice, fake1, fake2, fake3]));
-        while (newOptions.length < 4) {
-            newOptions.push(generateFakePrice(0.90 + Math.random() * 0.2)); // Rellenar si hubo colisión
-            newOptions = Array.from(new Set(newOptions));
-        }
-
-        // Barajar opciones
-        newOptions.sort(() => Math.random() - 0.5);
-
-        setOptions(newOptions);
-        setSelectedOption(null);
-        setTimeLeft(10);
-        setGameState('playing');
-    };
-
-    // Timer effect
     useEffect(() => {
-        if (gameState === 'playing' && timeLeft > 0) {
-            timerRef.current = setTimeout(() => {
-                setTimeLeft(t => t - 1);
-            }, 1000);
-        } else if (gameState === 'playing' && timeLeft === 0) {
-            handleTimeOut();
+        apiService.getTasadorDaily()
+            .then(d => {
+                setDaily(d);
+                setSecondsLeft(d.segundos_para_el_siguiente);
+                const fromServer: Answers = Object.fromEntries(d.respondidas.map(({ round, ...r }) => [round, r]));
+                // Con cuenta manda el servidor; lo jugado como invitado en este navegador no cuenta para el ranking
+                setAnswers(user ? fromServer : loadLocal(d.day));
+            })
+            .catch(() => setError('No se ha podido cargar el reto de hoy. Revisa tu conexión e inténtalo de nuevo.'));
+    }, [user]);
+
+    useEffect(() => {
+        const id = setInterval(() => setSecondsLeft(s => Math.max(0, s - 60)), 60_000);
+        return () => clearInterval(id);
+    }, []);
+
+    const done = daily ? daily.rondas.every((_, i) => answers[i]) : false;
+    const total = useMemo(() => Object.values(answers).reduce((sum, a) => sum + a.puntos, 0), [answers]);
+
+    useEffect(() => {
+        if (done) apiService.getTasadorRanking().then(setRanking).catch(() => setRanking([]));
+    }, [done]);
+
+    const submit = useCallback(async (guess: number) => {
+        if (!daily || current === null || sending) return;
+        setSending(true);
+        try {
+            const result = await apiService.sendTasadorGuess(daily.day, current, guess);
+            setAnswers(prev => {
+                const next = { ...prev, [current]: result };
+                if (!user) saveLocal(daily.day, next);
+                return next;
+            });
+        } catch (e: any) {
+            setError(e?.status === 409 ? 'El reto de ayer ha terminado. Recarga la página para jugar el de hoy.' : 'No se ha podido enviar tu respuesta. Inténtalo de nuevo.');
+        } finally {
+            setSending(false);
         }
+    }, [daily, current, sending, user]);
 
-        return () => {
-            if (timerRef.current) clearTimeout(timerRef.current);
-        };
-    }, [timeLeft, gameState]);
+    const firstPending = daily ? daily.rondas.findIndex((_, i) => !answers[i]) : -1;
 
-    const handleTimeOut = () => {
-        setSelectedOption(-1); // -1 signifies timeout
-        setGameState('round-result');
-    };
+    return (
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-16">
+            <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+                <div className="page-container h-14 flex items-center justify-between gap-2">
+                    <Link to="/entretenimiento" className="flex items-center text-gray-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors font-medium text-sm">
+                        <ChevronLeftIcon className="w-5 h-5 mr-1" />
+                        <span className="hidden sm:inline">Volver a Ubica Play</span>
+                        <span className="sm:hidden">Ubica Play</span>
+                    </Link>
+                    <div className="font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                        <CalculatorIcon className="w-6 h-6" />
+                        Tasador Exprés{daily ? <span className="font-semibold text-gray-400"> #{daily.numero}</span> : null}
+                    </div>
+                    <span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 px-3 py-1 rounded-full text-xs font-bold">
+                        {total} / 500
+                    </span>
+                </div>
+            </div>
 
-    const handleGuess = (guessedPrice: number) => {
-        if (gameState !== 'playing') return;
+            <div className="page-container mt-6 sm:mt-8">
+                {error && (
+                    <div role="alert" className="max-w-2xl mx-auto mb-6 rounded-2xl border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-4 text-red-700 dark:text-red-300 text-sm">
+                        {error}
+                    </div>
+                )}
 
-        if (timerRef.current) clearTimeout(timerRef.current);
-        setSelectedOption(guessedPrice);
+                {!daily && !error && (
+                    <div className="max-w-2xl mx-auto text-center py-24 text-gray-500 dark:text-gray-400">
+                        <CalculatorIcon className="w-14 h-14 mx-auto mb-4 text-emerald-500 animate-pulse" />
+                        Preparando el reto de hoy…
+                    </div>
+                )}
 
-        const realPrice = properties[currentRound].price;
+                {daily && (
+                    <>
+                        <Progress rounds={daily.rondas} answers={answers} current={current} onPick={i => setCurrent(i)} />
 
-        if (guessedPrice === realPrice) {
-            // Puntos en función del tiempo sobrante (+10 por acertar, +1 por cada segundo)
-            setScore(s => s + 10 + timeLeft);
-        }
+                        <AnimatePresence mode="wait">
+                            {current === null && !done && (
+                                <Intro key="intro" daily={daily} started={firstPending > 0} loggedIn={!!user} onStart={() => setCurrent(firstPending)} />
+                            )}
+                            {current !== null && (
+                                <RoundView
+                                    key={`round-${current}`}
+                                    index={current}
+                                    round={daily.rondas[current]}
+                                    answer={answers[current]}
+                                    sending={sending}
+                                    onSubmit={submit}
+                                    onNext={() => {
+                                        const next = daily.rondas.findIndex((_, i) => !answers[i]);
+                                        setCurrent(next === -1 ? null : next);
+                                    }}
+                                    isLast={daily.rondas.every((_, i) => i === current || answers[i])}
+                                />
+                            )}
+                            {current === null && done && (
+                                <Summary key="summary" daily={daily} answers={answers} total={total} ranking={ranking}
+                                         loggedIn={!!user} secondsLeft={secondsLeft} onReview={i => setCurrent(i)} />
+                            )}
+                        </AnimatePresence>
+                    </>
+                )}
+            </div>
+        </div>
+    );
+}
 
-        setGameState('round-result');
-    };
+function Progress({ rounds, answers, current, onPick }: { rounds: TasadorRound[]; answers: Answers; current: number | null; onPick: (i: number) => void }) {
+    return (
+        <div className="flex justify-center gap-2 mb-6" aria-label="Rondas del reto">
+            {rounds.map((_, i) => {
+                const a = answers[i];
+                return (
+                    <button
+                        key={i}
+                        type="button"
+                        disabled={!a}
+                        onClick={() => onPick(i)}
+                        aria-label={a ? `Ronda ${i + 1}: ${a.puntos} puntos` : `Ronda ${i + 1}: pendiente`}
+                        className={`w-10 h-10 rounded-xl text-sm font-bold border-2 transition-colors ${current === i ? 'border-emerald-500' : 'border-transparent'} ${a ? 'bg-white dark:bg-gray-800 shadow-sm' : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'}`}
+                    >
+                        {a ? square(a.puntos) : i + 1}
+                    </button>
+                );
+            })}
+        </div>
+    );
+}
 
-    const nextRound = () => {
-        if (currentRound + 1 >= properties.length) {
-            setGameState('game-over');
-        } else {
-            const nextIndex = currentRound + 1;
-            setCurrentRound(nextIndex);
-            prepareRound(properties[nextIndex]);
-        }
+function Intro({ daily, started, loggedIn, onStart }: { daily: TasadorDaily; started: boolean; loggedIn: boolean; onStart: () => void }) {
+    const date = new Date(`${daily.day}T12:00:00`).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+    return (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }}
+                    className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 max-w-2xl mx-auto overflow-hidden">
+            <div className="bg-emerald-600 px-8 py-8 text-white text-center">
+                <p className="uppercase tracking-widest text-xs font-semibold text-emerald-100">Reto diario · {date}</p>
+                <h1 className="text-3xl sm:text-4xl font-black mt-2">¿Tienes ojo de tasador?</h1>
+            </div>
+            <div className="p-6 sm:p-8 space-y-5 text-gray-700 dark:text-gray-300">
+                <p>Cada día, las mismas <strong>5 tasaciones</strong> para todo el mundo: inmuebles de Ubica y el precio del m² de vivienda en municipios de España, con datos oficiales.</p>
+                <ul className="space-y-2 text-sm">
+                    <li className="flex gap-2"><CheckIcon className="w-5 h-5 text-emerald-500 shrink-0" /> Mueve el control o escribe tu precio.</li>
+                    <li className="flex gap-2"><CheckIcon className="w-5 h-5 text-emerald-500 shrink-0" /> 100 puntos si lo clavas; pierdes 2 por cada 1 % de diferencia.</li>
+                    <li className="flex gap-2"><CheckIcon className="w-5 h-5 text-emerald-500 shrink-0" /> Una respuesta por ronda. Mañana, reto nuevo.</li>
+                </ul>
+                <button onClick={onStart}
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-lg py-4 rounded-xl shadow-lg transition-colors">
+                    {started ? 'Continuar el reto' : 'Empezar el reto'}
+                </button>
+                {!loggedIn && (
+                    <p className="text-sm text-center text-gray-500 dark:text-gray-400">
+                        Juegas como invitado. <Link to="/register" className="text-emerald-600 dark:text-emerald-400 font-semibold hover:underline">Crea una cuenta gratis</Link> para entrar en el ranking del mes.
+                    </p>
+                )}
+            </div>
+        </motion.div>
+    );
+}
+
+function Photos({ fotos: all, alt }: { fotos: string[]; alt: string }) {
+    const [i, setI] = useState(0);
+    // Las que no cargan se quitan y se pasa a la siguiente
+    const [broken, setBroken] = useState<string[]>([]);
+    const fotos = all.filter(f => !broken.includes(f));
+    if (!fotos.length) {
+        return <div className="h-64 md:h-80 bg-gray-200 dark:bg-gray-700 flex items-center justify-center"><HomeIcon className="w-16 h-16 text-gray-400" /></div>;
+    }
+    const shown = fotos[Math.min(i, fotos.length - 1)];
+    return (
+        <div className="relative h-64 md:h-80 bg-gray-200 dark:bg-gray-700">
+            <img src={shown} alt={alt} className="w-full h-full object-cover" onError={() => setBroken(b => [...b, shown])} />
+            {fotos.length > 1 && (
+                <>
+                    <button type="button" aria-label="Foto anterior" onClick={() => setI((i - 1 + fotos.length) % fotos.length)}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2"><ChevronLeftIcon className="w-5 h-5" /></button>
+                    <button type="button" aria-label="Foto siguiente" onClick={() => setI((i + 1) % fotos.length)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2"><ChevronRightIcon className="w-5 h-5" /></button>
+                    <span className="absolute bottom-3 right-3 bg-black/60 text-white text-xs font-semibold px-2 py-1 rounded-lg">{Math.min(i, fotos.length - 1) + 1}/{fotos.length}</span>
+                </>
+            )}
+        </div>
+    );
+}
+
+function RoundView({ index, round, answer, sending, onSubmit, onNext, isLast }: {
+    index: number; round: TasadorRound; answer?: TasadorReveal; sending: boolean;
+    onSubmit: (guess: number) => void; onNext: () => void; isLast: boolean;
+}) {
+    const range = RANGES[round.unidad];
+    const [value, setValue] = useState(range[2]);
+    const [text, setText] = useState(euros(range[2]));
+
+    const setFromNumber = (v: number) => {
+        const clamped = Math.min(range[1], Math.max(range[0], v));
+        setValue(clamped);
+        setText(euros(clamped));
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-12">
-            {/* Mini header */}
-            <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
-                <div className="page-container h-16 flex items-center justify-between">
-                    <Link to="/entretenimiento" className="flex items-center text-gray-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors font-medium text-sm">
-                        <ChevronLeftIcon className="w-5 h-5 mr-1" />
-                        Volver a Ubica Play
-                    </Link>
-                    <div className="font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-emerald-500 flex items-center gap-2">
-                        <CalculatorIcon className="w-6 h-6 text-emerald-500" />
-                        Tasador Exprés
+        <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}
+                    className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 max-w-3xl mx-auto overflow-hidden">
+            {round.tipo === 'inmueble' ? (
+                <Photos fotos={round.fotos || []} alt={round.titulo || 'Inmueble'} />
+            ) : (
+                <div className="h-40 sm:h-48 bg-gradient-to-br from-emerald-600 to-emerald-800 text-white flex flex-col items-center justify-center text-center px-6">
+                    <MapPinIcon className="w-10 h-10 mb-2 text-emerald-200" />
+                    <p className="text-3xl sm:text-4xl font-black">{round.municipio}</p>
+                    <p className="text-emerald-100 mt-1">{round.provincia}</p>
+                </div>
+            )}
+
+            <div className="p-6 sm:p-8">
+                <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Ronda {index + 1} de 5</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-1">{round.pregunta}</h2>
+
+                {round.tipo === 'inmueble' ? (
+                    <div className="flex flex-wrap gap-x-5 gap-y-2 mt-3 text-gray-600 dark:text-gray-300 text-sm">
+                        <span className="font-semibold">{round.tipo_inmueble} en venta</span>
+                        {round.ciudad && <span className="flex items-center gap-1"><MapPinIcon className="w-4 h-4" />{round.ciudad}</span>}
+                        {!!round.habitaciones && <span className="flex items-center gap-1"><HomeIcon className="w-4 h-4" />{round.habitaciones} hab. · {round.banos ?? 0} baños</span>}
+                        {!!round.superficie_m2 && <span className="flex items-center gap-1"><ArrowsPointingOutIcon className="w-4 h-4" />{euros(round.superficie_m2)} m²</span>}
                     </div>
-                    <div className="text-sm font-semibold flex items-center gap-4">
-                        <span className="text-gray-500 dark:text-gray-400 hidden sm:inline">{user ? 'Modo Competición' : 'Modo Demo'}</span>
-                        {gameState !== 'intro' && gameState !== 'loading' && (
-                            <span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 px-3 py-1 rounded-full text-xs font-bold">
-                                Puntuación: {score}
-                            </span>
-                        )}
-                    </div>
+                ) : (
+                    <p className="mt-3 text-gray-600 dark:text-gray-300 text-sm">Valor tasado medio de la vivienda libre por metro cuadrado.</p>
+                )}
+
+                {!answer ? (
+                    <form className="mt-8" onSubmit={e => { e.preventDefault(); onSubmit(roundNice(value, round.unidad)); }}>
+                        <label htmlFor={`guess-${index}`} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tu tasación</label>
+                        <div className="flex items-center gap-2">
+                            <input
+                                id={`guess-${index}`}
+                                inputMode="numeric"
+                                value={text}
+                                onChange={e => {
+                                    setText(e.target.value);
+                                    const n = Number(e.target.value.replace(/\D/g, ''));
+                                    if (n >= range[0] && n <= range[1]) setValue(n);
+                                }}
+                                onBlur={() => setFromNumber(Number(text.replace(/\D/g, '')) || range[2])}
+                                className="w-full text-3xl font-black text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            />
+                            <span className="text-xl font-bold text-gray-500 dark:text-gray-400 whitespace-nowrap">{round.unidad}</span>
+                        </div>
+                        <input
+                            type="range"
+                            min={0}
+                            max={STEPS}
+                            value={toPos(value, range)}
+                            onChange={e => setFromNumber(roundNice(fromPos(Number(e.target.value), range), round.unidad))}
+                            aria-label="Ajustar la tasación"
+                            className="w-full mt-5 accent-emerald-600"
+                        />
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                            <span>{withUnit(range[0], round.unidad)}</span>
+                            <span>{withUnit(range[1], round.unidad)}</span>
+                        </div>
+                        <button type="submit" disabled={sending}
+                                className="mt-6 w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-bold text-lg py-4 rounded-xl transition-colors">
+                            {sending ? 'Comprobando…' : 'Tasar'}
+                        </button>
+                    </form>
+                ) : (
+                    <RevealCard round={round} answer={answer} onNext={onNext} isLast={isLast} />
+                )}
+            </div>
+        </motion.div>
+    );
+}
+
+function RevealCard({ round, answer, onNext, isLast }: { round: TasadorRound; answer: TasadorReveal; onNext: () => void; isLast: boolean }) {
+    return (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-8">
+            <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-2xl bg-gray-50 dark:bg-gray-900/60 p-4">
+                    <p className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">Tu tasación</p>
+                    <p className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white mt-1">{withUnit(answer.respuesta, round.unidad)}</p>
+                </div>
+                <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 p-4">
+                    <p className="text-xs uppercase tracking-wider text-emerald-700 dark:text-emerald-300 font-semibold">{round.tipo === 'inmueble' ? 'Precio real' : 'Valor oficial'}</p>
+                    <p className="text-xl sm:text-2xl font-black text-emerald-700 dark:text-emerald-300 mt-1">{withUnit(answer.real, round.unidad)}</p>
+                </div>
+            </div>
+            <div className="mt-4">
+                <p className="text-lg font-black text-gray-900 dark:text-white">{square(answer.puntos)} {verdict(answer.puntos)}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Te has desviado un {answer.error_porcentaje.toLocaleString('es-ES')} % · <strong>+{answer.puntos} puntos</strong></p>
+            </div>
+            {round.tipo === 'inmueble' && answer.url && (
+                <Link to={answer.url} className="mt-3 inline-block text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">Ver el anuncio →</Link>
+            )}
+            {round.tipo === 'municipio' && round.fuente && (
+                <p className="mt-3 text-xs text-gray-400 flex items-start gap-1"><BuildingLibraryIcon className="w-4 h-4 shrink-0" />Fuente: {round.fuente}.</p>
+            )}
+            <button onClick={onNext}
+                    className="mt-6 w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold py-3 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors">
+                {isLast ? 'Ver mi resultado' : 'Siguiente ronda'}
+            </button>
+        </motion.div>
+    );
+}
+
+function Summary({ daily, answers, total, ranking, loggedIn, secondsLeft, onReview }: {
+    daily: TasadorDaily; answers: Answers; total: number; ranking: TasadorRankingEntry[] | null;
+    loggedIn: boolean; secondsLeft: number; onReview: (i: number) => void;
+}) {
+    const [copied, setCopied] = useState(false);
+    const squares = daily.rondas.map((_, i) => square(answers[i]?.puntos ?? 0)).join('');
+    const shareText = `Ubica Play · Tasador Exprés #${daily.numero}\n${squares} ${total}/500\n${SHARE_URL}`;
+
+    const share = async () => {
+        if (navigator.share) {
+            try {
+                await navigator.share({ text: shareText });
+                return;
+            } catch { /* cancelado: probamos a copiar */ }
+        }
+        try {
+            await navigator.clipboard.writeText(shareText);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2500);
+        } catch { /* sin portapapeles: queda el botón de WhatsApp */ }
+    };
+
+    return (
+        <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} className="max-w-2xl mx-auto space-y-6">
+            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 p-6 sm:p-8 text-center">
+                <p className="uppercase tracking-widest text-xs font-semibold text-gray-500 dark:text-gray-400">Reto #{daily.numero} completado</p>
+                <p className="text-6xl font-black text-emerald-600 dark:text-emerald-400 mt-3">{total}<span className="text-2xl text-gray-400"> / 500</span></p>
+                <p className="text-3xl mt-3 tracking-widest" aria-hidden="true">{squares}</p>
+                <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <button onClick={share} className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition-colors">
+                        <ShareIcon className="w-5 h-5" />{copied ? '¡Copiado!' : 'Compartir resultado'}
+                    </button>
+                    <a href={`https://wa.me/?text=${encodeURIComponent(shareText)}`} target="_blank" rel="noopener noreferrer"
+                       className="flex items-center justify-center gap-2 bg-[#25D366] hover:brightness-95 text-white font-bold py-3 rounded-xl transition">
+                        Enviar por WhatsApp
+                    </a>
+                </div>
+                <p className="mt-6 text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-1">
+                    <ClockIcon className="w-4 h-4" /> Siguiente reto en {countdown(secondsLeft)}
+                </p>
+                <div className="mt-4 flex flex-wrap justify-center gap-2 text-xs">
+                    {daily.rondas.map((r, i) => (
+                        <button key={i} onClick={() => onReview(i)} className="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600">
+                            {square(answers[i]?.puntos ?? 0)} {r.tipo === 'inmueble' ? r.tipo_inmueble : r.municipio}
+                        </button>
+                    ))}
                 </div>
             </div>
 
-            <div className="page-container mt-8">
-                <AnimatePresence mode="wait">
-                    {gameState === 'intro' && (
-                        <motion.div
-                            key="intro"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700 max-w-2xl mx-auto text-center"
-                        >
-                            <div className="h-48 bg-emerald-500 flex items-center justify-center relative overflow-hidden">
-                                <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
-                                <CalculatorIcon className="w-24 h-24 text-white drop-shadow-lg relative z-10" />
-                            </div>
-
-                            <div className="p-8">
-                                <h1 className="text-3xl font-black text-gray-900 dark:text-white mb-4">¿Tienes ojo clínico para el mercado?</h1>
-                                <p className="text-gray-600 dark:text-gray-300 text-lg mb-8 leading-relaxed">
-                                    Te mostraremos de forma rápida propiedades reales de la Región de Murcia (ocultando el precio). Fíjate en la ubicación, los metros y las fotos.
-                                    Tienes <span className="font-bold text-emerald-600 dark:text-emerald-400">10 segundos</span> para adivinar su precio de mercado actual.
-                                </p>
-
-                                <div className="space-y-4">
-                                    <button
-                                        onClick={startGame}
-                                        className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-bold text-xl py-4 rounded-xl shadow-lg hover:shadow-xl hover:from-emerald-500 hover:to-emerald-400 transition-all transform hover:-translate-y-1"
-                                    >
-                                        {!user ? 'Jugar Ronda de Prueba' : 'Empezar Partida'}
-                                    </button>
-
-                                    {!user && (
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            En el modo demo solo jugarás 3 rondas y los puntos no se guardarán en el ranking.
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                        </motion.div>
-                    )}
-
-                    {gameState === 'loading' && (
-                        <motion.div
-                            key="loading"
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 min-h-[500px] flex flex-col items-center justify-center p-8 text-center"
-                        >
-                            <CalculatorIcon className="w-16 h-16 text-emerald-500 dark:text-emerald-400 mx-auto mb-6 animate-pulse" />
-                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Buscando propiedades en Murcia...</h2>
-                            <p className="text-gray-500 dark:text-gray-400">Preparando tu partida aleatoria.</p>
-                        </motion.div>
-                    )}
-
-                    {(gameState === 'playing' || gameState === 'round-result') && properties[currentRound] && (
-                        <motion.div
-                            key="gameplay"
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700 max-w-4xl mx-auto"
-                        >
-                            {/* Image Section */}
-                            <div className="relative h-64 md:h-80 w-full overflow-hidden bg-gray-200 dark:bg-gray-700 group">
-                                <img
-                                    src={properties[currentRound].images[0] || 'https://via.placeholder.com/800x600?text=Sin+Imagen'}
-                                    alt="Propiedad Misteriosa"
-                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                    onError={(e) => {
-                                        e.currentTarget.src = 'https://via.placeholder.com/800x600?text=Sin+Imagen';
-                                    }}
-                                />
-
-                                {/* Round indicator & Timer Overlay */}
-                                <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-sm text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2">
-                                    <span>Ronda {currentRound + 1}/{ROUNDS_LIMIT}</span>
-                                </div>
-
-                                <div className={`absolute top-4 right-4 backdrop-blur-sm px-4 py-2 rounded-xl font-black text-xl flex items-center gap-2 transition-colors ${timeLeft <= 3 ? 'bg-red-500/80 text-white animate-pulse' : 'bg-black/60 text-white'}`}>
-                                    <ClockIcon className="w-6 h-6" />
-                                    {timeLeft}s
-                                </div>
-                            </div>
-
-                            {/* Info Section */}
-                            <div className="p-6 md:p-8">
-                                <div className="flex flex-col md:flex-row justify-between gap-6 mb-8">
-                                    <div className="flex-1">
-                                        <h3 className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-2">Datos Clave</h3>
-                                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white capitalize mb-4 line-clamp-1">{properties[currentRound].type} - {properties[currentRound].status === 'for-sale' ? 'Venta' : properties[currentRound].status}</h2>
-
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                                                <MapPinIcon className="w-5 h-5 text-gray-400" />
-                                                <span className="truncate">{properties[currentRound].location || properties[currentRound].address || 'Murcia'}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                                                <HomeIcon className="w-5 h-5 text-gray-400" />
-                                                <span>{properties[currentRound].bedrooms} Hab. · {properties[currentRound].bathrooms} Baños</span>
-                                            </div>
-                                            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                                                <ArrowsPointingOutIcon className="w-5 h-5 text-gray-400" />
-                                                <span>{properties[currentRound].area} m²</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Options Grid */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {options.map((optionPrice, idx) => {
-                                        const isRealPrice = optionPrice === properties[currentRound].price;
-                                        const isSelected = selectedOption === optionPrice;
-                                        const didTimeout = selectedOption === -1;
-
-                                        let buttonClass = "py-4 px-6 rounded-2xl font-bold text-lg md:text-xl transition-all border-2 text-center relative overflow-hidden ";
-
-                                        if (gameState === 'playing') {
-                                            buttonClass += "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:border-emerald-500 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20";
-                                        } else if (gameState === 'round-result') {
-                                            // Result revealed
-                                            if (isRealPrice) {
-                                                buttonClass += "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-400 scale-105 z-10 shadow-lg";
-                                            } else if (isSelected) {
-                                                buttonClass += "border-red-500 bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 dark:border-red-400 opacity-80";
-                                            } else {
-                                                buttonClass += "border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-600 opacity-50";
-                                            }
-                                        }
-
-                                        return (
-                                            <button
-                                                key={idx}
-                                                disabled={gameState !== 'playing'}
-                                                onClick={() => handleGuess(optionPrice)}
-                                                className={buttonClass}
-                                            >
-                                                {gameState === 'round-result' && isRealPrice && <CheckCircleIcon className="absolute top-1/2 -translate-y-1/2 right-4 w-6 h-6 text-emerald-500" />}
-                                                {gameState === 'round-result' && isSelected && !isRealPrice && <XCircleIcon className="absolute top-1/2 -translate-y-1/2 right-4 w-6 h-6 text-red-500" />}
-                                                {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(optionPrice)}
-                                            </button>
-                                        )
-                                    })}
-                                </div>
-
-                                {/* Result Message & Next Button */}
-                                {gameState === 'round-result' && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        className="mt-8 flex flex-col sm:flex-row items-center justify-between bg-gray-50 dark:bg-gray-900/50 p-6 rounded-2xl border border-gray-100 dark:border-gray-800"
-                                    >
-                                        <div className="text-center sm:text-left mb-4 sm:mb-0">
-                                            {selectedOption === properties[currentRound].price ? (
-                                                <>
-                                                    <h4 className="text-xl font-black text-emerald-600 dark:text-emerald-400">¡Ojo de lince!</h4>
-                                                    <p className="text-gray-600 dark:text-gray-400">Has acertado de lleno. +{10 + timeLeft} pts</p>
-                                                </>
-                                            ) : selectedOption === -1 ? (
-                                                <>
-                                                    <h4 className="text-xl font-black text-red-600 dark:text-red-400">¡Tiempo agotado!</h4>
-                                                    <p className="text-gray-600 dark:text-gray-400">No sumas puntos esta ronda.</p>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <h4 className="text-xl font-black text-red-600 dark:text-red-400">Te has pasado (o quedado corto)</h4>
-                                                    <p className="text-gray-600 dark:text-gray-400">La próxima vez fíjate mejor en la zona.</p>
-                                                </>
-                                            )}
-                                        </div>
-                                        <button
-                                            onClick={nextRound}
-                                            className="w-full sm:w-auto px-8 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold rounded-xl hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
-                                        >
-                                            {currentRound + 1 >= ROUNDS_LIMIT ? 'Ver Resultados' : 'Siguiente Ronda'}
-                                        </button>
-                                    </motion.div>
-                                )}
-                            </div>
-                        </motion.div>
-                    )}
-
-                    {gameState === 'game-over' && (
-                        <motion.div
-                            key="game-over"
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700 max-w-2xl mx-auto text-center p-8 md:p-12"
-                        >
-                            <div className="w-24 h-24 bg-emerald-100 dark:bg-emerald-900/40 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <CalculatorIcon className="w-12 h-12 text-emerald-600 dark:text-emerald-400" />
-                            </div>
-
-                            <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">¡Tasación Finalizada!</h2>
-
-                            <div className="my-8 space-y-2">
-                                <p className="text-gray-500 dark:text-gray-400 text-lg uppercase tracking-widest font-semibold">Puntuación Final</p>
-                                <div className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-emerald-500">
-                                    {score}
-                                </div>
-                            </div>
-
-                            <div className="bg-gray-50 dark:bg-gray-900/50 rounded-2xl p-6 mb-8 text-center border border-gray-100 dark:border-gray-800">
-                                {score >= 80 ? (
-                                    <p className="text-lg font-medium text-gray-800 dark:text-gray-200">¡Nivel Experto! Pareces todo un analista de AMI Fincas.</p>
-                                ) : score >= 40 ? (
-                                    <p className="text-lg font-medium text-gray-800 dark:text-gray-200">Buen intento. Aún puedes afinar un poco más el lápiz.</p>
-                                ) : (
-                                    <p className="text-lg font-medium text-gray-800 dark:text-gray-200">Quizá necesites estudiar un poco más el mercado murciano.</p>
-                                )}
-                            </div>
-
-                            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                                <button
-                                    onClick={startGame}
-                                    className="px-8 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:from-emerald-500 hover:to-emerald-400 transition-all transform hover:-translate-y-0.5"
-                                >
-                                    Jugar de Nuevo
-                                </button>
-                                {!user ? (
-                                    <Link to="/register" className="px-8 py-3 bg-white dark:bg-gray-800 border-2 border-emerald-600 text-emerald-600 dark:border-emerald-500 dark:text-emerald-400 font-bold rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all">
-                                        Crear cuenta gratis
-                                    </Link>
-                                ) : (
-                                    <Link to="/entretenimiento" className="px-8 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all">
-                                        Volver al menú
-                                    </Link>
-                                )}
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Ad block space - example of subtle branding */}
-                <div className="mt-12 text-center opacity-50 hover:opacity-100 transition-opacity">
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Patrocinado por</p>
-                    <div className="flex items-center justify-center gap-2">
-                        <span className="font-bold text-gray-700 dark:text-gray-300">AMI Fincas</span>
-                        <span className="text-gray-400 dark:text-gray-500 text-sm hidden sm:inline">| Excelencia Certificada 5.0 en Administración</span>
+            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 p-6 sm:p-8">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2"><TrophyIcon className="w-5 h-5 text-amber-500" /> Ranking del mes</h3>
+                {ranking === null ? (
+                    <p className="text-sm text-gray-500 mt-4">Cargando…</p>
+                ) : ranking.length === 0 ? (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">Todavía nadie con cuenta ha jugado este mes. ¡Puedes ser el primero!</p>
+                ) : (
+                    <ol className="mt-4 divide-y divide-gray-100 dark:divide-gray-700">
+                        {ranking.map(r => (
+                            <li key={r.posicion} className="flex items-center justify-between py-2 text-sm">
+                                <span className="text-gray-700 dark:text-gray-200"><span className="inline-block w-6 font-bold text-gray-400">{r.posicion}</span>{r.nombre}</span>
+                                <span className="font-bold text-gray-900 dark:text-white">{euros(r.puntos)} <span className="text-xs font-normal text-gray-400">pts · {r.retos} {r.retos === 1 ? 'reto' : 'retos'}</span></span>
+                            </li>
+                        ))}
+                    </ol>
+                )}
+                {!loggedIn && (
+                    <div className="mt-5 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 p-4 text-sm text-emerald-800 dark:text-emerald-200">
+                        Hoy has jugado como invitado y tus puntos no cuentan. <Link to="/register" className="font-bold underline">Crea una cuenta gratis</Link> y suma los de los próximos retos.
                     </div>
-                </div>
+                )}
             </div>
-        </div>
+
+            <div className="text-center">
+                <Link to="/" className="inline-block text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">
+                    ¿Buscas casa de verdad? Mira los inmuebles de Ubica →
+                </Link>
+            </div>
+        </motion.div>
     );
 }

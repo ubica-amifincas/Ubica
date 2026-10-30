@@ -5,8 +5,7 @@ import { Environment, ContactShadows, Edges, Circle, OrbitControls, Sky, Trail }
 import { ChevronLeftIcon, LockClosedIcon, SunIcon, MoonIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { API_BASE_URL } from '../../config';
-import { getToken } from '../../services/session';
+import { apiService } from '../../services/apiService';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
 
@@ -638,17 +637,16 @@ export default function UbicaBalance() {
     const [showMilestoneCelebration, setShowMilestoneCelebration] = useState(false);
     const [hasCelebrated100, setHasCelebrated100] = useState(false);
 
+    // Token de la partida en curso: el servidor comprueba que la puntuación cabe en el tiempo jugado
+    const gameTokenRef = useRef<string | null>(null);
+    const startGameSession = useCallback(() => {
+        gameTokenRef.current = null;
+        apiService.startBalanceGame().then(t => { gameTokenRef.current = t; }).catch(() => { /* sin token no se guarda la puntuación */ });
+    }, []);
+
     const fetchLeaderboard = useCallback(async () => {
         try {
-            const token = getToken();
-
-            const res = await fetch(`${API_BASE_URL}/games/balance/leaderboard`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setLeaderboard(Array.isArray(data) ? data : []);
-            }
+            setLeaderboard(await apiService.getBalanceLeaderboard());
         } catch (error) {
             console.error("Failed to fetch leaderboard", error);
             setLeaderboard([]);
@@ -661,28 +659,19 @@ export default function UbicaBalance() {
     useEffect(() => {
         if (user) {
             fetchLeaderboard();
+            startGameSession();
         }
-    }, [user, fetchLeaderboard]);
+    }, [user, fetchLeaderboard, startGameSession]);
 
     // Save score when game over
     useEffect(() => {
         if (gameOver && score > 0 && user) {
             const saveScore = async () => {
+                const token = gameTokenRef.current;
+                if (!token) return;
                 try {
-                    const token = getToken();
-
-                    const res = await fetch(`${API_BASE_URL}/games/score`, {
-                        method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}` 
-                        },
-                        body: JSON.stringify({ game_name: 'balance', score: score })
-                    });
-                    
-                    if (res.ok) {
-                        fetchLeaderboard();
-                    }
+                    await apiService.saveBalanceScore(score, token);
+                    fetchLeaderboard();
                 } catch (e) {
                     console.error("Error saving score", e);
                 }
@@ -782,6 +771,7 @@ export default function UbicaBalance() {
         setHasCelebrated100(false);
         setShowMilestoneCelebration(false);
         fetchLeaderboard(); // refresh stats
+        startGameSession();
     };
 
     const adjustCamera = (axis: 'x' | 'y' | 'z', amount: number) => {
@@ -801,7 +791,7 @@ export default function UbicaBalance() {
                     </div>
                     <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-4">La Torre Fincas (Beta 3D)</h2>
                     <p className="text-slate-600 dark:text-slate-300 mb-8 leading-relaxed">
-                        "Ubica Balance" es una experiencia 3D. Solo disponible para agentes registrados debido al guardado del ranking.
+                        "La Torre Fincas" es una experiencia 3D para usuarios registrados: así guardamos tu puntuación en el ranking del mes.
                     </p>
                     <Link
                         to="/register"
@@ -871,7 +861,7 @@ export default function UbicaBalance() {
                      isDarkMode ? 'bg-[#0f172a]/40 border-white/10' : 'bg-white/60 border-white/40'
                  }`}>
                      <h3 className="text-emerald-400 font-black text-[10px] sm:text-xs uppercase tracking-widest mb-3 flex items-center">
-                         <span className="mr-2">🏆</span> Top 10 Oficial
+                         <span className="mr-2">🏆</span> Top 10 del mes
                      </h3>
                      <div className="space-y-2">
                          {isLoadingLeaderboard ? (
@@ -920,7 +910,7 @@ export default function UbicaBalance() {
             {/* Instrucciones Centradas */}
             {(blocks?.length || 0) === 0 && !gameOver && (
                 <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center z-10 pointer-events-none opacity-80 animate-pulse w-[90%] md:w-auto">
-                    <h2 className={`text-4xl md:text-6xl font-black drop-shadow-2xl tracking-tight mb-4 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Ubica Balance</h2>
+                    <h2 className={`text-4xl md:text-6xl font-black drop-shadow-2xl tracking-tight mb-4 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>La Torre Fincas</h2>
                     <p className={`text-sm sm:text-lg font-medium drop-shadow-md px-6 py-3 rounded-full inline-block backdrop-blur-sm border ${isDarkMode ? 'text-white/90 bg-black/40 border-white/10' : 'text-slate-800 bg-white/60 border-black/10'}`}>
                         Toca la pantalla para soltar. ¡Cerca del centro da más puntos!
                     </p>

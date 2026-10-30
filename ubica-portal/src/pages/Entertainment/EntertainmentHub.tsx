@@ -12,11 +12,12 @@ export default function EntertainmentHub() {
         {
             id: 'tasador',
             title: 'Tasador Exprés',
-            description: 'Pon a prueba tu "ojo clínico" inmobiliario. Adivina el precio de mercado de distintas propiedades basándote en sus características.',
+            description: 'Reto diario: cinco tasaciones nuevas cada día, iguales para todos. Inmuebles de Ubica y el precio oficial del m² en municipios de España. ¿Cuánto te acercas?',
             icon: CalculatorIcon,
             path: '/entretenimiento/tasador',
             color: 'from-emerald-500 to-emerald-500',
-            requiresAuth: false, // The demo is free, but the full game requires login
+            requiresAuth: false, // Se juega sin cuenta; con cuenta los puntos suman en el ranking del mes
+            cta: 'Jugar el reto de hoy',
         },
         {
             id: 'balance',
@@ -25,7 +26,8 @@ export default function EntertainmentHub() {
             icon: BuildingOffice2Icon,
             path: '/entretenimiento/balance',
             color: 'from-emerald-500 to-emerald-600',
-            requiresAuth: true, // Only for registered users (global rankings)
+            requiresAuth: true, // Solo con cuenta: guarda la puntuación en el ranking del mes
+            cta: 'Jugar ahora',
         }
     ];
 
@@ -79,7 +81,7 @@ export default function EntertainmentHub() {
                                         <LockClosedIcon className="w-6 h-6 text-gray-400 shrink-0 mt-0.5" />
                                         <div>
                                             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Requiere cuenta gratuita</h3>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Regístrate para jugar al juego completo, guardar tus puntuaciones y competir en el ranking mensual.</p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Regístrate para jugar, guardar tus puntuaciones y competir en el ranking del mes.</p>
                                             <Link to="/register" className="mt-2 inline-block text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:underline">
                                                 Crear cuenta ahora
                                             </Link>
@@ -93,7 +95,7 @@ export default function EntertainmentHub() {
                                         >
                                             <span className="flex items-center justify-center gap-2">
                                                 <PlayCircleIcon className="w-6 h-6" />
-                                                {!user && !game.requiresAuth ? 'Jugar Demo' : 'Jugar Ahora'}
+                                                {game.cta}
                                             </span>
                                         </Link>
                                     </div>

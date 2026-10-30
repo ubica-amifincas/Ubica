@@ -1,5 +1,8 @@
+import time
+
 import models
 from conftest import auth, make_token
+from security import create_access_token
 
 
 # --- Salud ---
@@ -226,13 +229,19 @@ def test_messages_flow(client, make_user, make_property):
 
 def test_game_scores(client, make_user):
     a, b = make_user(email="ana@example.com", full_name="Ana"), make_user(email="beto@example.com")
-    client.post("/api/games/score", json={"game_name": "balance", "score": 50}, headers=auth(a))
-    assert client.post("/api/games/score", json={"game_name": "balance", "score": 30}, headers=auth(a)).json()["score"] == 50
-    assert client.post("/api/games/score", json={"game_name": "balance", "score": 80}, headers=auth(a)).json()["message"] == "New high score saved!"
-    client.post("/api/games/score", json={"game_name": "balance", "score": 60}, headers=auth(b))
+
+    def submit(user, score):
+        # La partida se empieza con /api/games/balance/start; aquí, una de hace 10 minutos
+        token = create_access_token({"sub": str(user.id), "type": "game", "game": "balance", "started": time.time() - 600})
+        return client.post("/api/games/score", json={"game_name": "balance", "score": score, "session_token": token}, headers=auth(user))
+    submit(a, 50)
+    assert submit(a, 30).json()["score"] == 50
+    assert submit(a, 80).json()["message"] == "New high score saved!"
+    submit(b, 60)
     board = client.get("/api/games/balance/leaderboard").json()
-    assert [(e["user_name"], e["score"]) for e in board] == [("Ana", 80), ("beto", 60)]
-    assert client.post("/api/games/score", json={"game_name": "balance", "score": 1}).status_code == 401
+    # Sin nombre se muestra «Jugador N», nunca el correo
+    assert [(e["user_name"], e["score"]) for e in board] == [("Ana", 80), (f"Jugador {b.id}", 60)]
+    assert client.post("/api/games/score", json={"game_name": "balance", "score": 1, "session_token": "x" * 20}).status_code == 401
 
 
 # --- Inmobiliaria e inversor ---

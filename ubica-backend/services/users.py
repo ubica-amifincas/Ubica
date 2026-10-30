@@ -39,6 +39,7 @@ def delete_user(session: Session, user: models.User) -> None:
         (models.Favorite, models.Favorite.user_id),
         (models.SavedSearch, models.SavedSearch.user_id),
         (models.GameScore, models.GameScore.user_id),
+        (models.TasadorGuess, models.TasadorGuess.user_id),
         (models.AIConversation, models.AIConversation.user_id),
         (models.Investment, models.Investment.investor_id),
     ):

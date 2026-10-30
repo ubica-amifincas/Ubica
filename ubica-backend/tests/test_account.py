@@ -492,10 +492,16 @@ def test_realtor_dashboard_from_portfolio(client, make_user, make_property):
 # --- Juegos y salud ---
 
 def test_game_score_bounds(client, make_user):
-    h = auth(make_user())
-    assert client.post("/api/games/score", json={"game_name": "balance", "score": 10_000_000}, headers=h).status_code == 200
-    for score in (10_000_001, -1, 5.5, "5", True):
-        assert client.post("/api/games/score", json={"game_name": "balance", "score": score}, headers=h).status_code == 422, score
+    u = make_user()
+    h = auth(u)
+    # Partida empezada hace mucho: solo queda el tope de La Torre (5000)
+    token = create_access_token({"sub": str(u.id), "type": "game", "game": "balance", "started": 0})
+
+    def body(score):
+        return {"game_name": "balance", "score": score, "session_token": token}
+    assert client.post("/api/games/score", json=body(5000), headers=h).status_code == 200
+    for score in (5001, 10_000_001, -1, 5.5, "5", True):
+        assert client.post("/api/games/score", json=body(score), headers=h).status_code == 422, score
     assert client.get("/api/games/balance/leaderboard?limit=50").status_code == 200
     for limit in (0, 51):
         assert client.get(f"/api/games/balance/leaderboard?limit={limit}").status_code == 422

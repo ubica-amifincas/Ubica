@@ -165,6 +165,10 @@ MATRIX = {
     ("POST",   "/api/user/messages/{message_id}/reply"):    (401, 200, 200, 200, 200),
     ("POST",   "/api/games/score"):                         (401, 200, 200, 200, 200),
     ("GET",    "/api/games/{game_name}/leaderboard"):       (200, 200, 200, 200, 200),
+    ("POST",   "/api/games/balance/start"):                 (401, 200, 200, 200, 200),
+    ("GET",    "/api/games/tasador/daily"):                 (200, 200, 200, 200, 200),
+    ("POST",   "/api/games/tasador/daily/guess"):           (200, 200, 200, 200, 200),
+    ("GET",    "/api/games/tasador/leaderboard"):           (200, 200, 200, 200, 200),
     ("GET",    "/api/realtor/dashboard"):                   (401, 403, 200, 403, 403),  # ni el admin
     ("GET",    "/api/realtor/properties"):                  (401, 403, 200, 403, 403),
     ("GET",    "/api/investor/dashboard"):                  (401, 403, 403, 200, 403),  # ni el admin
@@ -599,12 +603,19 @@ def _(w):
     return "POST", f"/api/user/messages/{original.id}/reply", {"json": {"content": "Sí"}}, check
 
 
+def game_token(user_id, seconds_ago=60):
+    """Token de partida de La Torre como el de /api/games/balance/start, empezada hace seconds_ago."""
+    started = datetime.now().timestamp() - seconds_ago
+    return create_access_token({"sub": str(user_id), "type": "game", "game": "balance", "started": started})
+
+
 @case("POST", "/api/games/score")
 def _(w):
     def check(w, r, allowed):
         scores = rows(models.GameScore)
         assert [(s.user_id, s.score) for s in scores] == ([(w.actor_id, 42)] if allowed else [])
-    return "POST", "/api/games/score", {"json": {"game_name": "balance", "score": 42}}, check
+    token = game_token(w.actor_id or w.owner_id)
+    return "POST", "/api/games/score", {"json": {"game_name": "balance", "score": 42, "session_token": token}}, check
 
 
 @case("GET", "/api/games/{game_name}/leaderboard")
@@ -614,6 +625,41 @@ def _(w):
     def check(w, r, allowed):
         assert [(e["user_name"], e["score"]) for e in r.json()] == [("Owner", 7)]
     return "GET", "/api/games/balance/leaderboard", {}, check
+
+
+@case("POST", "/api/games/balance/start")
+def _(w):
+    def check(w, r, allowed):
+        assert bool(r.json().get("session_token")) == allowed
+    return "POST", "/api/games/balance/start", {}, check
+
+
+@case("GET", "/api/games/tasador/daily")
+def _(w):
+    def check(w, r, allowed):
+        assert len(r.json()["rondas"]) == 5 and all("real" not in x for x in r.json()["rondas"])
+    return "GET", "/api/games/tasador/daily", {}, check
+
+
+@case("POST", "/api/games/tasador/daily/guess")
+def _(w):
+    from services import games
+
+    def check(w, r, allowed):
+        assert "real" in r.json()
+        # Solo se guarda la respuesta de quien juega con cuenta
+        assert [(g.user_id, g.round_index) for g in rows(models.TasadorGuess)] == ([(w.actor_id, 0)] if w.actor_id else [])
+    return "POST", "/api/games/tasador/daily/guess", {"json": {"day": games.today().isoformat(), "round": 0, "guess": 1500}}, check
+
+
+@case("GET", "/api/games/tasador/leaderboard")
+def _(w):
+    from services import games
+    add(w.db, models.TasadorGuess(user_id=w.owner_id, day=games.today().isoformat(), round_index=0, guess=1, points=80))
+
+    def check(w, r, allowed):
+        assert [(e["nombre"], e["puntos"]) for e in r.json()] == [("Owner", 80)]
+    return "GET", "/api/games/tasador/leaderboard", {}, check
 
 
 @case("GET", "/api/realtor/dashboard")
@@ -723,7 +769,7 @@ def client_get_me(token):
 
 def test_matrix_covers_every_openapi_route():
     routes = {(m.upper(), p) for p, ops in app.openapi()["paths"].items() for m in ops}
-    assert len(routes) == 54
+    assert len(routes) == 58
     assert set(MATRIX) == routes
     assert set(CASES) == routes
 
@@ -768,6 +814,9 @@ VALIDATION = [
     ("DELETE", "/api/user/searches/abc", {},                                    (401, 422, 422, 422, 422)),
     ("POST", "/api/user/messages/abc/reply", {"json": {"content": "x"}},        (401, 422, 422, 422, 422)),
     ("POST", "/api/games/score", {"json": {"game_name": "g"}},                  (401, 422, 422, 422, 422)),
+    ("POST", "/api/games/score", {"json": {"game_name": "balance", "score": 5}}, (401, 422, 422, 422, 422)),
+    ("POST", "/api/games/tasador/daily/guess", {"json": {"day": "hoy", "round": 0, "guess": 1}}, (422, 422, 422, 422, 422)),
+    ("POST", "/api/games/tasador/daily/guess", {"json": {"day": "2026-01-01", "round": 9, "guess": 1}}, (422, 422, 422, 422, 422)),
     ("POST", "/api/games/score", {"json": {"game_name": "g", "score": "mucho"}}, (401, 422, 422, 422, 422)),
     ("GET", "/api/games/g/leaderboard?limit=abc", {},                           (422, 422, 422, 422, 422)),
     ("POST", "/api/ai/chat", {"json": {}},                                      (422, 422, 422, 422, 422)),
@@ -1252,38 +1301,71 @@ def test_investor_lifecycle(client, db):
 
 
 def test_games_lifecycle(client, db):
-    ana = new_user(db, "ana@example.com", full_name="Ana")
+    ana = new_user(db, "ana@example.com", full_name="Ana Pérez")
     beto = new_user(db, "beto@example.com")
     caro = new_user(db, "caro@example.com", full_name="Caro", role="realtor")
     dani = new_user(db, "dani@example.com", full_name="Dani", role="admin")
 
     def submit(u, score, game="balance"):
-        return client.post("/api/games/score", json={"game_name": game, "score": score}, headers=auth(u))
+        token = game_token(u.id, seconds_ago=600)
+        return client.post("/api/games/score", json={"game_name": game, "score": score, "session_token": token}, headers=auth(u))
 
     assert submit(ana, 50).json()["message"] == "Score saved successfully!"
     assert submit(beto, 70).status_code == 200
     assert submit(caro, 70).status_code == 200   # empate con beto, llega después
     assert submit(dani, 10).status_code == 200
     assert submit(ana, 40).json() == {"message": "Score not higher than existing best.", "score": 50}
-    assert submit(ana, 10, game="otro").status_code == 200
+    assert submit(ana, 10, game="otro").status_code == 422   # solo existe La Torre
 
-    # Una fila por usuario y juego, con la mejor puntuación
+    # Una fila por usuario y mes, con la mejor puntuación
     assert sorted((s.user_id, s.game_name, s.score) for s in rows(models.GameScore)) == sorted(
-        [(ana.id, "balance", 50), (beto.id, "balance", 70), (caro.id, "balance", 70), (dani.id, "balance", 10), (ana.id, "otro", 10)])
+        [(ana.id, "balance", 50), (beto.id, "balance", 70), (caro.id, "balance", 70), (dani.id, "balance", 10)])
 
+    # En el ranking nunca sale el correo: «Nombre I.» o «Jugador N»
     board = client.get("/api/games/balance/leaderboard").json()
-    assert [(e["user_name"], e["score"]) for e in board] == [("beto", 70), ("Caro", 70), ("Ana", 50), ("Dani", 10)]
-    assert [e["user_name"] for e in client.get("/api/games/balance/leaderboard?limit=2").json()] == ["beto", "Caro"]
-    assert [e["score"] for e in client.get("/api/games/otro/leaderboard").json()] == [10]
+    assert [(e["user_name"], e["score"]) for e in board] == [(f"Jugador {beto.id}", 70), ("Caro", 70), ("Ana P.", 50), ("Dani", 10)]
+    assert "beto" not in json.dumps(board)
+    assert len(client.get("/api/games/balance/leaderboard?limit=2").json()) == 2
     assert client.get("/api/games/nadie/leaderboard").json() == []
 
-    # Ana bate el récord: pasa a primera y su created_at se actualiza
+    # Ana bate su récord: pasa a primera
     assert submit(ana, 90).json()["message"] == "New high score saved!"
     assert len(rows(models.GameScore, user_id=ana.id, game_name="balance")) == 1
-    assert [e["user_name"] for e in client.get("/api/games/balance/leaderboard").json()] == ["Ana", "beto", "Caro", "Dani"]
-    # Caro supera a beto: deja de ser un empate y pasa delante
-    assert submit(caro, 71).status_code == 200
-    assert [e["user_name"] for e in client.get("/api/games/balance/leaderboard").json()] == ["Ana", "Caro", "beto", "Dani"]
+    assert [e["user_name"] for e in client.get("/api/games/balance/leaderboard").json()][0] == "Ana P."
+
+    # Ranking mensual: lo de meses anteriores se conserva pero no cuenta, y este mes se empieza de cero
+    [old] = rows(models.GameScore, user_id=dani.id)
+    with Session(engine) as s2:
+        o = s2.get(models.GameScore, old.id)
+        o.created_at = datetime(2020, 1, 15)
+        s2.add(o)
+        s2.commit()
+    assert "Dani" not in [e["user_name"] for e in client.get("/api/games/balance/leaderboard").json()]
+    assert submit(dani, 5).json()["message"] == "Score saved successfully!"
+    assert len(rows(models.GameScore, user_id=dani.id)) == 2
+
+
+def test_balance_score_must_fit_play_time(client, db):
+    u = new_user(db, "u@example.com")
+    h = auth(u)
+
+    def submit(score, token):
+        return client.post("/api/games/score", json={"game_name": "balance", "score": score, "session_token": token}, headers=h)
+
+    # 10 s de partida: como mucho 13 bloques x 30 puntos
+    assert submit(391, game_token(u.id, seconds_ago=10)).status_code == 422
+    assert submit(390, game_token(u.id, seconds_ago=10)).status_code == 200
+    # Tope absoluto aunque la partida dure horas
+    assert submit(6000, game_token(u.id, seconds_ago=10_000)).status_code == 422
+    # Ni el token de otro jugador, ni uno caducado, ni el de la sesión valen
+    other = new_user(db, "otro@example.com")
+    assert submit(5, game_token(other.id)).status_code == 422
+    expired = create_access_token({"sub": str(u.id), "type": "game", "game": "balance", "started": 0}, expires_minutes=-1)
+    assert submit(5, expired).status_code == 422
+    assert submit(5, h["Authorization"].split()[1]).status_code == 422
+    # Y un token de partida no sirve para entrar en la cuenta
+    token = client.post("/api/games/balance/start", headers=h).json()["session_token"]
+    assert client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"}).status_code == 401
 
 
 def test_ai_conversations_keep_only_last_five(client, db):
@@ -1359,7 +1441,8 @@ def test_known_upload_url_not_localhost(client, db):
 
 @pytest.mark.parametrize("score", [-5, 10**20])
 def test_known_game_score_validated(score, client, db):
-    r = client.post("/api/games/score", json={"game_name": "balance", "score": score}, headers=auth(new_user(db, "u@example.com")))
+    u = new_user(db, "u@example.com")
+    r = client.post("/api/games/score", json={"game_name": "balance", "score": score, "session_token": game_token(u.id)}, headers=auth(u))
     assert r.status_code in (400, 422)
     assert count(models.GameScore) == 0
 
@@ -1384,7 +1467,7 @@ def _user_with(kind, client, db):
     elif kind == "saved_search":
         client.post("/api/user/searches", json={"name": "a"}, headers=hx)
     elif kind == "game_score":
-        client.post("/api/games/score", json={"game_name": "g", "score": 1}, headers=hx)
+        client.post("/api/games/score", json={"game_name": "balance", "score": 1, "session_token": game_token(x.id)}, headers=hx)
     elif kind == "ai_conversation":
         client.post("/api/ai/chat", json={"message": "hola"}, headers=hx)
     elif kind == "sent_message":

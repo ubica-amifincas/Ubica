@@ -40,7 +40,7 @@ const UBICA_PRIVATE = {
   '/reset-password': 'Nueva contraseña | Ubica',
   '/confirm-email-change': 'Confirmar cambio de correo | Ubica',
   '/publicar': 'Subir inmueble | Ubica',
-  '/entretenimiento/balance': 'Ubica Balance | Ubica',
+  '/entretenimiento/balance': 'La Torre Fincas · Ubica Play',
   '/dashboard': 'Mi panel | Ubica',
   '/dashboard/properties': 'Mis propiedades | Ubica',
   '/dashboard/sales': 'Ventas | Ubica',

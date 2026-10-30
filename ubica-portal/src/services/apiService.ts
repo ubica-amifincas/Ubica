@@ -119,6 +119,59 @@ export interface AdminDashboardStats {
   [key: string]: unknown;
 }
 
+// Ubica Play
+export interface TasadorRound {
+  tipo: 'inmueble' | 'municipio';
+  pregunta: string;
+  unidad: '€' | '€/m²';
+  // inmueble
+  inmueble_id?: number;
+  titulo?: string;
+  tipo_inmueble?: string;
+  ciudad?: string | null;
+  habitaciones?: number | null;
+  banos?: number | null;
+  superficie_m2?: number | null;
+  fotos?: string[];
+  // municipio
+  municipio?: string;
+  provincia?: string;
+  fuente?: string;
+}
+
+export interface TasadorReveal {
+  real: number;
+  respuesta: number;
+  error_porcentaje: number;
+  puntos: number;
+  url?: string;
+  ya_respondida?: boolean;
+}
+
+export interface TasadorDaily {
+  day: string;
+  numero: number;
+  rondas: TasadorRound[];
+  respondidas: (TasadorReveal & { round: number })[];
+  segundos_para_el_siguiente: number;
+}
+
+export interface TasadorRankingEntry {
+  posicion: number;
+  nombre: string;
+  puntos: number;
+  retos: number;
+}
+
+export interface GameLeaderboardEntry {
+  id: number;
+  user_id: number;
+  user_name: string;
+  game_name: string;
+  score: number;
+  created_at: string;
+}
+
 export interface ContactRequest {
   name: string;
   email: string;
@@ -680,6 +733,47 @@ class ApiService {
       body: JSON.stringify({ content }),
     });
     return this.handleResponse<any>(response);
+  }
+
+  // ─── Ubica Play ───
+
+  async getTasadorDaily(): Promise<TasadorDaily> {
+    const response = await fetch(`${API_BASE_URL}/games/tasador/daily`, { headers: this.getAuthHeaders() });
+    return this.handleResponse<TasadorDaily>(response, { skipAuthRedirect: true });
+  }
+
+  async sendTasadorGuess(day: string, round: number, guess: number): Promise<TasadorReveal> {
+    const response = await fetch(`${API_BASE_URL}/games/tasador/daily/guess`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ day, round, guess }),
+    });
+    return this.handleResponse<TasadorReveal>(response, { skipAuthRedirect: true });
+  }
+
+  async getTasadorRanking(limit = 10): Promise<TasadorRankingEntry[]> {
+    const response = await fetch(`${API_BASE_URL}/games/tasador/leaderboard?limit=${limit}`);
+    return this.handleResponse<TasadorRankingEntry[]>(response);
+  }
+
+  /** Empieza una partida de La Torre: la puntuación final se envía con este token. */
+  async startBalanceGame(): Promise<string> {
+    const response = await fetch(`${API_BASE_URL}/games/balance/start`, { method: 'POST', headers: this.getAuthHeaders() });
+    return (await this.handleResponse<{ session_token: string }>(response)).session_token;
+  }
+
+  async saveBalanceScore(score: number, sessionToken: string): Promise<{ message: string; score: number }> {
+    const response = await fetch(`${API_BASE_URL}/games/score`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ game_name: 'balance', score, session_token: sessionToken }),
+    });
+    return this.handleResponse(response);
+  }
+
+  async getBalanceLeaderboard(limit = 10): Promise<GameLeaderboardEntry[]> {
+    const response = await fetch(`${API_BASE_URL}/games/balance/leaderboard?limit=${limit}`);
+    return this.handleResponse<GameLeaderboardEntry[]>(response);
   }
 }
 

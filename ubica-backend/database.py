@@ -45,6 +45,24 @@ def ensure_columns():
                     conn.execute(text(f'ALTER TABLE "{table}" ADD COLUMN {name} {ddl}'))
                     print(f"[DB] Columna añadida: {table}.{name}")
 
+# Tablas nuevas: se crean al arrancar si faltan (las existentes no se tocan). En Postgres (Supabase) se les
+# activa RLS como al resto (enable_rls.sql): sin políticas, la API REST pública de Supabase no puede leerlas.
+NEW_TABLES = ("tasadorguess",)
+
+def ensure_tables():
+    from sqlalchemy import inspect, text
+    import models  # noqa: F401  (registra las tablas en el metadata)
+    inspector = inspect(engine)
+    missing = [t for t in NEW_TABLES if not inspector.has_table(t)]
+    if not missing:
+        return
+    SQLModel.metadata.create_all(engine, tables=[SQLModel.metadata.tables[t] for t in missing])
+    if engine.dialect.name == "postgresql":
+        with engine.begin() as conn:
+            for t in missing:
+                conn.execute(text(f'alter table public."{t}" enable row level security'))
+    print(f"[DB] Tablas creadas: {', '.join(missing)}")
+
 def get_session():
     with Session(engine) as session:
         yield session

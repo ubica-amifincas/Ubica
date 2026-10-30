@@ -17,13 +17,14 @@ from starlette.routing import Route
 
 import mcp_server
 from config import CORS_ORIGIN_REGEX, CORS_ORIGINS, UPLOAD_DIR
-from database import ensure_columns
+from database import ensure_columns, ensure_tables
 from routers import admin, ai, auth, contact, games, health, investor, properties, realtor, uploads, user
 from services.ai.chat import log_provider_status
 from services.ai.usage import load_ai_usage
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    ensure_tables()
     ensure_columns()
     # Solo en background
     asyncio.create_task(render_keep_alive())

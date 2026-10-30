@@ -149,8 +149,15 @@ class GameScoreResponse(BaseModel):
 MAX_GAME_SCORE = 10_000_000
 
 class GameScoreRequest(BaseModel):
-    game_name: str
+    game_name: Literal["balance"]
     score: StrictInt = Field(ge=0, le=MAX_GAME_SCORE)
+    # Lo da POST /api/games/balance/start: permite comprobar que la puntuación cabe en el tiempo jugado
+    session_token: str = Field(min_length=10, max_length=1000)
+
+class TasadorGuessRequest(BaseModel):
+    day: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
+    round: int = Field(ge=0, le=4)
+    guess: float = Field(gt=0, le=100_000_000)
 
 MAX_CHAT_HISTORY = 20
 MAX_CHAT_CONTENT = 4000

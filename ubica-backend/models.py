@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import List, Optional, Dict, Any
+from sqlalchemy import UniqueConstraint
 from sqlmodel import SQLModel, Field, Relationship, JSON, Column
 from pydantic import EmailStr, NaiveDatetime
 
@@ -117,6 +118,17 @@ class GameScore(SQLModel, table=True):
     created_at: NaiveDatetime = Field(default_factory=datetime.now)
     
     user: User = Relationship()
+
+class TasadorGuess(SQLModel, table=True):
+    """Respuesta de un jugador con cuenta a una ronda del reto diario del Tasador Exprés: solo cuenta la primera."""
+    __table_args__ = (UniqueConstraint("user_id", "day", "round_index"),)
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    day: str = Field(index=True)  # AAAA-MM-DD, hora de Madrid
+    round_index: int
+    guess: float
+    points: int
+    created_at: NaiveDatetime = Field(default_factory=datetime.now)
 
 class AIConversation(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
