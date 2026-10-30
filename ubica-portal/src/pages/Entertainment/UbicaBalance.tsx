@@ -813,7 +813,7 @@ export default function UbicaBalance() {
                         to="/entretenimiento"
                         className="block w-full mt-4 text-emerald-600 dark:text-emerald-400 font-bold hover:underline"
                     >
-                        Volver al menú de juegos
+                        Volver a Ubica Play
                     </Link>
                 </div>
             </div>

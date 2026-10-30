@@ -30,7 +30,7 @@ const resources = {
       "nav.login": "Iniciar sesión",
       "nav.mobile_menu": "Abrir menú principal",
       "nav.settings": "Ajustes",
-      "nav.entertainment": "Juegos",
+      "nav.entertainment": "Entretenimiento",
 
       // Header
       "header.welcome": "Bienvenido a Ubica",
@@ -825,7 +825,7 @@ const resources = {
       "nav.login": "Login",
       "nav.mobile_menu": "Open main menu",
       "nav.settings": "Settings",
-      "nav.entertainment": "Games",
+      "nav.entertainment": "Entertainment",
 
       // Header
       "header.welcome": "Welcome to Ubica",

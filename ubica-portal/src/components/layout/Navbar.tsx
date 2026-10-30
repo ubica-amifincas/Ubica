@@ -50,7 +50,7 @@ export default function Navbar() {
     const publicNav = [
       { name: t('nav.home'), href: '/', icon: HomeIcon, external: false },
       { name: 'AMI Fincas', href: amiHref(), icon: BuildingOfficeIcon, external: true },
-      { name: t('nav.entertainment', 'Juegos'), href: '/entretenimiento', icon: PuzzlePieceIcon, external: false },
+      { name: t('nav.entertainment', 'Entretenimiento'), href: '/entretenimiento', icon: PuzzlePieceIcon, external: false },
     ];
 
     if (!isAuthenticated) {

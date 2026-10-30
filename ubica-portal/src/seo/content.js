@@ -43,10 +43,10 @@ export const AMI = {
 
 export const UBICA = {
   name: 'Ubica',
-  summary: 'Ubica es el portal inmobiliario de AMI Fincas: pisos, casas, locales y terrenos en venta y alquiler en toda España, especialmente en la Región de Murcia. Incluye búsqueda en mapa con dibujo de zonas, un asistente de inteligencia artificial que responde sobre los inmuebles publicados y calcula hipotecas y rentabilidades, y un tasador exprés.',
+  summary: 'Ubica es el portal inmobiliario de AMI Fincas: pisos, casas, locales y terrenos en venta y alquiler en toda España, especialmente en la Región de Murcia. Incluye búsqueda en mapa con dibujo de zonas, un asistente de inteligencia artificial que responde sobre los inmuebles publicados y calcula hipotecas y rentabilidades, y Ubica Play, con juegos sobre el mercado inmobiliario.',
   sections: [
     ['/', 'Inmuebles en venta y alquiler', 'Búsqueda por zona, tipo, precio y habitaciones, en lista o en mapa.'],
-    ['/entretenimiento/tasador', 'Tasador exprés', 'Precio orientativo de una vivienda en segundos.'],
+    ['/entretenimiento', 'Ubica Play', 'Juegos sobre el mercado inmobiliario, como el Tasador Exprés: adivinar el precio de inmuebles reales.'],
     ['/about', 'Sobre nosotros', 'Quiénes somos y cómo ayudamos a comprar, vender o alquilar.'],
     ['/contact', 'Contacto', 'Teléfono, WhatsApp, correo y oficinas.'],
   ],

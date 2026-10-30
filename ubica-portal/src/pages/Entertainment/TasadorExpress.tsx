@@ -142,7 +142,7 @@ export default function TasadorExpress() {
                 <div className="page-container h-16 flex items-center justify-between">
                     <Link to="/entretenimiento" className="flex items-center text-gray-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors font-medium text-sm">
                         <ChevronLeftIcon className="w-5 h-5 mr-1" />
-                        Volver a Juegos
+                        Volver a Ubica Play
                     </Link>
                     <div className="font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-emerald-500 flex items-center gap-2">
                         <CalculatorIcon className="w-6 h-6 text-emerald-500" />
