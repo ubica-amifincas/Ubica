@@ -99,15 +99,17 @@ export default function Navbar() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <div className="flex items-center">
+            {/* Misma medida en las dos webs: logos recortados al dibujo y con la misma superficie (el de AMI es más
+                cuadrado, así que va algo más alto que el apaisado de Ubica), y el nombre al mismo tamaño */}
             {isAmiSite ? (
-              <Link to="/" className="flex items-center space-x-3">
-                <img src="/ami-fincas/logo-480.webp" alt="" width={48} height={46} className="h-10 md:h-11 w-auto object-contain" />
-                <span className="text-xl md:text-2xl font-bold text-[#23707f] dark:text-[#8fd0c3]">AMI Fincas</span>
+              <Link to="/" className="flex items-center gap-2.5 sm:gap-3">
+                <img src="/ami-fincas/logo-ami-mark.png" alt="" width={137} height={96} className="h-7 sm:h-[30px] lg:h-8 w-auto" />
+                <span className="text-xl sm:text-[1.375rem] lg:text-2xl font-bold leading-none tracking-tight text-[#23707f] dark:text-[#8fd0c3]">AMI Fincas</span>
               </Link>
             ) : (
-              <Link to="/" className="flex items-center space-x-3">
-                <img src="/logo_ubica.png" alt="Ubica" className="h-8 md:h-10 w-auto object-contain" />
-                <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-500 bg-clip-text text-transparent">Ubica</span>
+              <Link to="/" className="flex items-center gap-2.5 sm:gap-3">
+                <img src="/logo-ubica-mark.png" alt="" width={184} height={96} className="h-6 sm:h-[26px] lg:h-7 w-auto" />
+                <span className="text-xl sm:text-[1.375rem] lg:text-2xl font-bold leading-none tracking-tight text-emerald-700 dark:text-emerald-400">Ubica</span>
               </Link>
             )}
           </div>
