@@ -253,7 +253,7 @@ function pageBody(isAmi: boolean, path: string, title: string, description: stri
   if (isAmi && path === '/') return amiHomeBody();
   const name = title.replace(/ \| (Ubica|AMI Fincas)$/, '');
   if (LEGAL_SUMMARIES[path]) {
-    return `<h1>${esc(name)}</h1>${para(`${LEGAL_SUMMARIES[path]} Titular: ${AMI.company}.`)}<p>${link('/', 'Volver al inicio')}</p>`;
+    return `<h1>${esc(name)}</h1>${para(`${LEGAL_SUMMARIES[path]} Titular: ${AMI.company}`)}<p>${link('/', 'Volver al inicio')}</p>`;
   }
   if (path === '/about') return `<h1>Sobre nosotros</h1>${UBICA.about.map(para).join('')}${amiContact()}`;
   if (path === '/contact') return `<h1>Contacto</h1>${amiContact()}`;
@@ -272,7 +272,7 @@ async function llms(host: string): Promise<Response> {
   if (host === 'amifincas.es') {
     md = [
       `# ${AMI.name}`, '', `> ${AMI.summary}`, '',
-      `Empresa: ${AMI.company}. Teléfono y WhatsApp: ${AMI.phone}. Correo: ${AMI.email}. Zonas: ${AMI.zones}.`, '',
+      `Empresa: ${AMI.company} Teléfono y WhatsApp: ${AMI.phone}. Correo: ${AMI.email}. Zonas: ${AMI.zones}.`, '',
       '## Servicios', '', ...AMI.services.map(([t, d]) => `- **${t}**: ${d}`), '',
       '## Sedes', '', ...AMI.offices.map(o => `- **${o.name}**: ${o.address}. Tel. ${o.phone}. ${o.hours}. [Mapa](${o.map})`), '',
       '## Preguntas frecuentes', '', ...AMI.faqs.flatMap(([q, a]) => [`### ${q}`, '', a, '']),
