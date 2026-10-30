@@ -8,18 +8,21 @@
  *   En las fichas de inmueble los saca de la API (foto, precio, zona).
  * - Las fichas tienen dirección legible (/inmueble/123-piso-en-murcia): la antigua /property/123 redirige.
  * - Sirve /robots.txt según el dominio y /sitemap.xml de Ubica con los inmuebles publicados.
+ * - Para quien no ejecuta JavaScript (buscadores de IA como ChatGPT, Claude o Perplexity) pone el contenido de la
+ *   página en texto dentro de #root (oculto con JS; React lo sustituye al cargar) y sirve /llms.txt.
  * Si algo falla (API dormida, sin red), se sirve la página tal cual: nunca bloquea la web.
  */
 import {
   AMI_ORIGIN, AMI_SITE_PATHS, UBICA_ORIGIN, UBICA_SITEMAP_PATHS,
   normalizePath, pageMeta, parsePropertyId, propertyPath,
 } from './src/seo/pages.js';
+import { AMI, LEGAL_SUMMARIES, UBICA } from './src/seo/content.js';
 
 export const config = {
   // Node.js: Vercel retira el runtime edge para el middleware
   runtime: 'nodejs',
   // Páginas (sin punto en la ruta) más robots y sitemap; los ficheros estáticos van directos
-  matcher: ['/((?!assets/|icons/|images/|ami-fincas/|uploads/)[^.]*)', '/robots.txt', '/sitemap.xml'],
+  matcher: ['/((?!assets/|icons/|images/|ami-fincas/|uploads/)[^.]*)', '/robots.txt', '/sitemap.xml', '/llms.txt'],
 };
 
 const API = 'https://ubica-backend.onrender.com/api';
@@ -27,6 +30,9 @@ const UBICA_IMAGE = `${UBICA_ORIGIN}/og-ubica.jpg`;
 const AMI_IMAGE = `${AMI_ORIGIN}/og-ami.jpg`;
 const PROD_HOSTS = ['ubica.amifincas.es', 'amifincas.es'];
 const PRIVATE_PATHS = ['/dashboard', '/admin', '/realtor', '/investor', '/publicar'];
+// Buscadores y asistentes de IA: se permiten de forma explícita (búsqueda y entrenamiento)
+const AI_BOTS = ['GPTBot', 'OAI-SearchBot', 'ChatGPT-User', 'ClaudeBot', 'Claude-SearchBot', 'Claude-User', 'PerplexityBot',
+  'Perplexity-User', 'Google-Extended', 'Applebot-Extended', 'Bingbot', 'CCBot', 'meta-externalagent'];
 
 const TYPE_LABELS: Record<string, string> = {
   flat: 'Piso', apartment: 'Apartamento', house: 'Casa', townhouse: 'Adosado', villa: 'Villa', chalet: 'Chalet',
@@ -67,6 +73,8 @@ function setMeta(html: string, attr: 'name' | 'property', key: string, value: st
 
 interface HeadData {
   title: string; description: string; url: string; image: string; index: boolean; jsonLd: object[];
+  /** Contenido de la página en HTML sencillo para quien no ejecuta JavaScript */
+  body?: string;
 }
 
 export function applyHead(html: string, head: HeadData): string {
@@ -87,6 +95,10 @@ export function applyHead(html: string, head: HeadData): string {
   out = setMeta(out, 'name', 'twitter:image', head.image);
   out = setMeta(out, 'name', 'twitter:url', head.url);
   if (!head.index) out = setMeta(out, 'name', 'robots', 'noindex, follow');
+  if (head.body) {
+    // Visible sin JavaScript; con JavaScript lo oculta el CSS de la cabecera y React lo sustituye al cargar
+    out = out.replace('<div id="root"></div>', `<div id="root"><main data-static>${head.body}</main></div>`);
+  }
   for (const data of head.jsonLd) {
     // "<" escapado: un texto con "</script>" no puede cerrar la etiqueta
     out = out.replace('</head>', `  <script type="application/ld+json">${JSON.stringify(data).replace(/</g, '\\u003c')}</script>\n</head>`);
@@ -157,6 +169,7 @@ const UBICA_SITE_JSONLD = {
     name: 'AMI Fincas',
     url: `${AMI_ORIGIN}/`,
     logo: `${UBICA_ORIGIN}/icons/icon-512.png`,
+    sameAs: [AMI.instagram, `${AMI_ORIGIN}/`],
   },
   potentialAction: {
     '@type': 'SearchAction',
@@ -165,6 +178,125 @@ const UBICA_SITE_JSONLD = {
   },
 };
 
+// ─── Contenido en texto (sin JavaScript) ────────────────────────────────────
+
+const AMI_FAQ_JSONLD = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: AMI.faqs.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })),
+};
+
+const link = (href: string, text: string) => `<a href="${esc(href)}">${esc(text)}</a>`;
+const para = (text: string) => `<p>${esc(text)}</p>`;
+const list = (items: string[]) => `<ul>${items.map(i => `<li>${i}</li>`).join('')}</ul>`;
+
+function amiContact(): string {
+  return `<h2>Contacto</h2>${list([
+    `Teléfono y WhatsApp: ${esc(AMI.phone)}`,
+    `Correo: ${link(`mailto:${AMI.email}`, AMI.email)}`,
+    ...AMI.offices.map(o => `<strong>${esc(o.name)}</strong>: ${esc(o.address)} · Tel. ${esc(o.phone)} · ${esc(o.hours)} · ${link(o.map, 'Cómo llegar')}`),
+  ])}`;
+}
+
+function amiHomeBody(): string {
+  return [
+    `<h1>${esc(AMI.name)}: administración de fincas en Murcia y Alicante</h1>`,
+    para(AMI.summary),
+    `<h2>Servicios</h2>`,
+    list(AMI.services.map(([t, d]) => `<strong>${esc(t)}</strong>: ${esc(d)}`)),
+    `<h2>Zonas</h2>`, para(`${AMI.zones}.`),
+    amiContact(),
+    `<h2>Cambiar de administrador</h2>`,
+    `<ol>${AMI.switchSteps.map(st => `<li>${esc(st)}</li>`).join('')}</ol>`,
+    `<h2>Preguntas frecuentes</h2>`,
+    AMI.faqs.map(([q, a]) => `<h3>${esc(q)}</h3>${para(a)}`).join(''),
+    `<h2>¿Buscas vivienda?</h2>`,
+    `<p>${link(`${UBICA_ORIGIN}/`, 'Ubica')} es el portal inmobiliario de AMI Fincas.</p>`,
+  ].join('');
+}
+
+const listingLine = (p: ApiProperty) =>
+  `${link(propertyPath(p), p.title)}: ${esc(propertyDescription(p).split(':')[1]?.split('.')[0]?.trim() || eur(p.price))}${p.city ? ` (${esc(p.city)})` : ''}`;
+
+function ubicaHomeBody(listings: ApiProperty[] | null): string {
+  return [
+    `<h1>Ubica: portal inmobiliario de AMI Fincas</h1>`,
+    para(UBICA.summary),
+    `<h2>Inmuebles publicados</h2>`,
+    listings === null ? para('Consulta los inmuebles disponibles en la web.')
+      : listings.length ? list(listings.map(listingLine)) : para('Todavía no hay inmuebles publicados.'),
+    `<h2>Secciones</h2>`,
+    list(UBICA.sections.map(([href, t, d]) => `${link(href, t)}: ${esc(d)}`)),
+    `<p>Ubica es un servicio de ${link(`${AMI_ORIGIN}/`, 'AMI Fincas')}, administradores de fincas en Murcia y Alicante.</p>`,
+  ].join('');
+}
+
+function propertyBody(p: ApiProperty): string {
+  const facts = [
+    `Precio: ${eur(p.price)}${isRent(p) ? ' al mes' : ''}`,
+    `Tipo: ${TYPE_LABELS[p.type] ?? 'Inmueble'} en ${isRent(p) ? 'alquiler' : 'venta'}`,
+    p.bedrooms ? `Habitaciones: ${p.bedrooms}` : '',
+    p.bathrooms ? `Baños: ${p.bathrooms}` : '',
+    p.area ? `Superficie: ${Math.round(p.area)} m²` : '',
+    [p.address, p.city].filter(Boolean).length ? `Ubicación: ${[p.address, p.city].filter(Boolean).join(', ')}` : '',
+  ].filter(Boolean).map(esc);
+  return [
+    `<h1>${esc(p.title)}</h1>`,
+    list(facts),
+    p.description ? para(p.description.replace(/\s+/g, ' ').trim()) : '',
+    `<p>Anuncio publicado en ${link('/', 'Ubica')}, el portal inmobiliario de AMI Fincas. Contacto: ${esc(AMI.phone)}.</p>`,
+  ].join('');
+}
+
+/** Contenido de las páginas fijas (las fichas y la portada de Ubica, que dependen de la API, van aparte). */
+function pageBody(isAmi: boolean, path: string, title: string, description: string): string {
+  if (isAmi && path === '/') return amiHomeBody();
+  const name = title.replace(/ \| (Ubica|AMI Fincas)$/, '');
+  if (LEGAL_SUMMARIES[path]) {
+    return `<h1>${esc(name)}</h1>${para(`${LEGAL_SUMMARIES[path]} Titular: ${AMI.company}.`)}<p>${link('/', 'Volver al inicio')}</p>`;
+  }
+  if (path === '/about') return `<h1>Sobre nosotros</h1>${UBICA.about.map(para).join('')}${amiContact()}`;
+  if (path === '/contact') return `<h1>Contacto</h1>${amiContact()}`;
+  return `<h1>${esc(name)}</h1>${para(description)}<p>${link('/', 'Ir a la portada')}</p>`;
+}
+
+async function latestListings(limit: number, ms: number): Promise<ApiProperty[] | null> {
+  const res = await fetchWithTimeout(`${API}/properties?limit=${limit}`, ms);
+  if (!res?.ok) return null;
+  try { return (await res.json()) as ApiProperty[]; } catch { return null; }
+}
+
+/** /llms.txt: resumen en Markdown para asistentes de IA (https://llmstxt.org). */
+async function llms(host: string): Promise<Response> {
+  let md: string;
+  if (host === 'amifincas.es') {
+    md = [
+      `# ${AMI.name}`, '', `> ${AMI.summary}`, '',
+      `Empresa: ${AMI.company}. Teléfono y WhatsApp: ${AMI.phone}. Correo: ${AMI.email}. Zonas: ${AMI.zones}.`, '',
+      '## Servicios', '', ...AMI.services.map(([t, d]) => `- **${t}**: ${d}`), '',
+      '## Sedes', '', ...AMI.offices.map(o => `- **${o.name}**: ${o.address}. Tel. ${o.phone}. ${o.hours}. [Mapa](${o.map})`), '',
+      '## Preguntas frecuentes', '', ...AMI.faqs.flatMap(([q, a]) => [`### ${q}`, '', a, '']),
+      '## Enlaces', '',
+      `- [Web de AMI Fincas](${AMI_ORIGIN}/): servicios, sedes y presupuesto sin compromiso`,
+      `- [Ubica](${UBICA_ORIGIN}/): portal inmobiliario de AMI Fincas`,
+      `- [Aviso legal](${AMI_ORIGIN}/aviso-legal)`, `- [Política de privacidad](${AMI_ORIGIN}/privacy)`, '',
+    ].join('\n');
+  } else {
+    const listings = await latestListings(50, 3000);
+    md = [
+      `# ${UBICA.name}`, '', `> ${UBICA.summary}`, '',
+      `Ubica es un servicio de [AMI Fincas](${AMI_ORIGIN}/) (${AMI.company}). Contacto: ${AMI.phone}, ${AMI.email}.`, '',
+      '## Secciones', '', ...UBICA.sections.map(([href, t, d]) => `- [${t}](${UBICA_ORIGIN}${href}): ${d}`), '',
+      '## Inmuebles publicados', '',
+      ...(listings === null ? ['Consulta los inmuebles disponibles en la web.']
+        : listings.length ? listings.map(p => `- [${p.title}](${UBICA_ORIGIN}${propertyPath(p)}): ${propertyDescription(p)}`)
+        : ['Todavía no hay inmuebles publicados.']), '',
+      '## Más', '', `- [Mapa del sitio](${UBICA_ORIGIN}/sitemap.xml)`, `- [Condiciones de uso](${UBICA_ORIGIN}/terms)`, '',
+    ].join('\n');
+  }
+  return new Response(md, { headers: { 'content-type': 'text/markdown; charset=utf-8', 'cache-control': 'public, max-age=3600' } });
+}
+
 // ─── robots y sitemap ───────────────────────────────────────────────────────
 
 function robots(host: string): Response {
@@ -172,10 +304,15 @@ function robots(host: string): Response {
   if (!PROD_HOSTS.includes(host)) {
     // Vistas previas de Vercel: que no compitan con la web real en Google
     body = 'User-agent: *\nDisallow: /\n';
-  } else if (host === 'amifincas.es') {
-    body = `User-agent: *\nAllow: /\n\nSitemap: ${AMI_ORIGIN}/sitemap-ami.xml\n`;
   } else {
-    body = `User-agent: *\nAllow: /\n${PRIVATE_PATHS.map(p => `Disallow: ${p}`).join('\n')}\n\nSitemap: ${UBICA_ORIGIN}/sitemap.xml\n`;
+    const isAmi = host === 'amifincas.es';
+    const rules = ['Allow: /', ...(isAmi ? [] : PRIVATE_PATHS.map(p => `Disallow: ${p}`))].join('\n');
+    body = [
+      'User-agent: *', rules, '',
+      '# Buscadores y asistentes de IA: bienvenidos (resumen en /llms.txt)',
+      ...AI_BOTS.map(b => `User-agent: ${b}`), rules, '',
+      `Sitemap: ${isAmi ? `${AMI_ORIGIN}/sitemap-ami.xml` : `${UBICA_ORIGIN}/sitemap.xml`}`, '',
+    ].join('\n');
   }
   return new Response(body, { headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'public, max-age=3600' } });
 }
@@ -207,6 +344,7 @@ export default async function middleware(request: Request): Promise<Response> {
   if (host === 'www.amifincas.es' || path === '/ami-fincas') return next();
   if (path === '/robots.txt') return robots(host);
   if (path === '/sitemap.xml') return host === 'amifincas.es' ? next() : sitemap();
+  if (path === '/llms.txt') return llms(host);
 
   const isAmi = host === 'amifincas.es';
   const isProd = PROD_HOSTS.includes(host);
@@ -223,8 +361,14 @@ export default async function middleware(request: Request): Promise<Response> {
     url: `${origin}${path}`,
     image: isAmi ? AMI_IMAGE : UBICA_IMAGE,
     index: meta.index && isProd,
-    jsonLd: !isAmi && path === '/' ? [UBICA_SITE_JSONLD] : [],
+    jsonLd: !isAmi && path === '/' ? [UBICA_SITE_JSONLD] : isAmi && path === '/' ? [AMI_FAQ_JSONLD] : [],
   };
+  // Texto de la página solo en las públicas que existen (no en paneles ni 404)
+  if (meta.index && meta.known && parsePropertyId(path) === null) {
+    head.body = !isAmi && path === '/'
+      ? ubicaHomeBody(await latestListings(12, 1500))
+      : pageBody(isAmi, path, meta.title, meta.description);
+  }
   let status = meta.known ? 200 : 404;
 
   const propertyId = isAmi ? null : parsePropertyId(path);
@@ -244,6 +388,7 @@ export default async function middleware(request: Request): Promise<Response> {
       head.url = `${UBICA_ORIGIN}${canonicalPath}`;
       if (p.images?.[0]) head.image = absolute(p.images[0]);
       head.jsonLd = [listingJsonLd(p, head.url)];
+      head.body = propertyBody(p);
     }
     // API dormida o sin respuesta: se sirve la ficha con los datos generales y la app la carga después
   }

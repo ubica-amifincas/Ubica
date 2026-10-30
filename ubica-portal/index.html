@@ -4,8 +4,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
-  <!-- Aplica el tema antes de pintar (el elegido o, si no hay, el del sistema) para que no parpadee al cargar -->
-  <script>try{var c=localStorage.getItem('ubica-theme-choice');if(c==='dark'||(!c&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}</script>
+  <!-- Antes de pintar: marca que hay JavaScript (oculta el texto para buscadores de #root) y aplica el tema (el elegido o el del sistema) -->
+  <style>.js [data-static]{display:none}</style>
+  <script>document.documentElement.classList.add('js');try{var c=localStorage.getItem('ubica-theme-choice');if(c==='dark'||(!c&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}</script>
   <title>Ubica - Portal inmobiliario</title>
   <meta name="description" content="Ubica - Menos búsquedas, más precisión. Portal inmobiliario de AMI Fincas: pisos, casas y locales en venta y alquiler en toda España, especialmente en la Región de Murcia.">
   <meta name="theme-color" content="#10b981">
