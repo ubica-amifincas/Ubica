@@ -7,7 +7,7 @@
  *   estructurados, para que Google, WhatsApp o Facebook los vean sin ejecutar JavaScript.
  *   En las fichas de inmueble los saca de la API (foto, precio, zona).
  * - Las fichas tienen dirección legible (/inmueble/123-piso-en-murcia): la antigua /property/123 redirige.
- * - Sirve /robots.txt según el dominio y /sitemap.xml de Ubica con los inmuebles publicados.
+ * - Sirve /robots.txt según el dominio, /sitemap.xml de Ubica con los inmuebles publicados y el de AMI (/sitemap-ami.xml).
  * - Para quien no ejecuta JavaScript (buscadores de IA como ChatGPT, Claude o Perplexity) pone el contenido de la
  *   página en texto dentro de #root (oculto con JS; React lo sustituye al cargar) y sirve /llms.txt.
  * Si algo falla (API dormida, sin red), se sirve la página tal cual: nunca bloquea la web.
@@ -22,7 +22,7 @@ export const config = {
   // Node.js: Vercel retira el runtime edge para el middleware
   runtime: 'nodejs',
   // Páginas (sin punto en la ruta) más robots y sitemap; los ficheros estáticos van directos
-  matcher: ['/((?!assets/|icons/|images/|ami-fincas/|uploads/)[^.]*)', '/robots.txt', '/sitemap.xml', '/llms.txt'],
+  matcher: ['/((?!assets/|icons/|images/|ami-fincas/|uploads/)[^.]*)', '/robots.txt', '/sitemap.xml', '/sitemap-ami.xml', '/llms.txt'],
 };
 
 const API = 'https://ubica-backend.onrender.com/api';
@@ -329,6 +329,15 @@ async function sitemap(): Promise<Response> {
       }
     } catch { /* sin inmuebles: solo las páginas fijas */ }
   }
+  return xmlResponse(urls);
+}
+
+/** Sitemap de amifincas.es: portada y páginas legales */
+function amiSitemap(): Response {
+  return xmlResponse(AMI_SITE_PATHS.map(path => `  <url><loc>${AMI_ORIGIN}${path}</loc></url>`));
+}
+
+function xmlResponse(urls: string[]): Response {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`;
   return new Response(xml, { headers: { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'public, max-age=3600' } });
 }
@@ -343,7 +352,10 @@ export default async function middleware(request: Request): Promise<Response> {
   // www.amifincas.es y la dirección antigua /ami-fincas: las redirecciones de vercel.json
   if (host === 'www.amifincas.es' || path === '/ami-fincas') return next();
   if (path === '/robots.txt') return robots(host);
-  if (path === '/sitemap.xml') return host === 'amifincas.es' ? next() : sitemap();
+  if (path === '/sitemap.xml' || path === '/sitemap-ami.xml') {
+    if (host === 'amifincas.es') return amiSitemap();
+    return path === '/sitemap.xml' ? sitemap() : next();
+  }
   if (path === '/llms.txt') return llms(host);
 
   const isAmi = host === 'amifincas.es';

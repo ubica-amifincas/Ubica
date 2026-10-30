@@ -85,6 +85,10 @@ ok('robots por dominio; vistas previas fuera de Google');
 const sm = await (await go('https://ubica.amifincas.es/sitemap.xml')).text();
 assert.ok(sm.includes('<loc>https://ubica.amifincas.es/inmueble/5-piso-luminoso-en-murcia</loc><lastmod>2026-10-20</lastmod>') && sm.includes('/aviso-legal'));
 ok('sitemap con páginas fijas e inmuebles');
+const sa = await (await go('https://amifincas.es/sitemap-ami.xml')).text();
+assert.ok(sa.includes('<loc>https://amifincas.es/</loc>') && sa.includes('<loc>https://amifincas.es/politica-cookies</loc>') && !sa.includes('ubica.'));
+assert.equal(await (await go('https://amifincas.es/sitemap.xml')).text(), sa);
+ok('sitemap de AMI con portada y páginas legales, también en /sitemap.xml');
 // Buscadores de IA: texto sin JavaScript, FAQ, robots y llms.txt
 const visible = (h) => (/<main data-static>([\s\S]*?)<\/main>/.exec(h)?.[1] || '').replace(/<[^>]+>/g, ' ');
 h = await html(await go('https://amifincas.es/'));
