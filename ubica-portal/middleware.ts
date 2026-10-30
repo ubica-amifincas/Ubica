@@ -291,6 +291,9 @@ async function llms(host: string): Promise<Response> {
       ...(listings === null ? ['Consulta los inmuebles disponibles en la web.']
         : listings.length ? listings.map(p => `- [${p.title}](${UBICA_ORIGIN}${propertyPath(p)}): ${propertyDescription(p)}`)
         : ['Todavía no hay inmuebles publicados.']), '',
+      '## Para agentes de IA (MCP)', '',
+      `Servidor MCP público, sin cuenta: ${UBICA_ORIGIN}/mcp (Streamable HTTP). Herramientas: buscar_inmuebles, ver_inmueble, zonas_con_oferta, `
+      + 'calcular_hipoteca, calcular_rentabilidad y solicitar_informacion (envía la consulta del cliente a AMI Fincas si la acepta; no reserva visitas).', '',
       '## Más', '', `- [Mapa del sitio](${UBICA_ORIGIN}/sitemap.xml)`, `- [Condiciones de uso](${UBICA_ORIGIN}/terms)`, '',
     ].join('\n');
   }
@@ -349,8 +352,8 @@ export default async function middleware(request: Request): Promise<Response> {
   const host = url.hostname;
   const path = normalizePath(url.pathname);
 
-  // www.amifincas.es y la dirección antigua /ami-fincas: las redirecciones de vercel.json
-  if (host === 'www.amifincas.es' || path === '/ami-fincas') return next();
+  // www.amifincas.es y la dirección antigua /ami-fincas: las redirecciones de vercel.json; /mcp: la reescritura al backend
+  if (host === 'www.amifincas.es' || path === '/ami-fincas' || path === '/mcp') return next();
   if (path === '/robots.txt') return robots(host);
   if (path === '/sitemap.xml' || path === '/sitemap-ami.xml') {
     if (host === 'amifincas.es') return amiSitemap();

@@ -75,6 +75,7 @@ assert.equal(title(h), 'Aviso legal | AMI Fincas'); assert.equal(canonical(h), '
 r = await go('https://amifincas.es/about?x=1');
 assert.equal(r.status, 301); assert.equal(r.headers.get('location'), 'https://ubica.amifincas.es/about?x=1'); ok('amifincas.es/about → 301 a Ubica');
 r = await go('https://www.amifincas.es/'); assert.equal(r.headers.get('x-middleware-next'), '1'); ok('www lo redirige vercel.json');
+r = await go('https://ubica.amifincas.es/mcp'); assert.equal(r.headers.get('x-middleware-next'), '1'); ok('/mcp pasa al backend (vercel.json)');
 
 // robots y sitemap
 assert.ok((await (await go('https://ubica.amifincas.es/robots.txt')).text()).includes('Sitemap: https://ubica.amifincas.es/sitemap.xml'));
@@ -105,5 +106,6 @@ assert.ok(/User-agent: GPTBot[\s\S]*Disallow: \/dashboard/.test(rb) && rb.includ
 const la = await (await go('https://amifincas.es/llms.txt')).text();
 const lu = await (await go('https://ubica.amifincas.es/llms.txt')).text();
 assert.ok(la.startsWith('# AMI Fincas') && la.includes('## Preguntas frecuentes') && lu.startsWith('# Ubica') && lu.includes('/inmueble/5-piso-luminoso-en-murcia'));
+assert.ok(lu.includes('https://ubica.amifincas.es/mcp') && !la.includes('/mcp'));
 ok('llms.txt en las dos webs');
 console.log('TODO OK');
