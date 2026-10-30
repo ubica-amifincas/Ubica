@@ -68,7 +68,8 @@ interface Listing {
 function toListing(p: any): Listing {
     const images = Array.isArray(p.images) ? p.images : [];
     return {
-        id: p.id, title: p.title || '', price: Number(p.price) || 0, status: p.status, type: p.type || '',
+        // "available" es el estado con el que el panel de admin crea los anuncios: es una vivienda en venta
+        id: p.id, title: p.title || '', price: Number(p.price) || 0, status: p.status === 'available' ? 'for-sale' : p.status, type: p.type || '',
         city: p.city || '', region: p.region || '',
         bedrooms: Number(p.bedrooms) || 0, bathrooms: Number(p.bathrooms) || 0, area: Number(p.area) || 0,
         image: images.find((src: unknown) => typeof src === 'string' && src.trim()) ?? null,
