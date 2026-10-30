@@ -14,6 +14,7 @@ import {
   PuzzlePieceIcon,
   WrenchScrewdriverIcon,
   MapPinIcon,
+  SunIcon,
   PhoneIcon,
 } from '@heroicons/react/24/outline';
 import { panelHome } from '../../utils/panelHome';
@@ -43,6 +44,7 @@ export default function Navbar() {
       return [
         { name: t('ami.nav.services', 'Servicios'), href: '/#servicios', icon: WrenchScrewdriverIcon, external: true },
         { name: t('ami.nav.offices', 'Sedes'), href: '/#contacto', icon: MapPinIcon, external: true },
+        { name: t('ami.nav.coast', 'Mar Menor'), href: '/san-pedro-del-pinatar', icon: SunIcon, external: false },
         { name: t('ami.nav.ubica', 'Portal inmobiliario Ubica'), href: ubicaHref('/'), icon: HomeIcon, external: true },
       ];
     }

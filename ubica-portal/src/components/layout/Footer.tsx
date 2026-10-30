@@ -95,6 +95,7 @@ export default function Footer() {
               <Column title={t('ami.footer.services', 'Servicios')}>
                 <LinkList items={[
                   { label: t('ami.footer.admin', 'Administración de comunidades'), href: '/#servicios', kind: 'same' },
+                  { label: t('ami.footer.coast', 'Administración en el Mar Menor'), href: '/san-pedro-del-pinatar', kind: 'internal' },
                   { label: t('ami.footer.switch', 'Cambiar de administrador'), href: '/#cambiar', kind: 'same' },
                   { label: t('ami.footer.quote', 'Pedir presupuesto'), href: '/#presupuesto', kind: 'same' },
                   { label: t('ami.footer.faq', 'Preguntas frecuentes'), href: '/#preguntas', kind: 'same' },

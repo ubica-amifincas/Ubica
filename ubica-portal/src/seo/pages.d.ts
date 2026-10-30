@@ -14,6 +14,7 @@ export const UBICA_TITLE: string;
 export const UBICA_DESCRIPTION: string;
 export const AMI_TITLE: string;
 export const AMI_DESCRIPTION: string;
+export const AMI_ONLY_PATHS: string[];
 export const AMI_SITE_PATHS: string[];
 export const UBICA_SITEMAP_PATHS: string[];
 export function normalizePath(path: string): string;

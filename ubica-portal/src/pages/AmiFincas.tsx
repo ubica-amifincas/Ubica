@@ -23,13 +23,13 @@ import { ubicaHref } from '../utils/site';
 const FOUNDED = 2014;
 
 // Datos de contacto (los mismos que la ficha de Google Maps de cada sede)
-const MAIN_PHONE = '676 62 69 33';
-const WHATSAPP_NUMBER = '34676626933';
-const EMAIL = 'info@amifincas.es';
+export const MAIN_PHONE = '676 62 69 33';
+export const WHATSAPP_NUMBER = '34676626933';
+export const EMAIL = 'info@amifincas.es';
 
-const tel = (phone: string) => `tel:+34${phone.replace(/\s+/g, '')}`;
+export const tel = (phone: string) => `tel:+34${phone.replace(/\s+/g, '')}`;
 
-function SectionHeading({ eyebrow, title, description, center = true }: { eyebrow?: string; title: string; description?: string; center?: boolean }) {
+export function SectionHeading({ eyebrow, title, description, center = true }: { eyebrow?: string; title: string; description?: string; center?: boolean }) {
   return (
     <div className={center ? 'mx-auto mb-12 max-w-3xl text-center' : 'mb-10'}>
       {eyebrow && <p className="mb-3 text-sm font-black uppercase tracking-[0.2em] text-[#23707f] dark:text-[#8fd0c3]">{eyebrow}</p>}
@@ -43,7 +43,7 @@ const fieldClass =
   'block w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-[#2D8A9D] focus:outline-none focus:ring-2 focus:ring-[#2D8A9D]/40 dark:border-white/10 dark:bg-slate-900 dark:text-white';
 
 /** Formulario de presupuesto: llega a info@amifincas.es como "[AMI Fincas] Presupuesto: …". */
-function QuoteForm() {
+export function QuoteForm() {
   const { t } = useLanguage();
   const id = useId();
   const [form, setForm] = useState({ name: '', phone: '', email: '', service: 'community', homes: '', town: '', message: '' });
@@ -190,6 +190,7 @@ export default function AmiFincas() {
       directions: 'https://maps.google.com/?cid=16413795408017082990',
       photo: '/ami-fincas/sede-san-pedro.webp',
       photoAlt: t('ami.offices.photo'),
+      page: { href: '/san-pedro-del-pinatar', label: t('ami.coast.more') },
     },
   ];
 
@@ -386,9 +387,16 @@ export default function AmiFincas() {
                         </a>
                       ))}
                     </div>
-                    <a href={office.directions} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold text-[#23707f] hover:underline dark:text-[#8fd0c3]">
-                      {t('ami.offices.directions')} <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
-                    </a>
+                    <div className="flex flex-wrap gap-x-6 gap-y-2">
+                      <a href={office.directions} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold text-[#23707f] hover:underline dark:text-[#8fd0c3]">
+                        {t('ami.offices.directions')} <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
+                      </a>
+                      {'page' in office && office.page && (
+                        <Link to={office.page.href} className="inline-flex items-center gap-1 font-semibold text-[#23707f] hover:underline dark:text-[#8fd0c3]">
+                          {office.page.label} <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 </article>
               ))}

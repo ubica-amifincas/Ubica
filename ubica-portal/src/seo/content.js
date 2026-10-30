@@ -38,7 +38,27 @@ export const AMI = {
     ['¿Qué incluye la administración?', 'Convocatoria y actas de juntas, contabilidad y cobro de recibos, gestión de incidencias y mantenimiento, relación con proveedores y cumplimiento de la normativa. Lo adaptamos a cada comunidad.'],
     ['¿También gestionáis seguros?', 'Sí. Tenemos correduría de seguros propia para comunidades, viviendas y alquileres.'],
     ['¿Gestionáis viviendas en alquiler?', 'Sí: buscamos y seleccionamos inquilinos y nos ocupamos de los cobros, las incidencias y el mantenimiento.'],
-  ],
+  ],  /** Página de la sede de San Pedro del Pinatar: la costa del Mar Menor y el sur de Alicante. */
+  coast: {
+    path: '/san-pedro-del-pinatar',
+    heading: 'Administrador de fincas en San Pedro del Pinatar y el Mar Menor',
+    intro: 'Desde nuestra oficina de San Pedro del Pinatar administramos comunidades de propietarios y urbanizaciones del Mar Menor y del sur de Alicante. Muchas son de segunda residencia, con propietarios que no viven aquí todo el año, y por eso atendemos en español y en inglés.',
+    towns: ['San Pedro del Pinatar', 'Lo Pagán', 'San Javier', 'Santiago de la Ribera', 'Pilar de la Horadada', 'Torrevieja'],
+    points: [
+      ['Urbanizaciones y zonas comunes', 'Piscinas, jardines, garajes y demás zonas comunes: coordinamos el mantenimiento con proveedores de confianza y seguimos cada incidencia hasta resolverla.'],
+      ['Propietarios que viven fuera', 'Si la vivienda es de segunda residencia, te enviamos las convocatorias, las actas y las cuentas, y puedes hablar con nosotros por correo, teléfono o WhatsApp estés donde estés.'],
+      ['En español y en inglés', 'Atendemos en los dos idiomas a los propietarios de aquí y a los que vienen de fuera.'],
+      ['Seguros y alquileres', 'Correduría de seguros propia para comunidades y viviendas, y gestión integral si alquilas tu vivienda.'],
+    ],
+    faqs: [
+      ['¿Qué zonas atendéis desde San Pedro del Pinatar?', 'San Pedro del Pinatar y Lo Pagán, San Javier y Santiago de la Ribera y, en Alicante, Pilar de la Horadada y Torrevieja. Para el resto de la Región de Murcia tenemos también oficina en Murcia.'],
+      ['¿Administráis urbanizaciones con piscina y zonas comunes?', 'Sí. En la costa, la mayoría de las comunidades que llevamos son urbanizaciones y edificios de segunda residencia, con sus zonas comunes, su mantenimiento y sus proveedores.'],
+      ['No vivo aquí todo el año, ¿cómo me entero de lo que pasa en mi comunidad?', 'Te enviamos las convocatorias, las actas y las cuentas, y puedes contactar con nosotros por correo, teléfono o WhatsApp. Atendemos en español y en inglés.'],
+      ['Do you speak English?', 'Yes. Many owners in the communities we manage on the coast live abroad, and we can help you in English by phone, email or WhatsApp.'],
+      ['¿Cuánto cuesta la administración de mi comunidad?', 'Depende del número de viviendas, de las zonas comunes y de los servicios que necesitéis. Te preparamos un presupuesto a medida, gratis y sin compromiso, en 24-48 horas laborables.'],
+    ],
+    english: "We manage residents' communities and urbanisations on the Mar Menor coast and in the south of Alicante from our office in San Pedro del Pinatar. Many owners live abroad: we can help you in English.",
+  },
 };
 
 export const UBICA = {

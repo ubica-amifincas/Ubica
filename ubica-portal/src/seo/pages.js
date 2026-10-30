@@ -13,8 +13,11 @@ export const UBICA_DESCRIPTION = 'Ubica - Menos búsquedas, más precisión. Por
 export const AMI_TITLE = 'AMI Fincas | Administración de fincas en Murcia y Alicante';
 export const AMI_DESCRIPTION = 'AMI Fincas: administración de comunidades de propietarios, gestión de alquileres y correduría de seguros en la Región de Murcia y Alicante. Presupuesto sin compromiso.';
 
+/** Páginas propias de AMI Fincas: en Ubica redirigen a amifincas.es. */
+export const AMI_ONLY_PATHS = ['/san-pedro-del-pinatar'];
+
 /** Páginas que se sirven también en la web de AMI Fincas (el resto vive en Ubica). */
-export const AMI_SITE_PATHS = ['/', '/aviso-legal', '/privacy', '/politica-cookies'];
+export const AMI_SITE_PATHS = ['/', ...AMI_ONLY_PATHS, '/aviso-legal', '/privacy', '/politica-cookies'];
 
 // Páginas públicas de Ubica (las que se indexan)
 /** @type {Record<string, [string, string?]>} */
@@ -69,6 +72,10 @@ const UBICA_PRIVATE_PREFIXES = ['/dashboard/', '/admin/', '/realtor/', '/investo
 /** @type {Record<string, [string, string?]>} */
 const AMI_PAGES = {
   '/': [AMI_TITLE, AMI_DESCRIPTION],
+  '/san-pedro-del-pinatar': [
+    'Administrador de fincas en San Pedro del Pinatar y el Mar Menor | AMI Fincas',
+    'Administración de comunidades y urbanizaciones en San Pedro del Pinatar, Lo Pagán, San Javier, Santiago de la Ribera, Pilar de la Horadada y Torrevieja. Oficina en San Pedro; atendemos en español e inglés.',
+  ],
   '/aviso-legal': ['Aviso legal | AMI Fincas', 'Aviso legal de AMI Fincas (MAYNSASER 2014, S.L.): titular, condiciones de uso y propiedad intelectual.'],
   '/privacy': ['Política de privacidad | AMI Fincas', 'Cómo tratamos tus datos personales en AMI Fincas (MAYNSASER 2014, S.L.).'],
   '/politica-cookies': ['Política de cookies | AMI Fincas', 'Qué cookies usa la web de AMI Fincas y cómo configurarlas.'],

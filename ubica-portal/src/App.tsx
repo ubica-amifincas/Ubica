@@ -21,13 +21,14 @@ import { CookieConsentProvider } from './contexts/CookieConsentContext';
 // Quick wins
 import ScrollToTop from './components/common/ScrollToTop';
 import useDocumentTitle from './hooks/useDocumentTitle';
-import { AMI_PATH, AMI_SITE_PATHS, isAmiSite, amiHref, ubicaHref } from './utils/site';
+import { AMI_ONLY_PATHS, AMI_PATH, AMI_SITE_PATHS, isAmiSite, amiHref, ubicaHref } from './utils/site';
 import { PWAInstallPrompt } from './components/common/PWAInstallPrompt';
 import { AIChatProvider } from './contexts/AIChatContext';
 import AIChatModal from './components/ai/AIChatModal';
 
 // Páginas públicas (carga diferida)
 const AmiFincas = lazy(() => import('./pages/AmiFincas'));
+const AmiSanPedro = lazy(() => import('./pages/AmiSanPedro'));
 const PropertyDetail = lazy(() => import('./pages/PropertyDetail'));
 const About = lazy(() => import('./pages/About'));
 const Contact = lazy(() => import('./pages/Contact'));
@@ -86,6 +87,8 @@ function AppRoutes() {
     else if (!AMI_SITE_PATHS.includes(path)) externalTarget = ubicaHref(`${path}${query}`);
   } else if (path === AMI_PATH) {
     externalTarget = amiHref(`/${location.hash}`);
+  } else if (AMI_ONLY_PATHS.includes(path)) {
+    externalTarget = amiHref(`${path}${query}${location.hash}`);
   }
 
   useEffect(() => {
@@ -108,6 +111,7 @@ function AppRoutes() {
             <Route path="/" element={<MainLayout />}>
               <Route index element={isAmiSite ? <AmiFincas /> : <Home />} />
               <Route path="ami-fincas" element={<AmiFincas />} />
+              <Route path="san-pedro-del-pinatar" element={<AmiSanPedro />} />
               {/* Dirección pública de la ficha; /property/:id es la antigua y se corrige al cargar */}
               <Route path="inmueble/:slug" element={<PropertyDetail />} />
               <Route path="property/:id" element={<PropertyDetail />} />

@@ -10,7 +10,7 @@ export const UBICA_ORIGIN = 'https://ubica.amifincas.es';
 export const AMI_PATH = '/ami-fincas';
 
 /** Páginas que se sirven también en la web de AMI Fincas (el resto vive en Ubica). */
-export { AMI_SITE_PATHS } from '../seo/pages';
+export { AMI_ONLY_PATHS, AMI_SITE_PATHS } from '../seo/pages';
 
 export type Site = 'ami' | 'ubica';
 

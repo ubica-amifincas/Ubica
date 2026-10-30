@@ -13,7 +13,7 @@
  * Si algo falla (API dormida, sin red), se sirve la página tal cual: nunca bloquea la web.
  */
 import {
-  AMI_ORIGIN, AMI_SITE_PATHS, UBICA_ORIGIN, UBICA_SITEMAP_PATHS,
+  AMI_ONLY_PATHS, AMI_ORIGIN, AMI_SITE_PATHS, UBICA_ORIGIN, UBICA_SITEMAP_PATHS,
   normalizePath, pageMeta, parsePropertyId, propertyPath,
 } from './src/seo/pages.js';
 import { AMI, LEGAL_SUMMARIES, UBICA } from './src/seo/content.js';
@@ -181,11 +181,30 @@ const UBICA_SITE_JSONLD = {
 
 // ─── Contenido en texto (sin JavaScript) ────────────────────────────────────
 
-const AMI_FAQ_JSONLD = {
+const faqJsonLd = (faqs: [string, string][]) => ({
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
-  mainEntity: AMI.faqs.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })),
-};
+  mainEntity: faqs.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })),
+});
+
+const AMI_FAQ_JSONLD = faqJsonLd(AMI.faqs);
+
+const COAST = AMI.coast;
+
+// La sede de San Pedro (declarada en ami.html) con las localidades que atiende y los idiomas
+const COAST_JSONLD = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'ProfessionalService',
+    '@id': `${AMI_ORIGIN}/#sanpedro`,
+    name: 'AMI Fincas San Pedro del Pinatar',
+    url: `${AMI_ORIGIN}${COAST.path}`,
+    description: COAST.intro,
+    areaServed: COAST.towns.map(name => ({ '@type': 'City', name })),
+    knowsLanguage: ['es', 'en'],
+  },
+  faqJsonLd(COAST.faqs),
+];
 
 const link = (href: string, text: string) => `<a href="${esc(href)}">${esc(text)}</a>`;
 const para = (text: string) => `<p>${esc(text)}</p>`;
@@ -197,6 +216,26 @@ function amiContact(): string {
     `Correo: ${link(`mailto:${AMI.email}`, AMI.email)}`,
     ...AMI.offices.map(o => `<strong>${esc(o.name)}</strong>: ${esc(o.address)} · Tel. ${esc(o.phone)} · ${esc(o.hours)} · ${link(o.map, 'Cómo llegar')}`),
   ])}`;
+}
+
+function coastBody(): string {
+  const office = AMI.offices[1];
+  return [
+    `<h1>${esc(COAST.heading)}</h1>`,
+    para(COAST.intro),
+    `<h2>Zonas que atendemos desde San Pedro del Pinatar</h2>`, list(COAST.towns.map(esc)),
+    `<h2>Comunidades y urbanizaciones de la costa</h2>`,
+    list(COAST.points.map(([t, d]) => `<strong>${esc(t)}</strong>: ${esc(d)}`)),
+    `<h2>Oficina de San Pedro del Pinatar</h2>`,
+    para(`${office.address}. Tel. ${office.phone}. ${office.hours}.`),
+    `<p>${link(office.map, 'Cómo llegar')} · ${link(`mailto:${AMI.email}`, AMI.email)} · Teléfono y WhatsApp: ${esc(AMI.phone)}</p>`,
+    `<h2>Cambiar de administrador</h2>`,
+    `<ol>${AMI.switchSteps.map(st => `<li>${esc(st)}</li>`).join('')}</ol>`,
+    `<h2>Preguntas frecuentes</h2>`,
+    COAST.faqs.map(([q, a]) => `<h3>${esc(q)}</h3>${para(a)}`).join(''),
+    `<h2 lang="en">In English</h2>`, `<p lang="en">${esc(COAST.english)}</p>`,
+    `<p>${link('/', 'AMI Fincas')}: administración de fincas en Murcia y Alicante.</p>`,
+  ].join('');
 }
 
 function amiHomeBody(): string {
@@ -252,6 +291,7 @@ function propertyBody(p: ApiProperty): string {
 /** Contenido de las páginas fijas (las fichas y la portada de Ubica, que dependen de la API, van aparte). */
 function pageBody(isAmi: boolean, path: string, title: string, description: string): string {
   if (isAmi && path === '/') return amiHomeBody();
+  if (isAmi && path === COAST.path) return coastBody();
   const name = title.replace(/ \| (Ubica|AMI Fincas)$/, '');
   if (LEGAL_SUMMARIES[path]) {
     return `<h1>${esc(name)}</h1>${para(`${LEGAL_SUMMARIES[path]} Titular: ${AMI.company}`)}<p>${link('/', 'Volver al inicio')}</p>`;
@@ -297,6 +337,9 @@ async function llms(host: string): Promise<Response> {
       `Empresa: ${AMI.company} Teléfono y WhatsApp: ${AMI.phone}. Correo: ${AMI.email}. Zonas: ${AMI.zones}.`, '',
       '## Servicios', '', ...AMI.services.map(([t, d]) => `- **${t}**: ${d}`), '',
       '## Sedes', '', ...AMI.offices.map(o => `- **${o.name}**: ${o.address}. Tel. ${o.phone}. ${o.hours}. [Mapa](${o.map})`), '',
+      `## ${COAST.heading}`, '', COAST.intro, '', `Zonas: ${COAST.towns.join(', ')}.`, '',
+      ...COAST.points.map(([t, d]) => `- **${t}**: ${d}`), '', `In English: ${COAST.english}`, '',
+      `Más información: [${COAST.heading}](${AMI_ORIGIN}${COAST.path})`, '',
       '## Preguntas frecuentes', '', ...AMI.faqs.flatMap(([q, a]) => [`### ${q}`, '', a, '']),
       '## Enlaces', '',
       `- [Web de AMI Fincas](${AMI_ORIGIN}/): servicios, sedes y presupuesto sin compromiso`,
@@ -392,6 +435,10 @@ export default async function middleware(request: Request): Promise<Response> {
   if (isAmi && !AMI_SITE_PATHS.includes(path)) {
     return Response.redirect(`${UBICA_ORIGIN}${url.pathname}${url.search}`, 301);
   }
+  // Y al revés: las páginas propias de AMI Fincas no existen en Ubica
+  if (host === 'ubica.amifincas.es' && AMI_ONLY_PATHS.includes(path)) {
+    return Response.redirect(`${AMI_ORIGIN}${path}${url.search}`, 301);
+  }
 
   const origin = isAmi ? AMI_ORIGIN : UBICA_ORIGIN;
   const meta = pageMeta(isAmi ? 'ami' : 'ubica', path);
@@ -401,7 +448,10 @@ export default async function middleware(request: Request): Promise<Response> {
     url: `${origin}${path}`,
     image: isAmi ? AMI_IMAGE : UBICA_IMAGE,
     index: meta.index && isProd,
-    jsonLd: !isAmi && path === '/' ? [UBICA_SITE_JSONLD] : isAmi && path === '/' ? [AMI_FAQ_JSONLD] : [],
+    jsonLd: !isAmi && path === '/' ? [UBICA_SITE_JSONLD]
+      : isAmi && path === '/' ? [AMI_FAQ_JSONLD]
+      : isAmi && path === COAST.path ? COAST_JSONLD
+      : [],
   };
   // Texto de la página solo en las públicas que existen (no en paneles ni 404)
   if (meta.index && meta.known && parsePropertyId(path) === null) {

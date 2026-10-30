@@ -122,6 +122,18 @@ const lu = await (await go('https://ubica.amifincas.es/llms.txt')).text();
 assert.ok(la.startsWith('# AMI Fincas') && la.includes('## Preguntas frecuentes') && lu.startsWith('# Ubica') && lu.includes('/inmueble/5-piso-luminoso-en-murcia'));
 assert.ok(lu.includes('https://ubica.amifincas.es/mcp') && !la.includes('/mcp'));
 ok('llms.txt en las dos webs');
+// Página de la sede de San Pedro del Pinatar (la costa)
+r = await go('https://amifincas.es/san-pedro-del-pinatar'); h = await html(r);
+assert.equal(r.status, 200);
+assert.equal(title(h), 'Administrador de fincas en San Pedro del Pinatar y el Mar Menor | AMI Fincas');
+assert.equal(canonical(h), 'https://amifincas.es/san-pedro-del-pinatar'); assert.ok(!meta(h, 'robots'));
+assert.ok(visible(h).includes('Pilar de la Horadada') && visible(h).includes('Calle Panamá, 2A') && visible(h).includes('Do you speak English?'));
+assert.ok(h.includes('"knowsLanguage":["es","en"]') && h.includes('"@type":"FAQPage"') && h.includes('"name":"Torrevieja"'));
+ok('San Pedro: título, canónica, zonas, inglés y datos estructurados');
+r = await go('https://ubica.amifincas.es/san-pedro-del-pinatar?x=1');
+assert.equal(r.status, 301); assert.equal(r.headers.get('location'), 'https://amifincas.es/san-pedro-del-pinatar?x=1'); ok('en Ubica redirige a amifincas.es');
+assert.ok(sa.includes('<loc>https://amifincas.es/san-pedro-del-pinatar</loc>') && la.includes('https://amifincas.es/san-pedro-del-pinatar'));
+assert.ok(!(await (await go('https://ubica.amifincas.es/sitemap.xml')).text()).includes('san-pedro')); ok('en el sitemap y el llms.txt de AMI, no en los de Ubica');
 console.log('TODO OK');
 // Títulos con "$`" o "$'": con un texto de reemplazo copiaban trozos del HTML en el <title>
 {
