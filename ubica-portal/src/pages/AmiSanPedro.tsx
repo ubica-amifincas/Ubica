@@ -14,6 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../hooks/useLanguage';
+import PalmPromenade from '../components/common/PalmPromenade';
 import { EMAIL, MAIN_PHONE, QuoteForm, SectionHeading, WHATSAPP_NUMBER, tel } from './AmiFincas';
 
 // Sede de San Pedro del Pinatar (los mismos datos que su ficha de Google Maps y la portada)
@@ -84,6 +85,9 @@ export default function AmiSanPedro() {
             </div>
           </div>
         </section>
+
+        {/* El paseo de palmeras de la costa */}
+        <PalmPromenade className="-mt-8 h-24 sm:h-32 md:-mt-14 md:h-40" />
 
         {/* Zonas */}
         <section aria-labelledby="zonas" className="border-y border-slate-200 bg-white py-12 dark:border-white/5 dark:bg-white/5">

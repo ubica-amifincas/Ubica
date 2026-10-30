@@ -311,6 +311,129 @@ function BasePlatform({ isDarkMode }: { isDarkMode: boolean }) {
     );
 }
 
+// ─── Mil palmeras ────────────────────────────────────────────────────────
+// Un paseo de palmeras bajas alrededor de la obra y un palmeral por la ciudad hasta el horizonte. Son dos mallas instanciadas (troncos y hojas):
+// dos llamadas de dibujo para todas, sin sombras, y el vaivén con el viento lo hace la tarjeta gráfica.
+
+const PALMS = 1000;
+const FRONDS = 7;
+const PROMENADE = 16;
+
+// Vaivén en el vértice: más cuanto más alto (la base no se mueve) y con fase propia por palmera
+const PALM_SWAY_VERTEX = `
+vec4 mvPosition = vec4( transformed, 1.0 );
+#ifdef USE_INSTANCING
+  mvPosition = instanceMatrix * mvPosition;
+#endif
+float swayH = max( mvPosition.y + 0.5, 0.0 );
+mvPosition.x += sin( uTime * 1.4 + aPhase ) * swayH * swayH * uSway;
+mvPosition.z += cos( uTime * 1.1 + aPhase ) * swayH * swayH * uSway * 0.6;
+mvPosition = modelViewMatrix * mvPosition;
+gl_Position = projectionMatrix * mvPosition;
+`;
+
+function PalmGrove() {
+    const trunkRef = useRef<THREE.InstancedMesh>(null);
+    const frondRef = useRef<THREE.InstancedMesh>(null);
+    const uniforms = useMemo(() => ({ uTime: { value: 0 }, uSway: { value: 0.003 } }), []);
+
+    const { trunkGeometry, frondGeometry, trunkMaterial, frondMaterial } = useMemo(() => {
+        const swaying = (material: THREE.Material) => {
+            material.onBeforeCompile = shader => {
+                Object.assign(shader.uniforms, uniforms);
+                shader.vertexShader = 'uniform float uTime;\nuniform float uSway;\nattribute float aPhase;\n'
+                    + shader.vertexShader.replace('#include <project_vertex>', PALM_SWAY_VERTEX);
+            };
+            return material;
+        };
+        // Tronco con la base en el suelo; la hoja, un cono aplastado que sale de la copa hacia fuera
+        const trunk = new THREE.CylinderGeometry(0.1, 0.18, 1, 6, 4).translate(0, 0.5, 0);
+        const frond = new THREE.ConeGeometry(0.32, 2.2, 4, 1).rotateZ(-Math.PI / 2).translate(1.1, 0, 0).scale(1, 0.14, 1);
+        return {
+            trunkGeometry: trunk,
+            frondGeometry: frond,
+            trunkMaterial: swaying(new THREE.MeshLambertMaterial({ color: '#8b6b4a' })),
+            frondMaterial: swaying(new THREE.MeshLambertMaterial({ color: '#ffffff', side: THREE.DoubleSide })),
+        };
+    }, [uniforms]);
+
+    useEffect(() => {
+        const trunks = trunkRef.current;
+        const fronds = frondRef.current;
+        if (!trunks || !fronds) return;
+        let seed = 11;
+        const rand = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+        const matrix = new THREE.Matrix4();
+        const euler = new THREE.Euler();
+        const tilt = new THREE.Quaternion();
+        const leaf = new THREE.Quaternion();
+        const base = new THREE.Vector3();
+        const crown = new THREE.Vector3();
+        const scale = new THREE.Vector3();
+        const color = new THREE.Color();
+        const trunkPhase = new Float32Array(PALMS);
+        const frondPhase = new Float32Array(PALMS * FRONDS);
+
+        for (let i = 0; i < PALMS; i++) {
+            let x: number, z: number, height: number, crownSize: number;
+            if (i < PROMENADE) {
+                // Paseo de palmeras bajas pegado a la obra: por debajo de la vista de la cámara
+                const a = (i / PROMENADE) * Math.PI * 2;
+                x = Math.cos(a) * 4.6; z = Math.sin(a) * 4.6; height = 1.9 + rand() * 0.5; crownSize = 0.5;
+            } else {
+                // Palmeral repartido por igual desde fuera de la obra hasta el horizonte (la niebla lo funde)
+                const radius = Math.sqrt(rand() * (70 * 70 - 20 * 20) + 20 * 20);
+                const a = rand() * Math.PI * 2;
+                x = Math.cos(a) * radius; z = Math.sin(a) * radius; height = 4 + rand() * 2.5; crownSize = 1;
+            }
+            const lean = rand() * 0.18;
+            const leanDir = rand() * Math.PI * 2;
+            tilt.setFromEuler(euler.set(Math.cos(leanDir) * lean, 0, Math.sin(leanDir) * lean, 'XYZ'));
+            base.set(x, -0.5, z);
+            const girth = 1 + rand() * 0.3;
+            matrix.compose(base, tilt, scale.set(girth, height, girth));
+            trunks.setMatrixAt(i, matrix);
+            const phase = rand() * Math.PI * 2;
+            trunkPhase[i] = phase;
+
+            crown.set(0, height, 0).applyQuaternion(tilt).add(base);
+            for (let f = 0; f < FRONDS; f++) {
+                const k = i * FRONDS + f;
+                const yaw = (f / FRONDS) * Math.PI * 2 + rand() * 0.4;
+                const droop = 0.25 + rand() * 0.35;
+                leaf.setFromEuler(euler.set(0, yaw, -droop, 'YZX'));
+                matrix.compose(crown, leaf, scale.set((0.8 + rand() * 0.4) * crownSize, crownSize, (0.9 + rand() * 0.3) * crownSize));
+                fronds.setMatrixAt(k, matrix);
+                fronds.setColorAt(k, color.setHSL(0.26 + rand() * 0.07, 0.5, 0.26 + rand() * 0.1));
+                frondPhase[k] = phase;
+            }
+        }
+        trunkGeometry.setAttribute('aPhase', new THREE.InstancedBufferAttribute(trunkPhase, 1));
+        frondGeometry.setAttribute('aPhase', new THREE.InstancedBufferAttribute(frondPhase, 1));
+        trunks.instanceMatrix.needsUpdate = true;
+        fronds.instanceMatrix.needsUpdate = true;
+        if (fronds.instanceColor) fronds.instanceColor.needsUpdate = true;
+    }, [trunkGeometry, frondGeometry]);
+
+    useEffect(() => () => {
+        trunkGeometry.dispose(); frondGeometry.dispose(); trunkMaterial.dispose(); frondMaterial.dispose();
+    }, [trunkGeometry, frondGeometry, trunkMaterial, frondMaterial]);
+
+    // Se mecen siempre un poco, y bastante más cuando sopla el viento del juego
+    useFrame((_, delta) => {
+        uniforms.uTime.value += Math.min(delta, 0.1);
+        const target = 0.003 + FX.wind.length() * 0.012;
+        uniforms.uSway.value += (target - uniforms.uSway.value) * Math.min(1, delta * 2);
+    });
+
+    return (
+        <>
+            <instancedMesh ref={trunkRef} args={[trunkGeometry, trunkMaterial, PALMS]} frustumCulled={false} />
+            <instancedMesh ref={frondRef} args={[frondGeometry, frondMaterial, PALMS * FRONDS]} frustumCulled={false} />
+        </>
+    );
+}
+
 /** Ciudad de fondo, siempre la misma: da escala a la torre. */
 function CityBackdrop({ isDarkMode }: { isDarkMode: boolean }) {
     const buildings = useMemo(() => {
@@ -1463,6 +1586,7 @@ function TowerGame({ user }: { user: User }) {
                 <fog attach="fog" args={[isDarkMode ? '#0f172a' : '#e2e8f0', 35, 90]} />
                 <LocalEnvironment isDarkMode={isDarkMode} />
                 <CityBackdrop isDarkMode={isDarkMode} />
+                <PalmGrove />
 
                 <Physics gravity={[0, -9.81, 0]} numSolverIterations={8}>
                     <BasePlatform isDarkMode={isDarkMode} />
