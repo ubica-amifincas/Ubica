@@ -13,9 +13,11 @@
 import {
   AMI_ORIGIN, AMI_SITE_PATHS, UBICA_ORIGIN, UBICA_SITEMAP_PATHS,
   normalizePath, pageMeta, parsePropertyId, propertyPath,
-} from './src/seo/pages.ts';
+} from './src/seo/pages.js';
 
 export const config = {
+  // Node.js: Vercel retira el runtime edge para el middleware
+  runtime: 'nodejs',
   // Páginas (sin punto en la ruta) más robots y sitemap; los ficheros estáticos van directos
   matcher: ['/((?!assets/|icons/|images/|ami-fincas/|uploads/)[^.]*)', '/robots.txt', '/sitemap.xml'],
 };

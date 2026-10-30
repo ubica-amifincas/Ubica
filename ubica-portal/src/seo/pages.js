@@ -2,22 +2,11 @@
  * Título, descripción e indexación de cada página, y direcciones de los inmuebles.
  * Lo usan la app (useDocumentTitle) y el middleware de Vercel, que lo pone en el HTML antes de enviarlo
  * para que Google, WhatsApp o Facebook vean los datos de cada página sin ejecutar JavaScript.
- * Sin imports: el middleware lo carga tal cual.
+ * JavaScript sin imports (los tipos están en pages.d.ts): el middleware de Vercel no empaqueta .ts importados.
  */
 
 export const UBICA_ORIGIN = 'https://ubica.amifincas.es';
 export const AMI_ORIGIN = 'https://amifincas.es';
-
-export type SiteKey = 'ubica' | 'ami';
-
-export interface PageMeta {
-  title: string;
-  description: string;
-  /** false: la página existe pero no debe salir en buscadores (paneles, acceso, formularios) */
-  index: boolean;
-  /** false: la dirección no corresponde a ninguna página (404) */
-  known: boolean;
-}
 
 export const UBICA_TITLE = 'Ubica - Portal inmobiliario';
 export const UBICA_DESCRIPTION = 'Ubica - Menos búsquedas, más precisión. Portal inmobiliario de AMI Fincas: pisos, casas y locales en venta y alquiler en toda España, especialmente en la Región de Murcia.';
@@ -27,10 +16,9 @@ export const AMI_DESCRIPTION = 'AMI Fincas: administración de comunidades de pr
 /** Páginas que se sirven también en la web de AMI Fincas (el resto vive en Ubica). */
 export const AMI_SITE_PATHS = ['/', '/aviso-legal', '/privacy', '/politica-cookies'];
 
-type Entry = [title: string, description?: string];
-
 // Páginas públicas de Ubica (las que se indexan)
-const UBICA_PUBLIC: Record<string, Entry> = {
+/** @type {Record<string, [string, string?]>} */
+const UBICA_PUBLIC = {
   '/': [UBICA_TITLE, UBICA_DESCRIPTION],
   '/about': ['Sobre nosotros | Ubica', 'Ubica es el portal inmobiliario de AMI Fincas, con base en la Región de Murcia y para toda España: quiénes somos y cómo te ayudamos a comprar, vender o alquilar.'],
   '/contact': ['Contacto | Ubica', 'Contacta con Ubica y AMI Fincas: teléfono, WhatsApp, correo y oficinas en Murcia y San Pedro del Pinatar.'],
@@ -43,7 +31,8 @@ const UBICA_PUBLIC: Record<string, Entry> = {
 };
 
 // Páginas de uso privado o de un solo paso: existen, pero no se indexan
-const UBICA_PRIVATE: Record<string, string> = {
+/** @type {Record<string, string>} */
+const UBICA_PRIVATE = {
   '/login': 'Iniciar sesión | Ubica',
   '/register': 'Registrarse | Ubica',
   '/verify': 'Verificar correo | Ubica',
@@ -76,17 +65,18 @@ const UBICA_PRIVATE: Record<string, string> = {
 // Cualquier subruta de un panel es privada aunque no esté en la lista (redirecciones internas)
 const UBICA_PRIVATE_PREFIXES = ['/dashboard/', '/admin/', '/realtor/', '/investor/'];
 
-const AMI_PAGES: Record<string, Entry> = {
+/** @type {Record<string, [string, string?]>} */
+const AMI_PAGES = {
   '/': [AMI_TITLE, AMI_DESCRIPTION],
   '/aviso-legal': ['Aviso legal | AMI Fincas', 'Aviso legal de AMI Fincas (MAYNSASER 2014, S.L.): titular, condiciones de uso y propiedad intelectual.'],
   '/privacy': ['Política de privacidad | AMI Fincas', 'Cómo tratamos tus datos personales en AMI Fincas (MAYNSASER 2014, S.L.).'],
   '/politica-cookies': ['Política de cookies | AMI Fincas', 'Qué cookies usa la web de AMI Fincas y cómo configurarlas.'],
 };
 
-export const normalizePath = (path: string) => (path.length > 1 ? path.replace(/\/+$/, '') : path) || '/';
+export const normalizePath = (path) => (path.length > 1 ? path.replace(/\/+$/, '') : path) || '/';
 
 /** Datos de una página fija. Las fichas de inmueble los ponen aparte (propertyMeta). */
-export function pageMeta(site: SiteKey, rawPath: string): PageMeta {
+export function pageMeta(site, rawPath) {
   const path = normalizePath(rawPath);
   if (site === 'ami') {
     const entry = AMI_PAGES[path];
@@ -112,7 +102,7 @@ export const UBICA_SITEMAP_PATHS = Object.keys(UBICA_PUBLIC);
 // ─── Direcciones de los inmuebles ───────────────────────────────────────────
 
 /** "Ático con vistas en Murcia" → "atico-con-vistas-en-murcia" */
-export function slugify(text: string): string {
+export function slugify(text) {
   return text
     .normalize('NFD').replace(/[̀-ͯ]/g, '')
     .toLowerCase()
@@ -123,13 +113,13 @@ export function slugify(text: string): string {
 }
 
 /** Dirección pública de un inmueble: /inmueble/123-piso-con-terraza-en-murcia */
-export function propertyPath(p: { id: number; title?: string | null }): string {
+export function propertyPath(p) {
   const slug = slugify(p.title || '');
   return `/inmueble/${p.id}${slug ? `-${slug}` : ''}`;
 }
 
 /** Id del inmueble en /inmueble/123-… o en la dirección antigua /property/123; null si no es una ficha. */
-export function parsePropertyId(path: string): number | null {
+export function parsePropertyId(path) {
   const match = /^\/(?:inmueble|property)\/(\d+)(?:-[a-z0-9-]*)?\/?$/.exec(path);
   return match ? Number(match[1]) : null;
 }
