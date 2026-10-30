@@ -18,7 +18,13 @@ globalThis.fetch = async (url) => {
   if (apiMode === 'hang') return new Promise((_, reject) => setTimeout(() => reject(new Error('abort')), 2600));
   if (url.endsWith('/properties/5')) return Response.json(property);
   if (/\/properties\/\d+$/.test(url)) return new Response('{}', { status: 404 });
-  if (url.includes('/properties?')) return Response.json([property]);
+  if (url.includes('/properties?')) {
+    // Como la API real: como mucho 100 por petición
+    const q = new URL(url).searchParams, limit = Number(q.get('limit') || 20), skip = Number(q.get('skip') || 0);
+    if (limit > 100) return Response.json({ detail: 'limit <= 100' }, { status: 422 });
+    const all = apiMode === 'many' ? Array.from({ length: 150 }, (_, i) => ({ ...property, id: 1000 + i })) : [property];
+    return Response.json(all.slice(skip, skip + limit));
+  }
   throw new Error('fetch inesperado ' + url);
 };
 
@@ -86,6 +92,10 @@ ok('robots por dominio; vistas previas fuera de Google');
 const sm = await (await go('https://ubica.amifincas.es/sitemap.xml')).text();
 assert.ok(sm.includes('<loc>https://ubica.amifincas.es/inmueble/5-piso-luminoso-en-murcia</loc><lastmod>2026-10-20</lastmod>') && sm.includes('/aviso-legal'));
 ok('sitemap con páginas fijas e inmuebles');
+apiMode = 'many';
+const many = await (await go('https://ubica.amifincas.es/sitemap.xml')).text();
+assert.ok(many.includes('/inmueble/1000-') && many.includes('/inmueble/1149-')); apiMode = 'ok';
+ok('sitemap con más de 100 inmuebles (por páginas)');
 const sa = await (await go('https://amifincas.es/sitemap-ami.xml')).text();
 assert.ok(sa.includes('<loc>https://amifincas.es/</loc>') && sa.includes('<loc>https://amifincas.es/politica-cookies</loc>') && !sa.includes('ubica.'));
 assert.equal(await (await go('https://amifincas.es/sitemap.xml')).text(), sa);

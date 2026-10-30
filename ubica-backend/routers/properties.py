@@ -15,7 +15,8 @@ router = APIRouter()
 
 @router.get("/api/properties", response_model=List[PublicProperty])
 async def get_properties(skip: int = Query(0, ge=0), limit: int = Query(20, ge=1, le=100), session: Session = Depends(get_session)):
-    statement = select(models.Property).where(models.Property.status.in_(PUBLIC_STATUSES)).offset(skip).limit(limit)
+    # Orden fijo para que las páginas (skip) no se solapen ni se salten anuncios
+    statement = select(models.Property).where(models.Property.status.in_(PUBLIC_STATUSES)).order_by(models.Property.id).offset(skip).limit(limit)
     results = session.exec(statement).all()
     return results
 

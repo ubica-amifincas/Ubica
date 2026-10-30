@@ -322,15 +322,22 @@ function robots(host: string): Response {
 
 async function sitemap(): Promise<Response> {
   const urls = UBICA_SITEMAP_PATHS.map(path => `  <url><loc>${UBICA_ORIGIN}${path === '/' ? '/' : path}</loc></url>`);
-  const res = await fetchWithTimeout(`${API}/properties?limit=1000`, 4000);
-  if (res?.ok) {
+  // La API da como mucho 100 por petición: se piden por páginas hasta que se acaban o se agota el tiempo
+  const page = 100;
+  const deadline = Date.now() + 4000;
+  for (let skip = 0; skip < 5000; skip += page) {
+    const left = deadline - Date.now();
+    const res = left > 0 ? await fetchWithTimeout(`${API}/properties?limit=${page}&skip=${skip}`, left) : null;
+    let list: ApiProperty[];
     try {
-      const list = (await res.json()) as ApiProperty[];
-      for (const p of list) {
-        const lastmod = (p.updated_at || p.created_at || '').slice(0, 10);
-        urls.push(`  <url><loc>${UBICA_ORIGIN}${esc(propertyPath(p))}</loc>${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}</url>`);
-      }
-    } catch { /* sin inmuebles: solo las páginas fijas */ }
+      if (!res?.ok) break;
+      list = (await res.json()) as ApiProperty[];
+    } catch { break; /* lo que haya llegado hasta aquí, más las páginas fijas */ }
+    for (const p of list) {
+      const lastmod = (p.updated_at || p.created_at || '').slice(0, 10);
+      urls.push(`  <url><loc>${UBICA_ORIGIN}${esc(propertyPath(p))}</loc>${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}</url>`);
+    }
+    if (list.length < page) break;
   }
   return xmlResponse(urls);
 }
