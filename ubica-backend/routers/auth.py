@@ -10,14 +10,14 @@ from sqlmodel import Session, func, select
 import models
 from google.auth.exceptions import GoogleAuthError
 
-from config import ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM, FRONTEND_URL, GOOGLE_CLIENT_ID, SECRET_KEY
+from config import ACCESS_TOKEN_EXPIRE_MINUTES, ADMIN_NOTIFY_EMAIL, ALGORITHM, FRONTEND_URL, GOOGLE_CLIENT_ID, SECRET_KEY
 from database import get_session
 from schemas import (ChangeEmailRequest, ChangePasswordRequest, ForgotPasswordRequest, GoogleLoginRequest, GoogleSignupRequired, LoginRequest,
                      ResetPasswordRequest, Token, User, UserCreate)
 from security import (burn_password_check, create_access_token, create_session_token, decode_purpose_token, get_current_user,
                       hash_password, is_legacy_hash, password_fingerprint, verify_password)
 from services.google_auth import verify_google_credential
-from services.email import email_change_email_html, password_reset_email_html, send_email_resend, verification_email_html
+from services.email import email_change_email_html, new_realtor_email_html, password_reset_email_html, send_email_resend, verification_email_html
 from services.ratelimit import RateLimiter, get_client_ip
 from services.users import apply_staff_role, staff_role
 
@@ -32,6 +32,21 @@ login_ip_limiter = RateLimiter(30, 15 * 60)
 # Correos de recuperación: por encima del límite no se envían, pero la respuesta es la misma
 forgot_email_limiter = RateLimiter(3, 60 * 60)
 forgot_ip_limiter = RateLimiter(10, 60 * 60)
+# Cada alta y cada cambio de email manda un correo desde nuestro dominio: sin tope serían una vía de spam
+register_ip_limiter = RateLimiter(5, 60 * 60)
+register_daily_limiter = RateLimiter(200, 24 * 60 * 60)
+change_email_limiter = RateLimiter(5, 60 * 60)
+
+def notify_new_realtor(background_tasks: BackgroundTasks, user: models.User) -> None:
+    """Avisa a quien valida las altas (ADMIN_NOTIFY_EMAIL) de que hay una inmobiliaria esperando aprobación."""
+    if user.role != "realtor" or user.is_approved:
+        return
+    html = new_realtor_email_html(user.full_name, user.email, user.company, f"{FRONTEND_URL}/admin/usuarios")
+    background_tasks.add_task(send_email_resend, ADMIN_NOTIFY_EMAIL, f"[Ubica] Nueva inmobiliaria pendiente de aprobar - {user.full_name or user.email}", html)
+
+
+STAFF_SELF_SIGNUP = ("Las cuentas del equipo de AMI Fincas no se dan de alta con contraseña: "
+                     "entra con Google con ese correo o pide al administrador que te cree la cuenta.")
 
 TOO_MANY_ATTEMPTS = "Demasiados intentos fallidos. Espera unos minutos e inténtalo de nuevo."
 INVALID_LINK = "El enlace no es válido o ha caducado"
@@ -51,7 +66,7 @@ def _token_response(user: models.User) -> Token:
     )
 
 @router.post("/api/auth/login", response_model=Token)
-async def login(login_data: LoginRequest, request: Request, session: Session = Depends(get_session)):
+def login(login_data: LoginRequest, request: Request, session: Session = Depends(get_session)):
     email_key = login_data.email.strip().lower()
     client_ip = get_client_ip(request)
     if login_email_limiter.is_limited(email_key) or login_ip_limiter.is_limited(client_ip):
@@ -102,7 +117,7 @@ async def google_config():
     return {"client_id": GOOGLE_CLIENT_ID or None}
 
 @router.post("/api/auth/google", response_model=Union[Token, GoogleSignupRequired])
-def google_login(data: GoogleLoginRequest, request: Request, session: Session = Depends(get_session)):
+def google_login(data: GoogleLoginRequest, request: Request, background_tasks: BackgroundTasks, session: Session = Depends(get_session)):
     """Entrar (o registrarse) con Google. Síncrona: verificar el token descarga las claves de Google."""
     if not GOOGLE_CLIENT_ID:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El acceso con Google no está disponible")
@@ -121,6 +136,7 @@ def google_login(data: GoogleLoginRequest, request: Request, session: Session = 
     email = info["email"].strip().lower()
     full_name = (info.get("name") or email.split("@")[0])[:120]
     user = _find_user_by_email(session, email)
+    created = user is None
     if user is None:
         # Cuenta nueva: no se crea nada hasta que elige el tipo de cuenta y acepta las condiciones.
         # La web vuelve a enviar el mismo token de Google (válido una hora) con esos datos.
@@ -154,10 +170,12 @@ def google_login(data: GoogleLoginRequest, request: Request, session: Session = 
     session.commit()
     session.refresh(user)
     login_email_limiter.reset(email)
+    if created:
+        notify_new_realtor(background_tasks, user)
     return _token_response(user)
 
 @router.post("/api/auth/register", response_model=Dict[str, Any])
-async def register(user_data: UserCreate, background_tasks: BackgroundTasks, session: Session = Depends(get_session)):
+def register(user_data: UserCreate, request: Request, background_tasks: BackgroundTasks, session: Session = Depends(get_session)):
     # El registro público no puede crear administradores: solo los roles que ofrece el formulario
     if user_data.role not in SELF_SERVICE_ROLES:
         raise HTTPException(status_code=400, detail="Rol no permitido")
@@ -165,6 +183,12 @@ async def register(user_data: UserCreate, background_tasks: BackgroundTasks, ses
         raise HTTPException(status_code=400, detail=TERMS_REQUIRED)
     if len(user_data.password) < 8:
         raise HTTPException(status_code=400, detail="La contraseña debe tener al menos 8 caracteres")
+    # Si alguien registrara antes que el equipo uno de sus correos con su propia contraseña, al pulsar el
+    # enlace de verificación la cuenta (con rol de admin o inmobiliaria) quedaría en sus manos
+    if staff_role(user_data.email):
+        raise HTTPException(status_code=403, detail=STAFF_SELF_SIGNUP)
+    if not register_ip_limiter.check_and_hit(get_client_ip(request)) or not register_daily_limiter.check_and_hit("all"):
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Demasiados registros seguidos. Inténtalo más tarde.")
 
     existing_user = _find_user_by_email(session, user_data.email)
     if existing_user:
@@ -174,14 +198,13 @@ async def register(user_data: UserCreate, background_tasks: BackgroundTasks, ses
         email=user_data.email,
         hashed_password=hash_password(user_data.password),
         full_name=user_data.full_name,
-        # Cuentas del equipo: su rol queda fijado, pero no pueden entrar hasta verificar el correo
-        role=staff_role(user_data.email) or user_data.role,
+        role=user_data.role,
         company=user_data.company,
         phone=user_data.phone,
         is_active=True,
         is_verified=False,
         # Una inmobiliaria que se da de alta sola publica con revisión hasta que el admin la aprueba
-        is_approved=user_data.role != "realtor" or staff_role(user_data.email) is not None,
+        is_approved=user_data.role != "realtor",
         terms_accepted_at=datetime.now(),
     )
     session.add(new_user)
@@ -207,7 +230,7 @@ async def register(user_data: UserCreate, background_tasks: BackgroundTasks, ses
     }
 
 @router.get("/api/auth/verify-email")
-async def verify_email(token: str, session: Session = Depends(get_session)):
+def verify_email(token: str, background_tasks: BackgroundTasks, session: Session = Depends(get_session)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id_str: str = payload.get("sub")
@@ -226,11 +249,16 @@ async def verify_email(token: str, session: Session = Depends(get_session)):
         
     if user.is_verified:
         return {"message": "El correo ya había sido verificado"}
+    # Una cuenta del equipo sin verificar la pudo crear otro con su contraseña: se activa entrando con Google
+    if staff_role(user.email):
+        raise HTTPException(status_code=403, detail=STAFF_SELF_SIGNUP)
         
     user.is_verified = True
     user.updated_at = datetime.now()
     session.add(user)
     session.commit()
+    # Con el correo ya comprobado, el equipo recibe el aviso para aprobarla
+    notify_new_realtor(background_tasks, user)
     
     return {"message": "Correo verificado exitosamente. Ya puedes iniciar sesión."}
 
@@ -239,7 +267,7 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
     return current_user
 
 @router.post("/api/auth/change-password", response_model=Token)
-async def change_password(data: ChangePasswordRequest, current_user: models.User = Depends(get_current_user), session: Session = Depends(get_session)):
+def change_password(data: ChangePasswordRequest, current_user: models.User = Depends(get_current_user), session: Session = Depends(get_session)):
     if not verify_password(data.current_password, current_user.hashed_password):
         raise HTTPException(status_code=400, detail="La contraseña actual no es correcta")
     current_user.hashed_password = hash_password(data.new_password)
@@ -251,7 +279,7 @@ async def change_password(data: ChangePasswordRequest, current_user: models.User
     return _token_response(current_user)
 
 @router.post("/api/auth/forgot-password")
-async def forgot_password(data: ForgotPasswordRequest, request: Request, background_tasks: BackgroundTasks, session: Session = Depends(get_session)):
+def forgot_password(data: ForgotPasswordRequest, request: Request, background_tasks: BackgroundTasks, session: Session = Depends(get_session)):
     # Misma respuesta exista o no la cuenta, para no revelar qué emails están registrados
     email_key = data.email.strip().lower()
     if not forgot_ip_limiter.check_and_hit(get_client_ip(request)) or not forgot_email_limiter.check_and_hit(email_key):
@@ -266,7 +294,7 @@ async def forgot_password(data: ForgotPasswordRequest, request: Request, backgro
     return {"message": FORGOT_MESSAGE}
 
 @router.post("/api/auth/reset-password")
-async def reset_password(data: ResetPasswordRequest, session: Session = Depends(get_session)):
+def reset_password(data: ResetPasswordRequest, session: Session = Depends(get_session)):
     # El token lleva la huella de la contraseña: al cambiarla el enlace deja de valer (un solo uso)
     found = decode_purpose_token(data.token, "reset", session)
     if found is None:
@@ -281,9 +309,14 @@ async def reset_password(data: ResetPasswordRequest, session: Session = Depends(
     return {"message": "Contraseña actualizada. Ya puedes iniciar sesión con tu nueva contraseña."}
 
 @router.post("/api/auth/change-email")
-async def change_email(data: ChangeEmailRequest, background_tasks: BackgroundTasks, current_user: models.User = Depends(get_current_user), session: Session = Depends(get_session)):
+def change_email(data: ChangeEmailRequest, background_tasks: BackgroundTasks, current_user: models.User = Depends(get_current_user), session: Session = Depends(get_session)):
+    if not change_email_limiter.check_and_hit(str(current_user.id)):
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Demasiados cambios seguidos. Inténtalo más tarde.")
     if not verify_password(data.password, current_user.hashed_password):
         raise HTTPException(status_code=400, detail="La contraseña no es correcta")
+    # Pasar a un correo del equipo daría su rol al entrar: esas cuentas las crea el administrador
+    if staff_role(data.new_email):
+        raise HTTPException(status_code=403, detail=STAFF_SELF_SIGNUP)
     if _find_user_by_email(session, data.new_email) is not None:
         raise HTTPException(status_code=400, detail="El email ya está registrado")
     token = create_access_token(
@@ -296,12 +329,14 @@ async def change_email(data: ChangeEmailRequest, background_tasks: BackgroundTas
     return {"message": f"Te hemos enviado un enlace de confirmación a {data.new_email}"}
 
 @router.get("/api/auth/confirm-email-change")
-async def confirm_email_change(token: str, session: Session = Depends(get_session)):
+def confirm_email_change(token: str, session: Session = Depends(get_session)):
     found = decode_purpose_token(token, "email_change", session)
     if found is None or not isinstance(found[1].get("new_email"), str):
         raise HTTPException(status_code=400, detail=INVALID_LINK)
     user, payload = found
     new_email = payload["new_email"]
+    if staff_role(new_email):
+        raise HTTPException(status_code=403, detail=STAFF_SELF_SIGNUP)
     if user.email == new_email:
         return {"message": "Tu email ya estaba actualizado"}
     # Un enlace antiguo no sirve si el email ha cambiado después de pedirlo

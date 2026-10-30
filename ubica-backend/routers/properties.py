@@ -33,10 +33,12 @@ async def get_property(property_id: int, current_user: Optional[models.User] = D
 
 @router.get("/api/stats/market")
 async def get_market_stats(session: Session = Depends(get_session)):
-    total_properties = session.exec(select(func.count(models.Property.id))).one()
-    avg_price = session.exec(select(func.avg(models.Property.price))).one() or 0
-    cities = session.exec(select(models.Property.city).distinct()).all()
-    types = session.exec(select(models.Property.type).distinct()).all()
+    # Solo anuncios publicados: los borradores y pendientes no deben dejar rastro en una página pública
+    public = models.Property.status.in_(PUBLIC_STATUSES)
+    total_properties = session.exec(select(func.count(models.Property.id)).where(public)).one()
+    avg_price = session.exec(select(func.avg(models.Property.price)).where(public)).one() or 0
+    cities = session.exec(select(models.Property.city).where(public).distinct()).all()
+    types = session.exec(select(models.Property.type).where(public).distinct()).all()
     
     return {
         "total_properties": total_properties,

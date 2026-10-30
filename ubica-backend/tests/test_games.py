@@ -59,7 +59,11 @@ def test_inmuebles_publicados_en_venta_con_foto(client, day, make_property):
     rondas = client.get("/api/games/tasador/daily").json()["rondas"]
     pisos = [x for x in rondas if x["tipo"] == "inmueble"]
     assert len(pisos) == 3 and len(rondas) == 5
-    assert {x["inmueble_id"] for x in pisos} <= {p.id for p in ok}
+    # El id (y con él el precio) no se da hasta contestar
+    assert all("inmueble_id" not in x for x in rondas)
+    idx = next(i for i, x in enumerate(rondas) if x["tipo"] == "inmueble")
+    url = client.post("/api/games/tasador/daily/guess", json={"day": "2026-11-03", "round": idx, "guess": 100000}).json()["url"]
+    assert int(url.split("/")[-1]) in {p.id for p in ok}
     assert all(x["fotos"][0] == "/uploads/a.jpg" and x["unidad"] == "€" for x in pisos)
 
 

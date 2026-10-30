@@ -28,7 +28,7 @@ globalThis.fetch = async (url) => {
   throw new Error('fetch inesperado ' + url);
 };
 
-const { default: middleware } = await import(new URL('../middleware.ts', import.meta.url).href);
+const { default: middleware, resetApiCache } = await import(new URL('../middleware.ts', import.meta.url).href);
 const go = (u) => middleware(new Request(u));
 const html = async (r) => r.text();
 const title = (h) => /<title>([^<]*)<\/title>/.exec(h)[1];
@@ -62,10 +62,10 @@ ok('ficha: título, descripción, foto, sin medidas fijas, RealEstateListing esc
 r = await go('https://ubica.amifincas.es/inmueble/999'); h = await html(r);
 assert.equal(r.status, 404); assert.equal(meta(h, 'robots'), 'noindex, follow'); ok('inmueble inexistente → 404 noindex');
 
-apiMode = 'hang'; const t0 = Date.now();
+apiMode = 'hang'; resetApiCache(); const t0 = Date.now();
 r = await go('https://ubica.amifincas.es/inmueble/5-piso-luminoso-en-murcia'); h = await html(r);
 assert.equal(r.status, 200); assert.ok(Date.now() - t0 < 3500); assert.equal(title(h), 'Inmueble | Ubica');
-ok(`API dormida: se sirve la ficha igualmente en ${Date.now() - t0} ms`); apiMode = 'ok';
+ok(`API dormida: se sirve la ficha igualmente en ${Date.now() - t0} ms`); apiMode = 'ok'; resetApiCache();
 
 r = await go('https://ubica.amifincas.es/no-existe'); h = await html(r);
 assert.equal(r.status, 404); assert.equal(meta(h, 'robots'), 'noindex, follow'); ok('ruta desconocida → 404');
@@ -95,9 +95,9 @@ ok('robots por dominio; vistas previas fuera de Google');
 const sm = await (await go('https://ubica.amifincas.es/sitemap.xml')).text();
 assert.ok(sm.includes('<loc>https://ubica.amifincas.es/inmueble/5-piso-luminoso-en-murcia</loc><lastmod>2026-10-20</lastmod>') && sm.includes('/aviso-legal'));
 ok('sitemap con páginas fijas e inmuebles');
-apiMode = 'many';
+apiMode = 'many'; resetApiCache();
 const many = await (await go('https://ubica.amifincas.es/sitemap.xml')).text();
-assert.ok(many.includes('/inmueble/1000-') && many.includes('/inmueble/1149-')); apiMode = 'ok';
+assert.ok(many.includes('/inmueble/1000-') && many.includes('/inmueble/1149-')); apiMode = 'ok'; resetApiCache();
 ok('sitemap con más de 100 inmuebles (por páginas)');
 const sa = await (await go('https://amifincas.es/sitemap-ami.xml')).text();
 assert.ok(sa.includes('<loc>https://amifincas.es/</loc>') && sa.includes('<loc>https://amifincas.es/politica-cookies</loc>') && !sa.includes('ubica.'));
@@ -123,3 +123,11 @@ assert.ok(la.startsWith('# AMI Fincas') && la.includes('## Preguntas frecuentes'
 assert.ok(lu.includes('https://ubica.amifincas.es/mcp') && !la.includes('/mcp'));
 ok('llms.txt en las dos webs');
 console.log('TODO OK');
+// Títulos con "$`" o "$'": con un texto de reemplazo copiaban trozos del HTML en el <title>
+{
+  const { applyHead } = await import(new URL('../middleware.ts', import.meta.url).href);
+  const shell = '<html><head><title>x</title><link rel="canonical" href="/" /></head><body><div id="root"></div></body></html>';
+  const out = applyHead(shell, { title: "Piso $` raro $'", description: "d $&", url: 'https://ubica.amifincas.es/x', image: 'https://i', index: true, jsonLd: [{ a: "$'" }] });
+  assert.ok(out.includes("<title>Piso $` raro $'</title>") && out.includes('content="d $&amp;"') && out.split('<html>').length === 2);
+  console.log('  ✓ títulos con $ no rompen el HTML');
+}

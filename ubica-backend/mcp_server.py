@@ -269,8 +269,11 @@ async def solicitar_informacion(
             p = session.get(models.Property, inmueble_id)
         if not p or p.status not in PUBLIC_STATUSES:
             return {"enviada": False, "error": f"No hay ningún inmueble publicado con id {inmueble_id}."}
+    # Se reserva el hueco antes de enviar: comprobar y anotar después dejaba pasar ráfagas de llamadas a la vez
     ip = client_ip(ctx)
-    if contact_limiter.is_limited(ip) or contact_daily_limiter.is_limited("all"):
+    if not contact_limiter.check_and_hit(ip):
+        return {"enviada": False, "error": f"Se han enviado demasiadas consultas. Que el cliente llame al {PHONE}."}
+    if not contact_daily_limiter.check_and_hit("all"):
         return {"enviada": False, "error": f"Se han enviado demasiadas consultas. Que el cliente llame al {PHONE}."}
     lines = [mensaje.strip()]
     if p:
@@ -283,8 +286,6 @@ async def solicitar_informacion(
     result = await send_email_resend(CONTACT_EMAIL, subject, html, reply_to=email)
     if result.get("status") == "error":
         return {"enviada": False, "error": f"No se pudo enviar ahora mismo. Que el cliente llame al {PHONE}."}
-    contact_limiter.hit(ip)
-    contact_daily_limiter.hit("all")
     return {
         "enviada": True,
         "visita_reservada": False,

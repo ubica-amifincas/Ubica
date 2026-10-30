@@ -1,4 +1,5 @@
 """Utilidades de propiedades: conversión desde el formato del frontend, visibilidad por rol y borrado."""
+import math
 from datetime import datetime
 from typing import Optional
 
@@ -37,6 +38,10 @@ def normalize_property_type(value) -> str:
 
 
 FLOAT_FIELDS = ("price", "area", "purchasePrice", "totalCost", "monthlyCost", "monthlyIncome")
+# Topes razonables: un NaN, un infinito o una cifra absurda rompían las estadísticas públicas (avg -> NaN -> 500)
+MAX_NUMBER = {"area": 10_000_000, "bedrooms": 1000, "bathrooms": 1000, "yearBuilt": 3000}
+MAX_MONEY = 10_000_000_000
+MAX_IMAGES, MAX_FEATURES = 50, 60
 INT_FIELDS = ("bedrooms", "bathrooms", "yearBuilt")
 
 
@@ -51,13 +56,31 @@ def validate_property_payload(prop_data: dict) -> dict:
         try:
             if isinstance(value, bool):
                 raise ValueError
-            data[field] = int(float(value)) if field in INT_FIELDS else float(value)
-        except (TypeError, ValueError):
-            raise HTTPException(status_code=422, detail=f"El campo '{field}' debe ser un número")
+            number = float(value)
+            if not math.isfinite(number) or not 0 <= number <= MAX_NUMBER.get(field, MAX_MONEY):
+                raise ValueError
+            data[field] = int(number) if field in INT_FIELDS else number
+        except (TypeError, ValueError, OverflowError):
+            raise HTTPException(status_code=422, detail=f"El campo '{field}' debe ser un número válido")
     if "coordinates" in data and not isinstance(data["coordinates"], dict):
         raise HTTPException(status_code=422, detail="'coordinates' debe ser un objeto con lat y lng")
-    if "images" in data and not isinstance(data["images"], list):
-        raise HTTPException(status_code=422, detail="'images' debe ser una lista")
+    if "coordinates" in data and (data["coordinates"].get("lat") is not None or data["coordinates"].get("lng") is not None):
+        try:
+            lat, lng = float(data["coordinates"].get("lat")), float(data["coordinates"].get("lng"))
+            if not (math.isfinite(lat) and math.isfinite(lng) and -90 <= lat <= 90 and -180 <= lng <= 180):
+                raise ValueError
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=422, detail="Coordenadas no válidas")
+    # Listas de texto: un objeto dentro de "images" rompía el listado público para todos los visitantes
+    if "images" in data:
+        images = data["images"]
+        if not isinstance(images, list) or len(images) > MAX_IMAGES or not all(
+                isinstance(i, str) and len(i) <= 1000 and (i.startswith(("https://", "http://", "/"))) for i in images):
+            raise HTTPException(status_code=422, detail=f"'images' debe ser una lista de hasta {MAX_IMAGES} direcciones de imagen")
+    if "features" in data:
+        features = data["features"]
+        if not isinstance(features, list) or len(features) > MAX_FEATURES or not all(isinstance(f, str) and len(f) <= 120 for f in features):
+            raise HTTPException(status_code=422, detail=f"'features' debe ser una lista de hasta {MAX_FEATURES} textos")
     if "status" in data and data["status"] not in PROPERTY_STATUSES:
         raise HTTPException(status_code=422, detail=f"Estado no válido: {data['status']}")
     if data.get("type"):

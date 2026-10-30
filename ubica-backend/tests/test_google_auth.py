@@ -8,6 +8,8 @@ from google.auth.exceptions import TransportError
 import models
 import routers.auth as auth_router
 import services.google_auth as google_auth
+from conftest import auth
+from security import create_access_token
 
 PASSWORD = "secret123"
 _FAST_HASH = bcrypt.hashpw(PASSWORD.encode(), bcrypt.gensalt(4)).decode()
@@ -187,15 +189,64 @@ def test_staff_roles_never_lower_a_role(client, db, google):
     assert google_login(client).json()["user"]["role"] == "admin"
 
 
-def test_staff_register_waits_for_email_verification(client, db):
+def test_staff_emails_cannot_self_register_or_be_taken_over(client, db, make_user):
+    # Alta con contraseña de un correo del equipo: alguien podría hacerlo antes que el equipo y quedarse la cuenta
     r = client.post("/api/auth/register", json={"email": "sistemas@amifincas.es", "password": "pw123456", "accept_terms": True})
-    u = db.get(models.User, r.json()["user_id"])
-    assert (u.role, u.is_verified) == ("admin", False)
-    # Sin verificar el correo no entra, aunque el rol ya esté fijado
-    assert login(client, "sistemas@amifincas.es", "pw123456").status_code == 403
+    assert r.status_code == 403 and "Google" in r.json()["detail"]
+    assert db.query(models.User).filter(models.User.email == "sistemas@amifincas.es").count() == 0
+    # Una cuenta así creada antes del arreglo no se activa con el enlace del correo
+    planted = make_user(email="info@amifincas.es", verified=False)
+    token = create_access_token({"sub": str(planted.id), "type": "verify"})
+    assert client.get("/api/auth/verify-email", params={"token": token}).status_code == 403
+    db.refresh(planted)
+    assert planted.is_verified is False
+    # Ni cambiando el correo de otra cuenta a uno del equipo
+    other = make_user(email="otro@example.com")
+    r = client.post("/api/auth/change-email", json={"new_email": "tatiana@amifincas.es", "password": "secret123"}, headers=auth(other))
+    assert r.status_code == 403
 
 
 def test_staff_roles_setting_is_parsed_safely():
     from config import _parse_staff_roles
     assert _parse_staff_roles(" A@x.es:admin , b@x.es:realtor, c@x.es:superuser, :admin, d@x.es") == {
         "a@x.es": "admin", "b@x.es": "realtor"}
+
+
+# --- Aviso de inmobiliarias pendientes de aprobar ---
+
+@pytest.fixture
+def sent(monkeypatch):
+    calls = []
+
+    async def fake_send(email_to, subject, html, reply_to=None):
+        calls.append((email_to, subject))
+        return {"status": "skipped"}
+
+    monkeypatch.setattr(auth_router, "send_email_resend", fake_send)
+    return calls
+
+
+def test_google_realtor_signup_notifies_the_validator(client, google, sent):
+    google(google_info(email="inmo@gmail.com", name="Inmo Sur"))
+    r = google_login(client, role="realtor", accept_terms=True)
+    assert r.status_code == 200
+    assert sent == [("sistemas@amifincas.es", "[Ubica] Nueva inmobiliaria pendiente de aprobar - Inmo Sur")]
+    # Entrar de nuevo no repite el aviso, y un usuario normal no lo genera
+    google_login(client)
+    google(google_info(email="normal@gmail.com"))
+    google_login(client, role="user", accept_terms=True)
+    assert len(sent) == 1
+
+
+def test_realtor_verifying_email_notifies_the_validator(client, db, sent):
+    realtor = make_user(db, email="inmo2@gmail.com", role="realtor", is_verified=False, is_approved=False, full_name="Inmo Dos")
+    token = create_access_token({"sub": str(realtor.id), "type": "verify"})
+    assert client.get("/api/auth/verify-email", params={"token": token}).status_code == 200
+    assert sent == [("sistemas@amifincas.es", "[Ubica] Nueva inmobiliaria pendiente de aprobar - Inmo Dos")]
+
+
+def test_admin_dashboard_counts_pending_realtors(client, db):
+    make_user(db, email="p1@gmail.com", role="realtor", is_approved=False)
+    make_user(db, email="p2@gmail.com", role="realtor", is_approved=True)
+    admin = make_user(db, email="jefe@example.com", role="admin")
+    assert client.get("/api/admin/dashboard", headers=auth(admin)).json()["pending_realtors"] == 1

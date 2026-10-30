@@ -469,6 +469,9 @@ export default function AIChatModal() {
                                                 {message.role === 'assistant' ? (
                                                     <div className="prose prose-sm dark:prose-invert max-w-none text-left prose-p:leading-relaxed prose-pre:bg-gray-200 dark:prose-pre:bg-gray-700 prose-pre:p-2 prose-pre:rounded">
                                                         <ReactMarkdown
+                                                            // Una imagen se carga sola: el backend ya las quita, y aquí tampoco se pintan
+                                                            disallowedElements={['img']}
+                                                            unwrapDisallowed
                                                             components={{
                                                                 p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
                                                                 ul: ({ children }) => <ul className="list-disc ml-4 mb-2">{children}</ul>,
@@ -477,7 +480,8 @@ export default function AIChatModal() {
                                                                 strong: ({ children }) => <strong className="font-bold text-emerald-600 dark:text-emerald-400">{children}</strong>,
                                                                 code: ({ children }) => <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded font-mono text-xs">{children}</code>,
                                                                 a: ({ node, ...props }) => {
-                                                                    const isInternal = props.href?.startsWith('/');
+                                                                    // "//dominio" no es una ruta interna sino otra web
+                                                                    const isInternal = !!props.href && props.href.startsWith('/') && !props.href.startsWith('//') && !props.href.startsWith('/\\');
                                                                     if (isInternal) {
                                                                         return <Link to={props.href!} onClick={minimizeChat} className="inline-flex items-center gap-1 px-3 py-1 mt-1 bg-emerald-600 text-white rounded-md font-semibold text-xs hover:bg-emerald-700 transition-all shadow-md active:scale-95">{props.children} →</Link>;
                                                                     }

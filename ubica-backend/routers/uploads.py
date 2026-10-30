@@ -9,6 +9,12 @@ from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 import models
 from config import BACKEND_PUBLIC_URL, MAX_UPLOAD_BYTES, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_STORAGE_BUCKET, SUPABASE_URL, UPLOAD_DIR
 from security import get_current_user
+from services.ratelimit import RateLimiter
+
+# Todo se lee a memoria antes de guardar: sin tope por petición, unas pocas peticiones grandes tumbarían el servidor
+MAX_FILES_PER_REQUEST = 20
+# Y por usuario, para que nadie llene el almacenamiento (la subida rápida manda las fotos de una en una)
+upload_user_limiter = RateLimiter(300, 60 * 60)
 
 router = APIRouter()
 
@@ -33,6 +39,11 @@ async def _store_in_supabase(name: str, data: bytes, content_type: str) -> str:
 
 @router.post("/api/upload-images")
 async def upload_images(request: Request, files: List[UploadFile] = File(...), current_user: models.User = Depends(get_current_user)):
+    if len(files) > MAX_FILES_PER_REQUEST:
+        raise HTTPException(status_code=413, detail=f"Como mucho {MAX_FILES_PER_REQUEST} imágenes por envío")
+    for _ in files:
+        if not upload_user_limiter.check_and_hit(str(current_user.id)):
+            raise HTTPException(status_code=429, detail="Has subido muchas imágenes en poco tiempo. Inténtalo más tarde.")
     # Se valida todo antes de guardar nada
     pending = []
     for file in files:

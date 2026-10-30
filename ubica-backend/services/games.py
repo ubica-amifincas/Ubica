@@ -115,8 +115,8 @@ def daily_rounds(session: Session, day: date) -> list[dict]:
 
 
 def public_round(r: dict) -> dict:
-    """La ronda sin la respuesta."""
-    return {k: v for k, v in r.items() if k != "real"}
+    """La ronda sin la respuesta ni el id del anuncio (con él se podía consultar el precio antes de contestar)."""
+    return {k: v for k, v in r.items() if k not in ("real", "inmueble_id")}
 
 
 def reveal(r: dict, guess: float) -> dict:

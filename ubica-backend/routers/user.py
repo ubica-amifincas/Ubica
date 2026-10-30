@@ -9,6 +9,7 @@ import models
 from database import get_session
 from schemas import PublicProperty
 from security import get_current_user
+from services.ratelimit import RateLimiter
 from services.properties import (apply_property_payload, apply_review, can_view_property, delete_property,
                                  property_from_payload)
 
@@ -158,9 +159,14 @@ def _message_content(msg_data: dict) -> str:
         raise HTTPException(status_code=400, detail="El mensaje es demasiado largo")
     return content
 
+message_limiter = RateLimiter(30, 60 * 60)
+
+
 @router.post("/api/user/messages")
 async def add_message(msg_data: dict, current_user: models.User = Depends(get_current_user), session: Session = Depends(get_session)):
     content = _message_content(msg_data)
+    if not message_limiter.check_and_hit(str(current_user.id)):
+        raise HTTPException(status_code=429, detail="Has enviado muchos mensajes seguidos. Inténtalo más tarde.")
     prop = None
     prop_id = msg_data.get("property_id")
     if prop_id:
@@ -174,12 +180,14 @@ async def add_message(msg_data: dict, current_user: models.User = Depends(get_cu
         raise HTTPException(status_code=400, detail="Destinatario no válido")
 
     # Solo se puede escribir al propietario o agente del anuncio, o a quien ya nos escribió antes
-    allowed = current_user.role == "admin" or (prop is not None and receiver_id in (prop.owner_id, prop.realtor_id))
-    if not allowed:
-        allowed = session.exec(select(models.Message).where(
-            models.Message.user_id == receiver_id,
-            models.Message.receiver_id == current_user.id,
-        )).first() is not None
+    replying = session.exec(select(models.Message).where(
+        models.Message.user_id == receiver_id,
+        models.Message.receiver_id == current_user.id,
+    )).first() is not None
+    # Una conversación nueva solo sobre un anuncio que se puede ver: si no, revelaría el dueño de un borrador
+    if prop is not None and not replying and not can_view_property(prop, current_user):
+        raise HTTPException(status_code=404, detail="Propiedad no encontrada")
+    allowed = current_user.role == "admin" or replying or (prop is not None and receiver_id in (prop.owner_id, prop.realtor_id))
     if not allowed:
         raise HTTPException(status_code=403, detail="No puedes enviar mensajes a este usuario")
 

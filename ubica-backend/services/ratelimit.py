@@ -7,6 +7,8 @@ from typing import Deque, Dict, List
 from fastapi import Request
 
 _limiters: List["RateLimiter"] = []
+# Tope de claves por limitador: sin él, peticiones con miles de IP distintas agotaban la memoria
+MAX_KEYS = 50_000
 
 
 class RateLimiter:
@@ -17,6 +19,7 @@ class RateLimiter:
         self.window = window_seconds
         self._hits: Dict[str, Deque[float]] = {}
         self._lock = threading.Lock()
+        self._last_sweep = 0.0
         _limiters.append(self)
 
     def _recent(self, key: str, now: float) -> Deque[float]:
@@ -37,16 +40,27 @@ class RateLimiter:
         with self._lock:
             now = time.monotonic()
             # Limpieza ocasional de claves caducadas para no crecer sin límite
-            if len(self._hits) > 10_000:
-                for k in list(self._hits):
-                    self._recent(k, now)
+            self._sweep(now)
             self._recent(key, now)
             self._hits.setdefault(key, deque()).append(now)
+
+    def _sweep(self, now: float) -> None:
+        """Quita las claves caducadas; si aun así hay demasiadas (muchas IP distintas), descarta las más antiguas."""
+        # Como mucho cada 30 s: recorrer miles de claves en cada petición saldría caro
+        if len(self._hits) <= 10_000 or now - self._last_sweep < 30:
+            return
+        self._last_sweep = now
+        for k in list(self._hits):
+            self._recent(k, now)
+        if len(self._hits) > MAX_KEYS:
+            for k in sorted(self._hits, key=lambda k: self._hits[k][-1])[:len(self._hits) - MAX_KEYS]:
+                del self._hits[k]
 
     def check_and_hit(self, key: str) -> bool:
         """Registra el evento si queda cupo; devuelve False si ya se había alcanzado el límite."""
         with self._lock:
             now = time.monotonic()
+            self._sweep(now)
             hits = self._recent(key, now)
             if len(hits) >= self.max_hits:
                 return False

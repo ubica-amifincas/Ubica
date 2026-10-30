@@ -9,10 +9,12 @@ from services.ratelimit import RateLimiter, get_client_ip
 router = APIRouter()
 
 contact_limiter = RateLimiter(5, 60 * 60)
+# Y en total, para que nadie pueda llenar el buzón ni gastar la cuota de envíos
+contact_daily_limiter = RateLimiter(100, 24 * 60 * 60)
 
 @router.post("/api/contact")
 async def send_contact(data: ContactRequest, request: Request):
-    if not contact_limiter.check_and_hit(get_client_ip(request)):
+    if not contact_limiter.check_and_hit(get_client_ip(request)) or not contact_daily_limiter.check_and_hit("all"):
         raise HTTPException(status_code=429, detail="Has enviado demasiados mensajes. Inténtalo de nuevo más tarde.")
     origin = "AMI Fincas" if data.source == "ami" else "Contacto Ubica"
     subject = f"[{origin}] {data.subject or 'Nuevo mensaje'} - {data.name}"

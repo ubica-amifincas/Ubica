@@ -116,6 +116,7 @@ export interface AdminDashboardStats {
   market_growth?: number;
   users_by_role?: Partial<Record<UserRole, number>>;
   properties_by_status?: Record<string, number>;
+  pending_realtors?: number;
   [key: string]: unknown;
 }
 
@@ -553,6 +554,12 @@ class ApiService {
   // File Upload
   async uploadImages(files: File[]): Promise<string[]> {
     if (!files || files.length === 0) return [];
+    // El servidor acepta como mucho 20 por envío: de 10 en 10
+    if (files.length > 10) {
+      const urls: string[] = [];
+      for (let i = 0; i < files.length; i += 10) urls.push(...await this.uploadImages(files.slice(i, i + 10)));
+      return urls;
+    }
 
     const formData = new FormData();
     files.forEach(file => {

@@ -68,7 +68,8 @@ async function fetchWithTimeout(url: string, ms: number, headers: Record<string,
 function setMeta(html: string, attr: 'name' | 'property', key: string, value: string): string {
   const tag = `<meta ${attr}="${key}" content="${esc(value)}" />`;
   const re = new RegExp(`<meta ${attr}="${key}" content="[^"]*"\\s*/?>`);
-  return re.test(html) ? html.replace(re, tag) : html.replace('</head>', `  ${tag}\n</head>`);
+  // Siempre con función: en un texto de reemplazo, "$`" o "$'" del título de un anuncio copiarían trozos del HTML
+  return re.test(html) ? html.replace(re, () => tag) : html.replace('</head>', () => `  ${tag}\n</head>`);
 }
 
 interface HeadData {
@@ -78,8 +79,8 @@ interface HeadData {
 }
 
 export function applyHead(html: string, head: HeadData): string {
-  let out = html.replace(/<title>[^<]*<\/title>/, `<title>${esc(head.title)}</title>`);
-  out = out.replace(/<link rel="canonical" href="[^"]*"\s*\/?>/, `<link rel="canonical" href="${esc(head.url)}" />`);
+  let out = html.replace(/<title>[^<]*<\/title>/, () => `<title>${esc(head.title)}</title>`);
+  out = out.replace(/<link rel="canonical" href="[^"]*"\s*\/?>/, () => `<link rel="canonical" href="${esc(head.url)}" />`);
   out = setMeta(out, 'name', 'description', head.description);
   out = setMeta(out, 'property', 'og:title', head.title);
   out = setMeta(out, 'property', 'og:description', head.description);
@@ -97,11 +98,11 @@ export function applyHead(html: string, head: HeadData): string {
   if (!head.index) out = setMeta(out, 'name', 'robots', 'noindex, follow');
   if (head.body) {
     // Visible sin JavaScript; con JavaScript lo oculta el CSS de la cabecera y React lo sustituye al cargar
-    out = out.replace('<div id="root"></div>', `<div id="root"><main data-static>${head.body}</main></div>`);
+    out = out.replace('<div id="root"></div>', () => `<div id="root"><main data-static>${head.body}</main></div>`);
   }
   for (const data of head.jsonLd) {
     // "<" escapado: un texto con "</script>" no puede cerrar la etiqueta
-    out = out.replace('</head>', `  <script type="application/ld+json">${JSON.stringify(data).replace(/</g, '\\u003c')}</script>\n</head>`);
+    out = out.replace('</head>', () => `  <script type="application/ld+json">${JSON.stringify(data).replace(/</g, '\\u003c')}</script>\n</head>`);
   }
   return out;
 }
@@ -260,13 +261,34 @@ function pageBody(isAmi: boolean, path: string, title: string, description: stri
   return `<h1>${esc(name)}</h1>${para(description)}<p>${link('/', 'Ir a la portada')}</p>`;
 }
 
-async function latestListings(limit: number, ms: number): Promise<ApiProperty[] | null> {
-  const res = await fetchWithTimeout(`${API}/properties?limit=${limit}`, ms);
+// Lo que se pide al backend para la portada, llms.txt y el sitemap se guarda unos minutos en memoria:
+// sin esto, pedir /sitemap.xml en bucle lanzaba decenas de peticiones al backend cada vez
+const CACHE_MS = 5 * 60_000;
+const apiCache = new Map<string, { at: number; data: unknown }>();
+/** Para las pruebas: cada escenario empieza sin caché. */
+export const resetApiCache = () => apiCache.clear();
+
+async function cachedJson<T>(path: string, ms: number): Promise<T | null> {
+  const hit = apiCache.get(path);
+  if (hit && Date.now() - hit.at < CACHE_MS) return hit.data as T;
+  const res = await fetchWithTimeout(`${API}${path}`, ms);
   if (!res?.ok) return null;
-  try { return (await res.json()) as ApiProperty[]; } catch { return null; }
+  try {
+    const data = (await res.json()) as T;
+    if (apiCache.size > 200) apiCache.clear();
+    apiCache.set(path, { at: Date.now(), data });
+    return data;
+  } catch { return null; }
+}
+
+async function latestListings(limit: number, ms: number): Promise<ApiProperty[] | null> {
+  return cachedJson<ApiProperty[]>(`/properties?limit=${limit}`, ms);
 }
 
 /** /llms.txt: resumen en Markdown para asistentes de IA (https://llmstxt.org). */
+/** Texto de un anuncio dentro de Markdown: sin corchetes, paréntesis ni saltos que fabriquen enlaces o instrucciones */
+const mdText = (s: string) => s.replace(/[[\]()<>\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
+
 async function llms(host: string): Promise<Response> {
   let md: string;
   if (host === 'amifincas.es') {
@@ -289,7 +311,7 @@ async function llms(host: string): Promise<Response> {
       '## Secciones', '', ...UBICA.sections.map(([href, t, d]) => `- [${t}](${UBICA_ORIGIN}${href}): ${d}`), '',
       '## Inmuebles publicados', '',
       ...(listings === null ? ['Consulta los inmuebles disponibles en la web.']
-        : listings.length ? listings.map(p => `- [${p.title}](${UBICA_ORIGIN}${propertyPath(p)}): ${propertyDescription(p)}`)
+        : listings.length ? listings.map(p => `- [${mdText(p.title)}](${UBICA_ORIGIN}${propertyPath(p)}): ${mdText(propertyDescription(p))}`)
         : ['Todavía no hay inmuebles publicados.']), '',
       '## Para agentes de IA (MCP)', '',
       `Servidor MCP público, sin cuenta: ${UBICA_ORIGIN}/mcp (Streamable HTTP). Herramientas: buscar_inmuebles, ver_inmueble, zonas_con_oferta, `
@@ -327,12 +349,8 @@ async function sitemap(): Promise<Response> {
   const deadline = Date.now() + 4000;
   for (let skip = 0; skip < 5000; skip += page) {
     const left = deadline - Date.now();
-    const res = left > 0 ? await fetchWithTimeout(`${API}/properties?limit=${page}&skip=${skip}`, left) : null;
-    let list: ApiProperty[];
-    try {
-      if (!res?.ok) break;
-      list = (await res.json()) as ApiProperty[];
-    } catch { break; /* lo que haya llegado hasta aquí, más las páginas fijas */ }
+    const list = left > 0 ? await cachedJson<ApiProperty[]>(`/properties?limit=${page}&skip=${skip}`, left) : null;
+    if (!Array.isArray(list)) break; // lo que haya llegado hasta aquí, más las páginas fijas
     for (const p of list) {
       const lastmod = (p.updated_at || p.created_at || '').slice(0, 10);
       urls.push(`  <url><loc>${UBICA_ORIGIN}${esc(propertyPath(p))}</loc>${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}</url>`);

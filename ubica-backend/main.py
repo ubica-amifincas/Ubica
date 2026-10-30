@@ -42,8 +42,10 @@ app = FastAPI(
     title="Ubica Enterprise API",
     description="API completa para plataforma inmobiliaria enterprise",
     version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc"
+    # En producción no se publica el mapa de la API (no es secreto, pero tampoco hace falta dárselo hecho a nadie)
+    docs_url=None if os.getenv("RENDER") else "/docs",
+    redoc_url=None if os.getenv("RENDER") else "/redoc",
+    openapi_url=None if os.getenv("RENDER") else "/openapi.json"
 )
 
 # Configurar CORS

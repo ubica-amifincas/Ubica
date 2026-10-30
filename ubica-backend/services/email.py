@@ -137,6 +137,15 @@ def email_change_email_html(full_name: Optional[str], new_email: str, confirm_li
                          "Si no has solicitado este cambio, ignora este mensaje: tu cuenta no se modificará.",
                          "Confirmar nuevo email", confirm_link)
 
+def new_realtor_email_html(full_name: Optional[str], email: str, company: Optional[str], admin_link: str) -> str:
+    who = escape(full_name or email) + (f" ({escape(company)})" if company else "")
+    body = _paragraphs(
+        f"<strong>{who}</strong> se ha dado de alta en Ubica como inmobiliaria con el correo <strong>{escape(email)}</strong>.",
+        "Mientras no la apruebes, sus anuncios esperan tu revisión antes de publicarse. Si la conoces, apruébala desde Usuarios.",
+    )
+    return _email_layout("Nueva inmobiliaria pendiente de aprobar", "Hola,", body,
+                         "Aviso automático de Ubica para el equipo de AMI Fincas.", "Revisar en el panel", admin_link)
+
 def contact_email_html(name: str, email: str, phone: Optional[str], subject: Optional[str], message: str) -> str:
     rows: List[str] = []
     for label, value in (("Nombre", name), ("Email", email), ("Teléfono", phone), ("Asunto", subject)):

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuthenticatedFetch } from '../../contexts/AuthContext';
 import UserManagement from '../../components/admin/UserManagement';
 import PropertyManagement from '../../components/admin/PropertyManagement';
@@ -103,6 +104,16 @@ const AdminOverview: React.FC = () => {
   return (
     <PageStack>
       {header}
+
+      {(stats.pending_realtors ?? 0) > 0 && (
+        <Link to="/admin/usuarios" className="flex items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200 dark:hover:bg-amber-900/30">
+          <span>
+            <strong>{stats.pending_realtors} {stats.pending_realtors === 1 ? 'inmobiliaria pendiente' : 'inmobiliarias pendientes'} de aprobar.</strong>{' '}
+            Sus anuncios esperan revisión hasta que las apruebes.
+          </span>
+          <span className="shrink-0 font-semibold">Revisar →</span>
+        </Link>
+      )}
 
       <StatGrid cols={4}>
         <StatCard label="Total usuarios" value={formatNumber(stats.total_users)} icon={UsersIcon} />

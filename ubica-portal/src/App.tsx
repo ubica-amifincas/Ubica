@@ -74,7 +74,8 @@ function AppRoutes() {
 
   // Cada página se sirve en la web de su producto. En la de AMI Fincas (amifincas.es) solo están su
   // portada, en la raíz, y los textos legales; lo demás es Ubica. /ami-fincas es la dirección antigua.
-  const path = location.pathname.replace(/\/+$/, '') || '/';
+  // Una sola barra inicial: "//otra-web" se tomaría como dirección de otro dominio al redirigir
+  const path = ('/' + location.pathname.replace(/^\/+/, '')).replace(/\/+$/, '') || '/';
   const params = new URLSearchParams(location.search);
   params.delete('site');
   const query = params.toString() ? `?${params}` : '';

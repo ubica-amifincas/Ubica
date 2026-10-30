@@ -62,6 +62,21 @@ def build_system_instruction(user_name: str, user_role: str) -> str:
 # Rutas internas de la web a las que el chat puede enlazar
 INTERNAL_LINK_PREFIXES = ("/?", "/contact", "/register", "/login", "/dashboard", "/entretenimiento", "/about")
 MARKDOWN_LINK = re.compile(r"\[([^\]]+)\]\((/[^)\s]*)\)")
+# Lo que viene de fuera (descripciones de anuncios, mensajes) puede pedirle al modelo que muestre enlaces o imágenes
+# externos: una imagen se carga sola y podría llevarse datos en su URL; un enlace, servir de phishing
+MARKDOWN_IMAGE = re.compile(r"!\[([^\]]*)\]\([^)]*\)")
+EXTERNAL_LINK = re.compile(r"\[([^\]]+)\]\(\s*<?([a-zA-Z][a-zA-Z0-9+.-]*:[^)\s>]*|//[^)\s>]*)>?(?:\s+\"[^\"]*\")?\s*\)")
+AUTOLINK = re.compile(r"<((?:[a-zA-Z][a-zA-Z0-9+.-]*:|//)[^>\s]+)>")
+LINK_DEFINITION = re.compile(r"^\s{0,3}\[[^\]]+\]:\s*\S+.*$", re.MULTILINE)
+ALLOWED_EXTERNAL = re.compile(r"https://(?:(?:www\.)?amifincas\.es|ubica\.amifincas\.es|(?:www\.)?google\.(?:com|es)/maps|maps\.google\.(?:com|es))(?:[/?#]|$)", re.I)
+
+
+def strip_external(text: str) -> str:
+    """Quita imágenes y enlaces externos salvo a nuestras webs y a Google Maps (deja el texto del enlace)."""
+    text = MARKDOWN_IMAGE.sub(lambda m: m.group(1), text)
+    text = EXTERNAL_LINK.sub(lambda m: m.group(0) if ALLOWED_EXTERNAL.match(m.group(2)) else m.group(1), text)
+    text = AUTOLINK.sub(lambda m: m.group(0) if ALLOWED_EXTERNAL.match(m.group(1)) else "", text)
+    return LINK_DEFINITION.sub("", text)
 
 
 def sanitize_links(text: str, user_id: Optional[int], user_role: str) -> str:
@@ -87,7 +102,7 @@ def sanitize_links(text: str, user_id: Optional[int], user_role: str) -> str:
             return f"[{label}]({path})"
         return label
 
-    return MARKDOWN_LINK.sub(fix, text)
+    return MARKDOWN_LINK.sub(fix, strip_external(text))
 
 async def run_openai_provider(api_key: str, base_url: str, model_name: str, system_instruction: str,
                               history: List[Dict[str, str]], message: str, user_id: Optional[int], user_role: str) -> str:
@@ -121,7 +136,11 @@ async def run_openai_provider(api_key: str, base_url: str, model_name: str, syst
                 args = json.loads(tool_call.function.arguments)
             except (TypeError, ValueError):
                 args = {}
-            result = await execute_tool(func_name, args, user_id, user_role)
+            try:
+                result = await execute_tool(func_name, args, user_id, user_role)
+            except (TypeError, ValueError, ArithmeticError) as e:
+                # Argumentos mal formados del modelo: se le devuelve el error en vez de tirar toda la respuesta
+                result = json.dumps({"error": f"Argumentos no válidos para {func_name}: {e}"}, ensure_ascii=False)
             messages.append({
                 "role": "tool",
                 "tool_call_id": tool_call.id,

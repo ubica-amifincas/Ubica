@@ -40,6 +40,8 @@ async def get_admin_dashboard(current_user: models.User = Depends(require_role([
         market_growth=0.0,
         users_by_role=users_by_role,
         properties_by_status=properties_by_status,
+        pending_realtors=session.exec(select(func.count(models.User.id)).where(
+            models.User.role == "realtor", models.User.is_approved == False, models.User.is_active == True)).one(),  # noqa: E712
     )
 
 @router.get("/api/admin/users", response_model=List[User])

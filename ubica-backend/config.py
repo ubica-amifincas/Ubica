@@ -31,6 +31,8 @@ RESEND_SENDER = os.getenv("RESEND_SENDER", "onboarding@resend.dev") # Cambiar a 
 
 # Buzón que recibe el formulario de contacto
 CONTACT_EMAIL = os.getenv("CONTACT_EMAIL", "info@amifincas.es")
+# Quien valida las altas de inmobiliarias: recibe el aviso de cada una pendiente de aprobar
+ADMIN_NOTIFY_EMAIL = os.getenv("ADMIN_NOTIFY_EMAIL", "sistemas@amifincas.es")
 
 # Cuentas del equipo: con estos correos, al registrarse o entrar se recibe ese rol (inmobiliaria ya aprobada).
 # Solo sube permisos, nunca los baja. En Render se puede cambiar con STAFF_ROLES="correo:rol,correo:rol".

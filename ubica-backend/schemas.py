@@ -14,7 +14,11 @@ class UserBase(BaseModel):
     is_verified: bool = True  # Por defecto True para usuarios mock
 
 class UserCreate(UserBase):
-    password: str
+    # Van en el correo de verificación: sin límite servirían para mandar textos largos desde nuestro dominio
+    full_name: Optional[str] = Field(default=None, max_length=120)
+    company: Optional[str] = Field(default=None, max_length=120)
+    phone: Optional[str] = Field(default=None, max_length=30)
+    password: str = Field(max_length=128)
     # Casilla obligatoria del formulario: condiciones y política de privacidad
     accept_terms: bool = False
 
@@ -107,6 +111,8 @@ class DashboardStats(BaseModel):
     market_growth: float
     users_by_role: Dict[str, int]
     properties_by_status: Dict[str, int]
+    # Inmobiliarias dadas de alta que esperan aprobación
+    pending_realtors: int = 0
 
 class PublicProperty(BaseModel):
     """Anuncio tal como lo ve el público: sin datos económicos privados ni ids de propietario/inmobiliaria."""

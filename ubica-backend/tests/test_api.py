@@ -1,5 +1,7 @@
 import time
 
+import pytest
+
 import models
 from conftest import auth, make_token
 from security import create_access_token
@@ -109,7 +111,8 @@ def test_public_properties(client, make_property):
     assert client.get(f"/api/properties/{visible.id}").json()["title"] == "Piso en Cartagena"
     assert client.get("/api/properties/999").status_code == 404
     stats = client.get("/api/stats/market").json()
-    assert stats["total_properties"] == 2 and stats["cities"] == ["Cartagena"]
+    # Solo cuentan los anuncios publicados (la vendida no)
+    assert stats["total_properties"] == 1 and stats["cities"] == ["Cartagena"]
 
 
 # --- Admin ---
@@ -340,3 +343,25 @@ def test_cors_allows_only_this_projects_vercel_previews(client):
     assert not allowed("https://ubica-x-verifyubica-7020s-projects.vercel.app.evil.com")
     assert not allowed("https://otra-app-verifyubica-7020s-projects.vercel.app")
     assert not allowed("https://ubica-x-otro-equipo.vercel.app")
+
+
+@pytest.mark.parametrize("cambio", [{"price": "NaN"}, {"price": "1e309"}, {"price": -5}, {"bedrooms": 10**9},
+                                    {"images": [{"a": 1}]}, {"images": ["javascript:alert(1)"]}, {"features": [1, 2]},
+                                    {"coordinates": {"lat": 999, "lng": 0}}])
+def test_listing_rejects_values_that_break_public_pages(client, make_user, cambio):
+    h = auth(make_user())
+    body = {"title": "Piso", "price": 100000, "type": "flat", "city": "Murcia", **cambio}
+    assert client.post("/api/user/properties", json=body, headers=h).status_code == 422
+
+
+def test_upload_limits_files_per_request(client, make_user):
+    png = b"\x89PNG\r\n\x1a\n" + b"0" * 100
+    files = [("files", (f"a{i}.png", png, "image/png")) for i in range(21)]
+    assert client.post("/api/upload-images", files=files, headers=auth(make_user())).status_code == 413
+
+
+def test_message_to_a_draft_listing_is_not_found(client, make_user, make_property):
+    owner, buyer = make_user(email="owner@example.com"), make_user(email="buyer@example.com")
+    draft = make_property(status="draft", owner_id=owner.id)
+    r = client.post("/api/user/messages", json={"property_id": draft.id, "content": "Hola"}, headers=auth(buyer))
+    assert r.status_code == 404
