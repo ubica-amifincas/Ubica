@@ -130,6 +130,13 @@ class TasadorGuess(SQLModel, table=True):
     points: int
     created_at: NaiveDatetime = Field(default_factory=datetime.now)
 
+class TasadorDay(SQLModel, table=True):
+    """Las rondas del reto diario, fijadas la primera vez que se piden: publicar o quitar un anuncio a mitad
+    de día no debe cambiar el reto de ese día (ni descuadrar las respuestas ya guardadas)."""
+    day: str = Field(primary_key=True)  # AAAA-MM-DD, hora de Madrid
+    rounds: List[Dict[str, Any]] = Field(sa_column=Column(JSON))
+    created_at: NaiveDatetime = Field(default_factory=datetime.now)
+
 class PortfolioProperty(SQLModel, table=True):
     """Vivienda que el usuario tiene en propiedad (Mi cartera inmobiliaria). Solo la ve su dueño."""
     id: Optional[int] = Field(default=None, primary_key=True)

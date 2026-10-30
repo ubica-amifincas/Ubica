@@ -111,3 +111,11 @@ def test_la_tabla_nueva_se_crea_al_arrancar():
     database.ensure_tables()
     assert inspect(database.engine).has_table("tasadorguess")
     database.ensure_tables()  # si ya existe, no hace nada
+
+
+def test_el_reto_del_dia_no_cambia_al_publicar_un_anuncio(client, day, make_property):
+    antes = client.get("/api/games/tasador/daily").json()["rondas"]
+    assert all(r["tipo"] == "municipio" for r in antes)
+    # Se publica un anuncio a mitad de día: el reto de hoy sigue igual (y las respuestas guardadas cuadran)
+    make_property(title="Piso nuevo", price=120000, area=70, images=["/uploads/b.jpg"])
+    assert client.get("/api/games/tasador/daily").json()["rondas"] == antes

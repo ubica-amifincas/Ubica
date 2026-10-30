@@ -8,6 +8,7 @@ from functools import lru_cache
 from typing import Optional
 from zoneinfo import ZoneInfo
 
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
 import models
@@ -69,7 +70,24 @@ def challenge_number(day: date) -> int:
 
 
 def daily_rounds(session: Session, day: date) -> list[dict]:
-    """Las 5 rondas del día, iguales para todos. Cada una con su respuesta en «real» (no se envía al cliente).
+    """Las 5 rondas del día, iguales para todos. Se guardan la primera vez que se piden y ya no cambian ese día."""
+    key = day.isoformat()
+    saved = session.get(models.TasadorDay, key)
+    if saved:
+        return saved.rounds
+    rounds = _build_rounds(session, day)
+    session.add(models.TasadorDay(day=key, rounds=rounds))
+    try:
+        session.commit()
+    except IntegrityError:
+        # Otra petición lo guardó a la vez: vale el suyo
+        session.rollback()
+        return session.get(models.TasadorDay, key).rounds
+    return rounds
+
+
+def _build_rounds(session: Session, day: date) -> list[dict]:
+    """Genera las 5 rondas del día. Cada una con su respuesta en «real» (no se envía al cliente).
 
     Hasta 3 inmuebles en venta publicados (con precio, metros y foto) y el resto, municipios con su valor
     tasado oficial por m²: la mitad de la Región de Murcia y la otra mitad de toda España."""

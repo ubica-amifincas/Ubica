@@ -13,4 +13,5 @@ alter table public."savedsearch"    enable row level security;
 alter table public."tasadorguess"   enable row level security;  -- estas tres las crea el backend al arrancar (ensure_tables)
 alter table public."portfolioproperty" enable row level security;
 alter table public."portfolioitem"  enable row level security;
+alter table public."tasadorday"     enable row level security;
 alter table public."user"           enable row level security;
