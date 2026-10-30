@@ -71,6 +71,9 @@ r = await go('https://ubica.amifincas.es/no-existe'); h = await html(r);
 assert.equal(r.status, 404); assert.equal(meta(h, 'robots'), 'noindex, follow'); ok('ruta desconocida → 404');
 r = await go('https://ubica.amifincas.es/dashboard/properties'); h = await html(r);
 assert.equal(r.status, 200); assert.equal(meta(h, 'robots'), 'noindex, follow'); ok('panel → noindex');
+r = await go('https://ubica.amifincas.es/escaparate?segundos=10'); h = await html(r);
+assert.equal(r.status, 200); assert.equal(meta(h, 'robots'), 'noindex, follow'); assert.equal(title(h), 'Escaparate | AMI Fincas · Ubica');
+assert.ok(!h.includes('<main data-static>')); ok('escaparate de la oficina → noindex, sin texto');
 
 // AMI Fincas
 r = await go('https://amifincas.es/'); h = await html(r);
@@ -113,6 +116,7 @@ h = await html(await go('https://ubica.amifincas.es/dashboard'));
 assert.ok(!h.includes('<main data-static>')); ok('paneles sin texto');
 const rb = await (await go('https://ubica.amifincas.es/robots.txt')).text();
 assert.ok(/User-agent: GPTBot[\s\S]*Disallow: \/dashboard/.test(rb) && rb.includes('User-agent: ClaudeBot')); ok('robots: grupo de IA con las mismas exclusiones');
+assert.ok(rb.includes('Disallow: /escaparate')); ok('robots: el escaparate no se rastrea');
 const la = await (await go('https://amifincas.es/llms.txt')).text();
 const lu = await (await go('https://ubica.amifincas.es/llms.txt')).text();
 assert.ok(la.startsWith('# AMI Fincas') && la.includes('## Preguntas frecuentes') && lu.startsWith('# Ubica') && lu.includes('/inmueble/5-piso-luminoso-en-murcia'));

@@ -41,6 +41,8 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 const EntertainmentHub = lazy(() => import('./pages/Entertainment/EntertainmentHub'));
 const TasadorExpress = lazy(() => import('./pages/Entertainment/TasadorExpress'));
 const UbicaBalance = lazy(() => import('./pages/Entertainment/UbicaBalance')); // three.js
+// Escaparate digital: la pantalla del cristal de la oficina
+const Escaparate = lazy(() => import('./pages/Escaparate'));
 
 // Autenticación
 const AuthPage = lazy(() => import('./pages/AuthPage'));
@@ -92,6 +94,9 @@ function AppRoutes() {
   if (externalTarget) return <RouteFallback fullScreen />;
   if (internalTarget) return <Navigate to={internalTarget} replace />;
 
+  // En el escaparate no hay nadie delante con quien hablar: sin banner de cookies, asistente ni aviso de instalar
+  const isShowcase = path === '/escaparate';
+
   return (
     <>
       <ScrollToTop />
@@ -133,6 +138,9 @@ function AppRoutes() {
                 <UbicaBalance />
               </Suspense>
             } />
+
+            {/* Escaparate de la oficina: pantalla completa, sin barra ni pie */}
+            <Route path="/escaparate" element={<Escaparate />} />
 
             {/* Auth Routes */}
             <Route path="/login" element={<AuthPage />} />
@@ -219,11 +227,11 @@ function AppRoutes() {
         </Suspense>
 
         {/* Banner y panel de cookies */}
-        <CookieConsent />
+        {!isShowcase && <CookieConsent />}
 
         {/* La app instalable y el asistente IA son de Ubica: no aparecen en la web de AMI Fincas */}
-        {!isAmiSite && <PWAInstallPrompt />}
-        {!isAmiSite && <AIChatModal />}
+        {!isAmiSite && !isShowcase && <PWAInstallPrompt />}
+        {!isAmiSite && !isShowcase && <AIChatModal />}
       </div>
     </>
   );

@@ -41,6 +41,7 @@ const UBICA_PRIVATE = {
   '/confirm-email-change': 'Confirmar cambio de correo | Ubica',
   '/publicar': 'Subir inmueble | Ubica',
   '/entretenimiento/balance': 'La Torre Fincas · Ubica Play',
+  '/escaparate': 'Escaparate | AMI Fincas · Ubica',
   '/dashboard': 'Mi panel | Ubica',
   '/dashboard/properties': 'Mis propiedades | Ubica',
   '/dashboard/sales': 'Ventas | Ubica',

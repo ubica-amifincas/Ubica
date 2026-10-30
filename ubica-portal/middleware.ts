@@ -29,7 +29,7 @@ const API = 'https://ubica-backend.onrender.com/api';
 const UBICA_IMAGE = `${UBICA_ORIGIN}/og-ubica.jpg`;
 const AMI_IMAGE = `${AMI_ORIGIN}/og-ami.jpg`;
 const PROD_HOSTS = ['ubica.amifincas.es', 'amifincas.es'];
-const PRIVATE_PATHS = ['/dashboard', '/admin', '/realtor', '/investor', '/publicar'];
+const PRIVATE_PATHS = ['/dashboard', '/admin', '/realtor', '/investor', '/publicar', '/escaparate'];
 // Buscadores y asistentes de IA: se permiten de forma explícita (búsqueda y entrenamiento)
 const AI_BOTS = ['GPTBot', 'OAI-SearchBot', 'ChatGPT-User', 'ClaudeBot', 'Claude-SearchBot', 'Claude-User', 'PerplexityBot',
   'Perplexity-User', 'Google-Extended', 'Applebot-Extended', 'Bingbot', 'CCBot', 'meta-externalagent'];
