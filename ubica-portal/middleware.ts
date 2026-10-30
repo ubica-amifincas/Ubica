@@ -45,11 +45,11 @@ const next = () => new Response(null, { headers: { 'x-middleware-next': '1' } })
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-async function fetchWithTimeout(url: string, ms: number): Promise<Response | null> {
+async function fetchWithTimeout(url: string, ms: number, headers: Record<string, string> = {}): Promise<Response | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
   try {
-    return await fetch(url, { signal: controller.signal, headers: { accept: 'application/json' } });
+    return await fetch(url, { signal: controller.signal, headers: { accept: 'application/json', ...headers } });
   } catch {
     return null;
   } finally {
@@ -248,7 +248,9 @@ export default async function middleware(request: Request): Promise<Response> {
     // API dormida o sin respuesta: se sirve la ficha con los datos generales y la app la carga después
   }
 
-  const shell = await fetchWithTimeout(new URL(isAmi ? '/ami.html' : '/index.html', url).toString(), 3000);
+  // Las vistas previas de Vercel piden inicio de sesión: la petición interna lleva la del visitante
+  const cookie = request.headers.get('cookie');
+  const shell = await fetchWithTimeout(new URL(isAmi ? '/ami.html' : '/index.html', url).toString(), 3000, cookie ? { cookie } : {});
   if (!shell?.ok) return next();
   const html = applyHead(await shell.text(), head);
   return new Response(html, {
