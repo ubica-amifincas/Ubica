@@ -8,8 +8,11 @@ import { pageMeta, parsePropertyId } from '../seo/pages';
  * según la ruta y la web (AMI Fincas o Ubica), con los mismos datos que el middleware pone en el HTML
  * (src/seo/pages.ts). La ficha de inmueble pone los suyos al cargar los datos.
  */
-const AMI_ICON = '/ami-fincas/favicon-64.png';
-const UBICA_ICON = '/icons/favicon-64.png';
+// Cada web tiene su favicon (.ico para navegadores y buscadores, .png de 64 px); el HTML declara los dos
+const ICONS = {
+    ami: { ico: '/ami-fincas/favicon.ico', png: '/ami-fincas/favicon-64.png' },
+    ubica: { ico: '/icons/favicon.ico', png: '/icons/favicon-64.png' },
+};
 const AMI_TOUCH_ICON = '/ami-fincas/icon-192.png';
 const UBICA_TOUCH_ICON = '/icons/apple-touch-icon.png';
 
@@ -21,6 +24,12 @@ function setLink(rel: string, href: string) {
         document.head.appendChild(el);
     }
     el.href = href;
+}
+
+function setIcons(site: keyof typeof ICONS) {
+    const links = document.head.querySelectorAll<HTMLLinkElement>('link[rel="icon"]');
+    if (!links.length) return setLink('icon', ICONS[site].png);
+    links.forEach(el => { el.href = el.getAttribute('href')?.endsWith('.ico') ? ICONS[site].ico : ICONS[site].png; });
 }
 
 export function setMeta(attr: 'name' | 'property', key: string, content: string) {
@@ -50,7 +59,7 @@ export default function useDocumentTitle() {
         const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
         const isAmi = isAmiSite;
         setMeta('property', 'og:site_name', isAmi ? 'AMI Fincas' : 'Ubica');
-        setLink('icon', isAmi ? AMI_ICON : UBICA_ICON);
+        setIcons(isAmi ? 'ami' : 'ubica');
         setLink('apple-touch-icon', isAmi ? AMI_TOUCH_ICON : UBICA_TOUCH_ICON);
 
         // La ficha de inmueble pone su título y su dirección canónica cuando tiene los datos

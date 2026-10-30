@@ -21,6 +21,15 @@
     ],
     "rewrites": [
         {
+            "source": "/favicon.ico",
+            "has": [{ "type": "host", "value": "amifincas.es" }],
+            "destination": "/ami-fincas/favicon.ico"
+        },
+        {
+            "source": "/favicon.ico",
+            "destination": "/icons/favicon.ico"
+        },
+        {
             "source": "/mcp",
             "destination": "https://ubica-backend.onrender.com/mcp"
         },
