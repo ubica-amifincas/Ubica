@@ -144,7 +144,7 @@ const InvestorDashboard: React.FC<{ section?: InvestorSection }> = ({ section = 
     return () => { cancelled = true; };
   }, []);
 
-  // Patrimonio es la misma herramienta que /dashboard/wealth, con su propia cabecera
+  // Mi cartera es la misma herramienta que /dashboard/wealth, con su propia cabecera
   if (section === 'wealth') return <WealthManagement />;
 
   const headers: Record<Exclude<InvestorSection, 'wealth'>, { title: string; description?: string }> = {

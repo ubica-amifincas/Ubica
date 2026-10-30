@@ -1,5 +1,5 @@
 """Modelos Pydantic de entrada y salida de la API (los de base de datos están en models.py)."""
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, StrictBool, StrictInt, field_validator
@@ -153,6 +153,35 @@ class GameScoreRequest(BaseModel):
     score: StrictInt = Field(ge=0, le=MAX_GAME_SCORE)
     # Lo da POST /api/games/balance/start: permite comprobar que la puntuación cabe en el tiempo jugado
     session_token: str = Field(min_length=10, max_length=1000)
+
+MAX_MONEY = 100_000_000
+
+class PortfolioPropertyRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    name: str = Field(min_length=1, max_length=120)
+    address: Optional[str] = Field(default=None, max_length=200)
+    municipio: Optional[str] = Field(default=None, max_length=100)
+    provincia: Optional[str] = Field(default=None, max_length=100)
+    area_m2: Optional[float] = Field(default=None, gt=0, le=100_000)
+    purchase_price: float = Field(gt=0, le=MAX_MONEY)
+    purchase_date: Optional[date] = None
+    purchase_costs: float = Field(default=0, ge=0, le=MAX_MONEY)
+    current_value_manual: Optional[float] = Field(default=None, gt=0, le=MAX_MONEY)
+    mortgage_pending: float = Field(default=0, ge=0, le=MAX_MONEY)
+    mortgage_monthly: float = Field(default=0, ge=0, le=1_000_000)
+    rent_monthly: float = Field(default=0, ge=0, le=1_000_000)
+    community_monthly: float = Field(default=0, ge=0, le=100_000)
+    ibi_yearly: float = Field(default=0, ge=0, le=1_000_000)
+    insurance_yearly: float = Field(default=0, ge=0, le=1_000_000)
+    other_yearly: float = Field(default=0, ge=0, le=MAX_MONEY)
+    notes: Optional[str] = Field(default=None, max_length=2000)
+
+class PortfolioItemRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    kind: Literal["asset", "liability"]
+    name: str = Field(min_length=1, max_length=120)
+    description: Optional[str] = Field(default=None, max_length=300)
+    amount: float = Field(ge=0, le=MAX_MONEY)
 
 class TasadorGuessRequest(BaseModel):
     day: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")

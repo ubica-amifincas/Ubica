@@ -53,7 +53,7 @@ function buildNavigation(role: string | undefined, t: TFn): NavGroup[] {
   const mine = t('panel.group.mine', 'Mi área');
   const messages: NavItem = { label: t('panel.nav.messages', 'Mensajes'), href: '/dashboard?view=messages', icon: ChatBubbleLeftRightIcon };
   const aiHistory: NavItem = { label: t('panel.nav.aiHistory', 'Historial IA'), href: '/dashboard?view=ia_history', icon: SparklesIcon };
-  const wealth: NavItem = { label: t('panel.nav.wealth', 'Patrimonio'), href: '/dashboard/wealth', icon: WalletIcon };
+  const wealth: NavItem = { label: t('panel.nav.wealth', 'Mi cartera'), href: '/dashboard/wealth', icon: WalletIcon };
   const myProperties: NavItem = { label: t('panel.nav.myProperties', 'Mis propiedades'), href: '/dashboard/properties', icon: BuildingOfficeIcon };
   const quickListing: NavItem = { label: t('panel.nav.quickListing', 'Subir inmueble'), href: '/publicar', icon: CameraIcon };
   const sales: NavItem = { label: t('panel.nav.sales', 'Ventas'), href: '/dashboard/sales', icon: BanknotesIcon };
@@ -97,7 +97,7 @@ function buildNavigation(role: string | undefined, t: TFn): NavGroup[] {
           items: [
             { label: t('panel.nav.overview', 'Resumen'), href: '/investor', icon: PresentationChartLineIcon, exact: true },
             { label: t('panel.nav.opportunities', 'Oportunidades'), href: '/investor/oportunidades', icon: LightBulbIcon },
-            { label: t('panel.nav.wealth', 'Patrimonio'), href: '/investor/patrimonio', icon: WalletIcon },
+            { label: t('panel.nav.wealth', 'Mi cartera'), href: '/investor/patrimonio', icon: WalletIcon },
           ],
         },
         { label: mine, items: [quickListing, myProperties, sales, rentals, messages, aiHistory] },

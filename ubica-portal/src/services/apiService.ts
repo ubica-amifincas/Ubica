@@ -172,6 +172,80 @@ export interface GameLeaderboardEntry {
   created_at: string;
 }
 
+// Mi cartera inmobiliaria
+export interface PortfolioPropertyInput {
+  name: string;
+  address?: string | null;
+  municipio?: string | null;
+  provincia?: string | null;
+  area_m2?: number | null;
+  purchase_price: number;
+  purchase_date?: string | null;
+  purchase_costs?: number;
+  current_value_manual?: number | null;
+  mortgage_pending?: number;
+  mortgage_monthly?: number;
+  rent_monthly?: number;
+  community_monthly?: number;
+  ibi_yearly?: number;
+  insurance_yearly?: number;
+  other_yearly?: number;
+  notes?: string | null;
+}
+
+export interface PortfolioCalc {
+  valor: number;
+  metodo: 'indice' | 'm2' | 'manual' | 'compra';
+  valor_m2_zona: number | null;
+  invertido: number;
+  plusvalia: number;
+  plusvalia_porcentaje: number;
+  patrimonio_neto: number;
+  ingresos_anuales: number;
+  gastos_anuales: number;
+  rentabilidad_bruta: number | null;
+  rentabilidad_neta: number | null;
+  flujo_caja_mensual: number;
+}
+
+export interface PortfolioProperty extends PortfolioPropertyInput {
+  id: number;
+  calculo: PortfolioCalc;
+}
+
+export interface PortfolioItem {
+  id?: number;
+  kind: 'asset' | 'liability';
+  name: string;
+  description?: string | null;
+  amount: number;
+}
+
+export interface Portfolio {
+  viviendas: PortfolioProperty[];
+  otros: PortfolioItem[];
+  resumen: {
+    valor_inmuebles: number;
+    hipotecas: number;
+    otros_bienes: number;
+    otras_deudas: number;
+    patrimonio_neto: number;
+    plusvalia: number;
+    ingresos_anuales: number;
+    flujo_caja_mensual: number;
+    rentabilidad_bruta: number | null;
+    rentabilidad_neta: number | null;
+  };
+  evolucion: { trimestre: string; valor: number }[];
+  datos_oficiales: { fuente: string; ultimo_trimestre: string };
+}
+
+export interface MunicipioOption {
+  municipio: string;
+  provincia: string;
+  eur_m2: number | null;
+}
+
 export interface ContactRequest {
   name: string;
   email: string;
@@ -733,6 +807,41 @@ class ApiService {
       body: JSON.stringify({ content }),
     });
     return this.handleResponse<any>(response);
+  }
+
+  // ─── Mi cartera inmobiliaria ───
+
+  async getPortfolio(): Promise<Portfolio> {
+    const response = await fetch(`${API_BASE_URL}/portfolio`, { headers: this.getAuthHeaders() });
+    return this.handleResponse<Portfolio>(response);
+  }
+
+  async savePortfolioProperty(data: PortfolioPropertyInput, id?: number): Promise<PortfolioProperty> {
+    const response = await fetch(`${API_BASE_URL}/portfolio/properties${id ? `/${id}` : ''}`, {
+      method: id ? 'PUT' : 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return this.handleResponse<PortfolioProperty>(response);
+  }
+
+  async deletePortfolioProperty(id: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/portfolio/properties/${id}`, { method: 'DELETE', headers: this.getAuthHeaders() });
+    await this.handleResponse(response);
+  }
+
+  async savePortfolioItems(items: PortfolioItem[]): Promise<PortfolioItem[]> {
+    const response = await fetch(`${API_BASE_URL}/portfolio/items`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(items.map(({ kind, name, description, amount }) => ({ kind, name, description, amount }))),
+    });
+    return this.handleResponse<PortfolioItem[]>(response);
+  }
+
+  async searchMunicipios(q: string): Promise<MunicipioOption[]> {
+    const response = await fetch(`${API_BASE_URL}/portfolio/municipios?q=${encodeURIComponent(q)}`, { headers: this.getAuthHeaders() });
+    return this.handleResponse<MunicipioOption[]>(response);
   }
 
   // ─── Ubica Play ───

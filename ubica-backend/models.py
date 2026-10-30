@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import List, Optional, Dict, Any
 from sqlalchemy import UniqueConstraint
 from sqlmodel import SQLModel, Field, Relationship, JSON, Column
@@ -128,6 +128,41 @@ class TasadorGuess(SQLModel, table=True):
     round_index: int
     guess: float
     points: int
+    created_at: NaiveDatetime = Field(default_factory=datetime.now)
+
+class PortfolioProperty(SQLModel, table=True):
+    """Vivienda que el usuario tiene en propiedad (Mi cartera inmobiliaria). Solo la ve su dueño."""
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    name: str
+    address: Optional[str] = None
+    # Municipio de la estadística oficial de valor tasado: con él se estima la revalorización
+    municipio: Optional[str] = None
+    provincia: Optional[str] = None
+    area_m2: Optional[float] = None
+    purchase_price: float
+    purchase_date: Optional[date] = None
+    purchase_costs: float = 0  # impuestos, notaría, gestoría, reforma inicial
+    current_value_manual: Optional[float] = None  # si el usuario prefiere su propia valoración
+    mortgage_pending: float = 0
+    mortgage_monthly: float = 0
+    rent_monthly: float = 0
+    community_monthly: float = 0
+    ibi_yearly: float = 0
+    insurance_yearly: float = 0
+    other_yearly: float = 0
+    notes: Optional[str] = None
+    created_at: NaiveDatetime = Field(default_factory=datetime.now)
+    updated_at: NaiveDatetime = Field(default_factory=datetime.now)
+
+class PortfolioItem(SQLModel, table=True):
+    """Otros bienes (ahorros, vehículo...) y deudas (préstamos...) de Mi cartera."""
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    kind: str  # asset | liability
+    name: str
+    description: Optional[str] = None
+    amount: float
     created_at: NaiveDatetime = Field(default_factory=datetime.now)
 
 class AIConversation(SQLModel, table=True):

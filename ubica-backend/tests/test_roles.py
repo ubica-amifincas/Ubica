@@ -169,6 +169,12 @@ MATRIX = {
     ("GET",    "/api/games/tasador/daily"):                 (200, 200, 200, 200, 200),
     ("POST",   "/api/games/tasador/daily/guess"):           (200, 200, 200, 200, 200),
     ("GET",    "/api/games/tasador/leaderboard"):           (200, 200, 200, 200, 200),
+    ("GET",    "/api/portfolio"):                           (401, 200, 200, 200, 200),
+    ("POST",   "/api/portfolio/properties"):                (401, 200, 200, 200, 200),
+    ("PUT",    "/api/portfolio/properties/{prop_id}"):      (401, 200, 200, 200, 200),
+    ("DELETE", "/api/portfolio/properties/{prop_id}"):      (401, 200, 200, 200, 200),
+    ("PUT",    "/api/portfolio/items"):                     (401, 200, 200, 200, 200),
+    ("GET",    "/api/portfolio/municipios"):                (401, 200, 200, 200, 200),
     ("GET",    "/api/realtor/dashboard"):                   (401, 403, 200, 403, 403),  # ni el admin
     ("GET",    "/api/realtor/properties"):                  (401, 403, 200, 403, 403),
     ("GET",    "/api/investor/dashboard"):                  (401, 403, 403, 200, 403),  # ni el admin
@@ -652,6 +658,63 @@ def _(w):
     return "POST", "/api/games/tasador/daily/guess", {"json": {"day": games.today().isoformat(), "round": 0, "guess": 1500}}, check
 
 
+def own_portfolio_property(w, **kw):
+    """Vivienda de la cartera de quien hace la petición (para el invitado, del propietario)."""
+    return add(w.db, models.PortfolioProperty(user_id=w.me, name="Mi piso", purchase_price=100000, **kw))
+
+
+@case("GET", "/api/portfolio")
+def _(w):
+    own_portfolio_property(w)
+    if w.actor_id:  # la del propietario no debe aparecer en la cartera del actor
+        add(w.db, models.PortfolioProperty(user_id=w.owner_id, name="Ajeno", purchase_price=1))
+
+    def check(w, r, allowed):
+        if allowed:
+            assert [v["name"] for v in r.json()["viviendas"]] == ["Mi piso"]
+    return "GET", "/api/portfolio", {}, check
+
+
+@case("POST", "/api/portfolio/properties")
+def _(w):
+    def check(w, r, allowed):
+        assert [(p.user_id, p.name) for p in rows(models.PortfolioProperty)] == ([(w.actor_id, "Nuevo")] if allowed else [])
+    return "POST", "/api/portfolio/properties", {"json": {"name": "Nuevo", "purchase_price": 1000}}, check
+
+
+@case("PUT", "/api/portfolio/properties/{prop_id}")
+def _(w):
+    p = own_portfolio_property(w)
+
+    def check(w, r, allowed):
+        assert fetch(models.PortfolioProperty, p.id).name == ("Cambiado" if allowed else "Mi piso")
+    return "PUT", f"/api/portfolio/properties/{p.id}", {"json": {"name": "Cambiado", "purchase_price": 1000}}, check
+
+
+@case("DELETE", "/api/portfolio/properties/{prop_id}")
+def _(w):
+    p = own_portfolio_property(w)
+
+    def check(w, r, allowed):
+        assert (fetch(models.PortfolioProperty, p.id) is None) == allowed
+    return "DELETE", f"/api/portfolio/properties/{p.id}", {}, check
+
+
+@case("PUT", "/api/portfolio/items")
+def _(w):
+    def check(w, r, allowed):
+        assert [(i.user_id, i.name) for i in rows(models.PortfolioItem)] == ([(w.actor_id, "Ahorros")] if allowed else [])
+    return "PUT", "/api/portfolio/items", {"json": [{"kind": "asset", "name": "Ahorros", "amount": 10}]}, check
+
+
+@case("GET", "/api/portfolio/municipios")
+def _(w):
+    def check(w, r, allowed):
+        if allowed:
+            assert r.json()[0]["municipio"] == "Murcia"
+    return "GET", "/api/portfolio/municipios", {"params": {"q": "murcia"}}, check
+
+
 @case("GET", "/api/games/tasador/leaderboard")
 def _(w):
     from services import games
@@ -769,7 +832,7 @@ def client_get_me(token):
 
 def test_matrix_covers_every_openapi_route():
     routes = {(m.upper(), p) for p, ops in app.openapi()["paths"].items() for m in ops}
-    assert len(routes) == 58
+    assert len(routes) == 64
     assert set(MATRIX) == routes
     assert set(CASES) == routes
 

@@ -40,6 +40,8 @@ def delete_user(session: Session, user: models.User) -> None:
         (models.SavedSearch, models.SavedSearch.user_id),
         (models.GameScore, models.GameScore.user_id),
         (models.TasadorGuess, models.TasadorGuess.user_id),
+        (models.PortfolioProperty, models.PortfolioProperty.user_id),
+        (models.PortfolioItem, models.PortfolioItem.user_id),
         (models.AIConversation, models.AIConversation.user_id),
         (models.Investment, models.Investment.investor_id),
     ):
