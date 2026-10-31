@@ -829,6 +829,9 @@ const resources = {
       "details.photo_prev": "Foto anterior",
       "details.photo_next": "Foto siguiente",
       "details.photo_n": "Foto {{n}}",
+      "details.photo_open": "Ver las fotos en grande",
+      "details.photo_enlarge": "Ampliar",
+      "details.photo_close": "Cerrar",
       // Common
       "common.any": "Cualquiera",
       "common.month": "mes",
@@ -1692,6 +1695,9 @@ const resources = {
       "details.photo_prev": "Previous photo",
       "details.photo_next": "Next photo",
       "details.photo_n": "Photo {{n}}",
+      "details.photo_open": "View photos full size",
+      "details.photo_enlarge": "Enlarge",
+      "details.photo_close": "Close",
 
       // Common
       "common.any": "Any",

@@ -14,13 +14,15 @@ import {
   EnvelopeIcon,
   PaperAirplaneIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  ArrowsPointingOutIcon
 } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { PropertyCard } from '../components/property/PropertyCard';
+import PhotoViewer, { useFollowThumb } from '../components/property/PhotoViewer';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../contexts/AuthContext';
 import appService from '../services';
@@ -90,6 +92,10 @@ export default function PropertyDetail() {
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [validImages, setValidImages] = useState<string[]>([]);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  // La tira de miniaturas sigue a la foto que se ve
+  const thumbStripRef = useRef<HTMLDivElement>(null);
+  useFollowThumb(thumbStripRef, currentImageIndex, validImages.length > 1);
   const [isFavorite, setIsFavorite] = useState(false);
   const [showContactForm, setShowContactForm] = useState(false);
   const [messageForm, setMessageForm] = useState({ name: '', email: '', message: '' });
@@ -354,13 +360,24 @@ export default function PropertyDetail() {
                 onTouchEnd={onTouchEnd}
               >
                 {validImages.length > 0 ? (
-                  <img
-                    key={currentImageIndex}
-                    src={validImages[currentImageIndex]}
-                    alt={property.title}
-                    className="w-full h-full object-cover"
-                    onError={handleImageError}
-                  />
+                  <button
+                    type="button"
+                    onClick={() => setViewerOpen(true)}
+                    aria-label={t('details.photo_open')}
+                    className="group block h-full w-full cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600"
+                  >
+                    <img
+                      key={currentImageIndex}
+                      src={validImages[currentImageIndex]}
+                      alt={property.title}
+                      className="w-full h-full object-cover"
+                      onError={handleImageError}
+                    />
+                    <span className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-xs font-medium text-white transition-colors group-hover:bg-black/75">
+                      <ArrowsPointingOutIcon className="h-4 w-4" aria-hidden="true" />
+                      {t('details.photo_enlarge')}
+                    </span>
+                  </button>
                 ) : (
                   <div className="flex h-full w-full flex-col items-center justify-center bg-emerald-50 dark:bg-gray-700">
                     <div className="rounded-full bg-white/60 dark:bg-gray-600/40 p-6 mb-3">
@@ -399,7 +416,7 @@ export default function PropertyDetail() {
 
               {/* Miniaturas */}
               {validImages.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto p-2">
+                <div ref={thumbStripRef} className="flex gap-2 overflow-x-auto p-2">
                   {validImages.map((img, index) => (
                     <button
                       key={img + index}
@@ -415,6 +432,15 @@ export default function PropertyDetail() {
                 </div>
               )}
             </div>
+            {viewerOpen && validImages.length > 0 && (
+              <PhotoViewer
+                images={validImages}
+                index={Math.min(currentImageIndex, validImages.length - 1)}
+                title={property.title}
+                onIndexChange={setCurrentImageIndex}
+                onClose={() => setViewerOpen(false)}
+              />
+            )}
           </div>
 
           {/* Resumen: precio, qué es, dónde y contacto */}
