@@ -11,6 +11,7 @@ import { UBICA_ORIGIN, propertyPath } from '../seo/pages';
 import { getTypeLabel, normalizeType } from '../utils/propertyStatus';
 import { WhatsAppIcon } from '../components/layout/Footer';
 import MurciaSkyline from '../components/common/MurciaSkyline';
+import AmiLogoMark from '../components/common/AmiLogoMark';
 
 /**
  * Escaparate digital: la pantalla del cristal de la oficina de AMI Fincas, de cara a la calle.
@@ -507,10 +508,10 @@ function BrandBar({ portrait, counter, offlineSince }: { portrait: boolean; coun
     return (
         <div className={`relative flex shrink-0 items-center justify-between gap-[3vmin] overflow-hidden text-white ${portrait ? 'h-[17vmin] px-[4vmin]' : 'h-[13vmin] px-[4vmin]'}`} style={{ backgroundColor: TEAL }}>
             <MurciaSkyline className="absolute inset-0 opacity-[0.14]" colors={oneTone('#ffffff')} />
-            <div className="relative flex items-center gap-[2vmin]">
-                <span className="flex items-center rounded-[1.5vmin] bg-white px-[1.4vmin] py-[1vmin]">
-                    <img src="/ami-fincas/logo-ami-mark.png" alt="" className="h-[6.5vmin] w-auto" />
-                </span>
+            {/* El logo directamente sobre la barra: su parte azul, en blanco; un filete lo separa del nombre */}
+            <div className="relative flex items-center gap-[2.5vmin]">
+                <AmiLogoMark blue="#ffffff" className="h-[8vmin] w-auto drop-shadow-[0_0.3vmin_0.6vmin_rgba(0,0,0,0.25)]" />
+                <span className="h-[7vmin] w-px bg-white/30" aria-hidden="true" />
                 <div className="leading-none">
                     <p className="font-display text-[4.6vmin] font-extrabold tracking-tight">{AMI.name}</p>
                     {!portrait && <p className="mt-[0.8vmin] text-[2.2vmin] font-medium" style={{ color: MINT }}>Administración de fincas · Venta y alquiler</p>}
@@ -630,7 +631,7 @@ class ShowcaseBoundary extends Component<{ children: ReactNode }, { failed: bool
         if (!this.state.failed) return this.props.children;
         return (
             <div className="fixed inset-0 flex flex-col items-center justify-center gap-[3vmin] text-white" style={{ backgroundColor: TEAL }}>
-                <span className="rounded-[2vmin] bg-white px-[3vmin] py-[2vmin]"><img src="/ami-fincas/logo-ami-mark.png" alt="" className="h-[14vmin] w-auto" /></span>
+                <AmiLogoMark blue="#ffffff" className="h-[16vmin] w-auto" />
                 <p className="font-display text-[7vmin] font-extrabold">{AMI.name}</p>
                 <p className="text-[5vmin] font-bold">{AMI.phone}</p>
             </div>
