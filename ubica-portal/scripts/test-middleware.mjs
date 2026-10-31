@@ -90,6 +90,8 @@ assert.equal(r.status, 301); assert.equal(r.headers.get('location'), 'https://am
 r = await go('https://ubica.amifincas.es/about'); assert.equal(r.status, 200); ok('el /about de Ubica sigue igual');
 r = await go('https://www.amifincas.es/'); assert.equal(r.headers.get('x-middleware-next'), '1'); ok('www lo redirige vercel.json');
 r = await go('https://ubica.amifincas.es/mcp'); assert.equal(r.headers.get('x-middleware-next'), '1'); ok('/mcp pasa al backend (vercel.json)');
+r = await middleware(new Request('https://ubica.amifincas.es/publicar/compartir', { method: 'POST', body: new FormData() }));
+assert.equal(r.status, 303); assert.equal(r.headers.get('location'), 'https://ubica.amifincas.es/publicar?compartido=error'); ok('compartir sin service worker → aviso en «Subir inmueble»');
 
 // robots y sitemap
 assert.ok((await (await go('https://ubica.amifincas.es/robots.txt')).text()).includes('Sitemap: https://ubica.amifincas.es/sitemap.xml'));

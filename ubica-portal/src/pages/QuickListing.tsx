@@ -15,12 +15,15 @@ import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
 import { useAuth, useAuthenticatedFetch } from '../contexts/AuthContext';
 import { PROPERTY_TYPES, publishesDirectly } from '../utils/propertyStatus';
 import type { ListingDraft } from '../services/apiService';
+import { takeShared } from '../utils/shareInbox';
 
 /**
  * Subir un inmueble desde el móvil en pocos pasos grandes, pensado para quien recibe por WhatsApp
  * las fotos y las características que manda el propietario: fotos de la galería, pegar el mensaje
  * (la IA rellena los datos y escribe la descripción), repasar y publicar.
  * Todo se guarda en este dispositivo mientras tanto: si le llaman a mitad, sigue donde lo dejó.
+ * También se puede llegar compartiendo desde WhatsApp (Compartir → Ubica, en Android con la app instalada):
+ * las fotos se suben y el texto se lee como si se hubiera pegado.
  */
 
 const STORAGE_KEY = 'ubica-quick-listing';
@@ -110,6 +113,7 @@ export default function QuickListing() {
   const [busy, setBusy] = useState<'' | 'reading' | 'writing' | 'publishing'>('');
   const [error, setError] = useState('');
   const [done, setDone] = useState<{ id: number; outcome: 'published' | 'review' | 'draft' } | null>(null);
+  const [notice, setNotice] = useState('');
   const fileInput = useRef<HTMLInputElement>(null);
   const reviewFirst = !publishesDirectly(user);
 
@@ -122,7 +126,7 @@ export default function QuickListing() {
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft(d => ({ ...d, [key]: value }));
   const go = (step: number) => { setError(''); set('step', step); };
 
-  const addPhotos = async (files: FileList | null) => {
+  const addPhotos = async (files: FileList | File[] | null) => {
     if (!files || files.length === 0) return;
     setError('');
     const list = Array.from(files).slice(0, 30);
@@ -140,6 +144,39 @@ export default function QuickListing() {
       if (fileInput.current) fileInput.current.value = '';
     }
   };
+
+  // Lo compartido desde WhatsApp (lo deja el service worker). Se mira siempre al abrir, no solo con ?compartido:
+  // si antes hubo que iniciar sesión, se llega aquí sin el parámetro
+  const sharedChecked = useRef(false);
+  useEffect(() => {
+    if (sharedChecked.current) return;
+    sharedChecked.current = true;
+    const flag = new URLSearchParams(window.location.search).get('compartido');
+    if (flag) navigate('/publicar', { replace: true }); // recargar no debe repetir el aviso
+    (async () => {
+      const shared = await takeShared();
+      if (!shared) {
+        if (flag) setNotice('No ha llegado lo que has compartido. Vuelve a compartirlo desde WhatsApp con «Compartir → Ubica».');
+        return;
+      }
+      const parts: string[] = [];
+      if (shared.files.length) {
+        parts.push(shared.files.length === 1 ? 'Ha llegado 1 foto de WhatsApp.' : `Han llegado ${shared.files.length} fotos de WhatsApp.`);
+        setDraft(d => ({ ...d, step: 0 }));
+        await addPhotos(shared.files);
+      }
+      if (shared.text) {
+        const message = draft.message.trim() ? [draft.message.trim(), shared.text].join('\n\n') : shared.text;
+        set('message', message);
+        parts.push('Hemos leído el mensaje y rellenado los datos: repásalos.');
+        await readMessage(message);
+      } else {
+        parts.push('Ahora comparte también el mensaje del vendedor (Compartir → Ubica), o pulsa «Siguiente».');
+      }
+      setNotice(parts.join(' '));
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const makeCover = (url: string) => set('photos', [url, ...draft.photos.filter(p => p !== url)]);
   const removePhoto = (url: string) => set('photos', draft.photos.filter(p => p !== url));
@@ -170,15 +207,15 @@ export default function QuickListing() {
     description: d.description ?? prev.description,
   }));
 
-  const readMessage = async () => {
-    if (draft.message.trim().length < 3) {
+  const readMessage = async (message = draft.message) => {
+    if (message.trim().length < 3) {
       setError('Pega primero el mensaje del vendedor.');
       return;
     }
     setBusy('reading');
     setError('');
     try {
-      const d = await api.draftListing(draft.message);
+      const d = await api.draftListing(message);
       applyDraft(d);
       set('step', 2);
     } catch (err) {
@@ -300,9 +337,16 @@ export default function QuickListing() {
 
   return (
     <Screen title={STEPS[step]} step={step} onBack={back} onClose={() => navigate(myListings)}>
+      {notice && (
+        <p role="status" className="mb-5 rounded-2xl bg-emerald-50 p-4 text-base font-medium text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100">
+          {notice}
+        </p>
+      )}
       {step === 0 && (
         <div className="space-y-5">
-          <p className="text-lg text-gray-700 dark:text-gray-300">Elige las fotos que te ha mandado el vendedor. La primera será la portada.</p>
+          <p className="text-lg text-gray-700 dark:text-gray-300">
+            Elige las fotos que te ha mandado el vendedor, o compártelas desde WhatsApp con «Compartir → Ubica». La primera será la portada.
+          </p>
           <input ref={fileInput} type="file" accept="image/*" multiple className="hidden" onChange={(e) => addPhotos(e.target.files)} />
           <button type="button" onClick={() => fileInput.current?.click()} disabled={uploading > 0} className={primary}>
             <CameraIcon className="h-6 w-6" /> {uploading > 0 ? `Subiendo fotos… (faltan ${uploading})` : 'Añadir fotos'}
@@ -348,7 +392,7 @@ export default function QuickListing() {
             <button type="button" onClick={pasteMessage} className={secondary}><ClipboardDocumentIcon className="h-6 w-6" /> Pegar</button>
           )}
           <Footer error={error}>
-            <button type="button" onClick={readMessage} disabled={busy === 'reading'} className={primary}>
+            <button type="button" onClick={() => readMessage()} disabled={busy === 'reading'} className={primary}>
               <SparklesIcon className="h-6 w-6" /> {busy === 'reading' ? 'Leyendo el mensaje…' : 'Rellenar los datos'}
             </button>
             <button type="button" onClick={() => go(2)} className="w-full py-3 text-base font-semibold text-emerald-700 underline dark:text-emerald-400">

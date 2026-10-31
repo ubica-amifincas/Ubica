@@ -422,6 +422,10 @@ export default async function middleware(request: Request): Promise<Response> {
   const host = url.hostname;
   const path = normalizePath(url.pathname);
 
+  // Compartir con Ubica lo recoge el service worker; si llega aquí (aún sin él), se pide volver a compartir
+  if (request.method === 'POST' && path === '/publicar/compartir') {
+    return Response.redirect(`${url.origin}/publicar?compartido=error`, 303);
+  }
   // www.amifincas.es y la dirección antigua /ami-fincas: las redirecciones de vercel.json; /mcp: la reescritura al backend
   if (host === 'www.amifincas.es' || path === '/ami-fincas' || path === '/mcp') return next();
   if (path === '/robots.txt') return robots(host);
