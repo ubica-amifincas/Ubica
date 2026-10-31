@@ -38,7 +38,7 @@ const ok = (m) => console.log('  ✓', m);
 
 // Portada de Ubica
 let r = await go('https://ubica.amifincas.es/'); let h = await html(r);
-assert.equal(r.status, 200); assert.equal(title(h), 'Ubica by AMI Fincas | Inmuebles en venta y alquiler en la Región de Murcia'); assert.equal(canonical(h), 'https://ubica.amifincas.es/');
+assert.equal(r.status, 200); assert.equal(title(h), 'Ubica by AMI Fincas | Inmuebles en Murcia, Alicante y toda España'); assert.equal(canonical(h), 'https://ubica.amifincas.es/');
 assert.ok(h.includes('"@type":"WebSite"') && !meta(h, 'robots')); assert.equal(meta(h, 'og:image'), 'https://ubica.amifincas.es/og-ubica.jpg');
 ok('portada de Ubica: título, canónica, WebSite, imagen para redes');
 

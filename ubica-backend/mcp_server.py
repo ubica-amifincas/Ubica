@@ -47,7 +47,7 @@ TYPE_LABELS = {
 }
 
 INSTRUCTIONS = f"""Ubica ({SITE}) es el portal inmobiliario de AMI Fincas: viviendas, locales y terrenos en venta y alquiler
-en toda España, sobre todo en la Región de Murcia. Precios en euros.
+en toda España, sobre todo en la Región de Murcia y la provincia de Alicante. Precios en euros.
 - Busca con buscar_inmuebles y amplía con ver_inmueble. Usa solo los datos que devuelven las herramientas: no inventes
   inmuebles, precios ni características, y da siempre el enlace (url) del anuncio.
 - Si no hay resultados, dilo y sugiere ampliar la zona o el precio; zonas_con_oferta dice dónde hay oferta.
@@ -58,7 +58,7 @@ en toda España, sobre todo en la Región de Murcia. Precios en euros.
 mcp = MCPServer(
     name="ubica",
     title="Ubica · Portal inmobiliario de AMI Fincas",
-    description="Busca viviendas en venta y alquiler en España (sobre todo en la Región de Murcia) y contacta con AMI Fincas.",
+    description="Busca viviendas en venta y alquiler en España (sobre todo en la Región de Murcia y Alicante) y contacta con AMI Fincas.",
     instructions=INSTRUCTIONS,
     website_url=SITE,
     version="1.0.0",

@@ -79,8 +79,11 @@ const DEFAULT_FILTERS: PropertyFilters = { type: '', location: '', minPrice: 0, 
 
 const BASE_LOCATIONS = [
   ['murcia', 'location.murcia'], ['cartagena', 'location.cartagena'], ['lorca', 'location.lorca'], ['molina', 'location.molina'],
-  ['torre', 'location.torre'], ['aguilas', 'location.aguilas'], ['cieza', 'location.cieza'], ['yecla', 'location.yecla'],
+  // «torre pacheco» completo: con «torre» a secas también salía Torrevieja
+  ['torre pacheco', 'location.torre'], ['aguilas', 'location.aguilas'], ['cieza', 'location.cieza'], ['yecla', 'location.yecla'],
   ['jumilla', 'location.jumilla'], ['san javier', 'location.sanjavier'], ['mazarron', 'location.mazarron'], ['mar menor', 'location.marmenor'],
+  // Provincia de Alicante
+  ['alicante', 'location.alicante'], ['torrevieja', 'location.torrevieja'], ['pilar de la horadada', 'location.pilar'], ['orihuela', 'location.orihuela'],
 ] as const;
 
 // La búsqueda vive en la URL para poder compartirla, guardarla en marcadores o recargar sin perderla.

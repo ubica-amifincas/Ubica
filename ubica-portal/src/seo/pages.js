@@ -8,8 +8,8 @@
 export const UBICA_ORIGIN = 'https://ubica.amifincas.es';
 export const AMI_ORIGIN = 'https://amifincas.es';
 
-export const UBICA_TITLE = 'Ubica by AMI Fincas | Inmuebles en venta y alquiler en la Región de Murcia';
-export const UBICA_DESCRIPTION = 'Ubica, el portal inmobiliario de AMI Fincas: pisos, casas, apartamentos, bajos comerciales y terrenos en venta y alquiler en la Región de Murcia, de la ciudad a la costa del Mar Menor.';
+export const UBICA_TITLE = 'Ubica by AMI Fincas | Inmuebles en Murcia, Alicante y toda España';
+export const UBICA_DESCRIPTION = 'Ubica, el portal inmobiliario de AMI Fincas: pisos, casas, apartamentos, bajos comerciales y terrenos en venta y alquiler en la Región de Murcia, la provincia de Alicante y toda España.';
 export const AMI_TITLE = 'AMI Fincas | Administración de fincas en Murcia y Alicante';
 export const AMI_DESCRIPTION = 'AMI Fincas: administración de comunidades de propietarios, gestión de alquileres y correduría de seguros en la Región de Murcia y Alicante. Presupuesto sin compromiso.';
 
@@ -23,7 +23,7 @@ export const AMI_SITE_PATHS = ['/', ...AMI_ONLY_PATHS, '/aviso-legal', '/privacy
 /** @type {Record<string, [string, string?]>} */
 const UBICA_PUBLIC = {
   '/': [UBICA_TITLE, UBICA_DESCRIPTION],
-  '/about': ['Sobre nosotros | Ubica', 'Ubica es el portal inmobiliario de AMI Fincas, con base en la Región de Murcia y para toda España: quiénes somos y cómo te ayudamos a comprar, vender o alquilar.'],
+  '/about': ['Sobre nosotros | Ubica', 'Ubica es el portal inmobiliario de AMI Fincas, con base en la Región de Murcia y Alicante y para toda España: quiénes somos y cómo te ayudamos a comprar, vender o alquilar.'],
   '/contact': ['Contacto | Ubica', 'Contacta con Ubica y AMI Fincas: teléfono, WhatsApp, correo y oficinas en Murcia y San Pedro del Pinatar.'],
   '/entretenimiento': ['Ubica Play · Entretenimiento | Ubica', 'Ubica Play: juegos sobre el mercado inmobiliario para poner a prueba tu ojo para los precios.'],
   '/entretenimiento/tasador': ['Tasador Exprés · Ubica Play', 'Juego de Ubica Play: adivina el precio de inmuebles reales a partir de sus fotos, la zona y los metros.'],

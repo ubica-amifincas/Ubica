@@ -284,11 +284,12 @@ const PropertyFormModal: React.FC<PropertyFormModalProps> = ({ isOpen, onClose, 
 
     // --- Ubicación -----------------------------------------------------------
     const locateAddress = async () => {
-        const query = [form.address, form.location, 'Región de Murcia', 'España'].filter(Boolean).join(', ');
+        // Toda España; Murcia y Alicante solo tienen preferencia (viewbox sin limitar), para que un «San Javier» sea el de aquí
+        const query = [form.address, form.location, 'España'].filter(Boolean).join(', ');
         if (!form.address.trim() && !form.location.trim()) return;
         setGeocoding('busy');
         try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=es&q=${encodeURIComponent(query)}`, {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=es&viewbox=-2.5,38.9,0.3,37.3&bounded=0&q=${encodeURIComponent(query)}`, {
                 headers: { 'Accept-Language': 'es' },
             });
             const [hit] = await res.json();
