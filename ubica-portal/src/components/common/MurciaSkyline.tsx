@@ -96,10 +96,15 @@ const TREES: Tree[] = (() => {
 const palmTransform = ({ x, scale, flip }: Palm) =>
   `translate(${(x + (flip ? 50 : -50) * scale).toFixed(1)} ${(GROUND - 100 * scale).toFixed(1)}) scale(${flip ? -scale : scale} ${scale})`;
 
-export default function MurciaSkyline({ className = '' }: { className?: string }) {
+type Part = 'far' | 'mount' | 'city' | 'stone' | 'bridge' | 'water' | 'shine' | 'leaf' | 'grove' | 'trunk' | 'fruit';
+
+/** `colors` sustituye los colores de la web (p. ej. una silueta de un solo tono en el escaparate). */
+export default function MurciaSkyline({ className = '', colors }: { className?: string; colors?: Partial<Record<Part, string>> }) {
   const { x: nx, y: ny, r: nr } = NORIA;
+  // En línea: pesa más que las variables de las clases, también en modo oscuro
+  const style = colors && Object.fromEntries(Object.entries(colors).map(([part, color]) => [`--mur-${part}`, color])) as React.CSSProperties;
   return (
-    <div aria-hidden="true" className={`pointer-events-none select-none overflow-hidden
+    <div aria-hidden="true" style={style} className={`pointer-events-none select-none overflow-hidden
       [--mur-far:#d4e8dd] [--mur-mount:#bfdccf] [--mur-city:#e6d3b8] [--mur-stone:#c9a77e] [--mur-bridge:#b8936c]
       [--mur-water:#9fd6cb] [--mur-shine:#e4f5f1] [--mur-leaf:#3f8f5a] [--mur-grove:#5d9e52] [--mur-trunk:#7a5a3c] [--mur-fruit:#f5a623]
       dark:[--mur-far:#14262f] dark:[--mur-mount:#183039] dark:[--mur-city:#1d2a38] dark:[--mur-stone:#2a3a4a]

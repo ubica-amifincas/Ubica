@@ -10,6 +10,7 @@ import { AMI, UBICA } from '../seo/content.js';
 import { UBICA_ORIGIN, propertyPath } from '../seo/pages';
 import { getTypeLabel, normalizeType } from '../utils/propertyStatus';
 import { WhatsAppIcon } from '../components/layout/Footer';
+import MurciaSkyline from '../components/common/MurciaSkyline';
 
 /**
  * Escaparate digital: la pantalla del cristal de la oficina de AMI Fincas, de cara a la calle.
@@ -34,6 +35,14 @@ const CACHE_KEY = 'escaparate-viviendas';
 
 const TEAL = '#23707f';
 const MINT = '#8fd0c3';
+const INK = '#0d2a30';
+// Fondo cálido de las fichas, a juego con las ilustraciones de atardecer de la web
+const CREAM = '#fbf7f1';
+
+/** La silueta de Murcia en un solo tono (sobre la barra de marca o el fondo de las oficinas). */
+const oneTone = (color: string) => Object.fromEntries(
+    (['far', 'mount', 'city', 'stone', 'bridge', 'water', 'shine', 'leaf', 'grove', 'trunk', 'fruit'] as const).map(part => [part, color]),
+);
 const WHATSAPP_URL = `https://wa.me/34${AMI.whatsapp.replace(/\s/g, '')}`;
 
 interface Options {
@@ -279,7 +288,7 @@ function Showcase() {
                             {slide.kind === 'listing'
                                 ? <ListingSlide listing={slide.listing} portrait={portrait} seconds={options.seconds}
                                     broken={!!slide.listing.image && brokenImages.has(slide.listing.image)} onBroken={markBroken} />
-                                : <AmiSlide page={slide.page} portrait={portrait} />}
+                                : <AmiSlide page={slide.page} portrait={portrait} seconds={options.seconds} />}
                         </motion.div>
                     </AnimatePresence>
 
@@ -330,7 +339,7 @@ function ListingSlide({ listing, portrait, seconds, broken, onBroken }: {
     ].filter(Boolean) as { value: number | string; label: string }[];
 
     return (
-        <div className={`flex h-full w-full bg-white ${portrait ? 'flex-col' : 'flex-row'}`}>
+        <div className={`flex h-full w-full ${portrait ? 'flex-col' : 'flex-row'}`} style={{ backgroundColor: CREAM }}>
             <div className={`relative shrink-0 overflow-hidden bg-[#0d2a30] ${portrait ? 'h-[50%] w-full' : 'h-full w-[60%]'}`}>
                 {listing.image && !broken ? (
                     <motion.img
@@ -377,11 +386,11 @@ function ListingSlide({ listing, portrait, seconds, broken, onBroken }: {
                     )}
                 </div>
 
-                <div className="flex items-center gap-[3vmin] rounded-[2.5vmin] p-[2vmin]" style={{ backgroundColor: '#e9f6f3' }}>
+                <div className="flex items-center gap-[3vmin] rounded-[2.5vmin] bg-white p-[2vmin] shadow-sm ring-1 ring-black/5">
                     <QrCode value={ficha(listing)} className="h-[24vmin] w-[24vmin] shrink-0 rounded-[1.2vmin] bg-white p-[1vmin] text-slate-900" label="Código QR de la ficha de esta vivienda" />
                     <div>
                         <p className="text-[3.4vmin] font-bold leading-tight text-slate-900">Escanea y mira todas las fotos</p>
-                        <p className="mt-[1vmin] text-[2.5vmin] leading-snug text-slate-600">Detalles, mapa y contacto en Ubica, el portal de AMI Fincas</p>
+                        <p className="mt-[1vmin] text-[2.5vmin] leading-snug text-slate-600">Detalles, mapa y contacto en <strong className="font-semibold" style={{ color: TEAL }}>Ubica by AMI Fincas</strong></p>
                     </div>
                 </div>
             </div>
@@ -391,20 +400,36 @@ function ListingSlide({ listing, portrait, seconds, broken, onBroken }: {
 
 // ─── AMI Fincas ─────────────────────────────────────────────────────────────
 
-function AmiSlide({ page, portrait }: { page: AmiPage; portrait: boolean }) {
+/** Ilustración a pantalla completa, con zoom lento y oscurecida donde va el texto (izquierda; abajo en vertical). */
+function Backdrop({ src, portrait, seconds }: { src: string; portrait: boolean; seconds: number }) {
+    return (
+        <>
+            <motion.img src={src} alt="" className="absolute inset-0 h-full w-full object-cover"
+                initial={{ scale: 1 }} animate={{ scale: 1.06 }} transition={{ duration: seconds + 1, ease: 'linear' }} />
+            <div className="absolute inset-0" style={{
+                background: portrait
+                    ? 'linear-gradient(to top, rgba(13,42,48,0.96) 45%, rgba(13,42,48,0.7) 70%, rgba(13,42,48,0.2))'
+                    : 'linear-gradient(to right, rgba(13,42,48,0.95) 30%, rgba(13,42,48,0.6) 58%, rgba(13,42,48,0))',
+            }} />
+        </>
+    );
+}
+
+function AmiSlide({ page, portrait, seconds }: { page: AmiPage; portrait: boolean; seconds: number }) {
     const heading = (kicker: string, title: string) => (
         <>
             <p className="text-[3vmin] font-black uppercase tracking-[0.25em]" style={{ color: MINT }}>{kicker}</p>
             <h1 className="mt-[1.5vmin] font-display text-[7vmin] font-extrabold leading-[1.05] text-white">{title}</h1>
         </>
     );
-    const shell = 'flex h-full w-full overflow-hidden text-white';
+    const shell = 'relative flex h-full w-full overflow-hidden text-white';
     const background = { background: `radial-gradient(circle at 15% 20%, #2b8597 0%, ${TEAL} 35%, #0d2a30 100%)` };
 
     if (page === 'services') {
         return (
-            <div className={`${shell} ${portrait ? 'flex-col' : 'flex-row'}`} style={background}>
-                <div className={`flex flex-col justify-center ${portrait ? 'px-[6vmin] pt-[8vmin]' : 'w-[58%] px-[7vmin]'}`}>
+            <div className={`${shell} ${portrait ? 'flex-col justify-end' : 'items-center'}`} style={{ backgroundColor: INK }}>
+                <Backdrop src="/ami-fincas/urbanizacion-servicios.webp" portrait={portrait} seconds={seconds} />
+                <div className={`relative flex flex-col justify-center ${portrait ? 'px-[6vmin] pb-[7vmin]' : 'w-[55%] px-[7vmin]'}`}>
                     {heading(`Desde ${AMI.since}`, 'Administración de fincas en Murcia y Alicante')}
                     <ul className="mt-[4vmin] space-y-[2vmin]">
                         {AMI.services.map(([name]) => (
@@ -414,9 +439,6 @@ function AmiSlide({ page, portrait }: { page: AmiPage; portrait: boolean }) {
                         ))}
                     </ul>
                 </div>
-                <div className="relative flex flex-1 items-center justify-center p-[4vmin]">
-                    <img src="/ami-fincas/comunidad-piscina.webp" alt="" className="max-h-full max-w-full rounded-[3vmin] object-contain shadow-2xl" />
-                </div>
             </div>
         );
     }
@@ -424,8 +446,9 @@ function AmiSlide({ page, portrait }: { page: AmiPage; portrait: boolean }) {
     if (page === 'offices') {
         return (
             <div className={`${shell} flex-col justify-center px-[6vmin] py-[5vmin]`} style={background}>
-                {heading('Te atendemos en persona', 'Nuestras oficinas')}
-                <div className={`mt-[4vmin] grid min-h-0 gap-[4vmin] ${portrait ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                <MurciaSkyline className="absolute inset-x-0 bottom-0 h-[22vmin] opacity-30" colors={oneTone(MINT)} />
+                <div className="relative">{heading('Te atendemos en persona', 'Nuestras oficinas')}</div>
+                <div className={`relative mt-[4vmin] grid min-h-0 gap-[4vmin] ${portrait ? 'grid-cols-1' : 'grid-cols-2'}`}>
                     {AMI.offices.map((o, i) => (
                         <div key={o.name} className={`flex min-h-0 overflow-hidden rounded-[3vmin] bg-white text-slate-900 shadow-2xl ${portrait ? 'flex-row' : 'flex-col'}`}>
                             <img
@@ -450,14 +473,15 @@ function AmiSlide({ page, portrait }: { page: AmiPage; portrait: boolean }) {
     const ubica = page === 'ubica';
     const rentals = AMI.services.find(([name]) => name.includes('alquiler'));
     return (
-        <div className={`${shell} items-center gap-[6vmin] px-[7vmin] py-[6vmin] ${portrait ? 'flex-col justify-center' : 'flex-row'}`} style={background}>
-            <div className={portrait ? 'w-full' : 'flex-1'}>
+        <div className={`${shell} items-center gap-[6vmin] px-[7vmin] py-[6vmin] ${portrait ? 'flex-col justify-end' : 'flex-row'}`} style={{ backgroundColor: INK }}>
+            <Backdrop src={ubica ? '/ubica-portada.webp' : '/ami-fincas/comunidad-piscina.webp'} portrait={portrait} seconds={seconds} />
+            <div className={`relative ${portrait ? 'w-full' : 'flex-1'}`}>
                 {ubica
-                    ? heading('Ubica · el portal de AMI Fincas', 'Encuentra tu próxima casa desde el móvil')
+                    ? heading('Ubica by AMI Fincas', 'Encuentra tu próxima casa desde el móvil')
                     : heading('¿Tienes una vivienda en alquiler?', 'Nosotros nos ocupamos de todo')}
                 <p className="mt-[3vmin] max-w-[90vmin] text-[3.4vmin] leading-snug text-white/85">
                     {ubica
-                        ? 'Pisos, casas, locales y terrenos en venta y alquiler, con búsqueda en el mapa y un asistente con inteligencia artificial.'
+                        ? 'Pisos, casas, apartamentos, bajos comerciales y terrenos en Murcia, Alicante y toda España, con búsqueda en el mapa y un asistente con inteligencia artificial.'
                         : rentals?.[1] ?? AMI.summary}
                 </p>
                 {ubica && (
@@ -466,7 +490,7 @@ function AmiSlide({ page, portrait }: { page: AmiPage; portrait: boolean }) {
                     </p>
                 )}
             </div>
-            <div className="flex shrink-0 flex-col items-center rounded-[3vmin] bg-white p-[3vmin] text-slate-900 shadow-2xl">
+            <div className="relative flex shrink-0 flex-col items-center rounded-[3vmin] bg-white p-[3vmin] text-slate-900 shadow-2xl">
                 <QrCode value={ubica ? `${UBICA_ORIGIN}/` : WHATSAPP_URL} className="h-[34vmin] w-[34vmin]" label={ubica ? 'Código QR de Ubica' : 'Código QR de WhatsApp de AMI Fincas'} />
                 <p className="mt-[2vmin] flex items-center gap-[1.2vmin] text-[3.2vmin] font-bold">
                     {ubica ? <>Escanea y busca</> : <><WhatsAppIcon className="h-[3.6vmin] w-[3.6vmin] text-[#25d366]" />Escríbenos por WhatsApp</>}
@@ -481,8 +505,9 @@ function AmiSlide({ page, portrait }: { page: AmiPage; portrait: boolean }) {
 function BrandBar({ portrait, counter, offlineSince }: { portrait: boolean; counter: string | null; offlineSince: number | null }) {
     const samePhone = AMI.phone === AMI.whatsapp;
     return (
-        <div className={`relative flex shrink-0 items-center justify-between gap-[3vmin] text-white ${portrait ? 'h-[17vmin] px-[4vmin]' : 'h-[13vmin] px-[4vmin]'}`} style={{ backgroundColor: TEAL }}>
-            <div className="flex items-center gap-[2vmin]">
+        <div className={`relative flex shrink-0 items-center justify-between gap-[3vmin] overflow-hidden text-white ${portrait ? 'h-[17vmin] px-[4vmin]' : 'h-[13vmin] px-[4vmin]'}`} style={{ backgroundColor: TEAL }}>
+            <MurciaSkyline className="absolute inset-0 opacity-[0.14]" colors={oneTone('#ffffff')} />
+            <div className="relative flex items-center gap-[2vmin]">
                 <span className="flex items-center rounded-[1.5vmin] bg-white px-[1.4vmin] py-[1vmin]">
                     <img src="/ami-fincas/logo-ami-mark.png" alt="" className="h-[6.5vmin] w-auto" />
                 </span>
@@ -492,7 +517,7 @@ function BrandBar({ portrait, counter, offlineSince }: { portrait: boolean; coun
                 </div>
             </div>
 
-            <div className={`flex items-center ${portrait ? 'flex-col items-end gap-[0.8vmin]' : 'gap-[4vmin]'}`}>
+            <div className={`relative flex items-center ${portrait ? 'flex-col items-end gap-[0.8vmin]' : 'gap-[4vmin]'}`}>
                 <p className="flex items-center gap-[1.5vmin] font-display text-[5.4vmin] font-extrabold leading-none tracking-tight">
                     <PhoneIcon className="h-[4.6vmin] w-[4.6vmin]" style={{ color: MINT }} />{AMI.phone}
                 </p>
