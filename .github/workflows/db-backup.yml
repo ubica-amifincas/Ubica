@@ -44,13 +44,17 @@ jobs:
           sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y > /dev/null
           # Un pg_dump más nuevo puede volcar servidores más antiguos
           sudo apt-get install -y -qq postgresql-client-18 || sudo apt-get install -y -qq postgresql-client-17
-          pg_dump --version
+          # «pg_dump» a secas sigue apuntando al 16 que trae la máquina (y rechaza un servidor 17):
+          # se usa por su ruta el más nuevo instalado
+          bin=$(ls -d /usr/lib/postgresql/*/bin | sort -V | tail -1)
+          echo "PG_DUMP=$bin/pg_dump" >> "$GITHUB_ENV"
+          "$bin/pg_dump" --version
 
       - name: Volcar la base de datos
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          pg_dump "$SUPABASE_DB_URL" --schema=public --no-owner --no-privileges --format=custom --file=backup.dump
+          "$PG_DUMP" "$SUPABASE_DB_URL" --schema=public --no-owner --no-privileges --format=custom --file=backup.dump
           ls -l backup.dump
 
       - name: Subir a Supabase Storage
