@@ -8,8 +8,8 @@
 export const UBICA_ORIGIN = 'https://ubica.amifincas.es';
 export const AMI_ORIGIN = 'https://amifincas.es';
 
-export const UBICA_TITLE = 'Ubica - Portal inmobiliario';
-export const UBICA_DESCRIPTION = 'Ubica - Menos búsquedas, más precisión. Portal inmobiliario de AMI Fincas: pisos, casas y locales en venta y alquiler en toda España, especialmente en la Región de Murcia.';
+export const UBICA_TITLE = 'Ubica by AMI Fincas | Inmuebles en venta y alquiler en la Región de Murcia';
+export const UBICA_DESCRIPTION = 'Ubica, el portal inmobiliario de AMI Fincas: pisos, casas, apartamentos, bajos comerciales y terrenos en venta y alquiler en la Región de Murcia, de la ciudad a la costa del Mar Menor.';
 export const AMI_TITLE = 'AMI Fincas | Administración de fincas en Murcia y Alicante';
 export const AMI_DESCRIPTION = 'AMI Fincas: administración de comunidades de propietarios, gestión de alquileres y correduría de seguros en la Región de Murcia y Alicante. Presupuesto sin compromiso.';
 

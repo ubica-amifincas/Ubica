@@ -666,16 +666,20 @@ export default function Home() {
                 className="h-48 w-full object-cover object-[66%_50%] sm:h-full sm:object-[center_45%]" />
               <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent sm:bg-gradient-to-r sm:from-gray-950/90 sm:via-gray-950/55 sm:to-transparent" aria-hidden="true" />
             </div>
-            {/* Sello «by AMI Fincas»: quién respalda el portal */}
-            <a href={amiHref('/')} className="absolute right-3 top-3 inline-flex items-center gap-2 rounded-full bg-white/90 py-1 pl-1.5 pr-3 text-xs font-semibold text-gray-800 shadow backdrop-blur transition-colors hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white sm:right-5 sm:top-5 sm:text-sm">
-              <img src="/ami-fincas/logo-ami-mark.png" alt="" width={137} height={96} className="h-5 w-auto sm:h-6" />
-              {t('home.hero.byAmi')}
-            </a>
             <div className="-mt-6 px-4 pb-5 sm:mt-0 sm:px-8 sm:pb-7 sm:pt-32 lg:pt-40">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-300 sm:text-sm">{t('header.slogan')}</p>
               <h1 className="mt-2 max-w-xl font-display text-3xl font-black leading-tight text-white text-balance sm:text-4xl lg:text-5xl">
                 {t('home.hero.title')}
               </h1>
+              <p className="mt-3 max-w-xl text-base text-white/85 sm:text-lg">{t('home.hero.types')}</p>
+              {/* Quién respalda el portal, como parte del texto de la portada */}
+              <a href={amiHref('/')}
+                className="group mt-3 flex w-fit items-center gap-2 text-sm text-white/80 transition-colors hover:text-white focus:outline-none focus-visible:underline sm:text-base">
+                <img src="/ami-fincas/logo-ami-mark.png" alt="" width={137} height={96} className="h-5 w-auto sm:h-6" />
+                <span>
+                  {t('home.hero.byAmiPre')} <strong className="font-semibold text-white underline decoration-emerald-300/60 underline-offset-4 group-hover:decoration-emerald-300">AMI Fincas</strong>{t('home.hero.byAmiPost')}
+                </span>
+              </a>
 
               {/* Comprar o alquilar: lo primero que decide quien busca */}
               <div role="group" aria-label={t('home.hero.operation')} className="mt-5 inline-flex rounded-xl bg-white/15 p-1 backdrop-blur-md">
