@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, type MutableRefObject } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents, Polygon, ZoomControl } from 'react-leaflet';
 import { motion, AnimatePresence } from 'framer-motion';
 import L from 'leaflet';
@@ -20,6 +20,9 @@ import {
   ArrowPathIcon,
   ArrowUturnLeftIcon,
   HomeIcon,
+  HomeModernIcon,
+  ChatBubbleLeftRightIcon,
+  ArrowRightIcon,
 } from '@heroicons/react/24/outline';
 import { Slider } from '../components/ui/slider';
 import { PropertyCard, PropertyCardSkeleton } from '../components/property/PropertyCard';
@@ -32,6 +35,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { PROPERTY_TYPES, normalizeType } from '../utils/propertyStatus';
 import { useAIChat } from '../contexts/AIChatContext';
 import { propertyPath } from '../seo/pages';
+import { whatsappHref } from '../utils/contact';
 
 // Custom marker icon for properties with price
 const createPriceMarker = (price: number, isSelected: boolean = false) => {
@@ -68,6 +72,8 @@ type LatLng = { lat: number; lng: number };
 type Bounds = [[number, number], [number, number]];
 
 const MAX_PRICE = 1000000;
+// Por debajo de este número de anuncios, la rejilla se completa con las tarjetas de publicar y de pedir ayuda
+const FEW_LISTINGS = 6;
 const DEFAULT_FILTERS: PropertyFilters = { type: '', location: '', minPrice: 0, maxPrice: MAX_PRICE, bedrooms: 0, status: '', searchTerm: '' };
 
 const BASE_LOCATIONS = [
@@ -278,14 +284,25 @@ export default function Home() {
     }, { replace: true });
   }, [filters, searchTerm, viewMode, hasDrawnArea, drawnArea, boundsFilter, setSearchParams]);
 
-  // Ubicaciones del desplegable: las de siempre más la que venga en la URL (p. ej. "Murcia" desde el asistente)
+  // Zonas con más inmuebles publicados: accesos rápidos en la portada
+  const popularZones = useMemo(() => {
+    const counts = new Map<string, number>();
+    properties.forEach(p => { if (p.location) counts.set(p.location, (counts.get(p.location) || 0) + 1); });
+    return [...counts].sort((a, b) => b[1] - a[1]).slice(0, 5);
+  }, [properties]);
+
+  // Ubicaciones del desplegable: las de siempre, las de los inmuebles publicados que no encajen en ninguna
+  // (p. ej. San Pedro del Pinatar) y la que venga en la URL (p. ej. "Murcia" desde el asistente)
   const locationOptions = useMemo(() => {
     const options: { value: string; label: string }[] = BASE_LOCATIONS.map(([value, key]) => ({ value, label: t(key) }));
+    for (const [zone] of popularZones) {
+      if (!options.some(o => plain(zone).includes(plain(o.value)))) options.push({ value: zone, label: zone });
+    }
     if (filters.location && !options.some(o => plain(o.value) === plain(filters.location))) {
       options.push({ value: filters.location, label: filters.location });
     }
     return options;
-  }, [filters.location, t]);
+  }, [filters.location, popularZones, t]);
   const selectedLocation = locationOptions.find(o => plain(o.value) === plain(filters.location))?.value ?? '';
 
   // Center map on Murcia
@@ -625,8 +642,10 @@ export default function Home() {
             <path d="M12 2L13.09 8.26L18 6L14.74 10.91L21 12L14.74 13.09L18 18L13.09 15.74L12 22L10.91 15.74L6 18L9.26 13.09L3 12L9.26 10.91L6 6L10.91 8.26L12 2Z"
               className="fill-emerald-600 dark:fill-emerald-400" />
           </svg>
-          <span className={`font-semibold text-emerald-700 dark:text-emerald-300 whitespace-nowrap hidden sm:inline ${compact ? 'text-sm' : 'text-base'}`}>
-            {t('view.ia_mode')}
+          {/* En el móvil, «IA» a secas: solo el icono no se entendía */}
+          <span className={`font-semibold text-emerald-700 dark:text-emerald-300 whitespace-nowrap ${compact ? 'text-sm' : 'text-base'}`}>
+            <span className="sm:hidden">{t('view.ia_short')}</span>
+            <span className="hidden sm:inline">{t('view.ia_mode')}</span>
           </span>
         </div>
       </button>
@@ -635,16 +654,48 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Portada: eslogan y búsqueda, en el flujo normal de la página */}
+      {/* Portada: qué es Ubica, comprar o alquilar, búsqueda y zonas, sobre la ilustración de la costa */}
       {!isDrawingEnabled && viewMode !== 'map' && (
-        <div className="page-container pt-8 pb-4">
-          <div className="w-full rounded-3xl bg-emerald-600 shadow-xl px-4 py-5 sm:px-8 sm:py-6">
-            <div className="mb-5 rounded-2xl bg-black/30 px-6 md:px-8 py-4 text-center">
-              <h1 className="font-sans text-sm sm:text-lg md:text-xl font-semibold text-white tracking-wide text-balance leading-snug">
-                {t('header.slogan')}
+        <div className="page-container pt-4 pb-4 sm:pt-8">
+          <div className="relative isolate overflow-hidden rounded-3xl bg-gray-900 shadow-xl">
+            <img src="/ami-fincas/costa-mar-menor.webp" alt="" width={1024} height={940}
+              className="absolute inset-0 -z-10 h-full w-full object-cover object-[center_40%]" />
+            <div className="absolute inset-0 -z-10 bg-gradient-to-t from-gray-950/95 via-gray-950/60 to-gray-950/10" aria-hidden="true" />
+            <div className="px-4 pb-5 pt-14 sm:px-8 sm:pb-7 sm:pt-32 lg:pt-40">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-300 sm:text-sm">{t('header.slogan')}</p>
+              <h1 className="mt-2 max-w-3xl font-display text-3xl font-black leading-tight text-white text-balance sm:text-4xl lg:text-5xl">
+                {t('home.hero.title')}
               </h1>
+
+              {/* Comprar o alquilar: lo primero que decide quien busca */}
+              <div role="group" aria-label={t('home.hero.operation')} className="mt-5 inline-flex rounded-xl bg-white/15 p-1 backdrop-blur-md">
+                {([['', 'home.hero.all'], ['for-sale', 'home.hero.buy'], ['for-rent', 'home.hero.rent']] as const).map(([value, key]) => (
+                  <button key={key} type="button" aria-pressed={filters.status === value}
+                    onClick={() => handleFilterChange('status', value)}
+                    className={`rounded-lg px-4 py-1.5 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-5 sm:py-2 ${filters.status === value ? 'bg-white text-gray-900 shadow' : 'text-white hover:bg-white/15'}`}>
+                    {t(key)}
+                  </button>
+                ))}
+              </div>
+
+              <div ref={heroSearchRef} className="mt-3">{renderSearchRow(false)}</div>
+
+              {popularZones.length > 0 && (
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium text-white/80">{t('home.hero.zones')}</span>
+                  {popularZones.map(([zone, count]) => {
+                    const active = plain(filters.location) === plain(zone);
+                    return (
+                      <button key={zone} type="button" aria-pressed={active}
+                        onClick={() => handleFilterChange('location', active ? '' : zone)}
+                        className={`rounded-full border px-3 py-1 text-sm font-medium backdrop-blur-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white ${active ? 'border-white bg-white text-gray-900' : 'border-white/30 bg-white/10 text-white hover:bg-white/20'}`}>
+                        {zone} <span className={active ? 'text-gray-500' : 'text-white/60'}>{count}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-            <div ref={heroSearchRef}>{renderSearchRow(false)}</div>
           </div>
         </div>
       )}
@@ -1373,6 +1424,32 @@ export default function Home() {
                   />
                 </motion.div>
               ))}
+              {/* Con pocos anuncios, la rejilla no se queda medio vacía: publicar y pedir ayuda */}
+              {filteredProperties.length > 0 && properties.length < FEW_LISTINGS && (
+                <>
+                  <Link to="/publicar"
+                    className="group relative isolate flex min-h-[220px] flex-col justify-end overflow-hidden rounded-2xl bg-gray-900 p-5 text-white shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
+                    <img src="/ami-fincas/comunidad-piscina.webp" alt="" loading="lazy"
+                      className="absolute inset-0 -z-10 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transition-none" />
+                    <div className="absolute inset-0 -z-10 bg-gradient-to-t from-gray-950/95 via-gray-950/60 to-transparent" aria-hidden="true" />
+                    <HomeModernIcon className="h-8 w-8 text-emerald-300" aria-hidden="true" />
+                    <h2 className="mt-3 text-lg font-black leading-snug">{t('home.promo.sell.title')}</h2>
+                    <p className="mt-1 text-sm text-white/80">{t('home.promo.sell.desc')}</p>
+                    <span className="mt-4 inline-flex w-fit items-center gap-1.5 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-bold">
+                      {t('home.promo.sell.cta')} <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
+                    </span>
+                  </Link>
+                  <a href={whatsappHref(t('home.promo.help.message'))} target="_blank" rel="noopener noreferrer"
+                    className="flex min-h-[220px] flex-col justify-end rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-100 p-5 shadow-lg transition-shadow hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-emerald-900 dark:from-emerald-950 dark:to-gray-800">
+                    <ChatBubbleLeftRightIcon className="h-8 w-8 text-emerald-600 dark:text-emerald-300" aria-hidden="true" />
+                    <h2 className="mt-3 text-lg font-black leading-snug text-gray-900 dark:text-white">{t('home.promo.help.title')}</h2>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">{t('home.promo.help.desc')}</p>
+                    <span className="mt-4 inline-flex w-fit items-center gap-1.5 rounded-lg bg-[#25D366] px-4 py-2 text-sm font-bold text-white">
+                      {t('home.promo.help.cta')}
+                    </span>
+                  </a>
+                </>
+              )}
             </div>
 
             {/* No Results */}

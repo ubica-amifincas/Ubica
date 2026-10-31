@@ -15,7 +15,8 @@ import {
   PaperAirplaneIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  ArrowsPointingOutIcon
+  ArrowsPointingOutIcon,
+  ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
@@ -23,6 +24,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { PropertyCard } from '../components/property/PropertyCard';
 import PhotoViewer, { useFollowThumb } from '../components/property/PhotoViewer';
+import PublicContactForm from '../components/property/PublicContactForm';
+import { MAIN_PHONE, tel, whatsappHref } from '../utils/contact';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../contexts/AuthContext';
 import appService from '../services';
@@ -105,7 +108,7 @@ export default function PropertyDetail() {
   // "Contactar" (panel lateral y barra inferior) lleva a la sección de contacto y pone el foco en ella
   const contactSectionRef = useRef<HTMLElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
-  const loginLinkRef = useRef<HTMLAnchorElement>(null);
+  const publicNameRef = useRef<HTMLInputElement>(null);
   const [focusContactPending, setFocusContactPending] = useState(false);
 
   // Touch/swipe state for carousel
@@ -202,7 +205,7 @@ export default function PropertyDetail() {
   // Foco tras abrir el formulario (necesita que el textarea ya esté montado)
   useEffect(() => {
     if (!focusContactPending) return;
-    const target = user ? messageInputRef.current : loginLinkRef.current;
+    const target = user ? messageInputRef.current : publicNameRef.current;
     target?.focus({ preventScroll: true });
     setFocusContactPending(false);
   }, [focusContactPending, showContactForm, user]);
@@ -589,13 +592,22 @@ export default function PropertyDetail() {
               </h2>
 
               <div className="grid gap-3 sm:grid-cols-2">
-                <button
-                  type="button"
+                <a
+                  href={tel(MAIN_PHONE)}
                   className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 px-4 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
                 >
                   <PhoneIcon className="h-5 w-5" />
-                  <span>{t('details.callNow')}</span>
-                </button>
+                  <span>{t('details.callNow')} · {MAIN_PHONE}</span>
+                </a>
+                <a
+                  href={whatsappHref(t('details.whatsapp_text', { title: property.title, url: `${UBICA_ORIGIN}${propertyPath(property)}` }))}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3 font-semibold text-white transition-colors hover:bg-[#1ebe5a]"
+                >
+                  <ChatBubbleLeftRightIcon className="h-5 w-5" />
+                  <span>WhatsApp</span>
+                </a>
 
                 {user ? (
                   <button
@@ -603,7 +615,7 @@ export default function PropertyDetail() {
                     onClick={() => setShowContactForm(!showContactForm)}
                     aria-expanded={showContactForm}
                     aria-controls="contact-form"
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-emerald-700"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-emerald-700 sm:col-span-2"
                   >
                     <EnvelopeIcon className="h-5 w-5" />
                     <span>{showContactForm ? t('details.closeChat') : t('details.sendMessage')}</span>
@@ -646,18 +658,12 @@ export default function PropertyDetail() {
                   </div>
                 )
               ) : (
-                <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50 p-4 text-center dark:border-emerald-800 dark:bg-emerald-950">
-                  <p className="text-sm text-emerald-800 dark:text-emerald-200 mb-3">
-                    {t('details.contact_login')}
-                  </p>
-                  <Link
-                    ref={loginLinkRef}
-                    to="/login"
-                    className="inline-block rounded-lg bg-emerald-600 px-6 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
-                  >
-                    {t('nav.login')}
-                  </Link>
-                </div>
+                <PublicContactForm
+                  ref={publicNameRef}
+                  propertyId={property.id}
+                  title={property.title}
+                  url={`${UBICA_ORIGIN}${propertyPath(property)}`}
+                />
               )}
             </section>
 

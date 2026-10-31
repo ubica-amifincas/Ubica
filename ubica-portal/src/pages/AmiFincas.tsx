@@ -20,15 +20,12 @@ import { useLanguage } from '../hooks/useLanguage';
 import { apiService } from '../services/apiService';
 import { ubicaHref } from '../utils/site';
 import MurciaSkyline from '../components/common/MurciaSkyline';
+import { MAIN_PHONE, WHATSAPP_NUMBER, EMAIL, tel } from '../utils/contact';
 
 const FOUNDED = 2014;
 
-// Datos de contacto (los mismos que la ficha de Google Maps de cada sede)
-export const MAIN_PHONE = '676 62 69 33';
-export const WHATSAPP_NUMBER = '34676626933';
-export const EMAIL = 'info@amifincas.es';
-
-export const tel = (phone: string) => `tel:+34${phone.replace(/\s+/g, '')}`;
+// Datos de contacto: en utils/contact (también los usa Ubica); se reexportan para la página de San Pedro
+export { MAIN_PHONE, WHATSAPP_NUMBER, EMAIL, tel };
 
 export function SectionHeading({ eyebrow, title, description, center = true }: { eyebrow?: string; title: string; description?: string; center?: boolean }) {
   return (
