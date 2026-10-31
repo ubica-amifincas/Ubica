@@ -75,6 +75,7 @@ const resources = {
       "property.studio": "Estudio",
       "property.duplex": "Dúplex",
       "property.land": "Terreno",
+      "property.commercial": "Local comercial",
       "property.chalet": "Chalet",
 
       // Property status
@@ -956,6 +957,7 @@ const resources = {
       "property.studio": "Studio",
       "property.duplex": "Duplex",
       "property.land": "Land",
+      "property.commercial": "Commercial premises",
       "property.chalet": "Chalet",
 
       // Property status

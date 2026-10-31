@@ -52,6 +52,7 @@ export const PROPERTY_TYPES = [
   { value: 'duplex', label: 'Dúplex' },
   { value: 'studio', label: 'Estudio' },
   { value: 'land', label: 'Terreno' },
+  { value: 'commercial', label: 'Local comercial' },
 ] as const;
 
 // Formas antiguas o en español que aún hay en la base de datos
@@ -59,6 +60,7 @@ const TYPE_ALIASES: Record<string, string> = {
   apartamento: 'apartment', piso: 'flat', casa: 'house', atico: 'penthouse', 'ático': 'penthouse',
   adosado: 'townhouse', 'casa adosada': 'townhouse', estudio: 'studio', 'dúplex': 'duplex',
   terreno: 'land', parcela: 'land', solar: 'land',
+  local: 'commercial', 'local comercial': 'commercial', 'bajo comercial': 'commercial', locales: 'commercial',
 };
 
 /** "Apartamento", "piso", "Ático"... -> la clave común ("apartment", "flat", "penthouse"). */

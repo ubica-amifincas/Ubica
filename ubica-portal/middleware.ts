@@ -38,7 +38,7 @@ const AI_BOTS = ['GPTBot', 'OAI-SearchBot', 'ChatGPT-User', 'ClaudeBot', 'Claude
 
 const TYPE_LABELS: Record<string, string> = {
   flat: 'Piso', apartment: 'Apartamento', house: 'Casa', townhouse: 'Adosado', villa: 'Villa', chalet: 'Chalet',
-  penthouse: 'Ático', duplex: 'Dúplex', studio: 'Estudio', land: 'Terreno',
+  penthouse: 'Ático', duplex: 'Dúplex', studio: 'Estudio', land: 'Terreno', commercial: 'Local comercial',
 };
 
 interface ApiProperty {
@@ -145,7 +145,7 @@ export function listingJsonLd(p: ApiProperty, url: string): object {
       availability: p.status === 'reserved' ? 'https://schema.org/LimitedAvailability' : 'https://schema.org/InStock',
     },
     about: {
-      '@type': p.type === 'land' ? 'Place' : ['flat', 'apartment', 'penthouse', 'studio', 'duplex'].includes(p.type) ? 'Apartment' : 'SingleFamilyResidence',
+      '@type': p.type === 'land' || p.type === 'commercial' ? 'Place' : ['flat', 'apartment', 'penthouse', 'studio', 'duplex'].includes(p.type) ? 'Apartment' : 'SingleFamilyResidence',
       ...(p.bedrooms ? { numberOfRooms: p.bedrooms } : {}),
       ...(p.bathrooms ? { numberOfBathroomsTotal: p.bathrooms } : {}),
       ...(p.area ? { floorSize: { '@type': 'QuantitativeValue', value: p.area, unitCode: 'MTK' } } : {}),

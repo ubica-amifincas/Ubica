@@ -11,7 +11,7 @@ MAX_TEXT_LENGTH = 4000
 SYSTEM_PROMPT = """Eres el asistente de una inmobiliaria de Murcia. Te pasan el mensaje que un propietario ha enviado
 por WhatsApp con los datos de su inmueble. Devuelve SOLO un objeto JSON con estas claves:
 - "operation": "sale" (venta) o "rent" (alquiler); null si no se sabe
-- "type": uno de flat, apartment, house, townhouse, villa, chalet, penthouse, duplex, studio, land; null si no se sabe
+- "type": uno de flat, apartment, house, townhouse, villa, chalet, penthouse, duplex, studio, land, commercial (local o bajo comercial); null si no se sabe
 - "price": número en euros (alquiler: euros al mes); null si no aparece
 - "bedrooms", "bathrooms": enteros o null
 - "area": metros cuadrados construidos o útiles (número) o null
@@ -80,7 +80,9 @@ def clean_draft(raw: dict) -> dict:
     }
 
 
-TYPE_WORDS = [("atico", "penthouse"), ("ático", "penthouse"), ("duplex", "duplex"), ("dúplex", "duplex"), ("chalet", "chalet"),
+# Primero los locales: "local comercial en bajo de edificio de pisos" es un local, no un piso
+TYPE_WORDS = [("local comercial", "commercial"), ("bajo comercial", "commercial"), ("locales comerciales", "commercial"),
+              ("atico", "penthouse"), ("ático", "penthouse"), ("duplex", "duplex"), ("dúplex", "duplex"), ("chalet", "chalet"),
               ("villa", "villa"), ("adosad", "townhouse"), ("estudio", "studio"), ("apartamento", "apartment"),
               ("piso", "flat"), ("terreno", "land"), ("parcela", "land"), ("solar", "land"), ("casa", "house")]
 

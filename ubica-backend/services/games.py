@@ -25,6 +25,7 @@ MAX_LISTING_ROUNDS = 3
 TYPE_LABELS = {
     "villa": "Villa", "apartment": "Apartamento", "flat": "Piso", "house": "Casa", "penthouse": "Ático",
     "townhouse": "Adosado", "studio": "Estudio", "duplex": "Dúplex", "chalet": "Chalet", "land": "Terreno",
+    "commercial": "Local comercial",
 }
 
 # La Torre Fincas: como mucho 30 puntos por bloque (perfecto x combo 5 x bloque con logo) y un bloque cada 0,8 s

@@ -61,6 +61,9 @@ async def buscar_propiedades(user_id: Optional[int], user_role: str, ubicacion: 
                 statement = statement.where(tipo_filter)
             elif any(x in tipo_lower for x in ["terreno", "parcela", "solar", "land"]):
                 statement = statement.where(models.Property.type.ilike("%land%"))
+            # LOCALES: bajos comerciales
+            elif any(x in tipo_lower for x in ["local", "bajo comercial", "comercial", "commercial"]):
+                statement = statement.where(models.Property.type == "commercial")
             else:
                 statement = statement.where(or_(models.Property.type.ilike(f"%{tipo}%"), models.Property.title.ilike(f"%{tipo}%")))
         if estado:

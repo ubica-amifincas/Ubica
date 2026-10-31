@@ -23,11 +23,12 @@ REJECTED_STATUS = "rejected"
 NO_REVIEW_FIELDS = {"status"}
 
 # Tipos en una sola forma (la que usan el filtro y las traducciones del frontend)
-PROPERTY_TYPES = ("villa", "apartment", "flat", "house", "penthouse", "townhouse", "studio", "duplex", "chalet", "land")
+PROPERTY_TYPES = ("villa", "apartment", "flat", "house", "penthouse", "townhouse", "studio", "duplex", "chalet", "land", "commercial")
 TYPE_ALIASES = {
     "apartamento": "apartment", "piso": "flat", "casa": "house", "atico": "penthouse", "ático": "penthouse",
     "adosado": "townhouse", "casa adosada": "townhouse", "estudio": "studio", "dúplex": "duplex",
     "terreno": "land", "parcela": "land", "solar": "land",
+    "local": "commercial", "local comercial": "commercial", "bajo comercial": "commercial", "locales": "commercial",
 }
 
 

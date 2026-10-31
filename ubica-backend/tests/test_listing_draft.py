@@ -60,6 +60,14 @@ def test_rent_and_shorthand_prices():
     assert listing.basic_draft("Alquilo apartamento 2 hab 60m2, 650 euros al mes")["operation"] == "rent"
     assert listing.basic_draft("Alquilo apartamento 2 hab 60m2, 650 euros al mes")["price"] == 650
     assert listing.basic_draft("chalet 250k 4 dormitorios")["price"] == 250000
+    # Un local en un edificio de pisos sigue siendo un local
+    assert listing.basic_draft("Vendo local comercial en bajo de edificio de pisos, 120 m2, 90.000 €")["type"] == "commercial"
+    assert listing.basic_draft("Alquilo bajo comercial en la avenida, 800 euros al mes")["type"] == "commercial"
+
+
+def test_tipos_de_local_se_normalizan():
+    from services.properties import normalize_property_type
+    assert {normalize_property_type(v) for v in ("Local", "Local comercial", "bajo comercial", "commercial")} == {"commercial"}
 
 
 def test_requires_login_and_counts_towards_ai_limit(client, make_user, monkeypatch):

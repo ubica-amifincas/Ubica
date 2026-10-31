@@ -26,7 +26,7 @@ import type { ListingDraft } from '../services/apiService';
 const STORAGE_KEY = 'ubica-quick-listing';
 const STEPS = ['Fotos', 'Mensaje', 'Datos', 'Descripción', 'Revisar'] as const;
 // Los tipos más habituales primero: son los que más se usan
-const TYPE_CHOICES = ['flat', 'house', 'chalet', 'penthouse', 'apartment', 'townhouse', 'duplex', 'studio', 'villa', 'land'];
+const TYPE_CHOICES = ['flat', 'house', 'chalet', 'penthouse', 'apartment', 'townhouse', 'duplex', 'studio', 'villa', 'land', 'commercial'];
 
 interface Draft {
   step: number;

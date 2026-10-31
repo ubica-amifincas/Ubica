@@ -171,6 +171,14 @@ def test_buscar_pisos_y_terrenos_con_tipos_canonicos(make_property):
     assert [p["titulo"] for p in json.loads(run(tools.execute_tool("buscar_propiedades", {"tipo": "terreno"}, None, "guest")))] == ["Parcela"]
 
 
+def test_buscar_locales_comerciales(make_property):
+    make_property(title="Piso", type="flat")
+    make_property(title="Bajo en la plaza", type="commercial")
+    for tipo in ("local", "bajo comercial", "local comercial"):
+        found = json.loads(run(tools.execute_tool("buscar_propiedades", {"tipo": tipo}, None, "guest")))
+        assert [p["titulo"] for p in found] == ["Bajo en la plaza"], tipo
+
+
 def test_enlaces_inventados_se_quitan(make_property):
     real = make_property()
     draft = make_property(status="draft")

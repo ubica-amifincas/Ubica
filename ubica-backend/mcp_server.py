@@ -43,6 +43,7 @@ HIDDEN_FIELDS = set(PRIVATE_PROPERTY_FIELDS) | {"pending_status", "review_note"}
 TYPE_LABELS = {
     "villa": "villa", "apartment": "apartamento", "flat": "piso", "house": "casa", "penthouse": "ático",
     "townhouse": "adosado", "studio": "estudio", "duplex": "dúplex", "chalet": "chalet", "land": "terreno",
+    "commercial": "local comercial",
 }
 
 INSTRUCTIONS = f"""Ubica ({SITE}) es el portal inmobiliario de AMI Fincas: viviendas, locales y terrenos en venta y alquiler
