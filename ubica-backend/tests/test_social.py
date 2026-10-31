@@ -157,3 +157,28 @@ def test_comprobaciones_antes_de_publicar(client, make_user, make_property, list
     assert client.post(f"/api/social/instagram/{sold.id}", json={"caption": "Texto"}, headers=auth(admin)).status_code == 409
     assert client.post("/api/social/instagram/99999", json={"caption": "Texto"}, headers=auth(admin)).status_code == 404
     assert graph[0] == []  # nada llegó a Instagram
+
+
+def test_el_token_se_renueva_solo_y_manda_el_de_render(connected, monkeypatch):
+    import asyncio
+    calls = []
+
+    async def fake_refresh(token):
+        calls.append(token)
+        return {"access_token": f"renovado-{len(calls)}", "expires_in": 5184000}
+
+    monkeypatch.setattr(instagram, "_refresh_call", fake_refresh)
+    assert instagram.access_token() == "token-de-prueba"
+    assert asyncio.run(instagram.refresh_token_if_due()) is True
+    assert calls == ["token-de-prueba"] and instagram.access_token() == "renovado-1"
+    # Hasta dentro de una semana no vuelve a renovarse
+    assert asyncio.run(instagram.refresh_token_if_due()) is False and len(calls) == 1
+
+    # Si en Render se pone otro token, se usa ese y se renueva a partir de él
+    monkeypatch.setattr(config, "INSTAGRAM_ACCESS_TOKEN", "token-nuevo")
+    assert instagram.access_token() == "token-nuevo"
+    assert asyncio.run(instagram.refresh_token_if_due()) is True and calls[-1] == "token-nuevo"
+
+    # Con una página de Facebook el token no caduca: no se renueva
+    monkeypatch.setattr(config, "INSTAGRAM_GRAPH_URL", "https://graph.facebook.com/v23.0")
+    assert asyncio.run(instagram.refresh_token_if_due()) is False

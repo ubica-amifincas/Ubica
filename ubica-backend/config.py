@@ -80,8 +80,8 @@ PROPERTY_VIDEOS_INDEX_URL = os.getenv("PROPERTY_VIDEOS_INDEX_URL", (SUPABASE_URL
                                       + "/storage/v1/object/public/property-videos/index.json")
 
 # Instagram (@amifincas): publicar el vídeo vertical de un inmueble como Reel. Sin token, el botón avisa de que la
-# cuenta no está conectada. INSTAGRAM_GRAPH_URL es graph.facebook.com si la cuenta se conectó a través de una página
-# de Facebook (token de página, no caduca) o graph.instagram.com si se conectó con inicio de sesión de Instagram.
+# cuenta no está conectada. Por defecto, «inicio de sesión de Instagram» (graph.instagram.com): el token dura 60 días y
+# el servidor lo renueva solo (services/instagram.py). Con una página de Facebook: https://graph.facebook.com/v23.0.
 INSTAGRAM_ACCESS_TOKEN = os.getenv("INSTAGRAM_ACCESS_TOKEN", "").strip()
 INSTAGRAM_USER_ID = os.getenv("INSTAGRAM_USER_ID", "").strip()
-INSTAGRAM_GRAPH_URL = os.getenv("INSTAGRAM_GRAPH_URL", "https://graph.facebook.com/v23.0").rstrip("/")
+INSTAGRAM_GRAPH_URL = os.getenv("INSTAGRAM_GRAPH_URL", "https://graph.instagram.com/v23.0").rstrip("/")

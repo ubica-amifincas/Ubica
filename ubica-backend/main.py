@@ -19,6 +19,7 @@ import mcp_server
 from config import CORS_ORIGIN_REGEX, CORS_ORIGINS, UPLOAD_DIR
 from database import ensure_columns, ensure_tables
 from routers import admin, ai, auth, contact, games, health, investor, portfolio, properties, realtor, social, uploads, user
+from services import instagram
 from services.ai.chat import log_provider_status
 from services.ai.usage import load_ai_usage
 
@@ -28,6 +29,7 @@ async def lifespan(_app: FastAPI):
     ensure_columns()
     # Solo en background
     asyncio.create_task(render_keep_alive())
+    asyncio.create_task(instagram_token_refresher())
     # Comprueba que OpenRouter y Groq responden y lo deja en el log (en Render)
     if os.getenv("RENDER"):
         asyncio.create_task(log_provider_status())
@@ -57,6 +59,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+async def instagram_token_refresher():
+    """Renueva el token de Instagram antes de que caduque (mira una vez al día si toca)."""
+    while True:
+        try:
+            await instagram.refresh_token_if_due()
+        except Exception as e:
+            print(f"[Instagram] No se pudo renovar el token: {e}")
+        await asyncio.sleep(24 * 60 * 60)
+
 
 # --- Keep-Alive Task ---
 

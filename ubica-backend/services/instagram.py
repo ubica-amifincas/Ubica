@@ -4,9 +4,10 @@ El vídeo lo genera cada hora .github/workflows/property-videos.yml y queda en u
 solo se le pasa su URL a Instagram, que lo descarga, lo procesa (de segundos a un par de minutos) y se publica.
 """
 import asyncio
+import hashlib
 import re
 import unicodedata
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 import aiohttp
@@ -45,6 +46,61 @@ class InstagramError(Exception):
 
 def configured() -> bool:
     return bool(config.INSTAGRAM_ACCESS_TOKEN and config.INSTAGRAM_USER_ID)
+
+
+# ---------- token ----------
+# Con «inicio de sesión de Instagram» el token dura 60 días: el servidor lo renueva cada semana y guarda el nuevo en
+# la base de datos. Si en Render se pone otro token, manda ese (se reconoce por su huella).
+TOKEN_KEY = "instagram_token"
+SEED_KEY = "instagram_token_seed"
+REFRESH_EVERY = timedelta(days=7)
+REFRESH_URL = "https://graph.instagram.com/refresh_access_token"
+
+
+def _seed() -> str:
+    return hashlib.sha256(config.INSTAGRAM_ACCESS_TOKEN.encode()).hexdigest()[:16]
+
+
+def _stored_token(session: Session) -> Optional[models.AppSetting]:
+    """El token renovado, solo si viene del que hay ahora en Render."""
+    seed, token = session.get(models.AppSetting, SEED_KEY), session.get(models.AppSetting, TOKEN_KEY)
+    return token if seed and token and seed.value == _seed() else None
+
+
+def access_token() -> str:
+    if not config.INSTAGRAM_ACCESS_TOKEN:
+        return ""
+    with Session(engine) as session:
+        token = _stored_token(session)
+        return token.value if token else config.INSTAGRAM_ACCESS_TOKEN
+
+
+async def _refresh_call(token: str) -> dict:
+    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as http:
+        async with http.get(REFRESH_URL, params={"grant_type": "ig_refresh_token", "access_token": token}) as resp:
+            data = await resp.json(content_type=None)
+    if resp.status >= 400 or "access_token" not in data:
+        raise InstagramError((data.get("error") or {}).get("message") or f"Error {resp.status} al renovar el token")
+    return data
+
+
+async def refresh_token_if_due() -> bool:
+    """Renueva el token si toca (solo los de graph.instagram.com; los de página de Facebook no caducan)."""
+    if not configured() or "graph.instagram.com" not in config.INSTAGRAM_GRAPH_URL:
+        return False
+    with Session(engine) as session:
+        token = _stored_token(session)
+        if token and datetime.now() - token.updated_at < REFRESH_EVERY:
+            return False
+    data = await _refresh_call(access_token())
+    with Session(engine) as session:
+        for key, value in ((TOKEN_KEY, data["access_token"]), (SEED_KEY, _seed())):
+            row = session.get(models.AppSetting, key) or models.AppSetting(key=key, value=value)
+            row.value, row.updated_at = value, datetime.now()
+            session.add(row)
+        session.commit()
+    print(f"[Instagram] Token renovado (caduca en {int(data.get('expires_in', 0)) // 86400} días)")
+    return True
 
 
 def _plain(text: str) -> str:
@@ -134,7 +190,7 @@ def video_status(p: models.Property, entry: Optional[dict]) -> str:
 # ---------- Graph API ----------
 
 async def _graph(http: aiohttp.ClientSession, method: str, path: str, **params) -> dict:
-    params["access_token"] = config.INSTAGRAM_ACCESS_TOKEN
+    params["access_token"] = access_token()
     url = f"{config.INSTAGRAM_GRAPH_URL}/{path}"
     request = http.post(url, data=params) if method == "POST" else http.get(url, params=params)
     async with request as resp:

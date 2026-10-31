@@ -126,6 +126,12 @@ class SocialPost(SQLModel, table=True):
     created_at: NaiveDatetime = Field(default_factory=datetime.now)
     published_at: Optional[NaiveDatetime] = None
 
+class AppSetting(SQLModel, table=True):
+    """Valores que actualiza el propio servidor (p. ej. el token de Instagram, que se renueva solo)."""
+    key: str = Field(primary_key=True)
+    value: str
+    updated_at: NaiveDatetime = Field(default_factory=datetime.now)
+
 class GameScore(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id")
