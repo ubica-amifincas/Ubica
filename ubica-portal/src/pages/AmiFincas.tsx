@@ -415,7 +415,7 @@ export default function AmiFincas() {
                   {t('ami.ubica.cta')} <ArrowRightIcon className="h-5 w-5" aria-hidden="true" />
                 </a>
               </div>
-              <img src="/ami-fincas/3d_islands.webp" alt="" width={1024} height={940} loading="lazy" className="w-full max-w-xs rounded-3xl md:max-w-sm" />
+              <img src="/ami-fincas/costa-mar-menor.webp" alt="" width={1024} height={940} loading="lazy" className="w-full max-w-xs rounded-3xl md:max-w-sm" />
             </div>
           </div>
         </section>
