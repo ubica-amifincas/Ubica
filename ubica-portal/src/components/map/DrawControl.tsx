@@ -35,8 +35,8 @@ export const DrawControl = forwardRef<DrawControlHandle, DrawControlProps>(({ on
   useEffect(() => {
     markersRef.current.forEach(m => map.removeLayer(m));
     markersRef.current = points.map((p, i) => L.circleMarker(p, {
-      color: '#0f6b4f',
-      fillColor: i === 0 && points.length >= 3 ? '#0f6b4f' : '#ffffff',
+      color: '#357186',
+      fillColor: i === 0 && points.length >= 3 ? '#357186' : '#ffffff',
       fillOpacity: 1,
       weight: 2,
       radius: i === 0 ? 8 : 6,
@@ -45,7 +45,7 @@ export const DrawControl = forwardRef<DrawControlHandle, DrawControlProps>(({ on
 
     if (points.length > 1) {
       if (!lineRef.current) {
-        lineRef.current = L.polyline(points, { color: '#0f6b4f', weight: 3, dashArray: '6, 8', interactive: false }).addTo(map);
+        lineRef.current = L.polyline(points, { color: '#357186', weight: 3, dashArray: '6, 8', interactive: false }).addTo(map);
       } else {
         lineRef.current.setLatLngs(points);
       }

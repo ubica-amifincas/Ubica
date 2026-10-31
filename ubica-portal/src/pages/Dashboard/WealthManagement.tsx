@@ -341,15 +341,15 @@ function EvolutionChart({ points, source }: { points: { trimestre: string; valor
                     <AreaChart data={data} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
                         <defs>
                             <linearGradient id="portfolioValue" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#059669" stopOpacity={0.35} />
-                                <stop offset="100%" stopColor="#059669" stopOpacity={0} />
+                                <stop offset="0%" stopColor="#357186" stopOpacity={0.35} />
+                                <stop offset="100%" stopColor="#357186" stopOpacity={0} />
                             </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-gray-200 dark:text-gray-700" vertical={false} />
                         <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#9ca3af' }} minTickGap={32} tickLine={false} axisLine={false} />
                         <YAxis width={72} tick={{ fontSize: 11, fill: '#9ca3af' }} tickFormatter={v => `${Math.round(v / 1000)} mil €`} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
                         <Tooltip formatter={(v: number) => [formatEur(v), 'Valor estimado']} labelFormatter={l => `${l}`} />
-                        <Area type="monotone" dataKey="valor" stroke="#059669" strokeWidth={2} fill="url(#portfolioValue)" />
+                        <Area type="monotone" dataKey="valor" stroke="#357186" strokeWidth={2} fill="url(#portfolioValue)" />
                     </AreaChart>
                 </ResponsiveContainer>
             </div>

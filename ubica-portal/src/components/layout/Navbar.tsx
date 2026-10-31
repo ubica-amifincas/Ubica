@@ -109,9 +109,13 @@ export default function Navbar() {
                 <span className="text-xl sm:text-[1.375rem] lg:text-2xl font-bold leading-none tracking-tight text-[#23707f] dark:text-[#8fd0c3]">AMI Fincas</span>
               </Link>
             ) : (
-              <Link to="/" className="flex items-center gap-2.5 sm:gap-3">
+              <Link to="/" aria-label="Ubica by AMI Fincas" className="flex items-center gap-2.5 sm:gap-3">
                 <img src="/logo-ubica-mark.png" alt="" width={184} height={96} className="h-6 sm:h-[26px] lg:h-7 w-auto" />
-                <span className="text-xl sm:text-[1.375rem] lg:text-2xl font-bold leading-none tracking-tight text-emerald-700 dark:text-emerald-400">Ubica</span>
+                {/* «by AMI Fincas»: que se vea quién está detrás del portal */}
+                <span className="flex flex-col">
+                  <span className="text-xl sm:text-[1.375rem] lg:text-2xl font-bold leading-none tracking-tight text-emerald-700 dark:text-emerald-400">Ubica</span>
+                  <span className="mt-0.5 text-[10px] sm:text-[11px] font-semibold leading-none tracking-wide text-gray-500 dark:text-gray-400">by AMI Fincas</span>
+                </span>
               </Link>
             )}
           </div>
@@ -126,7 +130,7 @@ export default function Navbar() {
                     href={item.href}
                     className={`
                       flex items-center space-x-1 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200
-                      text-gray-700 hover:text-[#0f6b4f] dark:text-gray-300 dark:hover:text-[#0f6b4f]
+                      text-gray-700 hover:text-[#357186] dark:text-gray-300 dark:hover:text-[#357186]
                     `}
                   >
                     <item.icon className="h-4 w-4" />
@@ -139,8 +143,8 @@ export default function Navbar() {
                     className={`
                       flex items-center space-x-1 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200
                       ${isActive(item.href)
-                        ? 'bg-[#0f6b4f] text-white'
-                        : 'text-gray-700 hover:text-[#0f6b4f] dark:text-gray-300 dark:hover:text-[#0f6b4f]'
+                        ? 'bg-[#357186] text-white'
+                        : 'text-gray-700 hover:text-[#357186] dark:text-gray-300 dark:hover:text-[#357186]'
                       }
                     `}
                   >
@@ -176,7 +180,7 @@ export default function Navbar() {
                   }}
                   title={user?.full_name || user?.email}
                   aria-label={user?.full_name || user?.email}
-                  className="flex items-center space-x-2 rounded-lg bg-[#0f6b4f] h-10 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-[#0b5440] focus:outline-none focus:ring-2 focus:ring-[#0f6b4f] focus:ring-offset-2"
+                  className="flex items-center space-x-2 rounded-lg bg-[#357186] h-10 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-[#2b5d6e] focus:outline-none focus:ring-2 focus:ring-[#357186] focus:ring-offset-2"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -254,7 +258,7 @@ export default function Navbar() {
             ) : (
               <motion.button
                 onClick={() => navigate('/login')}
-                className="flex items-center space-x-1 rounded-lg bg-[#0f6b4f] h-10 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-[#0b5440] focus:outline-none focus:ring-2 focus:ring-[#0f6b4f] focus:ring-offset-2"
+                className="flex items-center space-x-1 rounded-lg bg-[#357186] h-10 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-[#2b5d6e] focus:outline-none focus:ring-2 focus:ring-[#357186] focus:ring-offset-2"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -273,7 +277,7 @@ export default function Navbar() {
                   e.stopPropagation();
                   setIsMenuOpen(!isMenuOpen);
                 }}
-                className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0f6b4f] focus:ring-offset-2 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+                className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#357186] focus:ring-offset-2 dark:hover:bg-gray-800 dark:hover:text-gray-300"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -367,7 +371,7 @@ export default function Navbar() {
                           navigate('/login');
                           setIsMenuOpen(false);
                         }}
-                        className="flex items-center justify-center space-x-2 w-full rounded-xl bg-[#0f6b4f] py-4 text-base font-bold text-white shadow-lg transition-all duration-200 hover:bg-[#0b5440]"
+                        className="flex items-center justify-center space-x-2 w-full rounded-xl bg-[#357186] py-4 text-base font-bold text-white shadow-lg transition-all duration-200 hover:bg-[#2b5d6e]"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
@@ -377,7 +381,7 @@ export default function Navbar() {
                     ) : (
                       <div className="space-y-2">
                         <div className="flex items-center space-x-3 px-4 py-2 opacity-60">
-                          <UserCircleIcon className="h-6 w-6 text-[#0f6b4f]" />
+                          <UserCircleIcon className="h-6 w-6 text-[#357186]" />
                           <span className="text-sm font-bold truncate">{user?.full_name || user?.email}</span>
                         </div>
                         <button

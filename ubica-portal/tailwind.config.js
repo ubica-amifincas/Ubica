@@ -21,10 +21,11 @@ module.exports = {
 				display: ['"Bricolage Grotesque Variable"', '"Inter Variable"', 'system-ui', 'sans-serif'],
 			},
 			colors: {
-				// Verde Ubica: un único acento. Desde el 500, el texto blanco cumple WCAG AA
+				// Colores del logo de Ubica: verde menta (300, #abdbb0) en los tonos claros y azul petróleo (600, #357186)
+				// en los oscuros, como en el logo. Un único acento; desde el 500, el texto blanco cumple WCAG AA
 				emerald: {
-					50: '#e6f2ec', 100: '#cde7da', 200: '#a3d3bb', 300: '#6fb896', 400: '#3b9a72',
-					500: '#1a8360', 600: '#0f6b4f', 700: '#0b5440', 800: '#0a4334', 900: '#08372b', 950: '#04201a',
+					50: '#eef8ef', 100: '#dcf1de', 200: '#c2e6c6', 300: '#abdbb0', 400: '#62ab9f',
+					500: '#37788a', 600: '#357186', 700: '#2b5d6e', 800: '#234b59', 900: '#1b3c48', 950: '#10252d',
 				},
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',

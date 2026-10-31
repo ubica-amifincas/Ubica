@@ -34,7 +34,7 @@ const VerifyEmail: React.FC = () => {
     }, [token]);
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0f6b4f] via-[#3b9a72] to-[#3d9e8f] py-12 px-4 sm:px-6 lg:px-8" style={{ perspective: '1000px' }}>
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#357186] via-[#37788a] to-[#62ab9f] py-12 px-4 sm:px-6 lg:px-8" style={{ perspective: '1000px' }}>
             <motion.div
                 initial={{ opacity: 0, rotateY: -90, scale: 0.9 }}
                 animate={{ opacity: 1, rotateY: 0, scale: 1 }}
@@ -44,7 +44,7 @@ const VerifyEmail: React.FC = () => {
                 {status === 'loading' && (
                     <>
                         <div className="mx-auto flex justify-center">
-                            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#0f6b4f]"></div>
+                            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#357186]"></div>
                         </div>
                         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t('auth.verifying')}</h2>
                         <p className="text-gray-600 dark:text-gray-400">{t('auth.verifying_msg')}</p>
@@ -64,7 +64,7 @@ const VerifyEmail: React.FC = () => {
                         <p className="text-gray-600 dark:text-gray-400">{message}</p>
                         <button
                             onClick={() => navigate('/login')}
-                            className="w-full mt-6 py-3 px-4 rounded-lg text-white bg-[#0f6b4f] hover:bg-[#0b5440] font-medium transition-colors shadow-md hover:shadow-lg"
+                            className="w-full mt-6 py-3 px-4 rounded-lg text-white bg-[#357186] hover:bg-[#2b5d6e] font-medium transition-colors shadow-md hover:shadow-lg"
                         >
                             {t('auth.go_to_login')}
                         </button>

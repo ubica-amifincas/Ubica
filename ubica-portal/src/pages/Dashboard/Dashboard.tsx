@@ -76,7 +76,7 @@ export default function Dashboard() {
   const location = useLocation();
 
   // Verde Ubica en varios tonos, ámbar y gris: sin azules ni violetas
-  const COLORS = ['#0f6b4f', '#3b9a72', '#a3d3bb', '#d97706', '#6b7280'];
+  const COLORS = ['#357186', '#62ab9f', '#c2e6c6', '#d97706', '#6b7280'];
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -262,7 +262,7 @@ export default function Dashboard() {
               <XAxis dataKey="month" stroke="#6B7280" fontSize={12} />
               <YAxis stroke="#6B7280" fontSize={12} />
               <Tooltip contentStyle={{ backgroundColor: '#1F2937', color: '#F9FAFB', borderRadius: 8, border: 'none' }} />
-              <Line type="monotone" dataKey="rentals" stroke="#0f6b4f" strokeWidth={2} name="Alquileres" />
+              <Line type="monotone" dataKey="rentals" stroke="#357186" strokeWidth={2} name="Alquileres" />
             </LineChart>
           </ResponsiveContainer>
         </Section>
@@ -272,7 +272,7 @@ export default function Dashboard() {
           ) : (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
-                <Pie data={userMetrics.propertyTypeData} cx="50%" cy="50%" outerRadius={80} fill="#0f6b4f" dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                <Pie data={userMetrics.propertyTypeData} cx="50%" cy="50%" outerRadius={80} fill="#357186" dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
                   {userMetrics.propertyTypeData.map((_: any, index: number) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                 </Pie>
                 <Tooltip contentStyle={{ backgroundColor: '#1F2937', color: '#F9FAFB', borderRadius: 8, border: 'none' }} />

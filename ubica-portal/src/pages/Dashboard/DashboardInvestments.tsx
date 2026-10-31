@@ -122,7 +122,7 @@ export default function DashboardInvestments() {
                   <Tooltip
                     contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px', color: '#F9FAFB' }}
                   />
-                  <Bar dataKey="averageROI" name="Rentabilidad %" fill="#0f6b4f" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="averageROI" name="Rentabilidad %" fill="#357186" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </Section>

@@ -36,6 +36,7 @@ import { PROPERTY_TYPES, normalizeType } from '../utils/propertyStatus';
 import { useAIChat } from '../contexts/AIChatContext';
 import { propertyPath } from '../seo/pages';
 import { whatsappHref } from '../utils/contact';
+import { amiHref } from '../utils/site';
 
 // Custom marker icon for properties with price
 const createPriceMarker = (price: number, isSelected: boolean = false) => {
@@ -658,12 +659,21 @@ export default function Home() {
       {!isDrawingEnabled && viewMode !== 'map' && (
         <div className="page-container pt-4 pb-4 sm:pt-8">
           <div className="relative isolate overflow-hidden rounded-3xl bg-gray-900 shadow-xl">
-            <img src="/ami-fincas/costa-mar-menor.webp" alt="" width={1024} height={940}
-              className="absolute inset-0 -z-10 h-full w-full object-cover object-[center_40%]" />
-            <div className="absolute inset-0 -z-10 bg-gradient-to-t from-gray-950/95 via-gray-950/60 to-gray-950/10" aria-hidden="true" />
-            <div className="px-4 pb-5 pt-14 sm:px-8 sm:pb-7 sm:pt-32 lg:pt-40">
+            {/* En el móvil, la imagen es una franja arriba (si no, el titular tapa el pin); en pantallas anchas va de
+                fondo, oscurecida a la izquierda, donde va el texto, y con el pin a la vista a la derecha */}
+            <div className="relative -z-10 sm:absolute sm:inset-0">
+              <img src="/ubica-portada.webp" alt="" width={1536} height={1024}
+                className="h-48 w-full object-cover object-[66%_50%] sm:h-full sm:object-[center_45%]" />
+              <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent sm:bg-gradient-to-r sm:from-gray-950/90 sm:via-gray-950/55 sm:to-transparent" aria-hidden="true" />
+            </div>
+            {/* Sello «by AMI Fincas»: quién respalda el portal */}
+            <a href={amiHref('/')} className="absolute right-3 top-3 inline-flex items-center gap-2 rounded-full bg-white/90 py-1 pl-1.5 pr-3 text-xs font-semibold text-gray-800 shadow backdrop-blur transition-colors hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white sm:right-5 sm:top-5 sm:text-sm">
+              <img src="/ami-fincas/logo-ami-mark.png" alt="" width={137} height={96} className="h-5 w-auto sm:h-6" />
+              {t('home.hero.byAmi')}
+            </a>
+            <div className="-mt-6 px-4 pb-5 sm:mt-0 sm:px-8 sm:pb-7 sm:pt-32 lg:pt-40">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-300 sm:text-sm">{t('header.slogan')}</p>
-              <h1 className="mt-2 max-w-3xl font-display text-3xl font-black leading-tight text-white text-balance sm:text-4xl lg:text-5xl">
+              <h1 className="mt-2 max-w-xl font-display text-3xl font-black leading-tight text-white text-balance sm:text-4xl lg:text-5xl">
                 {t('home.hero.title')}
               </h1>
 
@@ -1156,13 +1166,13 @@ export default function Home() {
                     justify-content: center;
                   }
                   .price-badge {
-                    background: linear-gradient(135deg, #059669 0%, #14b8a6 100%);
+                    background: linear-gradient(135deg, #357186 0%, #37788a 100%);
                     color: white;
                     padding: 6px 12px;
                     border-radius: 20px;
                     font-size: 13px;
                     font-weight: 600;
-                    box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
+                    box-shadow: 0 2px 8px rgba(53, 113, 134, 0.35);
                     white-space: nowrap;
                     border: 2px solid white;
                     cursor: pointer;
@@ -1173,9 +1183,9 @@ export default function Home() {
                     box-shadow: 0 6px 16px rgba(5, 150, 105, 0.4);
                   }
                   .price-marker.selected .price-badge {
-                    background: linear-gradient(135deg, #0d9488 0%, #06b6d4 100%);
+                    background: linear-gradient(135deg, #2b5d6e 0%, #357186 100%);
                     transform: scale(1.2);
-                    box-shadow: 0 8px 20px rgba(13, 148, 136, 0.5);
+                    box-shadow: 0 8px 20px rgba(53, 113, 134, 0.5);
                   }
                   .leaflet-container {
                     height: 100%;
@@ -1307,7 +1317,7 @@ export default function Home() {
                   {hasDrawnArea && drawnArea && Array.isArray(drawnArea) && (
                     <Polygon
                       positions={drawnArea}
-                      pathOptions={{ color: '#10b981', fillColor: '#10b981', fillOpacity: 0.2, weight: 2 }}
+                      pathOptions={{ color: '#357186', fillColor: '#62ab9f', fillOpacity: 0.2, weight: 2 }}
                     />
                   )}
 
