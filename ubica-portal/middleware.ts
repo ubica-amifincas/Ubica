@@ -30,6 +30,8 @@ const UBICA_IMAGE = `${UBICA_ORIGIN}/og-ubica.jpg`;
 const AMI_IMAGE = `${AMI_ORIGIN}/og-ami.jpg`;
 const PROD_HOSTS = ['ubica.amifincas.es', 'amifincas.es'];
 const PRIVATE_PATHS = ['/dashboard', '/admin', '/realtor', '/investor', '/publicar', '/escaparate'];
+// Páginas de la web antigua de AMI que Google aún tiene: si fueran a Ubica, mezclaría sus datos con los de AMI
+const AMI_OLD_PAGES: Record<string, string> = { '/about': '/', '/contact': '/#presupuesto' };
 // Buscadores y asistentes de IA: se permiten de forma explícita (búsqueda y entrenamiento)
 const AI_BOTS = ['GPTBot', 'OAI-SearchBot', 'ChatGPT-User', 'ClaudeBot', 'Claude-SearchBot', 'Claude-User', 'PerplexityBot',
   'Perplexity-User', 'Google-Extended', 'Applebot-Extended', 'Bingbot', 'CCBot', 'meta-externalagent'];
@@ -431,6 +433,10 @@ export default async function middleware(request: Request): Promise<Response> {
 
   const isAmi = host === 'amifincas.es';
   const isProd = PROD_HOSTS.includes(host);
+  // Quién somos y contacto de la web antigua de AMI: a su propia portada, no a las páginas de Ubica
+  if (isAmi && AMI_OLD_PAGES[path]) {
+    return Response.redirect(`${AMI_ORIGIN}${AMI_OLD_PAGES[path]}`, 301);
+  }
   // En amifincas.es solo están la portada de AMI y los textos legales; lo demás es Ubica
   if (isAmi && !AMI_SITE_PATHS.includes(path)) {
     return Response.redirect(`${UBICA_ORIGIN}${url.pathname}${url.search}`, 301);

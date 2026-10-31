@@ -81,8 +81,13 @@ assert.equal(title(h), 'AMI Fincas | Administración de fincas en Murcia y Alica
 assert.ok(h.includes('ProfessionalService')); ok('portada de AMI desde ami.html');
 r = await go('https://amifincas.es/aviso-legal'); h = await html(r);
 assert.equal(title(h), 'Aviso legal | AMI Fincas'); assert.equal(canonical(h), 'https://amifincas.es/aviso-legal'); ok('aviso legal de AMI con su marca');
-r = await go('https://amifincas.es/about?x=1');
-assert.equal(r.status, 301); assert.equal(r.headers.get('location'), 'https://ubica.amifincas.es/about?x=1'); ok('amifincas.es/about → 301 a Ubica');
+r = await go('https://amifincas.es/entretenimiento?x=1');
+assert.equal(r.status, 301); assert.equal(r.headers.get('location'), 'https://ubica.amifincas.es/entretenimiento?x=1'); ok('amifincas.es/entretenimiento → 301 a Ubica');
+r = await go('https://amifincas.es/about/');
+assert.equal(r.status, 301); assert.equal(r.headers.get('location'), 'https://amifincas.es/'); ok('amifincas.es/about (web antigua) → portada de AMI');
+r = await go('https://amifincas.es/contact/');
+assert.equal(r.status, 301); assert.equal(r.headers.get('location'), 'https://amifincas.es/#presupuesto'); ok('amifincas.es/contact (web antigua) → contacto de AMI');
+r = await go('https://ubica.amifincas.es/about'); assert.equal(r.status, 200); ok('el /about de Ubica sigue igual');
 r = await go('https://www.amifincas.es/'); assert.equal(r.headers.get('x-middleware-next'), '1'); ok('www lo redirige vercel.json');
 r = await go('https://ubica.amifincas.es/mcp'); assert.equal(r.headers.get('x-middleware-next'), '1'); ok('/mcp pasa al backend (vercel.json)');
 
