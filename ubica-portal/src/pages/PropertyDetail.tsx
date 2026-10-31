@@ -25,6 +25,7 @@ import 'leaflet/dist/leaflet.css';
 import { PropertyCard } from '../components/property/PropertyCard';
 import PhotoViewer, { useFollowThumb } from '../components/property/PhotoViewer';
 import PublicContactForm from '../components/property/PublicContactForm';
+import PropertyVideoCard from '../components/property/PropertyVideoCard';
 import { MAIN_PHONE, tel, whatsappHref } from '../utils/contact';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../contexts/AuthContext';
@@ -79,6 +80,9 @@ const statusChipClass = (status: string) => {
       return 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200';
   }
 };
+
+// Quien puede compartir el vídeo vertical del inmueble (para estados de WhatsApp y redes)
+const STAFF_ROLES: string[] = ['admin', 'realtor', 'property_manager'];
 
 const specGridCols: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3', 4: 'grid-cols-4' };
 
@@ -444,6 +448,12 @@ export default function PropertyDetail() {
                 onClose={() => setViewerOpen(false)}
               />
             )}
+            <PropertyVideoCard
+              propertyId={property.id}
+              title={property.title}
+              canShare={!!user && STAFF_ROLES.includes(user.role)}
+              className="mt-6"
+            />
           </div>
 
           {/* Resumen: precio, qué es, dónde y contacto */}

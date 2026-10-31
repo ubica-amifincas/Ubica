@@ -1,0 +1,60 @@
+# Vídeos de los inmuebles (fotos reales + rótulos) en el bucket público «property-videos» de Supabase.
+# Cada hora mira qué anuncios son nuevos o han cambiado y solo genera esos. Script: scripts/property-videos/.
+# Usa el secreto SUPABASE_SECRET_KEY (el mismo de la copia de la base de datos).
+name: Vídeos de los inmuebles
+
+on:
+  schedule:
+    - cron: "17 * * * *"  # cada hora, a y 17
+  workflow_dispatch:
+    inputs:
+      only_id:
+        description: "Solo este inmueble (id); vacío para todos"
+        required: false
+      force:
+        description: "Rehacer aunque no haya cambios"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: property-videos
+  cancel-in-progress: false
+
+env:
+  SUPABASE_URL: https://iklqjuiodvmeynbcimwq.supabase.co
+  ONLY_ID: ${{ inputs.only_id }}
+  FORCE: ${{ inputs.force && '1' || '' }}
+
+jobs:
+  videos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      # Sin cambios (lo normal en casi todas las horas) se termina aquí, sin instalar nada
+      - name: Comprobar si hay inmuebles nuevos o cambiados
+        id: check
+        env:
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          CHECK_ONLY: "1"
+        run: python scripts/property-videos/make_videos.py
+
+      - name: Instalar ffmpeg, fuentes y Pillow
+        if: steps.check.outputs.pending == 'true'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg fonts-inter > /dev/null
+          pip install -q pillow
+          ffmpeg -version | head -1
+          fc-match -f '%{file}\n' 'Inter:style=Regular' 'Inter:style=Bold'
+
+      - name: Generar y subir los vídeos
+        if: steps.check.outputs.pending == 'true'
+        env:
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          OUT_DIR: ${{ runner.temp }}/videos
+        run: python scripts/property-videos/make_videos.py

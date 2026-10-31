@@ -866,6 +866,12 @@ const resources = {
       "details.photo_open": "Ver las fotos en grande",
       "details.photo_enlarge": "Ampliar",
       "details.photo_close": "Cerrar",
+      "details.video_title": "Vídeo del inmueble",
+      "details.video_note": "Montado con las fotos reales del anuncio.",
+      "details.video_share": "Compartir vídeo para WhatsApp",
+      "details.video_preparing": "Preparando el vídeo…",
+      "details.video_downloaded": "Vídeo descargado: compártelo desde la carpeta de descargas.",
+      "details.video_error": "No se ha podido preparar el vídeo. Inténtalo de nuevo.",
       // Common
       "common.any": "Cualquiera",
       "common.month": "mes",
@@ -1766,6 +1772,12 @@ const resources = {
       "details.photo_open": "View photos full size",
       "details.photo_enlarge": "Enlarge",
       "details.photo_close": "Close",
+      "details.video_title": "Property video",
+      "details.video_note": "Made from the listing's real photos.",
+      "details.video_share": "Share video for WhatsApp",
+      "details.video_preparing": "Preparing the video…",
+      "details.video_downloaded": "Video downloaded: share it from your downloads folder.",
+      "details.video_error": "The video could not be prepared. Please try again.",
 
       // Common
       "common.any": "Any",
