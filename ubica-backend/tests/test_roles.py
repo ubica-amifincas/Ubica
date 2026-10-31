@@ -185,6 +185,9 @@ MATRIX = {
     ("POST",   "/api/ai/listing-draft"):                    (401, 200, 200, 200, 200),
     ("GET",    "/api/ai/conversations/{conversation_id}"):  (401, 200, 200, 200, 200),
     ("GET",    "/api/ping"):                                (200, 200, 200, 200, 200),
+    # Instagram de AMI: solo el administrador y las cuentas del equipo (STAFF_ROLES); sin token configurado, 503
+    ("GET",    "/api/social/instagram/{property_id}"):      (401, 403, 403, 403, 200),
+    ("POST",   "/api/social/instagram/{property_id}"):      (401, 403, 403, 403, 503),
     ("GET",    "/health"):                                  (200, 200, 200, 200, 200),
 }
 
@@ -819,6 +822,21 @@ def _(w):
     return "GET", "/api/ping", {}, None
 
 
+@case("GET", "/api/social/instagram/{property_id}")
+def _(w):
+    def check(w, r, allowed):
+        if allowed:
+            assert r.json()["configured"] is False and r.json()["post"] is None and "#" in r.json()["caption"]
+    return "GET", f"/api/social/instagram/{w.prop_id}", {}, check
+
+
+@case("POST", "/api/social/instagram/{property_id}")
+def _(w):
+    def check(w, r, allowed):
+        assert rows(models.SocialPost) == []  # nada se publica sin la cuenta conectada
+    return "POST", f"/api/social/instagram/{w.prop_id}", {"json": {"caption": "Texto del Reel"}}, check
+
+
 @case("GET", "/health")
 def _(w):
     def check(w, r, allowed):
@@ -832,7 +850,7 @@ def client_get_me(token):
 
 def test_matrix_covers_every_openapi_route():
     routes = {(m.upper(), p) for p, ops in app.openapi()["paths"].items() for m in ops}
-    assert len(routes) == 64
+    assert len(routes) == 66
     assert set(MATRIX) == routes
     assert set(CASES) == routes
 

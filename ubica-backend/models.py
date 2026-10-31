@@ -110,6 +110,22 @@ class Investment(SQLModel, table=True):
     holding_period_months: int
     status: str = "active"
 
+class SocialPost(SQLModel, table=True):
+    """Publicación del vídeo de un inmueble en redes (Reels de Instagram) y en qué quedó.
+    Sin claves foráneas: el historial se conserva aunque se borre el anuncio o el usuario."""
+    id: Optional[int] = Field(default=None, primary_key=True)
+    property_id: int = Field(index=True)
+    network: str = "instagram"
+    status: str = "publishing"  # publishing | published | error
+    caption: str
+    video_url: str
+    media_id: Optional[str] = None
+    permalink: Optional[str] = None
+    error: Optional[str] = None
+    created_by: Optional[int] = None
+    created_at: NaiveDatetime = Field(default_factory=datetime.now)
+    published_at: Optional[NaiveDatetime] = None
+
 class GameScore(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id")

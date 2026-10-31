@@ -74,3 +74,14 @@ SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 SUPABASE_STORAGE_BUCKET = os.getenv("SUPABASE_STORAGE_BUCKET", "property-images")
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024
+
+# Vídeos de los inmuebles (los genera cada hora .github/workflows/property-videos.yml): índice público
+PROPERTY_VIDEOS_INDEX_URL = os.getenv("PROPERTY_VIDEOS_INDEX_URL", (SUPABASE_URL or "https://iklqjuiodvmeynbcimwq.supabase.co")
+                                      + "/storage/v1/object/public/property-videos/index.json")
+
+# Instagram (@amifincas): publicar el vídeo vertical de un inmueble como Reel. Sin token, el botón avisa de que la
+# cuenta no está conectada. INSTAGRAM_GRAPH_URL es graph.facebook.com si la cuenta se conectó a través de una página
+# de Facebook (token de página, no caduca) o graph.instagram.com si se conectó con inicio de sesión de Instagram.
+INSTAGRAM_ACCESS_TOKEN = os.getenv("INSTAGRAM_ACCESS_TOKEN", "").strip()
+INSTAGRAM_USER_ID = os.getenv("INSTAGRAM_USER_ID", "").strip()
+INSTAGRAM_GRAPH_URL = os.getenv("INSTAGRAM_GRAPH_URL", "https://graph.facebook.com/v23.0").rstrip("/")

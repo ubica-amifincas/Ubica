@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ShareIcon } from '@heroicons/react/24/outline';
 import { useLanguage } from '../../hooks/useLanguage';
 import { getPropertyVideo, type PropertyVideo } from '../../utils/propertyVideos';
+import InstagramPublish from './InstagramPublish';
 
 /**
  * Vídeo del inmueble (si ya está generado) y, para el equipo, el vertical listo para compartir: en el móvil abre el
@@ -85,6 +86,11 @@ export default function PropertyVideoCard({ propertyId, title, canShare, classNa
         <p role="status" className="px-4 pb-4 text-sm empty:hidden text-gray-600 dark:text-gray-300">
           {state === 'downloaded' ? t('details.video_downloaded') : state === 'error' ? t('details.video_error') : ''}
         </p>
+      )}
+      {canShare && (
+        <div className="border-t border-gray-200 px-4 py-4 empty:hidden dark:border-gray-700">
+          <InstagramPublish propertyId={propertyId} />
+        </div>
       )}
     </section>
   );

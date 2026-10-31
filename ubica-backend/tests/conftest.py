@@ -17,6 +17,8 @@ os.environ["OPENROUTER_API_KEY"] = ""
 os.environ["GEMINI_API_KEY"] = ""
 os.environ["AI_USAGE_FILE"] = os.path.join(_tmp, "ai_usage.json")
 os.environ["UPLOAD_DIR"] = os.path.join(_tmp, "uploads")
+os.environ["PROPERTY_VIDEOS_INDEX_URL"] = "http://127.0.0.1:9/index.json"  # sin red: ningún inmueble tiene vídeo
+os.environ["INSTAGRAM_ACCESS_TOKEN"] = ""
 os.environ.pop("RENDER", None)
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

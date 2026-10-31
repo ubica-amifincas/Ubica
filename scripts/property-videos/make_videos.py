@@ -1,8 +1,9 @@
 """Vídeos de los inmuebles a partir de sus fotos reales (sin IA: movimiento de cámara, fundidos y rótulos con ffmpeg).
 
 Para cada anuncio público con fotos genera dos vídeos de unos 30 s:
-  horizontal (1280x720)  para la ficha del inmueble
-  vertical   (720x1280)  para estados de WhatsApp, Instagram o TikTok
+  horizontal (1280x720)   para la ficha del inmueble
+  vertical   (1080x1920)  para Reels, TikTok y estados de WhatsApp: los datos van arriba, fuera de lo que
+                          tapan los botones y el texto de esas apps (abajo y a la derecha)
 y los sube al bucket público «property-videos» de Supabase junto con index.json, que dice a la web qué vídeo
 tiene cada inmueble. Solo se rehace el vídeo de un inmueble cuando cambian sus fotos o sus datos.
 
@@ -15,6 +16,8 @@ Variables de entorno:
   CHECK_ONLY=1   solo decir si hay algo que hacer (pending=true/false en GITHUB_OUTPUT), sin ffmpeg ni Pillow
   MAX_PER_RUN    tope de inmuebles por ejecución (por defecto 10)
   FONT_REGULAR, FONT_BOLD, FFMPEG
+Música: si existe musica.mp3 junto a este script (libre de derechos), suena de fondo; si no, pista muda
+(Instagram rechaza algunos Reels sin pista de audio).
 """
 from __future__ import annotations
 
@@ -31,7 +34,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 # Cambiarla hace que se regeneren todos los vídeos (p. ej. al tocar el diseño)
-DESIGN_VERSION = 1
+DESIGN_VERSION = 2
 
 API = os.environ.get('API', 'https://ubica-backend.onrender.com/api').rstrip('/')
 SUPABASE_URL = os.environ.get('SUPABASE_URL', '').rstrip('/')
@@ -44,6 +47,7 @@ FORCE = os.environ.get('FORCE', '') == '1'
 CHECK_ONLY = os.environ.get('CHECK_ONLY', '') == '1'
 MAX_PER_RUN = int(os.environ.get('MAX_PER_RUN', '10'))
 LOGO = Path(__file__).resolve().parents[2] / 'ubica-portal' / 'public' / 'logo_ubica.png'
+MUSIC = Path(__file__).resolve().parent / 'musica.mp3'
 
 FPS = 30
 PHOTO_S = 3.2      # segundos por foto
@@ -154,8 +158,13 @@ def fingerprint(p: dict) -> str:
 class Render:
     def __init__(self, work: Path, mode: str, t: dict):
         self.work, self.mode, self.t = work, mode, t
-        self.W, self.H = (1280, 720) if mode == 'horizontal' else (720, 1280)
+        self.W, self.H = (1280, 720) if mode == 'horizontal' else (1080, 1920)
+        # Las medidas del vertical se escriben como en 720 de ancho y se escalan
+        self.k = 1 if mode == 'horizontal' else 1.5
         self.n = 0
+
+    def s(self, v: float) -> int:
+        return int(v * self.k)
 
     def txt(self, text: str) -> str:
         """drawtext lee el texto de un fichero: así no hay que escapar tildes, €, comas ni dos puntos."""
@@ -184,11 +193,12 @@ class Render:
                     self.dt(t['price'], 30, 'white', 28, f'h-{h}+15', max_w=260),
                     self.dt(t['facts'], 21, MINT, 300, f'h-{h}+22', bold=False, max_w=W - 300 - 240),
                     self.dt(WEB, 20, 'white', 'w-tw-28', f'h-{h}+22', bold=False, alpha=0.85)]
-        h = 150
-        return [f"drawbox=x=0:y=ih-{h}:w=iw:h={h}:color={INK}@0.82:t=fill",
-                self.dt(t['price'], 46, 'white', 36, f'h-{h}+22', max_w=400),
-                self.dt(t['facts_short'], 28, MINT, 36, f'h-{h}+86', bold=False, max_w=W - 72),
-                self.dt(WEB, 24, 'white', 'w-tw-36', f'h-{h}+36', bold=False, alpha=0.85)]
+        # Vertical: franja arriba, por debajo de la cabecera de Reels/TikTok (los botones y el texto van abajo)
+        s, y, h = self.s, self.s(140), self.s(150)
+        return [f"drawbox=x=0:y={y}:w=iw:h={h}:color={INK}@0.82:t=fill",
+                self.dt(t['price'], s(46), 'white', s(36), y + s(22), max_w=s(400)),
+                self.dt(t['facts_short'], s(28), MINT, s(36), y + s(86), bold=False, max_w=W - s(72)),
+                self.dt(WEB, s(24), 'white', f'w-tw-{s(36)}', y + s(36), bold=False, alpha=0.85)]
 
     def photo(self, i: int, src: Path, size: tuple[int, int]) -> Path:
         W, H = self.W, self.H
@@ -197,13 +207,14 @@ class Render:
         k = min(W / pw, H / ph)
         fw, fh = int(pw * k) // 2 * 2, int(ph * k) // 2 * 2
         n = int(PHOTO_S * FPS)
+        m = 3 if fw * fh < 800_000 else 2  # ampliación previa: con fotos grandes basta x2 (y va el doble de rápido)
         z = f"1+0.09*on/{n}" if i % 2 == 0 else f"1.09-0.09*on/{n}"
         x = 'iw/2-(iw/zoom/2)' if i % 3 != 1 else f'iw/2-(iw/zoom/2)+(iw-iw/zoom)/2*(on/{n}-0.5)'
         graph = ';'.join([
             "[0:v]split[a][b]",
             f"[a]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},boxblur=40:4,eq=brightness=-0.12:saturation=0.8[bg]",
             # Se amplía antes del zoompan para que el movimiento no tiemble
-            f"[b]scale={fw * 3}:{fh * 3},zoompan=z='{z}':x='{x}':y='ih/2-(ih/zoom/2)':d=1:s={fw}x{fh}:fps={FPS}[fg]",
+            f"[b]scale={fw * m}:{fh * m},zoompan=z='{z}':x='{x}':y='ih/2-(ih/zoom/2)':d=1:s={fw}x{fh}:fps={FPS}[fg]",
             f"[bg][fg]overlay=(W-w)/2:(H-h)/2," + ','.join(self.info_bar()) + ",format=yuv420p[v]",
         ])
         out = self.work / f'{self.mode}-{i:02d}.mp4'
@@ -213,16 +224,16 @@ class Render:
     def intro(self, src: Path) -> Path:
         W, H, t = self.W, self.H, self.t
         n = int(CARD_S * FPS)
-        horizontal = self.mode == 'horizontal'
-        big = 64 if horizontal else 72
-        x0 = 70 if horizontal else 50
-        y0 = int(H * (0.40 if horizontal else 0.52))
-        lines = [self.dt(t['op'], 26 if horizontal else 30, MINT, x0, y0 - 70, start=0.2, max_w=W - 2 * x0),
+        horizontal, s = self.mode == 'horizontal', self.s
+        big = 64 if horizontal else s(72)
+        x0 = 70 if horizontal else s(50)
+        y0 = int(H * (0.40 if horizontal else 0.42))
+        lines = [self.dt(t['op'], 26 if horizontal else s(30), MINT, x0, y0 - s(70), start=0.2, max_w=W - 2 * x0),
                  self.dt(t['place'], big, 'white', x0, y0, start=0.4, max_w=W - 2 * x0)]
         if t['sub']:
-            lines.append(self.dt(t['sub'], 34 if horizontal else 40, 'white', x0, y0 + big + 18, bold=False,
+            lines.append(self.dt(t['sub'], 34 if horizontal else s(40), 'white', x0, y0 + big + s(18), bold=False,
                                  start=0.6, alpha=0.9, max_w=W - 2 * x0))
-        lines.append(self.dt(t['price'], 52 if horizontal else 60, MINT, x0, y0 + big + 90, start=0.9))
+        lines.append(self.dt(t['price'], 52 if horizontal else s(60), MINT, x0, y0 + big + s(90), start=0.9))
         graph = (f"[0:v]scale={W * 2}:{H * 2}:force_original_aspect_ratio=increase,crop={W * 2}:{H * 2},"
                  f"zoompan=z='1.12-0.08*on/{n}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s={W}x{H}:fps={FPS},"
                  f"drawbox=x=0:y=0:w=iw:h=ih:color={INK}@0.55:t=fill," + ','.join(lines) + ",format=yuv420p[v]")
@@ -232,18 +243,18 @@ class Render:
 
     def outro(self, idx: int) -> Path:
         W, H = self.W, self.H
-        horizontal = self.mode == 'horizontal'
-        lw = 260 if horizontal else 300
+        horizontal, s = self.mode == 'horizontal', self.s
+        lw = 260 if horizontal else s(300)
         top = int(H * (0.16 if horizontal else 0.26))
-        ty = top + int(lw * 865 / 1024) + (20 if horizontal else 30)
+        ty = top + int(lw * 865 / 1024) + (20 if horizontal else s(30))
         graph = ';'.join([
             f"color=c={CREAM}:s={W}x{H}:r={FPS}:d={CARD_S}[bg]",
             f"[0:v]scale={lw}:-1,format=rgba,fade=t=in:st=0:d=0.6:alpha=1[logo]",
             f"[bg][logo]overlay=(W-w)/2:{top}," + ','.join([
-                self.dt('Ubica', 64, TEAL, '(w-tw)/2', ty, start=0.3),
-                self.dt('by AMI Fincas', 28, DARK_TEAL, '(w-tw)/2', ty + 82, bold=False, start=0.5),
-                self.dt(f'Llama o escribe:  {PHONE}', 32, INK, '(w-tw)/2', ty + 150, start=0.9),
-                self.dt(WEB, 30, TEAL, '(w-tw)/2', ty + 200, bold=False, start=1.1),
+                self.dt('Ubica', s(64), TEAL, '(w-tw)/2', ty, start=0.3),
+                self.dt('by AMI Fincas', s(28), DARK_TEAL, '(w-tw)/2', ty + s(82), bold=False, start=0.5),
+                self.dt(f'Llama o escribe:  {PHONE}', s(32), INK, '(w-tw)/2', ty + s(150), start=0.9),
+                self.dt(WEB, s(30), TEAL, '(w-tw)/2', ty + s(200), bold=False, start=1.1),
             ]) + ",format=yuv420p[v]",
         ])
         out = self.work / f'{self.mode}-{idx:02d}.mp4'
@@ -262,8 +273,17 @@ class Render:
             kind = 'fade' if k in (1, len(segs) - 1) else 'smoothleft'
             parts.append(f"{last}[{k}:v]xfade=transition={kind}:duration={FADE}:offset={offset:.3f}[x{k}]")
             last = f'[x{k}]'
-        ffmpeg([*inputs, '-filter_complex', ';'.join(parts), '-map', last, '-c:v', 'libx264', '-preset', 'slow',
-                '-crf', '23', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', str(out)])
+        total = sum(durs) - FADE * (len(segs) - 1)
+        if MUSIC.exists():
+            inputs += ['-stream_loop', '-1', '-i', str(MUSIC)]
+            parts.append(f"[{len(segs)}:a]atrim=0:{total:.3f},afade=t=in:d=1,afade=t=out:st={total - 2:.3f}:d=2,"
+                         f"volume=0.7[a]")
+        else:
+            inputs += ['-f', 'lavfi', '-t', f'{total:.3f}', '-i', 'anullsrc=r=48000:cl=stereo']
+            parts.append(f"[{len(segs)}:a]anull[a]")
+        ffmpeg([*inputs, '-filter_complex', ';'.join(parts), '-map', last, '-map', '[a]',
+                '-c:v', 'libx264', '-preset', 'slow', '-crf', '23', '-pix_fmt', 'yuv420p',
+                '-c:a', 'aac', '-b:a', '128k', '-ar', '48000', '-shortest', '-movflags', '+faststart', str(out)])
         for s in segs:
             s.unlink()
 
@@ -407,6 +427,9 @@ def main() -> int:
                 'horizontal': public_url(files['horizontal']) if upload_enabled else files['horizontal'],
                 'vertical': public_url(files['vertical']) if upload_enabled else files['vertical'],
                 'poster': p['images'][0],
+                # Para que el backend sepa si el vídeo corresponde aún al anuncio (antes de publicarlo en redes)
+                'images': (p.get('images') or [])[:MAX_PHOTOS],
+                'price': p.get('price'),
                 'updated': datetime.now(timezone.utc).isoformat(timespec='seconds'),
             }
             done += 1

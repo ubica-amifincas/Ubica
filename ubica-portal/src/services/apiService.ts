@@ -257,6 +257,27 @@ export interface ContactRequest {
   source?: 'ubica' | 'ami';
 }
 
+/** Publicación del vídeo de un inmueble en el Instagram de AMI Fincas. */
+export interface InstagramPost {
+  id: number;
+  status: 'publishing' | 'published' | 'error';
+  permalink?: string | null;
+  error?: string | null;
+  created_at: string;
+  published_at?: string | null;
+}
+
+export interface InstagramStatus {
+  /** La cuenta está conectada (hay token en el servidor) */
+  configured: boolean;
+  /** En venta o en alquiler */
+  publishable: boolean;
+  video: 'ready' | 'missing' | 'outdated';
+  /** Texto propuesto a partir de los datos del anuncio */
+  caption: string;
+  post: InstagramPost | null;
+}
+
 /** Error de la API con el código HTTP, para distinguir p. ej. 429 (demasiados intentos). */
 export class ApiError extends Error {
   status: number;
@@ -444,6 +465,21 @@ class ApiService {
       body: JSON.stringify(data),
     });
     return this.handleResponse<{ message: string }>(response, { skipAuthRedirect: true });
+  }
+
+  /** Solo el equipo de AMI Fincas: al resto la API responde 403. */
+  async getInstagramStatus(propertyId: number): Promise<InstagramStatus> {
+    const response = await fetch(`${API_BASE_URL}/social/instagram/${propertyId}`, { headers: this.getAuthHeaders() });
+    return this.handleResponse<InstagramStatus>(response);
+  }
+
+  async publishInstagram(propertyId: number, caption: string): Promise<InstagramPost> {
+    const response = await fetch(`${API_BASE_URL}/social/instagram/${propertyId}`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ caption }),
+    });
+    return this.handleResponse<InstagramPost>(response);
   }
 
   // Propiedades públicas

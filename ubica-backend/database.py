@@ -47,7 +47,7 @@ def ensure_columns():
 
 # Tablas nuevas: se crean al arrancar si faltan (las existentes no se tocan). En Postgres (Supabase) se les
 # activa RLS como al resto (enable_rls.sql): sin políticas, la API REST pública de Supabase no puede leerlas.
-NEW_TABLES = ("tasadorguess", "tasadorday", "portfolioproperty", "portfolioitem")
+NEW_TABLES = ("tasadorguess", "tasadorday", "portfolioproperty", "portfolioitem", "socialpost")
 
 def ensure_tables():
     from sqlalchemy import inspect, text
