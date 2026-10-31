@@ -20,11 +20,12 @@ export default function About() {
         { icon: GlobeAltIcon, title: t('about.values.reach.title'), desc: t('about.values.reach.desc') },
     ];
 
+    // Solo datos comprobables, los mismos que en la web de AMI Fincas
     const stats = [
-        { value: '500+', label: t('about.stats.managed') },
-        { value: '20+', label: t('about.stats.years') },
-        { value: '98%', label: t('about.stats.clients') },
-        { value: '50+', label: t('about.stats.pros') },
+        { value: '2014', label: t('about.stats.founded') },
+        { value: '2', label: t('about.stats.offices') },
+        { value: '24-48 h', label: t('about.stats.quote') },
+        { value: 'ES · EN', label: t('about.stats.languages') },
     ];
 
     return (

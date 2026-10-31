@@ -84,8 +84,7 @@ export default function Contact() {
         {
             icon: ClockIcon,
             title: t('contact.hours'),
-            content: 'Lun - Vie: 9:30 - 14:00',
-            subContent: t('contact.sat_hours')
+            content: t('footer.hours')
         }
     ];
 
@@ -160,9 +159,6 @@ export default function Contact() {
                                         </a>
                                     ) : (
                                         <p className="text-gray-600 dark:text-gray-400">{info.content}</p>
-                                    )}
-                                    {info.subContent && (
-                                        <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">{info.subContent}</p>
                                     )}
                                 </div>
                             </motion.div>
