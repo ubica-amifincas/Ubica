@@ -415,7 +415,7 @@ function AmiSlide({ page, portrait }: { page: AmiPage; portrait: boolean }) {
                     </ul>
                 </div>
                 <div className="relative flex flex-1 items-center justify-center p-[4vmin]">
-                    <img src="/ami-fincas/3d_warm.webp" alt="" className="max-h-full max-w-full rounded-[3vmin] object-contain shadow-2xl" />
+                    <img src="/ami-fincas/comunidad-piscina.webp" alt="" className="max-h-full max-w-full rounded-[3vmin] object-contain shadow-2xl" />
                 </div>
             </div>
         );

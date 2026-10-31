@@ -232,7 +232,7 @@ export default function AmiFincas() {
               </div>
 
               <div className="w-full max-w-md flex-1 lg:max-w-none">
-                <img src="/ami-fincas/3d_warm.webp" alt="" width={1024} height={941}
+                <img src="/ami-fincas/comunidad-piscina.webp" alt="" width={1024} height={940}
                   className="mx-auto w-full max-w-[520px] rounded-[2.5rem] shadow-2xl shadow-slate-900/20" />
               </div>
             </div>
