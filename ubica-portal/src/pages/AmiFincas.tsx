@@ -19,6 +19,7 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '../hooks/useLanguage';
 import { apiService } from '../services/apiService';
 import { ubicaHref } from '../utils/site';
+import MurciaSkyline from '../components/common/MurciaSkyline';
 
 const FOUNDED = 2014;
 
@@ -238,6 +239,9 @@ export default function AmiFincas() {
             </div>
           </div>
         </section>
+
+        {/* Murcia al fondo: la catedral, el Segura y la huerta */}
+        <MurciaSkyline className="-mt-8 h-[clamp(6rem,10vw,16rem)] md:-mt-14" />
 
         {/* Datos de la empresa: solo los que se pueden comprobar */}
         <section aria-label="AMI Fincas en cifras" className="border-y border-slate-200 bg-white dark:border-white/5 dark:bg-white/5">
