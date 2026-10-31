@@ -293,7 +293,7 @@ export default function AmiFincas() {
                 </ul>
               </div>
               <div className="w-full max-w-md flex-1 lg:max-w-none">
-                <img src="/ami-fincas/3d_circular.webp" alt="" width={1024} height={940} loading="lazy"
+                <img src="/ami-fincas/urbanizacion-servicios.webp" alt="" width={1024} height={940} loading="lazy"
                   className="mx-auto w-full max-w-[460px] rounded-[2.5rem] shadow-xl shadow-slate-900/15" />
               </div>
             </div>
